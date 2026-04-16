@@ -8,11 +8,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.js"></script>
 </head>
-<body class="bg-[#F2F4F4] font-sans">
+<body class="bg-[#F2F4F4] font-sans overflow-x-hidden">
 
-    <nav class="bg-[#143B62] text-white sticky top-0 z-50 shadow-md">
+    <nav class="bg-[#143B62] text-white sticky top-0 z-40 shadow-md">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
-            
             <div class="flex items-center gap-2">
                 <i class="fa-solid fa-layer-group text-[#E67E22] text-2xl"></i>
                 <span class="font-bold text-xl tracking-wide hidden sm:block">P&P Soluciones</span>
@@ -25,25 +24,24 @@
             </div>
 
             <div class="flex items-center gap-4">
-                <div class="bg-[#0f2d4a] px-2 py-1 rounded text-xs text-center border border-[#1a4a7a]">
+                <div class="bg-[#0f2d4a] px-2 py-1 rounded text-xs text-center border border-[#1a4a7a] hidden sm:block">
                     <p class="text-gray-300">Tasa BCV</p>
                     <p class="text-yellow-400 font-bold" id="tasa-bcv-display">Bs. 0.00</p>
                 </div>
-                <button class="relative hover:text-[#E67E22] transition">
+                <button onclick="toggleCarrito()" class="relative hover:text-[#E67E22] transition p-2">
                     <i class="fa-solid fa-cart-shopping text-xl"></i>
+                    <span id="contador-carrito" class="absolute top-0 right-0 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full hidden">0</span>
                 </button>
             </div>
         </div>
     </nav>
 
-    <div class="bg-white border-b shadow-sm overflow-x-auto">
-        <div class="max-w-7xl mx-auto px-4 py-3 flex gap-3 text-sm font-semibold justify-start md:justify-center" id="contenedor-categorias">
-            </div>
+    <div class="bg-white border-b shadow-sm overflow-x-auto relative z-30">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex gap-3 text-sm font-semibold justify-start md:justify-center" id="contenedor-categorias"></div>
     </div>
 
-    <main class="max-w-7xl mx-auto px-4 py-8">
+    <main class="max-w-7xl mx-auto px-4 py-8 relative z-10">
         <h2 id="titulo-seccion" class="text-2xl font-black text-[#143B62] mb-6 border-l-4 border-[#E67E22] pl-3">Todos los Productos</h2>
-        
         <div id="catalogo" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
             <div class="col-span-full flex flex-col items-center justify-center py-20 text-[#143B62]">
                 <i class="fa-solid fa-spinner fa-spin text-4xl mb-4 text-[#E67E22]"></i>
@@ -52,14 +50,48 @@
         </div>
     </main>
 
+    <div id="overlay-carrito" onclick="toggleCarrito()" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden transition-opacity"></div>
+
+    <div id="sidebar-carrito" class="fixed top-0 right-0 h-full w-full sm:w-[400px] bg-white shadow-2xl z-50 transform translate-x-full transition-transform duration-300 flex flex-col">
+        <div class="bg-[#143B62] text-white px-4 py-4 flex justify-between items-center">
+            <h3 class="font-bold text-lg"><i class="fa-solid fa-cart-shopping mr-2"></i> Mi Pedido</h3>
+            <button onclick="toggleCarrito()" class="text-gray-300 hover:text-white text-xl"><i class="fa-solid fa-times"></i></button>
+        </div>
+        
+        <div id="items-carrito" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+            <div class="flex flex-col items-center justify-center h-full text-gray-400">
+                <i class="fa-solid fa-basket-shopping text-4xl mb-3"></i>
+                <p>Tu carrito está vacío</p>
+            </div>
+        </div>
+
+        <div class="bg-white border-t p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+            <div class="flex justify-between text-sm text-gray-600 mb-1">
+                <span>Subtotal USD:</span>
+                <span id="subtotal-usd" class="font-bold">US $0.00</span>
+            </div>
+            <div class="flex justify-between text-lg text-[#143B62] font-black mb-4">
+                <span>Total Bs:</span>
+                <span id="total-bs">Bs. 0.00</span>
+            </div>
+            <button onclick="procesarPedido()" class="w-full bg-[#E67E22] hover:bg-[#d6731e] text-white font-bold py-3 rounded-lg shadow-md transition-colors text-lg flex justify-center items-center gap-2">
+                Continuar <i class="fa-solid fa-arrow-right"></i>
+            </button>
+        </div>
+    </div>
+
     <script>
-        // --- TUS LLAVES AQUÍ ---
-        const SUPABASE_URL = 'https://icvfmdvvochzaktugqvj.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImljdmZtZHZ2b2NoemFrdHVncXZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyNDEzMzEsImV4cCI6MjA5MTgxNzMzMX0.gO3D39piT6KGbMMOzrPGWXUp5-g_nOBAgJ-nwPv8IcQ';
+        // --- TUS LLAVES DE SUPABASE AQUÍ ---
+        const SUPABASE_URL = 'PAGA_AQUI_TU_URL_DE_SUPABASE';
+        const SUPABASE_KEY = 'PEGA_AQUI_TU_LLAVE_ANON_LARGUISIMA';
 
         let todosLosProductos = [];
         let fuse; 
-        let categoriaActiva = 'Todas'; // Para saber qué botón pintar de azul
+        let categoriaActiva = 'Todas';
+        let tasaBcvGlobal = 1; // Guardaremos la tasa aquí para usarla en el carrito
+
+        // Memoria del Carrito
+        let carrito = [];
 
         async function cargarDatos() {
             try {
@@ -68,30 +100,29 @@
                         headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
                     });
                     const dataTasa = await resTasa.json();
-                    if(dataTasa.length > 0) document.getElementById('tasa-bcv-display').innerText = `Bs. ${dataTasa[0].tasa.toFixed(2)}`;
-                } catch(e) { console.warn("No se pudo cargar la tasa", e); }
+                    if(dataTasa.length > 0) {
+                        tasaBcvGlobal = dataTasa[0].tasa;
+                        document.getElementById('tasa-bcv-display').innerText = `Bs. ${tasaBcvGlobal.toFixed(2)}`;
+                    }
+                } catch(e) { console.warn("Error tasa", e); }
 
-                // Pidiendo hasta 1000 productos (Por defecto Supabase a veces manda solo los primeros si no le dices)
                 const resProd = await fetch(`${SUPABASE_URL}/rest/v1/vista_catalogo_web?select=*&limit=1000`, {
                     headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
                 });
                 
-                if (!resProd.ok) throw new Error("Fallo la consulta SQL de productos");
+                if (!resProd.ok) throw new Error("Fallo DB");
                 todosLosProductos = await resProd.json();
                 
-                const opcionesFuse = { keys: ['nombre', 'categoria', 'sku'], threshold: 0.3, ignoreLocation: true };
-                fuse = new Fuse(todosLosProductos, opcionesFuse);
+                fuse = new Fuse(todosLosProductos, { keys: ['nombre', 'categoria', 'sku'], threshold: 0.3, ignoreLocation: true });
 
                 extraerCategorias(todosLosProductos);
                 renderizarProductos(todosLosProductos);
-
             } catch (error) {
-                console.error('Error Fatal:', error);
                 document.getElementById('catalogo').innerHTML = '<p class="text-red-500 col-span-full text-center">Error conectando con la base de datos.</p>';
             }
         }
 
-function renderizarProductos(productos, titulo = "Todos los Productos") {
+        function renderizarProductos(productos, titulo = "Todos los Productos") {
             const contenedor = document.getElementById('catalogo');
             document.getElementById('titulo-seccion').innerText = titulo;
             contenedor.innerHTML = '';
@@ -104,36 +135,38 @@ function renderizarProductos(productos, titulo = "Todos los Productos") {
             productos.forEach(prod => {
                 const precioUsd = Number(prod.precio_detal_usd) || 0;
                 const precioBs = Number(prod.precio_detal_bs) || 0;
-                const imagen = prod.imagen_principal || 'https://via.placeholder.com/300?text=P%26P+Soluciones';
+                const imagen = prod.imagen_principal || 'https://via.placeholder.com/300?text=P%26P';
                 
-                // LÓGICA DEL "DESDE" PARA SERVICIOS
-                // Comprobamos si el tipo_producto dice "Servicio" o "Fabricación"
                 const tipo = (prod.tipo_producto || "").toLowerCase();
                 const esServicio = tipo.includes('servicio') || tipo.includes('fabricaci');
-                
-                // Preparamos los textos
                 const textoDesdeUsd = esServicio ? `<span class="text-xs font-bold text-[#143B62] mr-1">Desde</span>` : '';
                 const textoDesdeBs = esServicio ? `Desde ` : '';
 
+                // Usamos JSON.stringify para pasar el objeto completo al carrito de forma segura
+                const prodData = encodeURIComponent(JSON.stringify(prod));
+
                 contenedor.innerHTML += `
-                    <div class="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow border border-gray-200 flex flex-col relative group">
+                    <div class="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow border border-gray-200 flex flex-col relative group overflow-hidden">
                         <button class="absolute top-2 right-2 text-gray-300 hover:text-red-500 z-10 text-lg transition-colors"><i class="fa-solid fa-heart"></i></button>
-                        <div class="h-40 w-full p-2 flex justify-center items-center bg-white rounded-t-lg">
+                        <div class="h-40 w-full p-2 flex justify-center items-center bg-white">
                             <img src="${imagen}" alt="Producto" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300">
                         </div>
                         <div class="p-3 flex flex-col flex-grow border-t border-gray-100">
                             <span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">${prod.categoria || 'Varios'}</span>
-                            <h3 class="text-xs font-bold text-[#212529] leading-tight mb-3 line-clamp-2" title="${prod.nombre}">${prod.nombre}</h3>
+                            <h3 class="text-xs font-bold text-[#212529] leading-tight mb-2 line-clamp-2" title="${prod.nombre}">${prod.nombre}</h3>
                             <div class="mt-auto">
                                 <div class="flex items-baseline gap-1 mb-0.5">
                                     ${textoDesdeUsd}
                                     <span class="text-[10px] text-gray-500 font-bold">US $</span>
                                     <span class="text-lg font-black text-[#143B62]">${precioUsd.toFixed(2)}</span>
                                 </div>
-                                <div class="flex justify-between items-center">
+                                <div class="flex justify-between items-center mb-3">
                                     <span class="text-[11px] font-bold text-gray-400">${textoDesdeBs}Bs. ${precioBs.toFixed(2)}</span>
                                     ${!esServicio ? `<span class="text-[10px] text-gray-400">Stock: ${prod.stock_actual}</span>` : `<span class="text-[10px] text-gray-400 italic">Disponible</span>`}
                                 </div>
+                                <button onclick="agregarAlCarrito('${prodData}')" class="w-full bg-[#143B62] hover:bg-[#0f2d4a] text-white text-xs font-bold py-2 rounded transition-colors flex items-center justify-center gap-2">
+                                    <i class="fa-solid fa-plus"></i> Agregar
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -141,15 +174,124 @@ function renderizarProductos(productos, titulo = "Todos los Productos") {
             });
         }
 
-        function filtrarProductosInteligente() {
-            const texto = document.getElementById('buscador').value;
-            // Si hay texto, buscamos. Si no, mostramos la categoría activa.
-            if (texto.trim() === '') {
-                filtrarPorCategoria(categoriaActiva);
+        // --- LÓGICA DEL CARRITO ---
+
+        function agregarAlCarrito(prodDataEncoded) {
+            const prod = JSON.parse(decodeURIComponent(prodDataEncoded));
+            
+            // Buscar si ya existe en el carrito
+            const index = carrito.findIndex(item => item.id_producto === prod.id_producto);
+            
+            if (index !== -1) {
+                carrito[index].cantidad += 1; // Si existe, suma 1
+            } else {
+                prod.cantidad = 1; // Si no existe, lo agrega con cantidad 1
+                carrito.push(prod);
+            }
+            
+            actualizarUI_Carrito();
+            abrirCarrito();
+        }
+
+        function cambiarCantidad(id, delta) {
+            const index = carrito.findIndex(item => item.id_producto === id);
+            if (index !== -1) {
+                carrito[index].cantidad += delta;
+                if (carrito[index].cantidad <= 0) {
+                    carrito.splice(index, 1); // Lo elimina si llega a 0
+                }
+                actualizarUI_Carrito();
+            }
+        }
+
+        function eliminarDelCarrito(id) {
+            carrito = carrito.filter(item => item.id_producto !== id);
+            actualizarUI_Carrito();
+        }
+
+        function actualizarUI_Carrito() {
+            const contenedor = document.getElementById('items-carrito');
+            const contadorBurbuja = document.getElementById('contador-carrito');
+            let subtotalUSD = 0;
+            let totalArticulos = 0;
+
+            if (carrito.length === 0) {
+                contenedor.innerHTML = `<div class="flex flex-col items-center justify-center h-full text-gray-400"><i class="fa-solid fa-basket-shopping text-4xl mb-3"></i><p>Tu carrito está vacío</p></div>`;
+                contadorBurbuja.classList.add('hidden');
+                document.getElementById('subtotal-usd').innerText = `US $0.00`;
+                document.getElementById('total-bs').innerText = `Bs. 0.00`;
                 return;
             }
+
+            contenedor.innerHTML = '';
+            
+            carrito.forEach(item => {
+                const precioUsd = Number(item.precio_detal_usd) || 0;
+                const subtotalItem = precioUsd * item.cantidad;
+                subtotalUSD += subtotalItem;
+                totalArticulos += item.cantidad;
+                const imagen = item.imagen_principal || 'https://via.placeholder.com/100';
+
+                contenedor.innerHTML += `
+                    <div class="flex bg-white p-3 rounded-lg shadow-sm border border-gray-100 relative">
+                        <img src="${imagen}" class="w-16 h-16 object-contain rounded border p-1 mr-3">
+                        <div class="flex-1">
+                            <h4 class="text-xs font-bold text-gray-800 line-clamp-2 leading-tight pr-5">${item.nombre}</h4>
+                            <div class="text-[#143B62] font-black text-sm mt-1">US $${precioUsd.toFixed(2)}</div>
+                            
+                            <div class="flex items-center mt-2 border w-max rounded-md overflow-hidden">
+                                <button onclick="cambiarCantidad('${item.id_producto}', -1)" class="px-2 py-0.5 bg-gray-100 hover:bg-gray-200 text-gray-600 transition"><i class="fa-solid fa-minus text-[10px]"></i></button>
+                                <span class="px-3 py-0.5 text-xs font-bold bg-white">${item.cantidad}</span>
+                                <button onclick="cambiarCantidad('${item.id_producto}', 1)" class="px-2 py-0.5 bg-gray-100 hover:bg-gray-200 text-gray-600 transition"><i class="fa-solid fa-plus text-[10px]"></i></button>
+                            </div>
+                        </div>
+                        <button onclick="eliminarDelCarrito('${item.id_producto}')" class="absolute top-2 right-2 text-red-400 hover:text-red-600 p-1"><i class="fa-solid fa-trash-can"></i></button>
+                    </div>
+                `;
+            });
+
+            // Actualizar Totales
+            const totalBs = subtotalUSD * tasaBcvGlobal;
+            document.getElementById('subtotal-usd').innerText = `US $${subtotalUSD.toFixed(2)}`;
+            document.getElementById('total-bs').innerText = `Bs. ${totalBs.toFixed(2)}`;
+            
+            // Actualizar Burbuja roja
+            contadorBurbuja.innerText = totalArticulos;
+            contadorBurbuja.classList.remove('hidden');
+        }
+
+        // Controles Visuales del Panel
+        const sidebar = document.getElementById('sidebar-carrito');
+        const overlay = document.getElementById('overlay-carrito');
+
+        function toggleCarrito() {
+            if (sidebar.classList.contains('translate-x-full')) {
+                abrirCarrito();
+            } else {
+                cerrarCarrito();
+            }
+        }
+
+        function abrirCarrito() {
+            sidebar.classList.remove('translate-x-full');
+            overlay.classList.remove('hidden');
+        }
+
+        function cerrarCarrito() {
+            sidebar.classList.add('translate-x-full');
+            overlay.classList.add('hidden');
+        }
+
+        function procesarPedido() {
+            if(carrito.length === 0) return alert("Agrega productos al carrito primero.");
+            alert("¡Fase 3! Aquí abriremos el buscador de cédulas y el envío a WhatsApp.");
+        }
+
+        // --- FUNCIONES EXISTENTES (Buscador y Categorías) ---
+        function filtrarProductosInteligente() {
+            const texto = document.getElementById('buscador').value;
+            if (texto.trim() === '') return filtrarPorCategoria(categoriaActiva);
             const resultados = fuse.search(texto).map(res => res.item);
-            // Si busca algo específico y estaba en una categoría, filtramos los resultados para que solo sean de esa categoría.
             const resultadosFiltrados = categoriaActiva === 'Todas' ? resultados : resultados.filter(p => p.categoria === categoriaActiva);
             renderizarProductos(resultadosFiltrados, `Resultados para: "${texto}"`);
         }
@@ -161,34 +303,21 @@ function renderizarProductos(productos, titulo = "Todos los Productos") {
 
         function pintarBotonesCategorias(categorias) {
             const contCat = document.getElementById('contenedor-categorias');
-            contCat.innerHTML = ''; // Limpiamos
-
-            // Lógica para pintar el botón activo de azul (#143B62) y los inactivos de gris
+            contCat.innerHTML = ''; 
             const claseActiva = "px-4 py-1.5 rounded-full bg-[#143B62] text-white transition whitespace-nowrap";
             const claseInactiva = "px-4 py-1.5 rounded-full bg-gray-200 text-[#143B62] hover:bg-[#E67E22] hover:text-white transition whitespace-nowrap cursor-pointer";
 
             contCat.innerHTML += `<button onclick="filtrarPorCategoria('Todas')" class="${categoriaActiva === 'Todas' ? claseActiva : claseInactiva}">Todas</button>`;
-            
-            categorias.forEach(cat => {
-                contCat.innerHTML += `<button onclick="filtrarPorCategoria('${cat}')" class="${categoriaActiva === cat ? claseActiva : claseInactiva}">${cat}</button>`;
-            });
+            categorias.forEach(cat => { contCat.innerHTML += `<button onclick="filtrarPorCategoria('${cat}')" class="${categoriaActiva === cat ? claseActiva : claseInactiva}">${cat}</button>`; });
         }
 
         function filtrarPorCategoria(categoria) {
-            categoriaActiva = categoria; // Actualizamos la memoria
-            document.getElementById('buscador').value = ''; // Limpiamos el buscador
-            
-            // Repintamos los botones para que se actualice el color
+            categoriaActiva = categoria; 
+            document.getElementById('buscador').value = ''; 
             const categoriasUnicas = [...new Set(todosLosProductos.map(p => p.categoria).filter(c => c))].sort();
             pintarBotonesCategorias(categoriasUnicas);
-
-            // Filtramos y mostramos
-            if (categoria === 'Todas') {
-                renderizarProductos(todosLosProductos, "Todos los Productos");
-            } else {
-                const filtrados = todosLosProductos.filter(p => p.categoria === categoria);
-                renderizarProductos(filtrados, `Categoría: ${categoria}`);
-            }
+            if (categoria === 'Todas') { renderizarProductos(todosLosProductos, "Todos los Productos"); } 
+            else { renderizarProductos(todosLosProductos.filter(p => p.categoria === categoria), `Categoría: ${categoria}`); }
         }
 
         cargarDatos();
