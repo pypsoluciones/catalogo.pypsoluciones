@@ -12,12 +12,12 @@
 
     <nav class="bg-[#143B62] text-white sticky top-0 z-40 shadow-md">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 cursor-pointer" onclick="volverAlCatalogo()">
                 <i class="fa-solid fa-layer-group text-[#E67E22] text-2xl"></i>
                 <span class="font-bold text-xl tracking-wide hidden sm:block">P&P Soluciones</span>
             </div>
             
-            <div class="flex-1 max-w-lg mx-4 relative">
+            <div class="flex-1 max-w-lg mx-4 relative" id="contenedor-buscador">
                 <input type="text" id="buscador" oninput="buscarPredictivo()" placeholder="Busca en P&P Soluciones..." 
                        class="w-full text-gray-900 rounded-full pl-4 pr-10 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#E67E22]">
                 <i class="fa-solid fa-search absolute right-4 top-2.5 text-gray-400"></i>
@@ -37,11 +37,11 @@
         </div>
     </nav>
 
-    <div class="bg-white border-b shadow-sm overflow-x-auto relative z-30">
+    <div class="bg-white border-b shadow-sm overflow-x-auto relative z-30" id="barra-categorias">
         <div class="max-w-7xl mx-auto px-4 py-3 flex gap-3 text-sm font-semibold justify-start md:justify-center" id="contenedor-categorias"></div>
     </div>
 
-    <main class="max-w-7xl mx-auto px-4 py-8 relative z-10" onclick="cerrarDropdown()">
+    <main class="max-w-7xl mx-auto px-4 py-8 relative z-10" onclick="cerrarDropdown()" id="vista-catalogo">
         <div class="flex justify-between items-end mb-6 border-b pb-2">
             <h2 id="titulo-seccion" class="text-2xl font-black text-[#143B62] border-l-4 border-[#E67E22] pl-3">Todos los Productos</h2>
             <button onclick="mostrarFavoritos()" class="text-sm font-bold text-red-500 hover:text-red-700 transition"><i class="fa-solid fa-heart"></i> Ver Favoritos</button>
@@ -55,6 +55,9 @@
         </div>
         <div id="observador-scroll" class="h-10 mt-4 flex justify-center items-center"></div>
     </main>
+
+    <main class="max-w-5xl mx-auto px-4 py-8 relative z-10 hidden" id="vista-pdp">
+        </main>
 
     <div id="overlay-carrito" onclick="toggleCarrito()" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden transition-opacity"></div>
     <div id="sidebar-carrito" class="fixed top-0 right-0 h-full w-full sm:w-[400px] bg-white shadow-2xl z-50 transform translate-x-full transition-transform duration-300 flex flex-col">
@@ -79,44 +82,31 @@
     </div>
 
     <div id="modal-checkout" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-md rounded-xl shadow-2xl overflow-hidden animate-[fadeIn_0.3s_ease-out]">
+        <div class="bg-white w-full max-w-md rounded-xl shadow-2xl overflow-hidden">
             <div class="bg-[#143B62] text-white px-5 py-4 flex justify-between items-center">
-                <h3 class="font-bold text-lg"><i class="fa-solid fa-user-check mr-2"></i> Identificación del Cliente</h3>
+                <h3 class="font-bold text-lg"><i class="fa-solid fa-user-check mr-2"></i> Identificación</h3>
                 <button onclick="cerrarCheckout()" class="text-gray-300 hover:text-white text-xl"><i class="fa-solid fa-times"></i></button>
             </div>
-            
             <div class="p-5 space-y-4">
                 <div>
                     <label class="block text-xs font-bold text-gray-600 mb-1">Número de Cédula / RIF</label>
                     <div class="flex gap-2">
                         <select id="tipo-doc" class="border border-gray-300 rounded-lg px-2 py-2 bg-gray-50 focus:outline-none focus:border-[#E67E22]">
-                            <option value="V">V</option>
-                            <option value="E">E</option>
-                            <option value="J">J</option>
-                            <option value="G">G</option>
+                            <option value="V">V</option><option value="E">E</option><option value="J">J</option><option value="G">G</option>
                         </select>
-                        <input type="number" id="input-cedula" placeholder="Ej: 13087656" class="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-[#E67E22] focus:ring-1 focus:ring-[#E67E22]">
-                        <button onclick="buscarCliente()" class="bg-[#143B62] hover:bg-[#0f2d4a] text-white px-4 rounded-lg transition">
-                            <i class="fa-solid fa-search"></i>
-                        </button>
+                        <input type="number" id="input-cedula" placeholder="Ej: 13087656" class="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-[#E67E22]">
+                        <button onclick="buscarCliente()" class="bg-[#143B62] hover:bg-[#0f2d4a] text-white px-4 rounded-lg transition"><i class="fa-solid fa-search"></i></button>
                     </div>
                     <p id="msg-cliente" class="text-xs mt-1 h-4"></p>
                 </div>
-
                 <div class="space-y-3 pt-2 border-t">
-                    <div>
-                        <input type="text" id="cliente-nombre" placeholder="Nombre / Razón Social" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#E67E22] bg-gray-50">
-                    </div>
-                    <div>
-                        <input type="tel" id="cliente-telefono" placeholder="Teléfono (Ej: 04141234567)" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#E67E22] bg-gray-50">
-                    </div>
+                    <input type="text" id="cliente-nombre" placeholder="Nombre / Razón Social" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#E67E22] bg-gray-50">
+                    <input type="tel" id="cliente-telefono" placeholder="Teléfono (Ej: 04141234567)" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#E67E22] bg-gray-50">
                 </div>
-
                 <div class="bg-gray-50 p-3 rounded-lg border text-sm mt-4">
                     <div class="flex justify-between text-gray-600 mb-1"><span>Total USD:</span><span id="check-usd" class="font-bold"></span></div>
                     <div class="flex justify-between text-[#E67E22] font-black text-base"><span>Total Bs:</span><span id="check-bs"></span></div>
                 </div>
-
                 <button onclick="enviarPedidoWhatsApp()" class="w-full bg-[#25D366] hover:bg-[#1ebd5c] text-white font-bold py-3 rounded-lg shadow-md transition-colors flex justify-center items-center gap-2 mt-4">
                     <i class="fa-brands fa-whatsapp text-xl"></i> Enviar Pedido
                 </button>
@@ -124,8 +114,20 @@
         </div>
     </div>
 
+    <div id="modal-compartir" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white p-6 rounded-xl shadow-2xl max-w-sm w-full text-center">
+            <i class="fa-brands fa-whatsapp text-5xl text-[#25D366] mb-4"></i>
+            <h3 class="text-lg font-bold text-[#143B62] mb-2">Compartir Oferta</h3>
+            <p class="text-sm text-gray-600 mb-6">Se abrirá WhatsApp para compartir este producto.</p>
+            <div class="flex gap-3">
+                <button onclick="document.getElementById('modal-compartir').classList.add('hidden')" class="flex-1 bg-gray-200 text-gray-700 py-2 rounded font-bold hover:bg-gray-300">Cancelar</button>
+                <button id="btn-confirmar-compartir" class="flex-1 bg-[#25D366] text-white py-2 rounded font-bold hover:bg-[#1ebd5c]">Compartir</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // --- LLAVES DE SUPABASE INTEGRADAS AUTOMÁTICAMENTE ---
+        // --- LLAVES DE SUPABASE ---
         const SUPABASE_URL = 'https://icvfmdvvochzaktugqvj.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImljdmZtZHZ2b2NoemFrdHVncXZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyNDEzMzEsImV4cCI6MjA5MTgxNzMzMX0.gO3D39piT6KGbMMOzrPGWXUp5-g_nOBAgJ-nwPv8IcQ';
         const NUMERO_WHATSAPP = '584140285806';
@@ -142,7 +144,14 @@
         const CANTIDAD_POR_PAGINA = 20;
         let totalUsdGlobal = 0;
 
-        async function cargarDatos() {
+        // URL ROUTING BASICO
+        window.onload = () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const skuUrl = urlParams.get('producto');
+            cargarDatos(skuUrl);
+        };
+
+        async function cargarDatos(skuParaAbrir = null) {
             try {
                 try {
                     const resTasa = await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?select=tasa&order=fecha_actualizacion.desc&limit=1`, {
@@ -160,10 +169,17 @@
                 });
                 
                 todosLosProductos = await resProd.json();
-                fuse = new Fuse(todosLosProductos, { keys: ['nombre', 'categoria', 'sku'], threshold: 0.3, ignoreLocation: true });
+                fuse = new Fuse(todosLosProductos, { keys: ['nombre', 'categoria_producto', 'id_producto_sku'], threshold: 0.3, ignoreLocation: true });
 
                 extraerCategorias(todosLosProductos);
-                iniciarVista(todosLosProductos, "Todos los Productos");
+                
+                if(skuParaAbrir) {
+                    const prod = todosLosProductos.find(p => p.id_producto_sku === skuParaAbrir);
+                    if(prod) abrirPDP(prod);
+                    else iniciarVista(todosLosProductos, "Todos los Productos");
+                } else {
+                    iniciarVista(todosLosProductos, "Todos los Productos");
+                }
 
                 const observer = new IntersectionObserver(entries => {
                     if(entries[0].isIntersecting) { cargarMasProductos(); }
@@ -175,20 +191,22 @@
             }
         }
 
-        // --- SISTEMA FAVORITOS ---
-        function toggleFavorito(id_producto) {
-            const index = favoritos.indexOf(id_producto);
-            if (index === -1) favoritos.push(id_producto); else favoritos.splice(index, 1);
-            localStorage.setItem('pyp_favoritos', JSON.stringify(favoritos)); 
-            const icono = document.getElementById(`icono-fav-${id_producto}`);
-            if(icono) {
-                if(favoritos.includes(id_producto)) icono.classList.replace('text-gray-300', 'text-red-500');
-                else icono.classList.replace('text-red-500', 'text-gray-300');
+        // --- FUNCIONES CORE: PRECIOS DINÁMICOS MAYORISTA ---
+        function calcularPrecioUnitario(prod, cantidad) {
+            let precioUnitario = Number(prod.precio_detal_usd) || 0;
+            
+            // Revisar tiers en orden inverso (del mayor al menor descuento)
+            if (prod.requerido_precio_3 && cantidad >= prod.requerido_precio_3 && prod.precio_tier3_usd) {
+                precioUnitario = Number(prod.precio_tier3_usd);
+            } else if (prod.requerido_precio_2 && cantidad >= prod.requerido_precio_2 && prod.precio_tier2_usd) {
+                precioUnitario = Number(prod.precio_tier2_usd);
+            } else if (prod.requerido_precio_1 && cantidad >= prod.requerido_precio_1 && prod.precio_tier1_usd) {
+                precioUnitario = Number(prod.precio_tier1_usd);
             }
+            return precioUnitario;
         }
-        function mostrarFavoritos() { iniciarVista(todosLosProductos.filter(p => favoritos.includes(p.id_producto)), "Mis Productos Favoritos ❤️"); }
 
-        // --- RENDER Y CARGA ---
+        // --- RENDERIZADO CATÁLOGO ---
         function iniciarVista(productos, titulo) {
             document.getElementById('titulo-seccion').innerText = titulo;
             document.getElementById('catalogo').innerHTML = ''; 
@@ -203,34 +221,36 @@
             const lote = productosActualesView.slice(indiceCarga, indiceCarga + CANTIDAD_POR_PAGINA);
             
             lote.forEach(prod => {
-                const precioUsd = Number(prod.precio_detal_usd) || 0; const precioBs = Number(prod.precio_detal_bs) || 0;
+                const precioUsd = Number(prod.precio_detal_usd) || 0; 
                 const imagen = prod.imagen_principal || 'https://via.placeholder.com/300?text=P%26P';
-                const tipo = (prod.tipo_producto || "").toLowerCase(); const esServicio = tipo.includes('servicio') || tipo.includes('fabricaci');
-                const prodData = encodeURIComponent(JSON.stringify(prod));
-                const esFav = favoritos.includes(prod.id_producto); const colorCorazon = esFav ? 'text-red-500' : 'text-gray-300';
+                const esServicio = (prod.tipo_producto || "").toLowerCase().includes('servicio') || (prod.tipo_producto || "").toLowerCase().includes('fabricaci');
+                const esFav = favoritos.includes(prod.id_producto_sku); const colorCorazon = esFav ? 'text-red-500' : 'text-gray-300';
+                
+                // Determinar si mostrar "Desde" porque tiene tiers o es servicio
+                const tieneTiers = prod.requerido_precio_1 != null;
+                const mostrarDesde = esServicio || tieneTiers ? `<span class="text-[10px] font-bold text-[#143B62] mr-1">Desde</span>` : '';
+
+                // El onClick ahora abre la PDP
+                const prodDataStr = encodeURIComponent(JSON.stringify(prod));
 
                 contenedor.innerHTML += `
-                    <div class="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow border border-gray-200 flex flex-col relative group overflow-hidden fade-in">
-                        <button onclick="toggleFavorito('${prod.id_producto}')" class="absolute top-2 right-2 z-20 text-lg transition-colors hover:scale-110">
-                            <i id="icono-fav-${prod.id_producto}" class="fa-solid fa-heart ${colorCorazon} hover:text-red-400"></i>
+                    <div class="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow border border-gray-200 flex flex-col relative group overflow-hidden cursor-pointer" onclick="abrirPDPObj('${prodDataStr}')">
+                        <button onclick="event.stopPropagation(); toggleFavorito('${prod.id_producto_sku}')" class="absolute top-2 right-2 z-20 text-lg transition-colors hover:scale-110">
+                            <i id="icono-fav-${prod.id_producto_sku}" class="fa-solid fa-heart ${colorCorazon} hover:text-red-400"></i>
                         </button>
                         <div class="h-40 w-full p-2 flex justify-center items-center bg-white">
                             <img src="${imagen}" loading="lazy" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300">
                         </div>
                         <div class="p-3 flex flex-col flex-grow border-t border-gray-100">
-                            <span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">${prod.categoria || 'Varios'}</span>
+                            <span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">${prod.categoria_producto || 'Varios'}</span>
                             <h3 class="text-xs font-bold text-[#212529] leading-tight mb-2 line-clamp-2" title="${prod.nombre}">${prod.nombre}</h3>
                             <div class="mt-auto">
-                                <div class="flex items-baseline gap-1 mb-0.5">
-                                    ${esServicio ? `<span class="text-xs font-bold text-[#143B62] mr-1">Desde</span>` : ''}
-                                    <span class="text-[10px] text-gray-500 font-bold">US $</span><span class="text-lg font-black text-[#143B62]">${precioUsd.toFixed(2)}</span>
+                                <div class="flex items-baseline mb-2">
+                                    ${mostrarDesde}
+                                    <span class="text-[10px] text-gray-500 font-bold mr-1">US $</span><span class="text-lg font-black text-[#143B62]">${precioUsd.toFixed(2)}</span>
                                 </div>
-                                <div class="flex justify-between items-center mb-3">
-                                    <span class="text-[11px] font-bold text-gray-400">${esServicio ? `Desde ` : ''}Bs. ${precioBs.toFixed(2)}</span>
-                                    ${!esServicio ? `<span class="text-[10px] text-gray-400">Stock: ${prod.stock_actual}</span>` : `<span class="text-[10px] text-gray-400 italic">Disponible</span>`}
-                                </div>
-                                <button onclick="agregarAlCarrito('${prodData}')" class="w-full bg-[#143B62] hover:bg-[#0f2d4a] text-white text-xs font-bold py-2 rounded transition-colors relative z-10">
-                                    <i class="fa-solid fa-plus"></i> Agregar
+                                <button onclick="event.stopPropagation(); agregarAlCarritoRapido('${prodDataStr}')" class="w-full bg-[#143B62] hover:bg-[#0f2d4a] text-white text-xs font-bold py-2 rounded transition-colors relative z-10">
+                                    <i class="fa-solid fa-cart-plus"></i> Añadir
                                 </button>
                             </div>
                         </div>
@@ -240,59 +260,137 @@
             indiceCarga += CANTIDAD_POR_PAGINA;
         }
 
-        // --- CATEGORÍAS & BUSCADOR ---
-        function extraerCategorias(productos) { pintarBotonesCategorias([...new Set(productos.map(p => p.categoria).filter(c => c))].sort()); }
-        function pintarBotonesCategorias(categorias) {
-            const contCat = document.getElementById('contenedor-categorias'); contCat.innerHTML = ''; 
-            const cAct = "px-4 py-1.5 rounded-full bg-[#143B62] text-white transition whitespace-nowrap";
-            const cIna = "px-4 py-1.5 rounded-full bg-gray-200 text-[#143B62] hover:bg-[#E67E22] hover:text-white transition whitespace-nowrap cursor-pointer";
-            contCat.innerHTML += `<button onclick="filtrarPorCategoria('Todas')" class="${categoriaActiva === 'Todas' ? cAct : cIna}">Todas</button>`;
-            categorias.forEach(cat => { contCat.innerHTML += `<button onclick="filtrarPorCategoria('${cat}')" class="${categoriaActiva === cat ? cAct : cIna}">${cat}</button>`; });
+        // --- PÁGINA DESCRIPTIVA DE PRODUCTO (PDP) ---
+        function abrirPDPObj(prodDataStr) {
+            const prod = JSON.parse(decodeURIComponent(prodDataStr));
+            abrirPDP(prod);
         }
-        function filtrarPorCategoria(categoria) {
-            categoriaActiva = categoria; document.getElementById('buscador').value = ''; cerrarDropdown();
-            pintarBotonesCategorias([...new Set(todosLosProductos.map(p => p.categoria).filter(c => c))].sort());
-            iniciarVista(categoria === 'Todas' ? todosLosProductos : todosLosProductos.filter(p => p.categoria === categoria), categoria === 'Todas' ? "Todos los Productos" : `Categoría: ${categoria}`);
-        }
-        function buscarPredictivo() {
-            const texto = document.getElementById('buscador').value; const dropdown = document.getElementById('dropdown-busqueda');
-            if (texto.trim() === '') { dropdown.classList.add('hidden'); return; }
-            const resultados = fuse.search(texto).slice(0, 8); dropdown.innerHTML = '';
-            if(resultados.length === 0) { dropdown.innerHTML = `<div class="p-4 text-sm text-gray-500 text-center">No se encontraron productos</div>`; } 
-            else {
-                resultados.forEach(res => {
-                    const prod = res.item; const precioUsd = Number(prod.precio_detal_usd) || 0;
-                    const prodData = encodeURIComponent(JSON.stringify(prod));
-                    dropdown.innerHTML += `
-                        <div class="flex items-center gap-3 p-3 border-b hover:bg-gray-50 cursor-pointer" onclick="agregarDesdeBuscador('${prodData}')">
-                            <img src="${prod.imagen_principal || 'https://via.placeholder.com/50'}" class="w-10 h-10 object-contain rounded border p-0.5">
-                            <div class="flex-1"><h4 class="text-xs font-bold text-gray-800 line-clamp-1">${prod.nombre}</h4><span class="text-xs font-black text-[#143B62]">US $${precioUsd.toFixed(2)}</span></div>
-                            <button class="text-[#E67E22] hover:text-[#d6731e]"><i class="fa-solid fa-plus-circle text-lg"></i></button>
-                        </div>
-                    `;
-                });
-            }
-            dropdown.classList.remove('hidden');
-        }
-        function cerrarDropdown() { document.getElementById('dropdown-busqueda').classList.add('hidden'); }
-        function agregarDesdeBuscador(prodData) { agregarAlCarrito(prodData); cerrarDropdown(); document.getElementById('buscador').value = ''; }
 
-        // --- CARRITO ---
-        function agregarAlCarrito(prodDataEncoded) {
-            const prod = JSON.parse(decodeURIComponent(prodDataEncoded));
-            const index = carrito.findIndex(item => item.id_producto === prod.id_producto);
-            if (index !== -1) carrito[index].cantidad += 1; else { prod.cantidad = 1; carrito.push(prod); }
-            actualizarUI_Carrito(); abrirCarrito();
+        function abrirPDP(prod) {
+            document.getElementById('vista-catalogo').classList.add('hidden');
+            document.getElementById('barra-categorias').classList.add('hidden');
+            document.getElementById('contenedor-buscador').classList.add('hidden');
+            
+            const pdp = document.getElementById('vista-pdp');
+            pdp.classList.remove('hidden');
+            window.scrollTo(0, 0);
+
+            // Actualizar URL sin recargar
+            const url = new URL(window.location);
+            url.searchParams.set('producto', prod.id_producto_sku);
+            window.history.pushState({}, '', url);
+
+            const precioBaseUsd = Number(prod.precio_detal_usd) || 0;
+            const esServicio = (prod.tipo_producto || "").toLowerCase().includes('servicio');
+            
+            // Construir HTML de Tiers Verdes
+            let htmlTiers = '';
+            if(!esServicio) {
+                if(prod.requerido_precio_1) htmlTiers += `<div class="bg-green-50 text-green-700 text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-2"><i class="fa-solid fa-tag"></i> A partir de ${prod.requerido_precio_1} unds: US $${Number(prod.precio_tier1_usd).toFixed(2)} c/u</div>`;
+                if(prod.requerido_precio_2) htmlTiers += `<div class="bg-green-50 text-green-700 text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-2"><i class="fa-solid fa-tag"></i> A partir de ${prod.requerido_precio_2} unds: US $${Number(prod.precio_tier2_usd).toFixed(2)} c/u</div>`;
+                if(prod.requerido_precio_3) htmlTiers += `<div class="bg-green-50 text-green-700 text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-2"><i class="fa-solid fa-tag"></i> A partir de ${prod.requerido_precio_3} unds: US $${Number(prod.precio_tier3_usd).toFixed(2)} c/u</div>`;
+            }
+
+            const prodDataStr = encodeURIComponent(JSON.stringify(prod));
+            const linkWhatsApp = `https://wa.me/?text=${encodeURIComponent(`*OFERTA P&P Soluciones* 🛒\n*Producto:* ${prod.nombre}\n*Precio:* Desde US $${precioBaseUsd.toFixed(2)}\n*Ver más:* ${window.location.href}`)}`;
+
+            pdp.innerHTML = `
+                <button onclick="volverAlCatalogo()" class="text-[#143B62] font-bold text-sm mb-6 hover:text-[#E67E22] transition"><i class="fa-solid fa-arrow-left mr-1"></i> Volver al Catálogo</button>
+                
+                <div class="bg-white rounded-xl shadow-md overflow-hidden flex flex-col md:flex-row mb-8">
+                    <div class="md:w-1/2 p-8 flex justify-center items-center bg-gray-50 border-r">
+                        <img src="${prod.imagen_principal || 'https://via.placeholder.com/500'}" class="max-h-96 object-contain">
+                    </div>
+                    
+                    <div class="md:w-1/2 p-8 flex flex-col">
+                        <div class="text-xs text-gray-400 font-bold uppercase tracking-widest mb-2">${prod.categoria_producto} / ${prod.id_producto_sku}</div>
+                        <h1 class="text-3xl font-black text-[#143B62] mb-4 leading-tight">${prod.nombre}</h1>
+                        
+                        <div class="flex items-baseline gap-2 mb-6">
+                            <span class="text-3xl font-black text-[#E67E22]">US $${precioBaseUsd.toFixed(2)}</span>
+                            <span class="text-sm font-bold text-gray-400">c/u</span>
+                        </div>
+
+                        <div class="space-y-2 mb-6">
+                            ${htmlTiers}
+                        </div>
+
+                        ${!esServicio ? `<div class="text-sm text-gray-500 font-bold mb-6 bg-gray-100 px-3 py-1 rounded w-max">Stock Disponible: ${prod.stock_actual}</div>` : ''}
+
+                        <div class="mt-auto space-y-3">
+                            <div class="flex gap-2">
+                                <div class="flex items-center border-2 border-[#143B62] rounded-lg overflow-hidden w-32">
+                                    <button onclick="cambiarCantidadPDP(-1)" class="w-10 h-12 bg-gray-100 hover:bg-gray-200 text-[#143B62] font-black transition">-</button>
+                                    <input type="number" id="pdp-cantidad" value="1" min="1" class="w-full h-full text-center font-bold text-lg focus:outline-none" readonly>
+                                    <button onclick="cambiarCantidadPDP(1)" class="w-10 h-12 bg-gray-100 hover:bg-gray-200 text-[#143B62] font-black transition">+</button>
+                                </div>
+                                <button onclick="agregarAlCarritoDesdePDP('${prodDataStr}')" class="flex-1 bg-[#E67E22] hover:bg-[#d6731e] text-white font-bold rounded-lg shadow-md transition flex items-center justify-center gap-2 text-lg">
+                                    <i class="fa-solid fa-cart-plus"></i> Agregar
+                                </button>
+                            </div>
+                            
+                            <a href="${linkWhatsApp}" target="_blank" class="w-full border-2 border-[#25D366] text-[#25D366] hover:bg-[#25D366] hover:text-white font-bold py-3 rounded-lg transition flex items-center justify-center gap-2">
+                                <i class="fa-brands fa-whatsapp text-lg"></i> Compartir por WhatsApp
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            `;
         }
-        function cambiarCantidad(id, delta) {
-            const index = carrito.findIndex(item => item.id_producto === id);
+
+        function cambiarCantidadPDP(delta) {
+            const input = document.getElementById('pdp-cantidad');
+            let val = parseInt(input.value) + delta;
+            if(val < 1) val = 1;
+            input.value = val;
+        }
+
+        function agregarAlCarritoDesdePDP(prodDataStr) {
+            const prod = JSON.parse(decodeURIComponent(prodDataStr));
+            const qty = parseInt(document.getElementById('pdp-cantidad').value);
+            procesarAgregarCarrito(prod, qty);
+        }
+
+        function agregarAlCarritoRapido(prodDataStr) {
+            const prod = JSON.parse(decodeURIComponent(prodDataStr));
+            procesarAgregarCarrito(prod, 1);
+        }
+
+        function procesarAgregarCarrito(prod, cantidadNueva) {
+            const index = carrito.findIndex(item => item.id_producto_sku === prod.id_producto_sku);
+            if (index !== -1) {
+                carrito[index].cantidad += cantidadNueva;
+            } else {
+                prod.cantidad = cantidadNueva;
+                carrito.push(prod);
+            }
+            actualizarUI_Carrito();
+            abrirCarrito();
+        }
+
+        function volverAlCatalogo() {
+            document.getElementById('vista-pdp').classList.add('hidden');
+            document.getElementById('vista-catalogo').classList.remove('hidden');
+            document.getElementById('barra-categorias').classList.remove('hidden');
+            document.getElementById('contenedor-buscador').classList.remove('hidden');
+            
+            // Limpiar URL
+            const url = new URL(window.location);
+            url.searchParams.delete('producto');
+            window.history.pushState({}, '', url);
+        }
+
+        // --- CARRITO Y CÁLCULOS MAYORISTA ---
+        function cambiarCantidadCarrito(sku, delta) {
+            const index = carrito.findIndex(item => item.id_producto_sku === sku);
             if (index !== -1) {
                 carrito[index].cantidad += delta;
                 if (carrito[index].cantidad <= 0) carrito.splice(index, 1);
                 actualizarUI_Carrito();
             }
         }
-        function eliminarDelCarrito(id) { carrito = carrito.filter(item => item.id_producto !== id); actualizarUI_Carrito(); }
+        function eliminarDelCarrito(sku) { carrito = carrito.filter(item => item.id_producto_sku !== sku); actualizarUI_Carrito(); }
+        
         function actualizarUI_Carrito() {
             const contenedor = document.getElementById('items-carrito'); const contadorBurbuja = document.getElementById('contador-carrito');
             totalUsdGlobal = 0; let totalArticulos = 0;
@@ -305,21 +403,35 @@
 
             contenedor.innerHTML = '';
             carrito.forEach(item => {
-                const precioUsd = Number(item.precio_detal_usd) || 0;
-                totalUsdGlobal += precioUsd * item.cantidad; totalArticulos += item.cantidad;
+                // AQUÍ OCURRE LA MAGIA DEL MAYORISTA EN EL CARRITO
+                const precioAplicadoUsd = calcularPrecioUnitario(item, item.cantidad);
+                const subtotalItemUsd = precioAplicadoUsd * item.cantidad;
+                
+                totalUsdGlobal += subtotalItemUsd; 
+                totalArticulos += item.cantidad;
+
+                // Indicador visual si se aplicó oferta
+                const precioBaseUsd = Number(item.precio_detal_usd) || 0;
+                const tieneDescuento = precioAplicadoUsd < precioBaseUsd;
+                const badgeDescuento = tieneDescuento ? `<span class="text-[9px] bg-green-100 text-green-700 px-1 rounded ml-1 font-bold">OFERTA APLICADA</span>` : '';
+
                 contenedor.innerHTML += `
                     <div class="flex bg-white p-3 rounded-lg shadow-sm border border-gray-100 relative">
                         <img src="${item.imagen_principal || 'https://via.placeholder.com/100'}" class="w-16 h-16 object-contain rounded border p-1 mr-3">
                         <div class="flex-1">
                             <h4 class="text-xs font-bold text-gray-800 line-clamp-2 pr-5">${item.nombre}</h4>
-                            <div class="text-[#143B62] font-black text-sm mt-1">US $${precioUsd.toFixed(2)}</div>
-                            <div class="flex items-center mt-2 border w-max rounded-md overflow-hidden">
-                                <button onclick="cambiarCantidad('${item.id_producto}', -1)" class="px-2 py-0.5 bg-gray-100 hover:bg-gray-200 text-gray-600 transition"><i class="fa-solid fa-minus text-[10px]"></i></button>
+                            <div class="flex items-center mt-1">
+                                <span class="text-[#143B62] font-black text-sm">US $${precioAplicadoUsd.toFixed(2)}</span>
+                                ${badgeDescuento}
+                            </div>
+                            <div class="text-[10px] text-gray-400 mb-2">Subtotal: US $${subtotalItemUsd.toFixed(2)}</div>
+                            <div class="flex items-center border w-max rounded-md overflow-hidden">
+                                <button onclick="cambiarCantidadCarrito('${item.id_producto_sku}', -1)" class="px-2 py-0.5 bg-gray-100 hover:bg-gray-200 text-gray-600 transition"><i class="fa-solid fa-minus text-[10px]"></i></button>
                                 <span class="px-3 py-0.5 text-xs font-bold bg-white">${item.cantidad}</span>
-                                <button onclick="cambiarCantidad('${item.id_producto}', 1)" class="px-2 py-0.5 bg-gray-100 hover:bg-gray-200 text-gray-600 transition"><i class="fa-solid fa-plus text-[10px]"></i></button>
+                                <button onclick="cambiarCantidadCarrito('${item.id_producto_sku}', 1)" class="px-2 py-0.5 bg-gray-100 hover:bg-gray-200 text-gray-600 transition"><i class="fa-solid fa-plus text-[10px]"></i></button>
                             </div>
                         </div>
-                        <button onclick="eliminarDelCarrito('${item.id_producto}')" class="absolute top-2 right-2 text-red-400 hover:text-red-600 p-1"><i class="fa-solid fa-trash-can"></i></button>
+                        <button onclick="eliminarDelCarrito('${item.id_producto_sku}')" class="absolute top-2 right-2 text-red-400 hover:text-red-600 p-1"><i class="fa-solid fa-trash-can"></i></button>
                     </div>
                 `;
             });
@@ -327,105 +439,95 @@
             document.getElementById('total-bs').innerText = `Bs. ${(totalUsdGlobal * tasaBcvGlobal).toFixed(2)}`;
             contadorBurbuja.innerText = totalArticulos; contadorBurbuja.classList.remove('hidden');
         }
+
+        // --- SISTEMAS AUXILIARES ---
+        function toggleFavorito(sku) {
+            const index = favoritos.indexOf(sku);
+            if (index === -1) favoritos.push(sku); else favoritos.splice(index, 1);
+            localStorage.setItem('pyp_favoritos', JSON.stringify(favoritos)); 
+            const icono = document.getElementById(`icono-fav-${sku}`);
+            if(icono) {
+                if(favoritos.includes(sku)) icono.classList.replace('text-gray-300', 'text-red-500');
+                else icono.classList.replace('text-red-500', 'text-gray-300');
+            }
+        }
+        function mostrarFavoritos() { iniciarVista(todosLosProductos.filter(p => favoritos.includes(p.id_producto_sku)), "Mis Productos Favoritos ❤️"); }
+
         function toggleCarrito() {
-            const sidebar = document.getElementById('sidebar-carrito'); const overlay = document.getElementById('overlay-carrito');
-            if (sidebar.classList.contains('translate-x-full')) { sidebar.classList.remove('translate-x-full'); overlay.classList.remove('hidden'); } 
-            else { sidebar.classList.add('translate-x-full'); overlay.classList.add('hidden'); }
+            const s = document.getElementById('sidebar-carrito'); const o = document.getElementById('overlay-carrito');
+            if(s.classList.contains('translate-x-full')) abrirCarrito(); else { s.classList.add('translate-x-full'); o.classList.add('hidden'); }
         }
         function abrirCarrito() { document.getElementById('sidebar-carrito').classList.remove('translate-x-full'); document.getElementById('overlay-carrito').classList.remove('hidden'); }
 
-        // --- FASE 3: CHECKOUT Y WHATSAPP ---
+        function extraerCategorias(productos) { pintarBotonesCategorias([...new Set(productos.map(p => p.categoria_producto).filter(c => c))].sort()); }
+        function pintarBotonesCategorias(categorias) {
+            const contCat = document.getElementById('contenedor-categorias'); contCat.innerHTML = ''; 
+            const cAct = "px-4 py-1.5 rounded-full bg-[#143B62] text-white transition whitespace-nowrap";
+            const cIna = "px-4 py-1.5 rounded-full bg-gray-200 text-[#143B62] hover:bg-[#E67E22] hover:text-white transition whitespace-nowrap cursor-pointer";
+            contCat.innerHTML += `<button onclick="filtrarPorCategoria('Todas')" class="${categoriaActiva === 'Todas' ? cAct : cIna}">Todas</button>`;
+            categorias.forEach(cat => { contCat.innerHTML += `<button onclick="filtrarPorCategoria('${cat}')" class="${categoriaActiva === cat ? cAct : cIna}">${cat}</button>`; });
+        }
+        function filtrarPorCategoria(categoria) {
+            categoriaActiva = categoria; document.getElementById('buscador').value = ''; cerrarDropdown();
+            pintarBotonesCategorias([...new Set(todosLosProductos.map(p => p.categoria_producto).filter(c => c))].sort());
+            volverAlCatalogo();
+            iniciarVista(categoria === 'Todas' ? todosLosProductos : todosLosProductos.filter(p => p.categoria_producto === categoria), categoria === 'Todas' ? "Todos los Productos" : `Categoría: ${categoria}`);
+        }
+
+        // Búsqueda
+        function buscarPredictivo() {
+            const texto = document.getElementById('buscador').value; const dropdown = document.getElementById('dropdown-busqueda');
+            if (texto.trim() === '') { dropdown.classList.add('hidden'); return; }
+            const resultados = fuse.search(texto).slice(0, 8); dropdown.innerHTML = '';
+            if(resultados.length === 0) { dropdown.innerHTML = `<div class="p-4 text-sm text-gray-500 text-center">No se encontraron productos</div>`; } 
+            else {
+                resultados.forEach(res => {
+                    const prod = res.item; const precioUsd = Number(prod.precio_detal_usd) || 0;
+                    const prodData = encodeURIComponent(JSON.stringify(prod));
+                    dropdown.innerHTML += `
+                        <div class="flex items-center gap-3 p-3 border-b hover:bg-gray-50 cursor-pointer" onclick="abrirPDPObj('${prodData}'); cerrarDropdown();">
+                            <img src="${prod.imagen_principal || 'https://via.placeholder.com/50'}" class="w-10 h-10 object-contain rounded border p-0.5">
+                            <div class="flex-1"><h4 class="text-xs font-bold text-gray-800 line-clamp-1">${prod.nombre}</h4><span class="text-xs font-black text-[#143B62]">US $${precioUsd.toFixed(2)}</span></div>
+                        </div>
+                    `;
+                });
+            }
+            dropdown.classList.remove('hidden');
+        }
+        function cerrarDropdown() { document.getElementById('dropdown-busqueda').classList.add('hidden'); }
+
+        // Checkout
         function abrirCheckout() {
             if(carrito.length === 0) return alert("Agrega productos al carrito primero.");
-            // Llenar resumen en el modal
-            document.getElementById('check-usd').innerText = `US $${totalUsdGlobal.toFixed(2)}`;
-            document.getElementById('check-bs').innerText = `Bs. ${(totalUsdGlobal * tasaBcvGlobal).toFixed(2)}`;
-            
-            toggleCarrito(); // Cerrar carrito
-            document.getElementById('modal-checkout').classList.remove('hidden'); // Abrir Modal
+            document.getElementById('check-usd').innerText = `US $${totalUsdGlobal.toFixed(2)}`; document.getElementById('check-bs').innerText = `Bs. ${(totalUsdGlobal * tasaBcvGlobal).toFixed(2)}`;
+            toggleCarrito(); document.getElementById('modal-checkout').classList.remove('hidden');
         }
-
-        function cerrarCheckout() {
-            document.getElementById('modal-checkout').classList.add('hidden');
-        }
-
-        // Buscar cliente en Supabase
+        function cerrarCheckout() { document.getElementById('modal-checkout').classList.add('hidden'); }
         async function buscarCliente() {
-            const cedulaInput = document.getElementById('input-cedula').value.trim();
-            const msg = document.getElementById('msg-cliente');
-            
-            if(!cedulaInput) { msg.innerText = "Escribe una cédula primero."; msg.className = "text-xs mt-1 h-4 text-red-500"; return; }
-            
-            msg.innerText = "Buscando..."; msg.className = "text-xs mt-1 h-4 text-gray-500";
-            
+            const cedula = document.getElementById('input-cedula').value.trim(); const msg = document.getElementById('msg-cliente');
+            if(!cedula) { msg.innerText = "Escribe una cédula."; msg.className = "text-xs mt-1 text-red-500"; return; }
+            msg.innerText = "Buscando..."; msg.className = "text-xs mt-1 text-gray-500";
             try {
-                // Buscamos en la tabla clientes (Asumimos que existe)
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/clientes?cedula=eq.${cedulaInput}`, {
-                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
-                });
-                
-                if(!res.ok) throw new Error("Tabla no encontrada");
-                
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/clientes_r?documento_identidad=eq.${document.getElementById('tipo-doc').value}${cedula}`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } });
                 const datos = await res.json();
-                
                 if(datos.length > 0) {
-                    // Cliente encontrado
-                    document.getElementById('cliente-nombre').value = datos[0].nombre || '';
-                    document.getElementById('cliente-telefono').value = datos[0].telefono || '';
-                    msg.innerHTML = '<i class="fa-solid fa-check-circle"></i> Cliente encontrado';
-                    msg.className = "text-xs mt-1 h-4 text-green-600 font-bold";
+                    document.getElementById('cliente-nombre').value = datos[0].nombre_razon_social || '';
+                    document.getElementById('cliente-telefono').value = datos[0].celular || '';
+                    msg.innerHTML = '<i class="fa-solid fa-check-circle"></i> Cliente encontrado'; msg.className = "text-xs mt-1 text-green-600 font-bold";
                 } else {
-                    // Cliente Nuevo
-                    document.getElementById('cliente-nombre').value = '';
-                    document.getElementById('cliente-telefono').value = '';
-                    msg.innerText = "Cliente nuevo. Por favor, llena sus datos.";
-                    msg.className = "text-xs mt-1 h-4 text-[#E67E22]";
+                    document.getElementById('cliente-nombre').value = ''; document.getElementById('cliente-telefono').value = '';
+                    msg.innerText = "Nuevo. Llena los datos."; msg.className = "text-xs mt-1 text-[#E67E22]";
                 }
-            } catch (error) {
-                // Si la tabla no existe aún, no bloqueamos la venta.
-                console.warn("Tabla clientes no configurada aún.");
-                msg.innerText = "Ingresa los datos manualmente.";
-                msg.className = "text-xs mt-1 h-4 text-gray-500";
-            }
+            } catch (e) { msg.innerText = "Ingresa datos a mano."; }
         }
-
-        // Generar Texto y Enviar a WhatsApp
         function enviarPedidoWhatsApp() {
-            const tipoDoc = document.getElementById('tipo-doc').value;
-            const cedula = document.getElementById('input-cedula').value.trim();
             const nombre = document.getElementById('cliente-nombre').value.trim();
-            const telefono = document.getElementById('cliente-telefono').value.trim();
-
-            if(!nombre) return alert("Por favor, ingresa tu nombre para el pedido.");
-
-            // Armar el mensaje
-            let texto = `*NUEVO PEDIDO - P&P Soluciones* 🛒\n`;
-            texto += `-----------------------------------\n`;
-            texto += `*Cliente:* ${nombre}\n`;
-            if(cedula) texto += `*Cédula/RIF:* ${tipoDoc}-${cedula}\n`;
-            if(telefono) texto += `*Teléfono:* ${telefono}\n`;
-            texto += `-----------------------------------\n`;
-            
-            carrito.forEach(item => {
-                const precio = Number(item.precio_detal_usd) || 0;
-                texto += `▪️ *${item.cantidad}x* ${item.nombre} (US $${precio.toFixed(2)} c/u)\n`;
-            });
-            
-            texto += `-----------------------------------\n`;
-            texto += `*Subtotal:* US $${totalUsdGlobal.toFixed(2)}\n`;
-            texto += `*Total en Bs:* Bs. ${(totalUsdGlobal * tasaBcvGlobal).toFixed(2)}\n`;
-            texto += `_(Calculado a Tasa BCV: ${tasaBcvGlobal.toFixed(2)})_\n`;
-
-            // Codificar para URL
-            const textoCodificado = encodeURIComponent(texto);
-            
-            // Abrir WhatsApp
-            window.open(`https://wa.me/${NUMERO_WHATSAPP}?text=${textoCodificado}`, '_blank');
-            
-            // Limpiar todo después de enviar
-            cerrarCheckout();
-            carrito = [];
-            actualizarUI_Carrito();
+            if(!nombre) return alert("Ingresa tu nombre.");
+            let t = `*NUEVO PEDIDO - P&P Soluciones* 🛒\n-----------------------------------\n*Cliente:* ${nombre}\n-----------------------------------\n`;
+            carrito.forEach(i => { t += `▪️ *${i.cantidad}x* ${i.nombre} (US $${calcularPrecioUnitario(i, i.cantidad).toFixed(2)})\n`; });
+            t += `-----------------------------------\n*Total:* US $${totalUsdGlobal.toFixed(2)}\n`;
+            window.open(`https://wa.me/${NUMERO_WHATSAPP}?text=${encodeURIComponent(t)}`, '_blank');
+            cerrarCheckout(); carrito = []; actualizarUI_Carrito();
         }
 
         cargarDatos();
