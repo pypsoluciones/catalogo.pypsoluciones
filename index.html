@@ -91,7 +91,7 @@
             }
         }
 
-        function renderizarProductos(productos, titulo = "Todos los Productos") {
+function renderizarProductos(productos, titulo = "Todos los Productos") {
             const contenedor = document.getElementById('catalogo');
             document.getElementById('titulo-seccion').innerText = titulo;
             contenedor.innerHTML = '';
@@ -105,6 +105,15 @@
                 const precioUsd = Number(prod.precio_detal_usd) || 0;
                 const precioBs = Number(prod.precio_detal_bs) || 0;
                 const imagen = prod.imagen_principal || 'https://via.placeholder.com/300?text=P%26P+Soluciones';
+                
+                // LÓGICA DEL "DESDE" PARA SERVICIOS
+                // Comprobamos si el tipo_producto dice "Servicio" o "Fabricación"
+                const tipo = (prod.tipo_producto || "").toLowerCase();
+                const esServicio = tipo.includes('servicio') || tipo.includes('fabricaci');
+                
+                // Preparamos los textos
+                const textoDesdeUsd = esServicio ? `<span class="text-xs font-bold text-[#143B62] mr-1">Desde</span>` : '';
+                const textoDesdeBs = esServicio ? `Desde ` : '';
 
                 contenedor.innerHTML += `
                     <div class="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow border border-gray-200 flex flex-col relative group">
@@ -117,11 +126,13 @@
                             <h3 class="text-xs font-bold text-[#212529] leading-tight mb-3 line-clamp-2" title="${prod.nombre}">${prod.nombre}</h3>
                             <div class="mt-auto">
                                 <div class="flex items-baseline gap-1 mb-0.5">
+                                    ${textoDesdeUsd}
                                     <span class="text-[10px] text-gray-500 font-bold">US $</span>
                                     <span class="text-lg font-black text-[#143B62]">${precioUsd.toFixed(2)}</span>
                                 </div>
                                 <div class="flex justify-between items-center">
-                                    <span class="text-[11px] font-bold text-gray-400">Bs. ${precioBs.toFixed(2)}</span>
+                                    <span class="text-[11px] font-bold text-gray-400">${textoDesdeBs}Bs. ${precioBs.toFixed(2)}</span>
+                                    ${!esServicio ? `<span class="text-[10px] text-gray-400">Stock: ${prod.stock_actual}</span>` : `<span class="text-[10px] text-gray-400 italic">Disponible</span>`}
                                 </div>
                             </div>
                         </div>
