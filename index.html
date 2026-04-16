@@ -12,30 +12,36 @@
         .modal-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
         .fade-in { animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        /* Toast Notification */
         #toast { visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 2px; padding: 16px; position: fixed; z-index: 100; left: 50%; bottom: 30px; transform: translateX(-50%); font-size: 15px; transition: visibility 0s, opacity 0.5s linear; opacity: 0; }
         #toast.show { visibility: visible; opacity: 1; }
     </style>
 </head>
 <body class="bg-[#ebebf0] font-sans overflow-x-hidden text-gray-800">
 
-    <div class="bg-[#0f2d4a] text-gray-300 text-xs py-1">
-        <div class="max-w-[1400px] mx-auto px-4 flex justify-between items-center">
-            <div class="flex gap-4">
-                <a href="#" class="hover:text-white transition"><i class="fa-solid fa-home mr-1"></i> Inicio</a>
-                <span class="font-bold text-yellow-400">Tasa BCV: Bs. <span id="tasa-bcv-display">0.00</span></span>
+    <div class="bg-[#0f2d4a] text-gray-300 text-xs py-1.5">
+        <div class="max-w-[1600px] mx-auto px-4 flex justify-between items-center">
+            <div class="flex gap-6 items-center">
+                <button onclick="irAInicio()" class="hover:text-white transition flex items-center gap-1 font-semibold"><i class="fa-solid fa-home"></i> Inicio</button>
+                <div class="hidden sm:flex items-center gap-2">
+                    <span class="text-gray-400">Tasa BCV:</span>
+                    <span class="font-bold text-yellow-400">Bs. <span id="tasa-bcv-display">0.00</span></span>
+                </div>
             </div>
-            <div class="flex gap-3">
-                <a href="#" class="hover:text-white"><i class="fa-brands fa-instagram"></i></a>
-                <a href="#" class="hover:text-white"><i class="fa-brands fa-facebook"></i></a>
-                <a href="#" class="hover:text-white"><i class="fa-brands fa-tiktok"></i></a>
+            <div class="flex gap-4 items-center">
+                <button onclick="toggleMonedaGlobal()" id="btn-moneda" class="bg-[#143B62] hover:bg-[#1a4a7a] border border-[#23588e] text-white px-3 py-0.5 rounded transition font-bold flex items-center gap-1">
+                    <i class="fa-solid fa-money-bill-transfer"></i> Mostrar en Bs
+                </button>
+                <span class="text-gray-500">|</span>
+                <a href="#" class="hover:text-white text-lg"><i class="fa-brands fa-instagram"></i></a>
+                <a href="#" class="hover:text-white text-lg"><i class="fa-brands fa-facebook"></i></a>
+                <a href="#" class="hover:text-white text-lg"><i class="fa-brands fa-tiktok"></i></a>
             </div>
         </div>
     </div>
 
-    <nav class="bg-[#143B62] text-white sticky top-0 z-40 shadow-md">
-        <div class="max-w-[1400px] mx-auto px-4 py-3 flex items-center justify-between gap-4">
-            <div class="flex items-center gap-2 cursor-pointer shrink-0" onclick="volverAlCatalogo()">
+    <nav class="bg-[#143B62] text-white sticky top-0 z-[50] shadow-md">
+        <div class="max-w-[1600px] mx-auto px-4 py-3 flex items-center justify-between gap-4">
+            <div class="flex items-center gap-2 cursor-pointer shrink-0" onclick="irAInicio()">
                 <i class="fa-solid fa-layer-group text-[#E67E22] text-3xl"></i>
                 <div class="hidden sm:block leading-tight">
                     <span class="font-bold text-xl tracking-wide block">P&P Soluciones</span>
@@ -43,13 +49,13 @@
                 </div>
             </div>
             
-            <div class="flex-1 max-w-3xl relative" id="contenedor-buscador">
-                <input type="text" id="buscador" oninput="buscarPredictivo()" placeholder="Buscar productos, marcas y más..." 
-                       class="w-full text-gray-900 rounded-sm pl-4 pr-10 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#E67E22] shadow-sm text-sm">
-                <div class="absolute right-0 top-0 h-full w-12 bg-white flex items-center justify-center rounded-r-sm cursor-pointer">
-                    <i class="fa-solid fa-search text-gray-400 text-lg"></i>
-                </div>
-                <div id="dropdown-busqueda" class="absolute w-full bg-white shadow-2xl rounded-b mt-1 hidden z-50 max-h-80 overflow-y-auto border border-gray-200"></div>
+            <div class="flex-1 max-w-4xl relative" id="contenedor-buscador">
+                <input type="text" id="buscador" oninput="buscarPredictivo()" onkeydown="buscarConEnter(event)" placeholder="Buscar productos, marcas y más... (Presiona Enter)" 
+                       class="w-full text-gray-900 rounded-sm pl-4 pr-12 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#E67E22] shadow-sm text-sm">
+                <button onclick="ejecutarBusquedaFull()" class="absolute right-0 top-0 h-full w-12 bg-white hover:bg-gray-100 flex items-center justify-center rounded-r-sm cursor-pointer border-l border-gray-200 transition">
+                    <i class="fa-solid fa-search text-gray-500 text-lg"></i>
+                </button>
+                <div id="dropdown-busqueda" class="absolute w-full bg-white shadow-[0_10px_25px_rgba(0,0,0,0.3)] rounded-b mt-0.5 hidden z-[100] max-h-[60vh] overflow-y-auto border border-gray-200"></div>
             </div>
 
             <div class="flex items-center gap-6 shrink-0">
@@ -58,91 +64,85 @@
                 </button>
                 <button onclick="toggleCarrito()" class="relative flex flex-col items-center hover:text-[#E67E22] transition text-xs">
                     <i class="fa-solid fa-cart-shopping text-xl mb-0.5"></i> Mi Carrito
-                    <span id="contador-carrito" class="absolute -top-2 -right-2 bg-[#E67E22] text-white text-[10px] font-bold h-4 w-4 flex items-center justify-center rounded-full hidden">0</span>
+                    <span id="contador-carrito" class="absolute -top-2 -right-2 bg-[#E67E22] text-white text-[10px] font-bold h-4 w-4 flex items-center justify-center rounded-full hidden shadow-sm">0</span>
                 </button>
             </div>
         </div>
         
-        <div class="bg-[#0f2d4a] border-t border-[#1a4a7a]">
-            <div class="max-w-[1400px] mx-auto px-4 py-1.5 flex gap-4 text-xs text-gray-300 overflow-x-auto no-scrollbar" id="contenedor-categorias">
-                </div>
+        <div class="bg-[#0f2d4a] border-t border-[#1a4a7a] shadow-inner">
+            <div class="max-w-[1600px] mx-auto px-4 py-1.5 flex gap-4 text-xs text-gray-300 overflow-x-auto no-scrollbar" id="contenedor-categorias"></div>
         </div>
     </nav>
 
     <div id="vista-catalogo" class="fade-in">
-        <div class="max-w-[1400px] mx-auto px-4 pt-6 pb-2">
+        <div class="max-w-[1600px] mx-auto px-4 pt-6 pb-2">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="bg-white p-4 rounded shadow-sm flex flex-col">
-                    <h3 class="font-bold text-lg text-gray-800 mb-3">Los Esenciales de Papelería</h3>
+                <div class="bg-white p-4 rounded shadow-sm flex flex-col cursor-pointer hover:shadow-md transition">
+                    <h3 class="font-bold text-lg text-gray-800 mb-3 border-l-4 border-[#E67E22] pl-2">Zona Escolar y Papelería</h3>
                     <div class="grid grid-cols-2 gap-2 flex-1">
-                        <img src="https://via.placeholder.com/150?text=Cuadernos" class="w-full h-full object-cover rounded cursor-pointer hover:opacity-80 transition">
-                        <img src="https://via.placeholder.com/150?text=Bolígrafos" class="w-full h-full object-cover rounded cursor-pointer hover:opacity-80 transition">
+                        <img src="https://images.unsplash.com/photo-1583508915901-b5f84c1dcde1?auto=format&fit=crop&w=300&q=80" class="w-full h-24 object-cover rounded hover:opacity-90">
+                        <img src="https://images.unsplash.com/photo-1568205612837-017257d2310a?auto=format&fit=crop&w=300&q=80" class="w-full h-24 object-cover rounded hover:opacity-90">
                     </div>
-                    <a href="#" class="text-sm text-blue-600 mt-3 font-semibold hover:underline">Ver más en Papelería</a>
+                    <span class="text-sm text-[#143B62] mt-3 font-bold hover:underline">Ver todo en Papelería <i class="fa-solid fa-angle-right ml-1"></i></span>
                 </div>
-                <div class="bg-white p-4 rounded shadow-sm flex flex-col hidden md:flex">
-                    <h3 class="font-bold text-lg text-gray-800 mb-3">Actualiza tu Tecnología</h3>
-                    <img src="https://via.placeholder.com/400x200?text=Oferta+Routers" class="w-full h-full object-cover rounded cursor-pointer hover:opacity-80 transition">
-                    <a href="#" class="text-sm text-blue-600 mt-3 font-semibold hover:underline">Explorar Tecnología</a>
+                <div class="bg-white p-4 rounded shadow-sm flex flex-col hidden md:flex cursor-pointer hover:shadow-md transition">
+                    <h3 class="font-bold text-lg text-gray-800 mb-3 border-l-4 border-[#143B62] pl-2">Accesorios Tech</h3>
+                    <img src="https://images.unsplash.com/photo-1546868871-7041f2a55e12?auto=format&fit=crop&w=600&q=80" class="w-full h-24 object-cover rounded hover:opacity-90 flex-1">
+                    <span class="text-sm text-[#143B62] mt-3 font-bold hover:underline">Explorar Tecnología <i class="fa-solid fa-angle-right ml-1"></i></span>
                 </div>
-                <div class="bg-white p-4 rounded shadow-sm flex flex-col hidden md:flex">
-                    <h3 class="font-bold text-lg text-gray-800 mb-3">Servicios de Impresión</h3>
-                    <img src="https://via.placeholder.com/400x200?text=Gigantografias" class="w-full h-full object-cover rounded cursor-pointer hover:opacity-80 transition">
-                    <a href="#" class="text-sm text-blue-600 mt-3 font-semibold hover:underline">Cotizar ahora</a>
+                <div class="bg-white p-4 rounded shadow-sm flex flex-col hidden md:flex cursor-pointer hover:shadow-md transition">
+                    <h3 class="font-bold text-lg text-gray-800 mb-3 border-l-4 border-[#25D366] pl-2">Servicios de Impresión</h3>
+                    <img src="https://images.unsplash.com/photo-1562564055-71e051d33c19?auto=format&fit=crop&w=600&q=80" class="w-full h-24 object-cover rounded hover:opacity-90 flex-1">
+                    <span class="text-sm text-[#143B62] mt-3 font-bold hover:underline">Cotizar servicios <i class="fa-solid fa-angle-right ml-1"></i></span>
                 </div>
             </div>
         </div>
 
-        <main class="max-w-[1400px] mx-auto px-4 py-6" onclick="cerrarDropdown()">
+        <main class="max-w-[1600px] mx-auto px-4 py-6" onclick="cerrarDropdown()">
             <div class="flex justify-between items-center mb-6">
-                <h2 id="titulo-seccion" class="text-xl font-normal text-gray-800">Basado en tu última visita</h2>
+                <h2 id="titulo-seccion" class="text-xl font-semibold text-gray-800 border-l-4 border-[#E67E22] pl-3">Basado en tu última visita</h2>
             </div>
             
-            <div id="catalogo" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-                </div>
+            <div id="catalogo" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4"></div>
             <div id="observador-scroll" class="h-10 mt-4 flex justify-center items-center"></div>
         </main>
     </div>
 
     <div id="vista-pdp" class="hidden fade-in bg-[#ebebf0] pb-10">
-        <div class="max-w-[1400px] mx-auto px-4 py-4">
+        <div class="max-w-[1600px] mx-auto px-4 py-4">
             <div class="text-sm text-gray-500 mb-4 flex items-center gap-2">
-                <button onclick="volverAlCatalogo()" class="hover:text-blue-600 transition">Volver al listado</button>
+                <button onclick="volverAlCatalogo()" class="hover:text-[#143B62] font-semibold transition"><i class="fa-solid fa-arrow-left"></i> Volver al listado</button>
                 <span class="text-gray-400">|</span>
                 <span id="pdp-breadcrumbs">Categoría > Subcategoría</span>
             </div>
             
             <div class="bg-white rounded shadow-sm border border-gray-200">
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-0">
-                    
-                    <div class="lg:col-span-7 p-6 border-b lg:border-b-0 lg:border-r border-gray-200 flex flex-col md:flex-row gap-6">
-                        <div class="flex md:flex-col gap-2 order-2 md:order-1 overflow-x-auto md:overflow-visible w-full md:w-16 shrink-0" id="pdp-galeria-mini">
-                            </div>
+                    <div class="lg:col-span-8 p-6 border-b lg:border-b-0 lg:border-r border-gray-200 flex flex-col md:flex-row gap-6">
+                        <div class="flex md:flex-col gap-2 order-2 md:order-1 overflow-x-auto md:overflow-visible w-full md:w-16 shrink-0" id="pdp-galeria-mini"></div>
                         <div class="flex-1 flex justify-center items-center order-1 md:order-2 min-h-[300px] md:h-[500px]">
                             <img id="pdp-imagen-principal" src="" class="max-h-full max-w-full object-contain fade-in">
                         </div>
                     </div>
                     
-                    <div class="lg:col-span-5 p-8 flex flex-col justify-start">
+                    <div class="lg:col-span-4 p-8 flex flex-col justify-start">
                         <div class="text-xs text-gray-400 mb-2 flex justify-between items-center">
                             <span id="pdp-estatus-ventas">Nuevo | SKU: <span id="pdp-sku"></span></span>
-                            <button onclick="copiarLinkShare()" class="text-blue-600 hover:text-blue-800 flex items-center gap-1 font-semibold transition" title="Copiar Link">
+                            <button onclick="copiarLinkShare()" class="text-[#143B62] hover:text-[#E67E22] flex items-center gap-1 font-bold transition">
                                 <i class="fa-regular fa-copy"></i> Copiar Link
                             </button>
                         </div>
-                        
-                        <h1 id="pdp-titulo" class="text-2xl font-semibold text-gray-900 mb-4 leading-tight">Título del Producto</h1>
+                        <h1 id="pdp-titulo" class="text-2xl font-semibold text-gray-900 mb-4 leading-tight">Título</h1>
                         
                         <div class="mb-6">
                             <div class="flex items-start gap-1">
-                                <span class="text-2xl text-gray-900 mt-1">US$</span>
-                                <span id="pdp-precio-usd" class="text-5xl font-light text-gray-900">0.00</span>
+                                <span id="pdp-moneda-simbolo" class="text-2xl text-gray-900 mt-1">US$</span>
+                                <span id="pdp-precio-principal" class="text-5xl font-light text-gray-900">0.00</span>
                             </div>
-                            <div id="pdp-precio-bs" class="text-sm text-gray-500 mt-1">Bs. 0.00</div>
+                            <div id="pdp-precio-secundario" class="text-sm text-gray-500 mt-1 font-semibold">Bs. 0.00</div>
                         </div>
 
                         <div id="pdp-tiers" class="mb-6 space-y-2"></div>
-
                         <p id="pdp-stock-info" class="text-sm font-semibold text-gray-800 mb-4">¡Últimas en Stock!</p>
 
                         <div class="space-y-3 mb-6">
@@ -152,26 +152,13 @@
                                     <input type="number" id="pdp-cantidad" value="1" min="1" class="w-full text-center bg-transparent font-semibold focus:outline-none" readonly>
                                     <button onclick="cambiarCantidadPDP(1)" class="w-10 h-12 text-gray-500 hover:text-[#143B62] font-bold transition text-xl">+</button>
                                 </div>
-                                <button id="btn-agregar-pdp" class="flex-1 bg-[#3483fa] hover:bg-[#2968c8] text-white font-semibold py-3 rounded transition text-lg">
-                                    Agregar al Carrito
+                                <button id="btn-agregar-pdp" class="flex-1 bg-[#143B62] hover:bg-[#0f2d4a] text-white font-bold py-3 rounded shadow transition text-lg flex justify-center items-center gap-2">
+                                    <i class="fa-solid fa-cart-plus"></i> Agregar
                                 </button>
                             </div>
-                            <a id="btn-whatsapp-pdp" href="#" target="_blank" class="w-full bg-[#E67E22] hover:bg-[#d6731e] text-white font-semibold py-3 rounded transition text-lg flex items-center justify-center gap-2">
+                            <a id="btn-whatsapp-pdp" href="#" target="_blank" class="w-full border-2 border-[#25D366] text-[#25D366] hover:bg-[#25D366] hover:text-white font-bold py-3 rounded shadow-sm transition text-lg flex items-center justify-center gap-2">
                                 <i class="fa-brands fa-whatsapp text-xl"></i> Consultar al Asesor
                             </a>
-                        </div>
-
-                        <div class="space-y-4 pt-6 border-t border-gray-200 mt-auto">
-                            <div class="flex gap-3 items-start">
-                                <i class="fa-solid fa-shield-halved text-gray-400 text-lg mt-0.5"></i>
-                                <div>
-                                    <p class="text-sm text-gray-700"><span class="text-blue-600 font-semibold cursor-pointer">Compra Protegida</span>, recibe el producto que esperabas o te devolvemos tu dinero.</p>
-                                </div>
-                            </div>
-                            <div class="flex gap-3 items-start">
-                                <i class="fa-solid fa-trophy text-gray-400 text-lg mt-0.5"></i>
-                                <div><p class="text-sm text-gray-700"><span class="text-blue-600 font-semibold cursor-pointer">Calidad P&P</span>, los mejores estándares del mercado.</p></div>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -179,98 +166,99 @@
                 <div class="border-t border-gray-200">
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-0">
                         <div class="p-8 border-b lg:border-b-0 lg:border-r border-gray-200">
-                            <h3 class="text-2xl font-normal text-gray-900 mb-6 border-l-4 border-[#E67E22] pl-3">Descripción del Producto</h3>
-                            <p id="pdp-descripcion" class="text-gray-600 text-base leading-relaxed whitespace-pre-line">Cargando...</p>
+                            <h3 class="text-xl font-semibold text-gray-900 mb-6 border-l-4 border-[#E67E22] pl-3">Descripción del Producto</h3>
+                            <p id="pdp-descripcion" class="text-gray-600 text-sm leading-relaxed whitespace-pre-line"></p>
                         </div>
                         <div class="p-8">
-                            <h3 class="text-2xl font-normal text-gray-900 mb-6 border-l-4 border-[#143B62] pl-3">Especificaciones Técnicas</h3>
-                            <div id="pdp-ficha-tecnica" class="bg-gray-50 rounded border overflow-hidden">
-                                </div>
+                            <h3 class="text-xl font-semibold text-gray-900 mb-6 border-l-4 border-[#143B62] pl-3">Ficha Técnica</h3>
+                            <div id="pdp-ficha-tecnica" class="bg-gray-50 rounded border overflow-hidden"></div>
                         </div>
                     </div>
                 </div>
             </div>
-            
             <div id="pdp-relacionados-container" class="mt-12"></div>
         </div>
     </div>
 
-    <footer class="bg-[#1e1e1e] text-gray-400 py-10 mt-10">
-        <div class="max-w-[1400px] mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div>
-                <h4 class="text-white font-bold mb-4 uppercase text-sm tracking-wider">P&P Soluciones</h4>
-                <p class="text-sm mb-2"><i class="fa-solid fa-location-dot mr-2"></i> Creamos Soluciones y las Ponemos a tu Disposición</p>
-                <p class="text-sm mb-4"><i class="fa-regular fa-clock mr-2"></i> Lunes a Viernes: 8:30 AM - 12:00 PM / 1:00 PM - 5:00 PM</p>
-                <div class="flex gap-4 mt-4">
-                    <a href="#" class="bg-gray-700 hover:bg-gray-600 text-white w-8 h-8 rounded-full flex items-center justify-center transition"><i class="fa-brands fa-instagram"></i></a>
-                    <a href="#" class="bg-gray-700 hover:bg-gray-600 text-white w-8 h-8 rounded-full flex items-center justify-center transition"><i class="fa-brands fa-facebook-f"></i></a>
-                    <a href="#" class="bg-gray-700 hover:bg-gray-600 text-white w-8 h-8 rounded-full flex items-center justify-center transition"><i class="fa-brands fa-tiktok"></i></a>
-                </div>
-            </div>
-            <div>
-                <h4 class="text-white font-bold mb-4 uppercase text-sm tracking-wider">Contacto</h4>
-                <p class="text-sm mb-2"><i class="fa-solid fa-phone mr-2"></i> +58 414 028 5806</p>
-                <p class="text-sm mb-4"><i class="fa-solid fa-map mr-2"></i> Calle 9 Mini Centro Comercial Vecinal Local 40 Urb. Juan Pablo II Montalbán, 1020, Caracas, Venezuela.</p>
-                <button class="border border-gray-500 text-gray-300 hover:text-white hover:border-white px-4 py-1.5 rounded text-sm transition">Ver en Mapa</button>
-            </div>
-            <div>
-                <h4 class="text-white font-bold mb-4 uppercase text-sm tracking-wider">Información</h4>
-                <ul class="text-sm space-y-2">
-                    <li><a href="#" class="hover:text-white transition">> Políticas de Envío</a></li>
-                    <li><a href="#" class="hover:text-white transition">> Términos de Garantía</a></li>
-                    <li><a href="#" class="hover:text-white transition">> Métodos de Pago</a></li>
-                </ul>
-                <p class="text-[10px] mt-8 text-gray-500">© 2024 P&P Soluciones - Todos los derechos reservados.<br>Caracas, D.C. RIF: J-50704307-0</p>
-            </div>
-        </div>
-    </footer>
-
-    <a href="https://wa.me/584140285806" target="_blank" class="fixed bottom-6 right-6 bg-[#25D366] text-white w-14 h-14 rounded-full flex items-center justify-center text-3xl shadow-lg hover:bg-[#1ebd5c] hover:scale-110 transition z-40">
-        <i class="fa-brands fa-whatsapp"></i>
-    </a>
-
-    <div id="overlay-carrito" onclick="toggleCarrito()" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden transition-opacity"></div>
-    <div id="sidebar-carrito" class="fixed top-0 right-0 h-full w-full sm:w-[400px] bg-white shadow-2xl z-50 transform translate-x-full transition-transform duration-300 flex flex-col">
-        <div class="bg-[#143B62] text-white px-4 py-4 flex justify-between items-center">
+    <div id="overlay-carrito" onclick="toggleCarrito()" class="fixed inset-0 bg-black bg-opacity-50 z-[60] hidden transition-opacity"></div>
+    <div id="sidebar-carrito" class="fixed top-0 right-0 h-full w-full sm:w-[400px] bg-white shadow-2xl z-[70] transform translate-x-full transition-transform duration-300 flex flex-col">
+        <div class="bg-[#143B62] text-white px-4 py-4 flex justify-between items-center shadow-md">
             <h3 class="font-bold text-lg"><i class="fa-solid fa-cart-shopping mr-2"></i> Mi Pedido</h3>
             <button onclick="toggleCarrito()" class="text-gray-300 hover:text-white text-xl"><i class="fa-solid fa-times"></i></button>
         </div>
         <div id="items-carrito" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50"></div>
-        <div class="bg-white border-t p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+        <div class="bg-white border-t p-4 shadow-[0_-4px_10px_rgba(0,0,0,0.1)]">
             <div class="flex justify-between text-sm text-gray-600 mb-1"><span>Subtotal USD:</span><span id="subtotal-usd" class="font-bold">US $0.00</span></div>
             <div class="flex justify-between text-lg text-[#143B62] font-black mb-4"><span>Total Bs:</span><span id="total-bs">Bs. 0.00</span></div>
             <button onclick="abrirCheckout()" class="w-full bg-[#E67E22] hover:bg-[#d6731e] text-white font-bold py-3 rounded shadow transition-colors text-lg flex justify-center items-center gap-2">
-                Continuar Compra
+                Procesar Compra <i class="fa-solid fa-arrow-right"></i>
             </button>
         </div>
     </div>
 
-    <div id="modal-checkout" class="fixed inset-0 bg-black bg-opacity-60 z-[60] hidden flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-md rounded shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+    <div id="modal-checkout" class="fixed inset-0 bg-black bg-opacity-60 z-[80] hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-lg rounded shadow-2xl overflow-hidden flex flex-col max-h-[95vh]">
             <div class="bg-[#143B62] text-white px-5 py-4 flex justify-between items-center shrink-0">
-                <h3 class="font-bold text-lg">Facturación</h3>
+                <h3 class="font-bold text-lg"><i class="fa-regular fa-rectangle-list mr-2"></i> Datos de Facturación y Envío</h3>
                 <button onclick="cerrarCheckout()" class="text-gray-300 hover:text-white text-xl"><i class="fa-solid fa-times"></i></button>
             </div>
-            <div class="p-5 overflow-y-auto modal-scroll flex-1">
-                <div>
-                    <label class="block text-xs font-bold text-gray-600 mb-1">Cédula / RIF</label>
+            <div class="p-6 overflow-y-auto modal-scroll flex-1 bg-gray-50">
+                
+                <div class="bg-white p-4 rounded border shadow-sm mb-4">
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Cédula / RIF *</label>
                     <div class="flex gap-2">
-                        <select id="tipo-doc" class="border border-gray-300 rounded px-2 py-2 bg-gray-50 focus:outline-none">
+                        <select id="tipo-doc" class="border border-gray-300 rounded px-2 py-2 bg-gray-50 focus:outline-none font-bold text-gray-700">
                             <option value="V">V</option><option value="E">E</option><option value="J">J</option><option value="G">G</option>
                         </select>
-                        <input type="number" id="input-cedula" placeholder="13087656" class="flex-1 border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-[#E67E22]">
-                        <button onclick="buscarCliente()" class="bg-[#143B62] hover:bg-[#0f2d4a] text-white px-4 rounded transition"><i class="fa-solid fa-search"></i></button>
+                        <input type="number" id="input-cedula" placeholder="13087656" class="flex-1 border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-[#E67E22] font-semibold text-gray-800">
+                        <button onclick="buscarCliente()" class="bg-[#143B62] hover:bg-[#0f2d4a] text-white px-4 rounded transition shadow-sm"><i class="fa-solid fa-search"></i> Buscar</button>
                     </div>
-                    <p id="msg-cliente" class="text-xs mt-1 h-4"></p>
+                    <p id="msg-cliente" class="text-xs mt-1.5 h-4 font-semibold"></p>
                 </div>
-                <div class="space-y-3 pt-2 border-t">
-                    <input type="text" id="cliente-nombre" placeholder="Nombre / Razón Social" class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-[#E67E22] bg-gray-50">
-                    <input type="tel" id="cliente-telefono" placeholder="Celular (Ej: 04141234567)" class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-[#E67E22] bg-gray-50">
+                
+                <div class="bg-white p-4 rounded border shadow-sm space-y-4">
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Nombre / Razón Social *</label>
+                        <input type="text" id="cliente-nombre" class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-[#E67E22] text-gray-800 font-medium">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Correo Electrónico</label>
+                        <input type="email" id="cliente-correo" class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-[#E67E22] text-gray-800">
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Celular Principal *</label>
+                            <input type="tel" id="cliente-celular" placeholder="0414..." class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-[#E67E22] text-gray-800">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Celular Alternativo</label>
+                            <input type="tel" id="cliente-celular2" class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-[#E67E22] text-gray-800">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Dirección Fiscal</label>
+                        <input type="text" id="cliente-dir-fiscal" class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-[#E67E22] text-gray-800">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Dirección de Entrega</label>
+                        <input type="text" id="cliente-dir-entrega" class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-[#E67E22] text-gray-800">
+                    </div>
+                </div>
+
+                <div class="bg-[#f8f9fa] border border-gray-200 p-4 rounded mt-4 space-y-2">
+                    <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 border-b pb-1">Resumen del Pedido</h4>
+                    <div class="flex justify-between text-sm text-gray-600"><span>Subtotal:</span><span id="check-subtotal"></span></div>
+                    <div class="flex justify-between text-sm text-green-600 font-semibold"><span>Descuento Aplicado:</span><span id="check-descuento">US $0.00</span></div>
+                    <div class="flex justify-between text-sm text-gray-600"><span>IVA (0%):</span><span id="check-iva">US $0.00</span></div>
+                    <div class="border-t border-gray-300 my-2 pt-2"></div>
+                    <div class="flex justify-between text-lg text-[#143B62] font-black"><span>Total USD:</span><span id="check-total-usd"></span></div>
+                    <div class="flex justify-between text-lg text-[#E67E22] font-black"><span>Total Bs:</span><span id="check-total-bs"></span></div>
                 </div>
             </div>
-            <div class="p-4 border-t shrink-0">
-                <button onclick="enviarPedidoWhatsApp()" class="w-full bg-[#25D366] hover:bg-[#1ebd5c] text-white font-bold py-3 rounded shadow transition-colors flex justify-center items-center gap-2">
-                    <i class="fa-brands fa-whatsapp text-xl"></i> Enviar a WhatsApp
+            
+            <div class="p-4 border-t bg-white shrink-0">
+                <button onclick="enviarPedidoWhatsApp()" class="w-full bg-[#25D366] hover:bg-[#1ebd5c] text-white font-bold py-3.5 rounded shadow transition-colors flex justify-center items-center gap-2 text-lg">
+                    <i class="fa-brands fa-whatsapp text-xl"></i> Confirmar y Enviar
                 </button>
             </div>
         </div>
@@ -286,17 +274,21 @@
 
         let todosLosProductos = []; let fuse; let categoriaActiva = 'Todas'; let tasaBcvGlobal = 1;
         let carrito = []; let favoritos = JSON.parse(localStorage.getItem('pyp_favoritos')) || []; 
-        let productosActualesView = []; let indiceCarga = 0; const CANTIDAD_POR_PAGINA = 24; let totalUsdGlobal = 0;
+        let productosActualesView = []; let indiceCarga = 0; const CANTIDAD_POR_PAGINA = 28; 
+        
+        let totalUsdGlobal = 0;
+        let subtotalBaseUsdGlobal = 0; // Para calcular descuentos
 
-        // Manejo del botón "Atrás" del navegador
+        // VARIABLE GLOBAL MONEDA
+        let mostrarEnBs = false; 
+        let productoAbiertoActual = null; // Guardar el producto abierto para re-renderizar
+
         window.addEventListener('popstate', (event) => {
             const skuUrl = new URLSearchParams(window.location.search).get('producto');
             if (skuUrl) {
                 const prod = todosLosProductos.find(p => p.id_producto_sku === skuUrl);
-                if(prod) abrirPDP(prod, false); // false = no empujar al historial
-            } else {
-                volverAlCatalogo(false);
-            }
+                if(prod) abrirPDP(prod, false); 
+            } else { volverAlCatalogo(false); }
         });
 
         window.onload = () => { const skuUrl = new URLSearchParams(window.location.search).get('producto'); cargarDatos(skuUrl); };
@@ -321,15 +313,41 @@
                 } else { iniciarVista(todosLosProductos, "Todos los Productos"); }
 
                 new IntersectionObserver(e => { if(e[0].isIntersecting) cargarMasProductos(); }).observe(document.getElementById('observador-scroll'));
-            } catch (error) { document.getElementById('catalogo').innerHTML = '<p class="text-red-500 col-span-full text-center py-10">Error conectando con la base de datos.</p>'; }
+            } catch (error) { document.getElementById('catalogo').innerHTML = '<p class="text-red-500 col-span-full text-center py-10 font-bold">Error conectando con la base de datos.</p>'; }
         }
 
-        // --- RENDER CATÁLOGO (Estilo Meli) ---
+        // --- SISTEMA DE MONEDA ---
+        function toggleMonedaGlobal() {
+            mostrarEnBs = !mostrarEnBs;
+            const btn = document.getElementById('btn-moneda');
+            btn.innerHTML = mostrarEnBs ? `<i class="fa-solid fa-money-bill-transfer"></i> Mostrar en USD` : `<i class="fa-solid fa-money-bill-transfer"></i> Mostrar en Bs`;
+            
+            // Re-renderizar Vistas
+            iniciarVista(productosActualesView, document.getElementById('titulo-seccion').innerText);
+            actualizarUI_Carrito();
+            if(productoAbiertoActual) abrirPDP(productoAbiertoActual, false);
+        }
+
+        function formatearPrecio(precioUsd) {
+            if(mostrarEnBs) return `Bs. ${(precioUsd * tasaBcvGlobal).toFixed(2)}`;
+            return `US$ ${precioUsd.toFixed(2)}`;
+        }
+
+        // --- CÁLCULOS ---
+        function calcularPrecioUnitario(prod, cantidad) {
+            let precioUnitario = Number(prod.precio_detal_usd) || 0;
+            if (prod.requerido_precio_3 && cantidad >= prod.requerido_precio_3 && prod.precio_tier3_usd != null) precioUnitario = Number(prod.precio_tier3_usd);
+            else if (prod.requerido_precio_2 && cantidad >= prod.requerido_precio_2 && prod.precio_tier2_usd != null) precioUnitario = Number(prod.precio_tier2_usd);
+            else if (prod.requerido_precio_1 && cantidad >= prod.requerido_precio_1 && prod.precio_tier1_usd != null) precioUnitario = Number(prod.precio_tier1_usd);
+            return precioUnitario;
+        }
+
+        // --- RENDER CATÁLOGO ---
         function iniciarVista(productos, titulo) {
-            document.getElementById('titulo-seccion').innerText = titulo;
+            document.getElementById('titulo-seccion').innerHTML = titulo;
             document.getElementById('catalogo').innerHTML = ''; 
             productosActualesView = productos; indiceCarga = 0; 
-            if (productos.length === 0) { document.getElementById('catalogo').innerHTML = '<p class="col-span-full text-center text-gray-500 py-10">No se encontraron productos.</p>'; return; }
+            if (productos.length === 0) { document.getElementById('catalogo').innerHTML = '<p class="col-span-full text-center text-gray-500 py-10 font-bold text-lg">No se encontraron productos.</p>'; return; }
             cargarMasProductos(); 
         }
 
@@ -344,10 +362,15 @@
                 const esFav = favoritos.includes(prod.id_producto_sku); const colorCorazon = esFav ? 'text-blue-600' : 'text-gray-300';
                 const tieneTiers = prod.requerido_precio_1 != null && prod.requerido_precio_1 > 0;
                 
-                let etiquetaTop = tieneTiers ? `<div class="absolute top-0 left-0 bg-[#E67E22] text-white text-[9px] font-bold px-2 py-1 rounded-br z-10 uppercase tracking-wider shadow-sm">Oferta Mayorista</div>` : '';
+                let etiquetaTop = tieneTiers ? `<div class="absolute top-0 left-0 bg-[#E67E22] text-white text-[9px] font-bold px-2 py-1 rounded-br z-10 uppercase tracking-wider shadow-sm">Oferta</div>` : '';
                 if(!tieneTiers && (prod.tipo_producto || "").toLowerCase().includes('servicio')) etiquetaTop = `<div class="absolute top-0 left-0 bg-[#143B62] text-white text-[9px] font-bold px-2 py-1 rounded-br z-10 uppercase tracking-wider shadow-sm">Servicio</div>`;
 
                 const prodDataStr = encodeURIComponent(JSON.stringify(prod));
+
+                // Lógica Moneda Tarjeta
+                const precioPrincipal = mostrarEnBs ? (precioUsd * tasaBcvGlobal).toFixed(2) : precioUsd.toFixed(2);
+                const simboloPrincipal = mostrarEnBs ? 'Bs.' : 'US$';
+                const textoSecundario = mostrarEnBs ? `US$ ${precioUsd.toFixed(2)}` : `Bs. ${(precioUsd * tasaBcvGlobal).toFixed(2)}`;
 
                 contenedor.innerHTML += `
                     <div class="bg-white rounded shadow-sm hover:shadow-lg transition-shadow border border-gray-100 flex flex-col relative group cursor-pointer" onclick="abrirPDPObj('${prodDataStr}')">
@@ -355,16 +378,16 @@
                         <button onclick="event.stopPropagation(); toggleFavorito('${prod.id_producto_sku}')" class="absolute top-2 right-2 z-20 text-lg bg-white rounded-full w-8 h-8 flex items-center justify-center shadow-sm hover:scale-110 transition">
                             <i id="icono-fav-${prod.id_producto_sku}" class="fa-solid fa-heart ${colorCorazon}"></i>
                         </button>
-                        <div class="h-48 w-full p-4 flex justify-center items-center bg-white border-b border-gray-100">
+                        <div class="h-44 w-full p-4 flex justify-center items-center bg-white border-b border-gray-100">
                             <img src="${imagen}" loading="lazy" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300">
                         </div>
                         <div class="p-4 flex flex-col flex-grow">
-                            <h3 class="text-[13px] font-light text-gray-700 leading-snug mb-2 line-clamp-2" title="${prod.nombre}">${prod.nombre}</h3>
+                            <h3 class="text-xs font-normal text-gray-800 leading-snug mb-2 line-clamp-2" title="${prod.nombre}">${prod.nombre}</h3>
                             <div class="mt-auto">
-                                <div class="flex items-baseline mb-1">
-                                    <span class="text-xs text-gray-800 mr-1">US$</span><span class="text-2xl font-normal text-gray-900">${precioUsd.toFixed(2)}</span>
+                                <div class="flex items-baseline mb-0.5">
+                                    <span class="text-xs text-gray-800 mr-1">${simboloPrincipal}</span><span class="text-2xl font-normal text-gray-900">${precioPrincipal}</span>
                                 </div>
-                                <div class="text-[10px] text-green-600 font-semibold mb-3">Bs. ${(precioUsd * tasaBcvGlobal).toFixed(2)}</div>
+                                <div class="text-[10px] text-green-600 font-semibold mb-3">${textoSecundario}</div>
                             </div>
                         </div>
                     </div>
@@ -373,11 +396,45 @@
             indiceCarga += CANTIDAD_POR_PAGINA;
         }
 
-        // --- PDP FUNCIONES ---
+        // --- BUSCADOR CORREGIDO (ENTER) ---
+        function irAInicio() {
+            document.getElementById('buscador').value = '';
+            cerrarDropdown();
+            volverAlCatalogo(true);
+            filtrarPorCategoria('Todas');
+        }
+
+        function buscarPredictivo() {
+            const texto = document.getElementById('buscador').value; const dropdown = document.getElementById('dropdown-busqueda');
+            if (texto.trim() === '') { dropdown.classList.add('hidden'); return; }
+            const resultados = fuse.search(texto).slice(0, 8); dropdown.innerHTML = '';
+            if(resultados.length === 0) dropdown.innerHTML = `<div class="p-4 text-sm text-gray-500 text-center font-bold">No se encontraron productos</div>`; 
+            else resultados.forEach(res => {
+                const prodDataStr = encodeURIComponent(JSON.stringify(res.item));
+                dropdown.innerHTML += `<div class="flex items-center gap-3 p-3 border-b hover:bg-gray-50 cursor-pointer transition" onclick="abrirPDPObj('${prodDataStr}'); cerrarDropdown();"><img src="${res.item.imagen_principal}" class="w-10 h-10 object-contain rounded"><div class="flex-1"><h4 class="text-xs font-normal line-clamp-1 text-gray-800">${res.item.nombre}</h4><span class="text-xs font-semibold text-[#143B62]">${formatearPrecio(Number(res.item.precio_detal_usd))}</span></div></div>`;
+            });
+            dropdown.classList.remove('hidden');
+        }
+
+        function buscarConEnter(event) {
+            if (event.key === 'Enter') ejecutarBusquedaFull();
+        }
+
+        function ejecutarBusquedaFull() {
+            const texto = document.getElementById('buscador').value;
+            cerrarDropdown();
+            volverAlCatalogo(false);
+            if (texto.trim() === '') { iniciarVista(todosLosProductos, "Todos los Productos"); return; }
+            const resultados = fuse.search(texto).map(r => r.item);
+            iniciarVista(resultados, `Resultados para: <span class="font-bold text-[#143B62]">'${texto}'</span>`);
+        }
+
+        function cerrarDropdown() { document.getElementById('dropdown-busqueda').classList.add('hidden'); }
+
+        // --- PDP (PÁGINA DE PRODUCTO) ---
         function copiarLinkShare() {
             navigator.clipboard.writeText(window.location.href).then(() => {
-                const toast = document.getElementById("toast");
-                toast.className = "show";
+                const toast = document.getElementById("toast"); toast.className = "show";
                 setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
             });
         }
@@ -385,122 +442,84 @@
         function abrirPDPObj(prodDataStr) { abrirPDP(JSON.parse(decodeURIComponent(prodDataStr)), true); }
 
         function abrirPDP(prod, pushHistory = true) {
+            productoAbiertoActual = prod;
             document.getElementById('vista-catalogo').classList.add('hidden');
-            const pdp = document.getElementById('vista-pdp');
-            pdp.classList.remove('hidden'); window.scrollTo(0, 0);
+            const pdp = document.getElementById('vista-pdp'); pdp.classList.remove('hidden'); window.scrollTo(0, 0);
 
-            if(pushHistory) {
-                const url = new URL(window.location); url.searchParams.set('producto', prod.id_producto_sku);
-                window.history.pushState({}, '', url);
-            }
+            if(pushHistory) { const url = new URL(window.location); url.searchParams.set('producto', prod.id_producto_sku); window.history.pushState({}, '', url); }
 
             const precioBaseUsd = Number(prod.precio_detal_usd) || 0;
             const esServicio = (prod.tipo_producto || "").toLowerCase().includes('servicio');
             
-            // Llenar Datos Simples
             document.getElementById('pdp-breadcrumbs').innerText = `${prod.categoria_producto || 'Categoría'} > ${prod.marca || 'Marca'}`;
             document.getElementById('pdp-sku').innerText = prod.id_producto_sku;
             document.getElementById('pdp-estatus-ventas').innerHTML = `${prod.estado_producto || 'Activo'}  |  SKU: <span class="font-semibold text-gray-600">${prod.id_producto_sku}</span>`;
             document.getElementById('pdp-titulo').innerText = prod.nombre;
-            document.getElementById('pdp-precio-usd').innerText = precioBaseUsd.toFixed(2);
-            document.getElementById('pdp-precio-bs').innerText = `Bs. ${(precioBaseUsd * tasaBcvGlobal).toFixed(2)}`;
+            
+            // Moneda PDP
+            document.getElementById('pdp-moneda-simbolo').innerText = mostrarEnBs ? 'Bs.' : 'US$';
+            document.getElementById('pdp-precio-principal').innerText = mostrarEnBs ? (precioBaseUsd * tasaBcvGlobal).toFixed(2) : precioBaseUsd.toFixed(2);
+            document.getElementById('pdp-precio-secundario').innerText = mostrarEnBs ? `US$ ${precioBaseUsd.toFixed(2)}` : `Bs. ${(precioBaseUsd * tasaBcvGlobal).toFixed(2)}`;
+
             document.getElementById('pdp-descripcion').innerText = prod.descripcion || 'Descripción detallada no disponible.';
-            document.getElementById('pdp-cantidad').value = 1;
             document.getElementById('pdp-stock-info').innerText = !esServicio ? `¡Últimas en Stock! (${prod.stock_actual} disponibles)` : 'Servicio Disponible';
 
-            // Botones de Acción
             const prodDataStr = encodeURIComponent(JSON.stringify(prod));
             document.getElementById('btn-agregar-pdp').setAttribute('onclick', `agregarAlCarritoDesdePDP('${prodDataStr}')`);
             document.getElementById('btn-whatsapp-pdp').href = `https://wa.me/${NUMERO_WHATSAPP}?text=${encodeURIComponent(`Hola P&P, quiero información de:\n*${prod.nombre}*\nSKU: ${prod.id_producto_sku}\nLink: ${window.location.href}`)}`;
 
-            // Galería
             const imgPrincipal = prod.imagen_principal || 'https://via.placeholder.com/500';
             document.getElementById('pdp-imagen-principal').src = imgPrincipal;
-            document.getElementById('pdp-galeria-mini').innerHTML = `
-                <div class="w-12 h-12 border-2 border-blue-500 rounded cursor-pointer p-1 shrink-0 hover:border-blue-600 transition"><img src="${imgPrincipal}" class="w-full h-full object-contain"></div>
-            `;
+            document.getElementById('pdp-galeria-mini').innerHTML = `<div class="w-12 h-12 border-2 border-blue-500 rounded cursor-pointer p-1 shrink-0 hover:border-blue-600 transition"><img src="${imgPrincipal}" class="w-full h-full object-contain"></div>`;
 
-            // Tiers
             let htmlTiers = '';
             if(!esServicio && prod.requerido_precio_1 > 0) {
                 htmlTiers += `<p class="text-sm font-semibold text-gray-800 mb-2 mt-4">Ofertas por cantidad:</p>`;
-                if(prod.requerido_precio_1 > 0) htmlTiers += `<div class="border border-green-200 bg-green-50 text-green-800 text-xs px-3 py-2 rounded mb-2 flex justify-between items-center"><span class="font-semibold"><i class="fa-solid fa-tag mr-1"></i> A partir de ${prod.requerido_precio_1} unds</span> <span>US $${Number(prod.precio_tier1_usd).toFixed(2)} c/u</span></div>`;
-                if(prod.requerido_precio_2 > 0) htmlTiers += `<div class="border border-green-200 bg-green-50 text-green-800 text-xs px-3 py-2 rounded mb-2 flex justify-between items-center"><span class="font-semibold"><i class="fa-solid fa-tag mr-1"></i> A partir de ${prod.requerido_precio_2} unds</span> <span>US $${Number(prod.precio_tier2_usd).toFixed(2)} c/u</span></div>`;
-                if(prod.requerido_precio_3 > 0) htmlTiers += `<div class="border border-green-200 bg-green-50 text-green-800 text-xs px-3 py-2 rounded flex justify-between items-center"><span class="font-semibold"><i class="fa-solid fa-tag mr-1"></i> A partir de ${prod.requerido_precio_3} unds</span> <span>US $${Number(prod.precio_tier3_usd).toFixed(2)} c/u</span></div>`;
+                if(prod.requerido_precio_1 > 0) htmlTiers += `<div class="border border-green-200 bg-green-50 text-green-800 text-xs px-3 py-2 rounded mb-2 flex justify-between items-center"><span class="font-semibold"><i class="fa-solid fa-tag mr-1"></i> A partir de ${prod.requerido_precio_1} unds</span> <span>${formatearPrecio(Number(prod.precio_tier1_usd))} c/u</span></div>`;
+                if(prod.requerido_precio_2 > 0) htmlTiers += `<div class="border border-green-200 bg-green-50 text-green-800 text-xs px-3 py-2 rounded mb-2 flex justify-between items-center"><span class="font-semibold"><i class="fa-solid fa-tag mr-1"></i> A partir de ${prod.requerido_precio_2} unds</span> <span>${formatearPrecio(Number(prod.precio_tier2_usd))} c/u</span></div>`;
+                if(prod.requerido_precio_3 > 0) htmlTiers += `<div class="border border-green-200 bg-green-50 text-green-800 text-xs px-3 py-2 rounded flex justify-between items-center"><span class="font-semibold"><i class="fa-solid fa-tag mr-1"></i> A partir de ${prod.requerido_precio_3} unds</span> <span>${formatearPrecio(Number(prod.precio_tier3_usd))} c/u</span></div>`;
             }
             document.getElementById('pdp-tiers').innerHTML = htmlTiers;
 
-            // Ficha Técnica (Con la data nueva)
             let htmlFicha = '';
             const specs = [
-                { label: 'Código SKU', val: prod.id_producto_sku },
-                { label: 'Categoría', val: prod.categoria_producto },
-                { label: 'Marca', val: prod.marca },
-                { label: 'Tipo de Producto', val: prod.tipo_producto },
-                { label: 'Estatus', val: prod.estado_producto },
-                { label: 'Talla', val: prod.talla },
-                { label: 'Color', val: prod.color },
-                { label: 'Aplica IVA', val: prod.tipo_impuesto }
+                { label: 'Código SKU', val: prod.id_producto_sku }, { label: 'Categoría', val: prod.categoria_producto },
+                { label: 'Marca', val: prod.marca }, { label: 'Tipo', val: prod.tipo_producto },
+                { label: 'Estatus', val: prod.estado_producto }, { label: 'Talla', val: prod.talla },
+                { label: 'Color', val: prod.color }, { label: 'Aplica IVA', val: prod.tipo_impuesto }
             ];
-            
             let colorFondo = 'bg-gray-100';
             specs.forEach(s => {
                 if(s.val && s.val !== 'NULL' && s.val !== '') {
-                    htmlFicha += `
-                    <div class="grid grid-cols-3 border-b border-gray-200">
-                        <div class="${colorFondo} p-3 text-sm font-semibold text-gray-700">${s.label}</div>
-                        <div class="col-span-2 p-3 text-sm text-gray-600 bg-white">${s.val}</div>
-                    </div>`;
+                    htmlFicha += `<div class="grid grid-cols-3 border-b border-gray-200"><div class="${colorFondo} p-3 text-sm font-semibold text-gray-700">${s.label}</div><div class="col-span-2 p-3 text-sm text-gray-600 bg-white">${s.val}</div></div>`;
                     colorFondo = colorFondo === 'bg-gray-100' ? 'bg-gray-50' : 'bg-gray-100';
                 }
             });
             document.getElementById('pdp-ficha-tecnica').innerHTML = htmlFicha;
 
-            // Relacionados
-            const relacionados = todosLosProductos.filter(p => p.categoria_producto === prod.categoria_producto && p.id_producto_sku !== prod.id_producto_sku).slice(0, 6);
+            const relacionados = todosLosProductos.filter(p => p.categoria_producto === prod.categoria_producto && p.id_producto_sku !== prod.id_producto_sku).slice(0, 7);
             let htmlRelacionados = '';
             if(relacionados.length > 0) {
-                htmlRelacionados = `<h3 class="text-xl font-normal text-gray-800 mb-6 border-l-4 border-[#143B62] pl-3">Quienes vieron este producto también compraron</h3><div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">`;
+                htmlRelacionados = `<h3 class="text-xl font-normal text-gray-800 mb-6 border-l-4 border-[#143B62] pl-3">Quienes vieron esto también compraron</h3><div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 xl:grid-cols-7 gap-4">`;
                 relacionados.forEach(rel => {
                     const rData = encodeURIComponent(JSON.stringify(rel));
-                    htmlRelacionados += `
-                        <div class="bg-white border border-gray-200 rounded p-3 hover:shadow-md cursor-pointer transition" onclick="abrirPDPObj('${rData}')">
-                            <img src="${rel.imagen_principal}" class="h-28 w-full object-contain mb-3">
-                            <div class="text-xs text-gray-500 line-clamp-2 h-8 font-light">${rel.nombre}</div>
-                            <div class="text-lg font-normal text-gray-900 mt-2">US$ ${(Number(rel.precio_detal_usd) || 0).toFixed(2)}</div>
-                        </div>`;
+                    htmlRelacionados += `<div class="bg-white border border-gray-200 rounded p-3 hover:shadow-md cursor-pointer transition" onclick="abrirPDPObj('${rData}')"><img src="${rel.imagen_principal}" class="h-28 w-full object-contain mb-3"><div class="text-xs text-gray-500 line-clamp-2 h-8 font-light">${rel.nombre}</div><div class="text-lg font-normal text-gray-900 mt-2">${formatearPrecio(Number(rel.precio_detal_usd))}</div></div>`;
                 });
                 htmlRelacionados += `</div>`;
             }
             document.getElementById('pdp-relacionados-container').innerHTML = htmlRelacionados;
         }
 
-        function cambiarCantidadPDP(delta) {
-            const input = document.getElementById('pdp-cantidad');
-            let val = parseInt(input.value) + delta; if(val < 1) val = 1; input.value = val;
-        }
-
-        function agregarAlCarritoDesdePDP(prodDataStr) { 
-            procesarAgregarCarrito(JSON.parse(decodeURIComponent(prodDataStr)), parseInt(document.getElementById('pdp-cantidad').value)); 
-        }
+        function cambiarCantidadPDP(delta) { const input = document.getElementById('pdp-cantidad'); let val = parseInt(input.value) + delta; if(val < 1) val = 1; input.value = val; }
+        function agregarAlCarritoDesdePDP(prodDataStr) { procesarAgregarCarrito(JSON.parse(decodeURIComponent(prodDataStr)), parseInt(document.getElementById('pdp-cantidad').value)); }
         function volverAlCatalogo(pushHistory = true) {
-            document.getElementById('vista-pdp').classList.add('hidden'); 
-            document.getElementById('vista-catalogo').classList.remove('hidden');
-            if(pushHistory) {
-                const url = new URL(window.location); url.searchParams.delete('producto'); window.history.pushState({}, '', url);
-            }
+            productoAbiertoActual = null;
+            document.getElementById('vista-pdp').classList.add('hidden'); document.getElementById('vista-catalogo').classList.remove('hidden');
+            if(pushHistory) { const url = new URL(window.location); url.searchParams.delete('producto'); window.history.pushState({}, '', url); }
             window.scrollTo(0, 0);
         }
 
-        // --- SISTEMAS EXTRAS (CARRITO, BUSCADOR, CATEGORÍAS) ---
-        // (Se mantienen iguales a la versión anterior para funcionalidad)
-        function calcularPrecioUnitario(prod, cantidad) {
-            let precioUnitario = Number(prod.precio_detal_usd) || 0;
-            if (prod.requerido_precio_3 && cantidad >= prod.requerido_precio_3 && prod.precio_tier3_usd != null) precioUnitario = Number(prod.precio_tier3_usd);
-            else if (prod.requerido_precio_2 && cantidad >= prod.requerido_precio_2 && prod.precio_tier2_usd != null) precioUnitario = Number(prod.precio_tier2_usd);
-            else if (prod.requerido_precio_1 && cantidad >= prod.requerido_precio_1 && prod.precio_tier1_usd != null) precioUnitario = Number(prod.precio_tier1_usd);
-            return precioUnitario;
-        }
+        // --- CARRITO Y CHECKOUT RESUMEN ---
         function procesarAgregarCarrito(prod, cantidad) {
             const index = carrito.findIndex(item => item.id_producto_sku === prod.id_producto_sku);
             if (index !== -1) carrito[index].cantidad += cantidad; else { prod.cantidad = cantidad; carrito.push(prod); }
@@ -511,21 +530,29 @@
             if (index !== -1) { carrito[index].cantidad += delta; if (carrito[index].cantidad <= 0) carrito.splice(index, 1); actualizarUI_Carrito(); }
         }
         function eliminarDelCarrito(sku) { carrito = carrito.filter(item => item.id_producto_sku !== sku); actualizarUI_Carrito(); }
+        
         function actualizarUI_Carrito() {
             const contenedor = document.getElementById('items-carrito'); const contadorBurbuja = document.getElementById('contador-carrito');
-            totalUsdGlobal = 0; let totalArticulos = 0;
+            totalUsdGlobal = 0; subtotalBaseUsdGlobal = 0; let totalArticulos = 0;
+
             if (carrito.length === 0) { contenedor.innerHTML = `<div class="flex flex-col items-center justify-center h-full text-gray-400"><i class="fa-solid fa-basket-shopping text-4xl mb-3"></i><p>Tu carrito está vacío</p></div>`; contadorBurbuja.classList.add('hidden'); document.getElementById('subtotal-usd').innerText = `US $0.00`; document.getElementById('total-bs').innerText = `Bs. 0.00`; return; }
             contenedor.innerHTML = '';
+            
             carrito.forEach(item => {
-                const precioAplicadoUsd = calcularPrecioUnitario(item, item.cantidad); const subtotalItemUsd = precioAplicadoUsd * item.cantidad;
-                totalUsdGlobal += subtotalItemUsd; totalArticulos += item.cantidad;
-                const tieneDescuento = precioAplicadoUsd < (Number(item.precio_detal_usd) || 0);
+                const precioBaseUsd = Number(item.precio_detal_usd) || 0;
+                const precioAplicadoUsd = calcularPrecioUnitario(item, item.cantidad); 
+                
+                subtotalBaseUsdGlobal += (precioBaseUsd * item.cantidad);
+                totalUsdGlobal += (precioAplicadoUsd * item.cantidad); 
+                totalArticulos += item.cantidad;
+                
+                const tieneDescuento = precioAplicadoUsd < precioBaseUsd;
                 contenedor.innerHTML += `
                     <div class="flex bg-white p-3 rounded shadow-sm border border-gray-100 relative">
                         <img src="${item.imagen_principal}" class="w-16 h-16 object-contain rounded border p-1 mr-3">
                         <div class="flex-1">
                             <h4 class="text-xs font-normal text-gray-800 line-clamp-2 pr-5">${item.nombre}</h4>
-                            <div class="flex items-center mt-1"><span class="text-gray-900 font-semibold text-sm">US $${precioAplicadoUsd.toFixed(2)}</span>${tieneDescuento ? `<span class="text-[9px] bg-green-100 text-green-700 px-1 rounded ml-1 font-bold">OFERTA</span>` : ''}</div>
+                            <div class="flex items-center mt-1"><span class="text-gray-900 font-semibold text-sm">${formatearPrecio(precioAplicadoUsd)}</span>${tieneDescuento ? `<span class="text-[9px] bg-green-100 text-green-700 px-1 rounded ml-1 font-bold">OFERTA</span>` : ''}</div>
                             <div class="flex items-center border w-max rounded overflow-hidden mt-2">
                                 <button onclick="cambiarCantidadCarrito('${item.id_producto_sku}', -1)" class="px-2 py-0.5 bg-gray-50 hover:bg-gray-200"><i class="fa-solid fa-minus text-[10px]"></i></button>
                                 <span class="px-3 py-0.5 text-xs font-semibold bg-white">${item.cantidad}</span>
@@ -535,69 +562,85 @@
                         <button onclick="eliminarDelCarrito('${item.id_producto_sku}')" class="absolute top-2 right-2 text-red-400 hover:text-red-600"><i class="fa-solid fa-trash-can"></i></button>
                     </div>`;
             });
-            document.getElementById('subtotal-usd').innerText = `US $${totalUsdGlobal.toFixed(2)}`; document.getElementById('total-bs').innerText = `Bs. ${(totalUsdGlobal * tasaBcvGlobal).toFixed(2)}`;
+            document.getElementById('subtotal-usd').innerText = formatearPrecio(totalUsdGlobal); 
+            document.getElementById('total-bs').innerText = `Bs. ${(totalUsdGlobal * tasaBcvGlobal).toFixed(2)}`;
             contadorBurbuja.innerText = totalArticulos; contadorBurbuja.classList.remove('hidden');
         }
         function toggleCarrito() { const s = document.getElementById('sidebar-carrito'); const o = document.getElementById('overlay-carrito'); if(s.classList.contains('translate-x-full')) abrirCarrito(); else { s.classList.add('translate-x-full'); o.classList.add('hidden'); } }
         function abrirCarrito() { document.getElementById('sidebar-carrito').classList.remove('translate-x-full'); document.getElementById('overlay-carrito').classList.remove('hidden'); }
+        
+        // --- CATEGORÍAS ---
+        function extraerCategorias(productos) {
+            const contCat = document.getElementById('contenedor-categorias'); contCat.innerHTML = ''; 
+            const catArr = [...new Set(productos.map(p => p.categoria_producto).filter(c => c))].sort();
+            contCat.innerHTML += `<button onclick="filtrarPorCategoria('Todas')" class="hover:text-white transition whitespace-nowrap font-semibold">Todas</button><span class="text-[#1a4a7a]">|</span>`;
+            catArr.forEach((cat, idx) => { 
+                contCat.innerHTML += `<button onclick="filtrarPorCategoria('${cat}')" class="hover:text-white transition whitespace-nowrap font-semibold">${cat}</button>`; 
+                if(idx < catArr.length-1) contCat.innerHTML += `<span class="text-[#1a4a7a]">|</span>`;
+            });
+        }
+        function filtrarPorCategoria(categoria) {
+            categoriaActiva = categoria; document.getElementById('buscador').value = ''; cerrarDropdown(); volverAlCatalogo();
+            iniciarVista(categoria === 'Todas' ? todosLosProductos : todosLosProductos.filter(p => p.categoria_producto === categoria), categoria === 'Todas' ? "Todos los Productos" : `<span class="border-l-4 border-[#E67E22] pl-3">Categoría: ${categoria}</span>`);
+        }
+
+        // --- CHECKOUT DATA Y WHATSAPP ---
+        function abrirCheckout() { 
+            if(carrito.length === 0) return alert("Agrega productos al carrito."); 
+            
+            // Llenar Resumen Financiero
+            const descuentoTotal = subtotalBaseUsdGlobal - totalUsdGlobal;
+            document.getElementById('check-subtotal').innerText = `US $${subtotalBaseUsdGlobal.toFixed(2)}`;
+            document.getElementById('check-descuento').innerText = descuentoTotal > 0 ? `- US $${descuentoTotal.toFixed(2)}` : `US $0.00`;
+            document.getElementById('check-total-usd').innerText = `US $${totalUsdGlobal.toFixed(2)}`;
+            document.getElementById('check-total-bs').innerText = `Bs. ${(totalUsdGlobal * tasaBcvGlobal).toFixed(2)}`;
+
+            toggleCarrito(); document.getElementById('modal-checkout').classList.remove('hidden'); 
+        }
+        function cerrarCheckout() { document.getElementById('modal-checkout').classList.add('hidden'); }
+        
+        async function buscarCliente() {
+            const cedula = document.getElementById('input-cedula').value.trim(); const msg = document.getElementById('msg-cliente');
+            if(!cedula) return; msg.innerText = "Buscando en base de datos..."; msg.className = "text-xs mt-1.5 text-gray-500 font-semibold";
+            try {
+                // Buscador: Concatena Tipo (V) + Cedula (123)
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/clientes?documento_identidad=eq.${document.getElementById('tipo-doc').value}${cedula}`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } });
+                const datos = await res.json();
+                if(datos.length > 0) {
+                    const d = datos[0]; 
+                    document.getElementById('cliente-nombre').value = d.nombre_razon_social || ''; 
+                    document.getElementById('cliente-correo').value = d.correo || ''; 
+                    document.getElementById('cliente-celular').value = d.celular || ''; 
+                    document.getElementById('cliente-celular2').value = d["Celular 2"] || d.celular_2 || ''; 
+                    document.getElementById('cliente-dir-fiscal').value = d.direccion_fiscal || ''; 
+                    document.getElementById('cliente-dir-entrega').value = d.direccion_entrega || ''; 
+                    msg.innerHTML = '<i class="fa-solid fa-check-circle"></i> Cliente encontrado y cargado'; msg.className = "text-xs mt-1.5 text-green-600 font-bold";
+                } else {
+                    document.getElementById('cliente-nombre').value = ''; document.getElementById('cliente-correo').value = ''; document.getElementById('cliente-celular').value = ''; document.getElementById('cliente-celular2').value = ''; document.getElementById('cliente-dir-fiscal').value = ''; document.getElementById('cliente-dir-entrega').value = '';
+                    msg.innerText = "Cliente no registrado. Ingrese los datos."; msg.className = "text-xs mt-1.5 text-[#E67E22] font-bold";
+                }
+            } catch (e) { msg.innerText = "Error de conexión. Ingrese datos manualmente."; }
+        }
+
+        function enviarPedidoWhatsApp() {
+            const doc = document.getElementById('tipo-doc').value + document.getElementById('input-cedula').value.trim();
+            const nombre = document.getElementById('cliente-nombre').value.trim();
+            const celular = document.getElementById('cliente-celular').value.trim();
+            if(!nombre || !celular || document.getElementById('input-cedula').value.trim() === '') return alert("Cédula, Nombre y Celular Principal son obligatorios.");
+            
+            let t = `*NUEVO PEDIDO - P&P Soluciones* 🛒\n-----------------------------------\n*Cliente:* ${nombre}\n*CI/RIF:* ${doc}\n*Celular:* ${celular}\n-----------------------------------\n`;
+            carrito.forEach(i => { t += `▪️ *${i.cantidad}x* ${i.nombre} (US $${calcularPrecioUnitario(i, i.cantidad).toFixed(2)})\n`; });
+            t += `-----------------------------------\n*Total USD:* US $${totalUsdGlobal.toFixed(2)}\n*Total Bs:* Bs. ${(totalUsdGlobal * tasaBcvGlobal).toFixed(2)}`;
+            
+            window.open(`https://wa.me/${NUMERO_WHATSAPP}?text=${encodeURIComponent(t)}`, '_blank'); cerrarCheckout(); carrito = []; actualizarUI_Carrito();
+        }
+
         function toggleFavorito(sku) {
             const index = favoritos.indexOf(sku); if (index === -1) favoritos.push(sku); else favoritos.splice(index, 1);
             localStorage.setItem('pyp_favoritos', JSON.stringify(favoritos)); 
             const i = document.getElementById(`icono-fav-${sku}`); if(i) { i.className = favoritos.includes(sku) ? 'fa-solid fa-heart text-blue-600' : 'fa-solid fa-heart text-gray-300'; }
         }
         function mostrarFavoritos() { volverAlCatalogo(false); iniciarVista(todosLosProductos.filter(p => favoritos.includes(p.id_producto_sku)), "Mis Favoritos ❤️"); }
-        
-        function extraerCategorias(productos) {
-            const contCat = document.getElementById('contenedor-categorias'); contCat.innerHTML = ''; 
-            const catArr = [...new Set(productos.map(p => p.categoria_producto).filter(c => c))].sort();
-            contCat.innerHTML += `<button onclick="filtrarPorCategoria('Todas')" class="hover:text-white transition whitespace-nowrap">Todas</button><span class="text-gray-600">|</span>`;
-            catArr.forEach((cat, idx) => { 
-                contCat.innerHTML += `<button onclick="filtrarPorCategoria('${cat}')" class="hover:text-white transition whitespace-nowrap">${cat}</button>`; 
-                if(idx < catArr.length-1) contCat.innerHTML += `<span class="text-gray-600">|</span>`;
-            });
-        }
-        function filtrarPorCategoria(categoria) {
-            categoriaActiva = categoria; document.getElementById('buscador').value = ''; cerrarDropdown(); volverAlCatalogo();
-            iniciarVista(categoria === 'Todas' ? todosLosProductos : todosLosProductos.filter(p => p.categoria_producto === categoria), categoria === 'Todas' ? "Todos los Productos" : `Categoría: ${categoria}`);
-        }
-        function buscarPredictivo() {
-            const texto = document.getElementById('buscador').value; const dropdown = document.getElementById('dropdown-busqueda');
-            if (texto.trim() === '') { dropdown.classList.add('hidden'); return; }
-            const resultados = fuse.search(texto).slice(0, 8); dropdown.innerHTML = '';
-            if(resultados.length === 0) dropdown.innerHTML = `<div class="p-4 text-sm text-gray-500 text-center">No encontrado</div>`; 
-            else resultados.forEach(res => {
-                const prodDataStr = encodeURIComponent(JSON.stringify(res.item));
-                dropdown.innerHTML += `<div class="flex items-center gap-3 p-3 border-b hover:bg-gray-50 cursor-pointer" onclick="abrirPDPObj('${prodDataStr}'); cerrarDropdown();"><img src="${res.item.imagen_principal}" class="w-10 h-10 object-contain"><div class="flex-1"><h4 class="text-xs font-normal line-clamp-1">${res.item.nombre}</h4><span class="text-xs font-semibold text-gray-900">US $${(Number(res.item.precio_detal_usd) || 0).toFixed(2)}</span></div></div>`;
-            });
-            dropdown.classList.remove('hidden');
-        }
-        function cerrarDropdown() { document.getElementById('dropdown-busqueda').classList.add('hidden'); }
-
-        // --- CHECKOUT ---
-        function abrirCheckout() { if(carrito.length === 0) return alert("Agrega productos al carrito."); toggleCarrito(); document.getElementById('modal-checkout').classList.remove('hidden'); }
-        function cerrarCheckout() { document.getElementById('modal-checkout').classList.add('hidden'); }
-        async function buscarCliente() {
-            const cedula = document.getElementById('input-cedula').value.trim(); const msg = document.getElementById('msg-cliente');
-            if(!cedula) return; msg.innerText = "Buscando..."; msg.className = "text-xs mt-1 text-gray-500";
-            try {
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/clientes?documento_identidad=eq.${document.getElementById('tipo-doc').value}${cedula}`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } });
-                const datos = await res.json();
-                if(datos.length > 0) {
-                    const d = datos[0]; document.getElementById('cliente-nombre').value = d.nombre_razon_social || ''; document.getElementById('cliente-telefono').value = d.celular || d.celular_principal || d.telefono || '';
-                    msg.innerHTML = '<i class="fa-solid fa-check-circle"></i> Cliente encontrado'; msg.className = "text-xs mt-1 text-green-600 font-bold";
-                } else {
-                    document.getElementById('cliente-nombre').value = ''; document.getElementById('cliente-telefono').value = ''; msg.innerText = "Nuevo cliente."; msg.className = "text-xs mt-1 text-[#E67E22]";
-                }
-            } catch (e) { msg.innerText = "Ingresa datos a mano."; }
-        }
-        function enviarPedidoWhatsApp() {
-            const nombre = document.getElementById('cliente-nombre').value.trim();
-            if(!nombre) return alert("Ingresa tu nombre.");
-            let t = `*NUEVO PEDIDO - P&P Soluciones* 🛒\n-----------------------------------\n*Cliente:* ${nombre}\n-----------------------------------\n`;
-            carrito.forEach(i => { t += `▪️ *${i.cantidad}x* ${i.nombre} (US $${calcularPrecioUnitario(i, i.cantidad).toFixed(2)})\n`; });
-            t += `-----------------------------------\n*Total USD:* US $${totalUsdGlobal.toFixed(2)}\n*Total Bs:* Bs. ${(totalUsdGlobal * tasaBcvGlobal).toFixed(2)}`;
-            window.open(`https://wa.me/${NUMERO_WHATSAPP}?text=${encodeURIComponent(t)}`, '_blank'); cerrarCheckout(); carrito = []; actualizarUI_Carrito();
-        }
     </script>
 </body>
 </html>
