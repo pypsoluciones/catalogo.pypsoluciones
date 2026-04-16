@@ -21,9 +21,7 @@
                 <input type="text" id="buscador" oninput="buscarPredictivo()" placeholder="Busca en P&P Soluciones..." 
                        class="w-full text-gray-900 rounded-full pl-4 pr-10 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#E67E22]">
                 <i class="fa-solid fa-search absolute right-4 top-2.5 text-gray-400"></i>
-                
-                <div id="dropdown-busqueda" class="absolute w-full bg-white shadow-2xl rounded-b-lg mt-1 hidden z-50 max-h-80 overflow-y-auto border border-gray-200">
-                    </div>
+                <div id="dropdown-busqueda" class="absolute w-full bg-white shadow-2xl rounded-b-lg mt-1 hidden z-50 max-h-80 overflow-y-auto border border-gray-200"></div>
             </div>
 
             <div class="flex items-center gap-4">
@@ -44,7 +42,10 @@
     </div>
 
     <main class="max-w-7xl mx-auto px-4 py-8 relative z-10" onclick="cerrarDropdown()">
-        <h2 id="titulo-seccion" class="text-2xl font-black text-[#143B62] mb-6 border-l-4 border-[#E67E22] pl-3">Todos los Productos</h2>
+        <div class="flex justify-between items-end mb-6 border-b pb-2">
+            <h2 id="titulo-seccion" class="text-2xl font-black text-[#143B62] border-l-4 border-[#E67E22] pl-3">Todos los Productos</h2>
+            <button onclick="mostrarFavoritos()" class="text-sm font-bold text-red-500 hover:text-red-700 transition"><i class="fa-solid fa-heart"></i> Ver Favoritos</button>
+        </div>
         
         <div id="catalogo" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
             <div class="col-span-full flex flex-col items-center justify-center py-20 text-[#143B62]">
@@ -52,7 +53,6 @@
                 <p class="font-bold text-lg animate-pulse">Preparando el catálogo...</p>
             </div>
         </div>
-        
         <div id="observador-scroll" class="h-10 mt-4 flex justify-center items-center"></div>
     </main>
 
@@ -79,17 +79,17 @@
     </div>
 
     <script>
-        // --- TUS LLAVES DE SUPABASE AQUÍ ---
-        const SUPABASE_URL = 'https://icvfmdvvochzaktugqvj.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImljdmZtZHZ2b2NoemFrdHVncXZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyNDEzMzEsImV4cCI6MjA5MTgxNzMzMX0.gO3D39piT6KGbMMOzrPGWXUp5-g_nOBAgJ-nwPv8IcQ';
+        // --- TUS LLAVES AQUÍ ---
+        const SUPABASE_URL = 'PAGA_AQUI_TU_URL_DE_SUPABASE';
+        const SUPABASE_KEY = 'PEGA_AQUI_TU_LLAVE_ANON_LARGUISIMA';
 
         let todosLosProductos = [];
         let fuse; 
         let categoriaActiva = 'Todas';
         let tasaBcvGlobal = 1;
         let carrito = [];
+        let favoritos = JSON.parse(localStorage.getItem('pyp_favoritos')) || []; // Cargar favoritos de memoria
 
-        // Variables de Paginación Visual (Infinite Scroll)
         let productosActualesView = []; 
         let indiceCarga = 0;
         const CANTIDAD_POR_PAGINA = 20;
@@ -113,13 +113,11 @@
                 
                 if (!resProd.ok) throw new Error("Fallo DB");
                 todosLosProductos = await resProd.json();
-                
                 fuse = new Fuse(todosLosProductos, { keys: ['nombre', 'categoria', 'sku'], threshold: 0.3, ignoreLocation: true });
 
                 extraerCategorias(todosLosProductos);
                 iniciarVista(todosLosProductos, "Todos los Productos");
 
-                // Configurar Observador para Infinite Scroll
                 const observer = new IntersectionObserver(entries => {
                     if(entries[0].isIntersecting) { cargarMasProductos(); }
                 });
@@ -130,22 +128,48 @@
             }
         }
 
-        // --- SISTEMA DE DIBUJADO POR LOTES (OPTIMIZACIÓN EXTREMA) ---
+        // --- SISTEMA FAVORITOS ---
+        function toggleFavorito(id_producto) {
+            const index = favoritos.indexOf(id_producto);
+            if (index === -1) {
+                favoritos.push(id_producto); // Agregar
+            } else {
+                favoritos.splice(index, 1); // Quitar
+            }
+            localStorage.setItem('pyp_favoritos', JSON.stringify(favoritos)); // Guardar en memoria
+            
+            // Cambiar color visualmente sin recargar
+            const icono = document.getElementById(`icono-fav-${id_producto}`);
+            if(icono) {
+                if(favoritos.includes(id_producto)) {
+                    icono.classList.replace('text-gray-300', 'text-red-500');
+                } else {
+                    icono.classList.replace('text-red-500', 'text-gray-300');
+                }
+            }
+        }
+
+        function mostrarFavoritos() {
+            const prodFavoritos = todosLosProductos.filter(p => favoritos.includes(p.id_producto));
+            iniciarVista(prodFavoritos, "Mis Productos Favoritos ❤️");
+        }
+
+        // --- RENDER Y CARGA ---
         function iniciarVista(productos, titulo) {
             document.getElementById('titulo-seccion').innerText = titulo;
-            document.getElementById('catalogo').innerHTML = ''; // Limpiamos pantalla
-            productosActualesView = productos; // Guardamos la lista que vamos a mostrar
-            indiceCarga = 0; // Reiniciamos el contador
+            document.getElementById('catalogo').innerHTML = ''; 
+            productosActualesView = productos; 
+            indiceCarga = 0; 
             
             if (productos.length === 0) {
                 document.getElementById('catalogo').innerHTML = '<p class="col-span-full text-center text-gray-500 py-10">No se encontraron productos.</p>';
                 return;
             }
-            cargarMasProductos(); // Cargamos el primer lote
+            cargarMasProductos(); 
         }
 
         function cargarMasProductos() {
-            if (indiceCarga >= productosActualesView.length) return; // Ya no hay más
+            if (indiceCarga >= productosActualesView.length) return; 
 
             const contenedor = document.getElementById('catalogo');
             const lote = productosActualesView.slice(indiceCarga, indiceCarga + CANTIDAD_POR_PAGINA);
@@ -159,10 +183,16 @@
                 const textoDesdeUsd = esServicio ? `<span class="text-xs font-bold text-[#143B62] mr-1">Desde</span>` : '';
                 const textoDesdeBs = esServicio ? `Desde ` : '';
                 const prodData = encodeURIComponent(JSON.stringify(prod));
+                
+                // Determinar si ya es favorito para pintarlo rojo al cargar
+                const esFav = favoritos.includes(prod.id_producto);
+                const colorCorazon = esFav ? 'text-red-500' : 'text-gray-300';
 
-                // NOTA TÉCNICA: agregamos loading="lazy" a la imagen
                 contenedor.innerHTML += `
                     <div class="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow border border-gray-200 flex flex-col relative group overflow-hidden fade-in">
+                        <button onclick="toggleFavorito('${prod.id_producto}')" class="absolute top-2 right-2 z-20 text-lg transition-colors hover:scale-110">
+                            <i id="icono-fav-${prod.id_producto}" class="fa-solid fa-heart ${colorCorazon} hover:text-red-400"></i>
+                        </button>
                         <div class="h-40 w-full p-2 flex justify-center items-center bg-white">
                             <img src="${imagen}" alt="${prod.nombre}" loading="lazy" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300">
                         </div>
@@ -179,7 +209,7 @@
                                     <span class="text-[11px] font-bold text-gray-400">${textoDesdeBs}Bs. ${precioBs.toFixed(2)}</span>
                                     ${!esServicio ? `<span class="text-[10px] text-gray-400">Stock: ${prod.stock_actual}</span>` : `<span class="text-[10px] text-gray-400 italic">Disponible</span>`}
                                 </div>
-                                <button onclick="agregarAlCarrito('${prodData}')" class="w-full bg-[#143B62] hover:bg-[#0f2d4a] text-white text-xs font-bold py-2 rounded transition-colors">
+                                <button onclick="agregarAlCarrito('${prodData}')" class="w-full bg-[#143B62] hover:bg-[#0f2d4a] text-white text-xs font-bold py-2 rounded transition-colors relative z-10">
                                     <i class="fa-solid fa-plus"></i> Agregar
                                 </button>
                             </div>
@@ -190,28 +220,20 @@
             indiceCarga += CANTIDAD_POR_PAGINA;
         }
 
-        // --- BÚSQUEDA PREDICTIVA (DROPDOWN) ---
+        // --- BÚSQUEDA PREDICTIVA ---
         function buscarPredictivo() {
             const texto = document.getElementById('buscador').value;
             const dropdown = document.getElementById('dropdown-busqueda');
-            
-            if (texto.trim() === '') {
-                dropdown.classList.add('hidden');
-                return;
-            }
-
-            const resultados = fuse.search(texto).slice(0, 8); // Tomamos solo los mejores 8 resultados
+            if (texto.trim() === '') { dropdown.classList.add('hidden'); return; }
+            const resultados = fuse.search(texto).slice(0, 8); 
             dropdown.innerHTML = '';
-
-            if(resultados.length === 0) {
-                dropdown.innerHTML = `<div class="p-4 text-sm text-gray-500 text-center">No se encontraron productos</div>`;
-            } else {
+            if(resultados.length === 0) { dropdown.innerHTML = `<div class="p-4 text-sm text-gray-500 text-center">No se encontraron productos</div>`; } 
+            else {
                 resultados.forEach(res => {
                     const prod = res.item;
                     const precioUsd = Number(prod.precio_detal_usd) || 0;
                     const imagen = prod.imagen_principal || 'https://via.placeholder.com/50';
                     const prodData = encodeURIComponent(JSON.stringify(prod));
-                    
                     dropdown.innerHTML += `
                         <div class="flex items-center gap-3 p-3 border-b hover:bg-gray-50 cursor-pointer transition" onclick="agregarDesdeBuscador('${prodData}')">
                             <img src="${imagen}" class="w-10 h-10 object-contain rounded border p-0.5">
@@ -227,15 +249,8 @@
             dropdown.classList.remove('hidden');
         }
 
-        function cerrarDropdown() {
-            document.getElementById('dropdown-busqueda').classList.add('hidden');
-        }
-
-        function agregarDesdeBuscador(prodData) {
-            agregarAlCarrito(prodData);
-            cerrarDropdown();
-            document.getElementById('buscador').value = ''; // Limpiamos buscador
-        }
+        function cerrarDropdown() { document.getElementById('dropdown-busqueda').classList.add('hidden'); }
+        function agregarDesdeBuscador(prodData) { agregarAlCarrito(prodData); cerrarDropdown(); document.getElementById('buscador').value = ''; }
 
         // --- CATEGORÍAS ---
         function extraerCategorias(productos) {
@@ -254,26 +269,20 @@
         }
 
         function filtrarPorCategoria(categoria) {
-            categoriaActiva = categoria; 
-            document.getElementById('buscador').value = ''; 
-            cerrarDropdown();
-            
+            categoriaActiva = categoria; document.getElementById('buscador').value = ''; cerrarDropdown();
             const categoriasUnicas = [...new Set(todosLosProductos.map(p => p.categoria).filter(c => c))].sort();
             pintarBotonesCategorias(categoriasUnicas);
-            
             if (categoria === 'Todas') { iniciarVista(todosLosProductos, "Todos los Productos"); } 
             else { iniciarVista(todosLosProductos.filter(p => p.categoria === categoria), `Categoría: ${categoria}`); }
         }
 
-        // --- LÓGICA DEL CARRITO (IGUAL A LA FASE 2) ---
+        // --- CARRITO ---
         function agregarAlCarrito(prodDataEncoded) {
             const prod = JSON.parse(decodeURIComponent(prodDataEncoded));
             const index = carrito.findIndex(item => item.id_producto === prod.id_producto);
             if (index !== -1) { carrito[index].cantidad += 1; } else { prod.cantidad = 1; carrito.push(prod); }
-            actualizarUI_Carrito();
-            abrirCarrito();
+            actualizarUI_Carrito(); abrirCarrito();
         }
-
         function cambiarCantidad(id, delta) {
             const index = carrito.findIndex(item => item.id_producto === id);
             if (index !== -1) {
@@ -282,12 +291,7 @@
                 actualizarUI_Carrito();
             }
         }
-
-        function eliminarDelCarrito(id) {
-            carrito = carrito.filter(item => item.id_producto !== id);
-            actualizarUI_Carrito();
-        }
-
+        function eliminarDelCarrito(id) { carrito = carrito.filter(item => item.id_producto !== id); actualizarUI_Carrito(); }
         function actualizarUI_Carrito() {
             const contenedor = document.getElementById('items-carrito');
             const contadorBurbuja = document.getElementById('contador-carrito');
@@ -296,16 +300,14 @@
             if (carrito.length === 0) {
                 contenedor.innerHTML = `<div class="flex flex-col items-center justify-center h-full text-gray-400"><i class="fa-solid fa-basket-shopping text-4xl mb-3"></i><p>Tu carrito está vacío</p></div>`;
                 contadorBurbuja.classList.add('hidden');
-                document.getElementById('subtotal-usd').innerText = `US $0.00`;
-                document.getElementById('total-bs').innerText = `Bs. 0.00`;
+                document.getElementById('subtotal-usd').innerText = `US $0.00`; document.getElementById('total-bs').innerText = `Bs. 0.00`;
                 return;
             }
 
             contenedor.innerHTML = '';
             carrito.forEach(item => {
                 const precioUsd = Number(item.precio_detal_usd) || 0;
-                subtotalUSD += precioUsd * item.cantidad;
-                totalArticulos += item.cantidad;
+                subtotalUSD += precioUsd * item.cantidad; totalArticulos += item.cantidad;
                 const imagen = item.imagen_principal || 'https://via.placeholder.com/100';
 
                 contenedor.innerHTML += `
@@ -324,25 +326,15 @@
                     </div>
                 `;
             });
-
             document.getElementById('subtotal-usd').innerText = `US $${subtotalUSD.toFixed(2)}`;
             document.getElementById('total-bs').innerText = `Bs. ${(subtotalUSD * tasaBcvGlobal).toFixed(2)}`;
-            contadorBurbuja.innerText = totalArticulos;
-            contadorBurbuja.classList.remove('hidden');
+            contadorBurbuja.innerText = totalArticulos; contadorBurbuja.classList.remove('hidden');
         }
-
         function toggleCarrito() {
-            const sidebar = document.getElementById('sidebar-carrito');
-            const overlay = document.getElementById('overlay-carrito');
-            if (sidebar.classList.contains('translate-x-full')) {
-                sidebar.classList.remove('translate-x-full');
-                overlay.classList.remove('hidden');
-            } else {
-                sidebar.classList.add('translate-x-full');
-                overlay.classList.add('hidden');
-            }
+            const sidebar = document.getElementById('sidebar-carrito'); const overlay = document.getElementById('overlay-carrito');
+            if (sidebar.classList.contains('translate-x-full')) { sidebar.classList.remove('translate-x-full'); overlay.classList.remove('hidden'); } 
+            else { sidebar.classList.add('translate-x-full'); overlay.classList.add('hidden'); }
         }
-
         function procesarPedido() {
             if(carrito.length === 0) return alert("Agrega productos al carrito primero.");
             alert("¡Fase 3! Aquí abriremos el buscador de cédulas y el envío a WhatsApp.");
