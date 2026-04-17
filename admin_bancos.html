@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin | Bancos y Tesorería</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
+        .btn-press:active { transform: scale(0.95); }
+    </style>
+    <script>if (localStorage.getItem('pyp_sesion_activa') !== 'true') window.location.href = 'login.html';</script>
+</head>
+<body class="bg-[#f0f2f5] font-sans flex h-screen overflow-hidden text-gray-800">
+
+    <aside class="w-64 bg-[#143B62] text-white flex flex-col hidden md:flex shrink-0 shadow-xl z-20">
+        <div class="p-6 border-b border-white/10 flex items-center gap-3">
+            <i class="fa-solid fa-layer-group text-[#E67E22] text-3xl"></i>
+            <h2 class="font-bold text-xl tracking-wide">P&P Admin</h2>
+        </div>
+        <nav class="flex-1 p-4 space-y-1 overflow-y-auto custom-scroll text-sm">
+            <a href="admin_dashboard.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-chart-pie w-5"></i> Dashboard</a>
+            <a href="admin_ventas.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-cash-register w-5"></i> Ventas (POS)</a>
+            <a href="admin_presupuestos.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-file-invoice w-5"></i> Cotizaciones</a>
+            <a href="admin_compras.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-truck-ramp-box w-5"></i> Compras</a>
+            <a href="admin_productos.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-boxes-stacked w-5"></i> Inventario</a>
+            <a href="admin_contactos.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-address-book w-5"></i> Directorio</a>
+            <a href="admin_taller.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-screwdriver-wrench w-5"></i> Taller</a>
+            <a href="#" class="flex items-center gap-3 bg-[#E67E22] text-white px-4 py-2.5 rounded-lg font-bold shadow-md"><i class="fa-solid fa-building-columns w-5"></i> Bancos / Cajas</a>
+            <a href="admin_usuarios.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-users-gear w-5"></i> Usuarios y Roles</a>
+            <a href="admin_publicidad.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-image w-5"></i> Publicidad Web</a>
+        </nav>
+    </aside>
+
+    <main class="flex-1 flex flex-col h-screen overflow-hidden bg-gray-50">
+        <header class="bg-white shadow-sm px-6 py-4 flex justify-between items-center z-10 shrink-0">
+            <h1 class="text-xl font-bold text-[#143B62] flex items-center gap-2"><i class="fa-solid fa-building-columns"></i> Gestión de Bancos y Tesorería</h1>
+            <button onclick="abrirModalTransaccion()" class="bg-[#25D366] hover:bg-[#1ebd5c] text-white px-4 py-2 rounded-lg font-bold text-sm shadow-md transition flex items-center gap-2 btn-press">
+                <i class="fa-solid fa-money-bill-transfer"></i> Nueva Transacción
+            </button>
+        </header>
+
+        <div class="flex-1 overflow-auto p-6 custom-scroll">
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div class="bg-[#143B62] rounded-xl p-5 text-white shadow-lg relative overflow-hidden">
+                    <i class="fa-solid fa-dollar-sign absolute -right-4 -bottom-4 text-8xl text-white/10"></i>
+                    <p class="text-xs font-bold text-blue-200 uppercase tracking-wider mb-1">Total Liquidez (USD)</p>
+                    <h2 class="text-4xl font-black text-yellow-400" id="total-usd">$0.00</h2>
+                </div>
+                <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm relative overflow-hidden">
+                    <i class="fa-solid fa-money-bill-1-wave absolute -right-4 -bottom-4 text-8xl text-gray-100"></i>
+                    <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Total Liquidez (Bs)</p>
+                    <h2 class="text-4xl font-black text-[#143B62]" id="total-bs">Bs. 0.00</h2>
+                </div>
+            </div>
+
+            <h3 class="text-sm font-bold text-gray-700 uppercase tracking-wider mb-4 border-l-4 border-[#E67E22] pl-2">Mis Cuentas y Cajas</h3>
+            
+            <div id="grilla-cuentas" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                <div class="col-span-full text-center text-gray-400 py-10"><i class="fa-solid fa-spinner fa-spin text-2xl"></i> Cargando cuentas...</div>
+            </div>
+
+        </div>
+    </main>
+
+    <div id="modal-transaccion" class="fixed inset-0 bg-black/60 z-[100] hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md flex flex-col transform scale-95 transition-transform" id="modal-content">
+            <div class="bg-[#143B62] text-white p-4 flex justify-between items-center">
+                <h3 class="font-bold text-lg"><i class="fa-solid fa-money-bill-transfer mr-2"></i> Registrar Movimiento</h3>
+                <button onclick="cerrarModal()" class="text-gray-300 hover:text-white text-xl"><i class="fa-solid fa-times"></i></button>
+            </div>
+            
+            <form id="form-transaccion" onsubmit="procesarTransaccion(event)" class="p-6 bg-gray-50 space-y-4">
+                
+                <div class="grid grid-cols-3 gap-2 bg-gray-200 p-1 rounded-lg">
+                    <label class="cursor-pointer text-center">
+                        <input type="radio" name="tipo_mov" value="Ingreso" class="peer sr-only" onchange="cambiarVistaForm()">
+                        <div class="peer-checked:bg-green-500 peer-checked:text-white peer-checked:shadow text-gray-600 text-xs font-bold py-2 rounded transition">INGRESO</div>
+                    </label>
+                    <label class="cursor-pointer text-center">
+                        <input type="radio" name="tipo_mov" value="Egreso" class="peer sr-only" checked onchange="cambiarVistaForm()">
+                        <div class="peer-checked:bg-red-500 peer-checked:text-white peer-checked:shadow text-gray-600 text-xs font-bold py-2 rounded transition">EGRESO</div>
+                    </label>
+                    <label class="cursor-pointer text-center">
+                        <input type="radio" name="tipo_mov" value="Transferencia" class="peer sr-only" onchange="cambiarVistaForm()">
+                        <div class="peer-checked:bg-blue-600 peer-checked:text-white peer-checked:shadow text-gray-600 text-xs font-bold py-2 rounded transition">TRANSFERIR</div>
+                    </label>
+                </div>
+
+                <div id="bloque-cuenta-origen">
+                    <label id="lbl-origen" class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Sacar dinero de (Cuenta Origen):</label>
+                    <select id="cuenta-origen" required class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none font-bold text-gray-800 bg-white shadow-sm"></select>
+                </div>
+
+                <div id="bloque-cuenta-destino" class="hidden">
+                    <div class="flex justify-center my-2 text-gray-400"><i class="fa-solid fa-arrow-down"></i></div>
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Mover dinero a (Cuenta Destino):</label>
+                    <select id="cuenta-destino" class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none font-bold text-gray-800 bg-white shadow-sm"></select>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Monto Exacto</label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-2 font-black text-gray-400">#</span>
+                        <input type="number" id="monto-transaccion" step="0.01" min="0.01" required placeholder="0.00" class="w-full border border-gray-300 rounded pl-8 pr-3 py-2 text-lg focus:outline-none focus:border-[#E67E22] font-black text-[#143B62]">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Concepto / Razón</label>
+                    <input type="text" id="concepto-transaccion" required placeholder="Ej: Pago de luz / Depósito de efectivo" class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-[#E67E22]">
+                </div>
+                
+                <div class="pt-4 flex gap-3">
+                    <button type="button" onclick="cerrarModal()" class="flex-1 py-3 bg-gray-200 text-gray-700 font-bold rounded-lg btn-press">Cancelar</button>
+                    <button type="submit" id="btn-guardar" class="flex-[2] py-3 bg-[#143B62] text-white font-bold rounded-lg shadow-md btn-press flex justify-center items-center gap-2">
+                        <i class="fa-solid fa-bolt"></i> Ejecutar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://icvfmdvvochzaktugqvj.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImljdmZtZHZ2b2NoemFrdHVncXZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyNDEzMzEsImV4cCI6MjA5MTgxNzMzMX0.gO3D39piT6KGbMMOzrPGWXUp5-g_nOBAgJ-nwPv8IcQ';
+
+        let cuentas = [];
+
+        window.onload = cargarCuentas;
+
+        async function cargarCuentas() {
+            try {
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/cuentas_bancarias?order=tipo.asc`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } });
+                cuentas = await res.json();
+                
+                let totalUSD = 0; let totalBS = 0;
+                let htmlGrilla = '';
+                let htmlOpciones = '';
+
+                cuentas.forEach(c => {
+                    // Sumar totales
+                    if(c.moneda === 'USD') totalUSD += Number(c.saldo);
+                    else if(c.moneda === 'BS') totalBS += Number(c.saldo);
+
+                    // Estilo de tarjeta según el tipo
+                    let icono = 'fa-building-columns'; let colorFondo = 'bg-white'; let colorIcono = 'text-blue-500';
+                    if(c.tipo === 'Efectivo') { icono = 'fa-money-bill-wave'; colorIcono = 'text-green-500'; }
+                    if(c.tipo === 'Billetera Digital') { icono = 'fa-mobile-screen'; colorIcono = 'text-purple-500'; colorFondo = 'bg-gray-50'; }
+
+                    const simbolo = c.moneda === 'USD' ? '$' : 'Bs.';
+
+                    htmlGrilla += `
+                    <div class="${colorFondo} rounded-xl border border-gray-200 p-5 shadow-sm hover:shadow-md transition relative group">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="w-10 h-10 rounded-full bg-white border border-gray-100 shadow-sm flex items-center justify-center">
+                                <i class="fa-solid ${icono} ${colorIcono} text-lg"></i>
+                            </div>
+                            <span class="text-[9px] font-bold bg-gray-200 text-gray-600 px-2 py-1 rounded uppercase tracking-wider">${c.tipo}</span>
+                        </div>
+                        <h3 class="text-xs font-bold text-gray-500 mb-1">${c.nombre}</h3>
+                        <p class="text-2xl font-black text-[#143B62]">${simbolo} ${Number(c.saldo).toFixed(2)}</p>
+                    </div>`;
+
+                    // Llenar los selects del Modal
+                    htmlOpciones += `<option value="${c.id_cuenta}">${c.nombre} (${c.moneda})</option>`;
+                });
+
+                document.getElementById('grilla-cuentas').innerHTML = htmlGrilla;
+                document.getElementById('total-usd').innerText = `$${totalUSD.toFixed(2)}`;
+                document.getElementById('total-bs').innerText = `Bs. ${totalBS.toFixed(2)}`;
+
+                document.getElementById('cuenta-origen').innerHTML = htmlOpciones;
+                document.getElementById('cuenta-destino').innerHTML = htmlOpciones;
+
+            } catch(e) { alert("Error cargando las cuentas bancarias."); }
+        }
+
+        function abrirModalTransaccion() {
+            document.getElementById('form-transaccion').reset();
+            cambiarVistaForm(); // Para asegurar que empiece en Egreso (o el que esté checked)
+            document.getElementById('modal-transaccion').classList.remove('hidden');
+            setTimeout(() => document.getElementById('modal-content').classList.replace('scale-95', 'scale-100'), 10);
+        }
+
+        function cerrarModal() {
+            document.getElementById('modal-content').classList.replace('scale-100', 'scale-95');
+            setTimeout(() => document.getElementById('modal-transaccion').classList.add('hidden'), 150);
+        }
+
+        function cambiarVistaForm() {
+            const tipo = document.querySelector('input[name="tipo_mov"]:checked').value;
+            const bOrigen = document.getElementById('bloque-cuenta-origen');
+            const bDestino = document.getElementById('bloque-cuenta-destino');
+            const lblOrigen = document.getElementById('lbl-origen');
+
+            if(tipo === 'Ingreso') {
+                bOrigen.classList.remove('hidden'); bDestino.classList.add('hidden');
+                lblOrigen.innerText = 'Ingresar dinero a (Cuenta Destino):';
+            } 
+            else if(tipo === 'Egreso') {
+                bOrigen.classList.remove('hidden'); bDestino.classList.add('hidden');
+                lblOrigen.innerText = 'Sacar dinero de (Cuenta Origen):';
+            } 
+            else if(tipo === 'Transferencia') {
+                bOrigen.classList.remove('hidden'); bDestino.classList.remove('hidden');
+                lblOrigen.innerText = 'Transferir DESDE (Origen):';
+            }
+        }
+
+        async function procesarTransaccion(e) {
+            e.preventDefault();
+            const tipo = document.querySelector('input[name="tipo_mov"]:checked').value;
+            const monto = parseFloat(document.getElementById('monto-transaccion').value);
+            const idOrigen = document.getElementById('cuenta-origen').value;
+            const idDestino = document.getElementById('cuenta-destino').value;
+            const concepto = document.getElementById('concepto-transaccion').value.trim();
+
+            if (tipo === 'Transferencia' && idOrigen === idDestino) {
+                return alert("No puedes transferir dinero a la misma cuenta.");
+            }
+
+            const btn = document.getElementById('btn-guardar');
+            const htmlOrg = btn.innerHTML;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Procesando...`;
+            btn.disabled = true;
+
+            try {
+                // Obtener saldo actual de la cuenta origen
+                const cuentaOrigenData = cuentas.find(c => c.id_cuenta === idOrigen);
+                
+                // VALIDACIONES Y CÁLCULOS
+                if(tipo === 'Egreso') {
+                    const nuevoSaldo = Number(cuentaOrigenData.saldo) - monto;
+                    await actualizarSaldo(idOrigen, nuevoSaldo);
+                } 
+                else if (tipo === 'Ingreso') {
+                    // Si es ingreso, el combo "origen" actúa como destino visualmente
+                    const nuevoSaldo = Number(cuentaOrigenData.saldo) + monto;
+                    await actualizarSaldo(idOrigen, nuevoSaldo);
+                } 
+                else if (tipo === 'Transferencia') {
+                    const cuentaDestinoData = cuentas.find(c => c.id_cuenta === idDestino);
+                    
+                    if(cuentaOrigenData.moneda !== cuentaDestinoData.moneda) {
+                        alert("No puedes transferir directamente entre USD y BS. Usa la función de cambio/venta de divisas.");
+                        throw new Error("Monedas incompatibles");
+                    }
+
+                    const saldoOrigenFinal = Number(cuentaOrigenData.saldo) - monto;
+                    const saldoDestinoFinal = Number(cuentaDestinoData.saldo) + monto;
+
+                    await actualizarSaldo(idOrigen, saldoOrigenFinal);
+                    await actualizarSaldo(idDestino, saldoDestinoFinal);
+                }
+
+                cerrarModal();
+                await cargarCuentas(); // Recarga los cuadritos
+
+            } catch (error) {
+                if(error.message !== "Monedas incompatibles") alert("Ocurrió un error al procesar el movimiento.");
+            } finally {
+                btn.innerHTML = htmlOrg;
+                btn.disabled = false;
+            }
+        }
+
+        // Función auxiliar para actualizar Supabase
+        async function actualizarSaldo(idCuenta, nuevoSaldo) {
+            const res = await fetch(`${SUPABASE_URL}/rest/v1/cuentas_bancarias?id_cuenta=eq.${idCuenta}`, {
+                method: 'PATCH',
+                headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ saldo: nuevoSaldo })
+            });
+            if(!res.ok) throw new Error("Error en base de datos");
+        }
+    </script>
+</body>
+</html>
