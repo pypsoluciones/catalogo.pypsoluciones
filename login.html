@@ -4,8 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>P&P Soluciones | Iniciar Sesión</title>
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="P&P Admin">
+    <meta name="theme-color" content="#143B62">
+    
+    <link rel="manifest" href="admin_manifest.json">
+    <link rel="apple-touch-icon" href="https://i.ibb.co/Y7kFmQbj/Favicon-P-P-Soluciones-Tinified.png">
+    <link rel="shortcut icon" type="image/png" href="https://i.ibb.co/Y7kFmQbj/Favicon-P-P-Soluciones-Tinified.png">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
         .fade-in { animation: fadeIn 0.5s ease-out; }
         .slide-up { animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
@@ -70,6 +81,15 @@
         const SUPABASE_URL = 'https://icvfmdvvochzaktugqvj.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImljdmZtZHZ2b2NoemFrdHVncXZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyNDEzMzEsImV4cCI6MjA5MTgxNzMzMX0.gO3D39piT6KGbMMOzrPGWXUp5-g_nOBAgJ-nwPv8IcQ';
 
+        // REGISTRO DEL SERVICE WORKER PARA QUE SEA INSTALABLE
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                .then(reg => console.log('SW Admin registrado'))
+                .catch(err => console.log('Error SW Admin: ', err));
+            });
+        }
+
         function togglePassword() {
             const input = document.getElementById('login-pass');
             const icono = document.getElementById('icono-ojo');
@@ -100,7 +120,6 @@
             btn.disabled = true; msgError.classList.add('hidden');
 
             try {
-                // Consultamos la base de datos real
                 const res = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?usuario_login=eq.${user}&clave=eq.${pass}`, {
                     headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
                 });
@@ -110,12 +129,10 @@
                 if (data.length > 0) {
                     const usuarioEncontrado = data[0];
                     
-                    // Verificar si está suspendido
                     if(usuarioEncontrado.estatus !== 'Activo') {
                         return mostrarError("Usuario Inactivo o Suspendido.");
                     }
 
-                    // ÉXITO: Guardamos la sesión y los datos del usuario
                     localStorage.setItem('pyp_sesion_activa', 'true');
                     localStorage.setItem('pyp_usuario_rol', usuarioEncontrado.rol);
                     localStorage.setItem('pyp_usuario_nombre', usuarioEncontrado.nombre_completo);
