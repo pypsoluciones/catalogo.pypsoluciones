@@ -3,334 +3,113 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin | Directorio P&P</title>
+    <title>Admin | Directorio</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.js"></script>
     <style>
         .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
         .custom-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
         .btn-press:active { transform: scale(0.95); }
     </style>
-    <script>
-        if (localStorage.getItem('pyp_sesion_activa') !== 'true') window.location.href = 'login.html';
-    </script>
+    <script>if (localStorage.getItem('pyp_sesion_activa') !== 'true') window.location.href = 'login.html';</script>
 </head>
 <body class="bg-[#f0f2f5] font-sans flex h-screen overflow-hidden text-gray-800">
-        <button onclick="cerrarSesion()" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded shadow text-[10px] font-bold transition btn-press" title="Cerrar Sesión">
-                    <i class="fa-solid fa-power-off"></i>
-                </button>
-            </div>
-        <nav class="flex-1 p-4 space-y-2 overflow-y-auto custom-scroll">
-            <a href="admin_dashboard.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-3 rounded-lg font-semibold transition"><i class="fa-solid fa-chart-pie w-5"></i> Dashboard</a>
-            <a href="admin_ventas.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-3 rounded-lg font-semibold transition"><i class="fa-solid fa-cash-register w-5"></i> Ventas (POS)</a>
-            <a href="admin_compras.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-3 rounded-lg font-semibold transition"><i class="fa-solid fa-truck-ramp-box w-5"></i> Compras</a>
-            <a href="admin_productos.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-3 rounded-lg font-semibold transition"><i class="fa-solid fa-boxes-stacked w-5"></i> Inventario</a>
-            <a href="#" class="flex items-center gap-3 bg-[#E67E22] text-white px-4 py-3 rounded-lg font-bold shadow-md"><i class="fa-solid fa-address-book w-5"></i> Directorio</a>
+
+    <aside class="w-64 bg-[#143B62] text-white flex flex-col hidden md:flex shrink-0 shadow-xl z-20">
+        <div class="p-6 border-b border-white/10 flex items-center gap-3">
+            <i class="fa-solid fa-layer-group text-[#E67E22] text-3xl"></i>
+            <h2 class="font-bold text-xl tracking-wide">P&P Admin</h2>
+        </div>
+        <nav class="flex-1 p-4 space-y-1 overflow-y-auto custom-scroll text-sm">
+            <a href="admin_dashboard.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-chart-pie w-5"></i> Dashboard</a>
+            <a href="admin_ventas.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-cash-register w-5"></i> Ventas (POS)</a>
+            <a href="admin_notas.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-truck-fast w-5"></i> Despachos</a>
+            <a href="admin_presupuestos.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-file-invoice w-5"></i> Cotizaciones</a>
+            <a href="admin_rma.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-rotate-left w-5"></i> RMA / Garantías</a>
+            <a href="admin_compras.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-truck-ramp-box w-5"></i> Compras</a>
+            <a href="admin_productos.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-boxes-stacked w-5"></i> Inventario</a>
+            <a href="admin_taller.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-screwdriver-wrench w-5"></i> Taller</a>
+            <a href="admin_bancos.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-building-columns w-5"></i> Bancos / Cajas</a>
+            <a href="admin_nomina.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-hand-holding-dollar w-5"></i> Nómina</a>
+            <a href="admin_usuarios.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-users-gear w-5"></i> Usuarios y Roles</a>
+            <a href="#" class="flex items-center gap-3 bg-[#E67E22] text-white px-4 py-2.5 rounded-lg font-bold shadow-md"><i class="fa-solid fa-address-book w-5"></i> Directorio</a>
         </nav>
-        <aside class="w-64 bg-[#143B62] text-white flex flex-col hidden md:flex shrink-0 shadow-xl z-20">
+        
         <div class="p-4 border-t border-white/10 shrink-0 bg-[#0f2d4a]">
             <button onclick="cerrarSesion()" class="w-full flex items-center justify-center gap-2 bg-red-500/20 text-red-300 hover:bg-red-500 hover:text-white py-2.5 rounded-lg font-bold transition text-sm shadow-sm btn-press">
                 <i class="fa-solid fa-power-off"></i> Cerrar Sesión
             </button>
         </div>
     </aside>
-    </aside>
 
     <main class="flex-1 flex flex-col h-screen overflow-hidden bg-gray-50">
-        
-        <header class="bg-white shadow-sm px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-4 z-10 shrink-0">
-            <h1 class="text-xl font-bold text-[#143B62]"><i class="fa-solid fa-address-book mr-2"></i> Directorio de Contactos</h1>
-            
-            <div class="flex bg-gray-100 p-1 rounded-lg border border-gray-200">
-                <button id="tab-clientes" onclick="cambiarVista('clientes')" class="px-6 py-1.5 rounded-md font-bold text-sm bg-white text-[#143B62] shadow-sm transition">Clientes</button>
-                <button id="tab-proveedores" onclick="cambiarVista('proveedores')" class="px-6 py-1.5 rounded-md font-bold text-sm text-gray-500 hover:text-gray-800 transition">Proveedores</button>
+        <header class="bg-white shadow-sm px-6 py-4 flex justify-between items-center z-10 shrink-0">
+            <div>
+                <h1 class="text-xl font-bold text-[#143B62] flex items-center gap-2"><i class="fa-solid fa-address-book"></i> Directorio de Contactos</h1>
             </div>
             
-            <button onclick="abrirModalNuevo()" class="bg-[#25D366] hover:bg-[#1ebd5c] text-white px-4 py-2 rounded-lg font-bold text-sm shadow-md transition flex items-center gap-2 btn-press">
-                <i class="fa-solid fa-user-plus"></i> <span id="btn-nuevo-texto">Nuevo Cliente</span>
-            </button>
+            <div class="flex items-center gap-3">
+                <div class="bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100 flex items-center gap-2 text-xs font-bold text-[#143B62]">
+                    <i class="fa-solid fa-user-tie"></i> <span id="nombre-usuario">Usuario</span>
+                </div>
+                <button onclick="cerrarSesion()" class="md:hidden text-red-500 hover:text-red-700 text-xl transition btn-press"><i class="fa-solid fa-power-off"></i></button>
+            </div>
         </header>
 
-        <div class="p-4 bg-white border-b border-gray-200">
-            <div class="relative max-w-2xl mx-auto">
-                <i class="fa-solid fa-search absolute left-4 top-3.5 text-gray-400"></i>
-                <input type="text" id="busqueda-contactos" oninput="filtrarTabla()" placeholder="Buscar por RIF, Cédula, Nombre o Empresa..." class="w-full bg-gray-50 border border-gray-300 rounded-xl pl-12 pr-4 py-3 focus:outline-none focus:border-[#E67E22] shadow-sm">
-            </div>
-        </div>
+        <div class="flex-1 overflow-auto p-4 md:p-6 custom-scroll">
+            <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col h-full">
+                
+                <div class="p-4 border-b border-gray-100 flex gap-3 bg-gray-50 justify-between items-center">
+                    <div class="flex gap-2">
+                        <button class="bg-white border border-gray-300 px-4 py-1.5 rounded font-bold text-sm shadow-sm text-[#143B62]">Clientes</button>
+                        <button class="bg-gray-100 text-gray-500 px-4 py-1.5 rounded font-semibold text-sm hover:bg-gray-200 transition">Proveedores</button>
+                    </div>
+                    <button onclick="alert('Módulo de creación en construcción')" class="bg-[#25D366] hover:bg-[#1ebd5c] text-white px-4 py-2 rounded-lg font-bold text-sm shadow-sm transition flex items-center gap-2 btn-press">
+                        <i class="fa-solid fa-plus"></i> <span class="hidden sm:inline">Nuevo Cliente</span>
+                    </button>
+                </div>
 
-        <div class="flex-1 overflow-auto p-4 custom-scroll">
-            <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                <table class="w-full text-left border-collapse min-w-[800px]">
-                    <thead class="bg-[#143B62] text-white text-xs uppercase tracking-wider">
-                        <tr>
-                            <th class="p-4 font-bold rounded-tl-xl">Documento</th>
-                            <th class="p-4 font-bold">Nombre / Razón Social</th>
-                            <th class="p-4 font-bold">Contacto</th>
-                            <th class="p-4 font-bold">Dirección Principal</th>
-                            <th class="p-4 font-bold text-center rounded-tr-xl">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabla-contactos" class="divide-y divide-gray-100">
-                        <tr><td colspan="5" class="p-10 text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin text-2xl"></i> Cargando directorio...</td></tr>
-                    </tbody>
-                </table>
+                <div class="p-4 border-b border-gray-100 bg-white">
+                    <div class="relative">
+                        <i class="fa-solid fa-search absolute left-3 top-2.5 text-gray-400"></i>
+                        <input type="text" id="buscador-contactos" oninput="filtrarContactos()" placeholder="Buscar por RIF, Cédula, Nombre o Empresa..." class="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2 text-sm focus:outline-none focus:border-[#E67E22]">
+                    </div>
+                </div>
+
+                <div class="flex-1 overflow-y-auto custom-scroll">
+                    <table class="w-full text-left text-sm border-collapse">
+                        <thead class="bg-[#143B62] text-white text-[10px] uppercase font-black sticky top-0 z-10">
+                            <tr>
+                                <th class="p-3">Documento</th>
+                                <th class="p-3">Nombre / Razón Social</th>
+                                <th class="p-3">Contacto</th>
+                                <th class="p-3">Dirección Principal</th>
+                                <th class="p-3 text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-contactos" class="divide-y divide-gray-100">
+                            <tr><td colspan="5" class="p-10 text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin text-xl mb-2 block"></i> Cargando directorio...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
             </div>
         </div>
     </main>
 
-    <div id="modal-contacto" class="fixed inset-0 bg-black/60 z-[100] hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg flex flex-col max-h-[90vh] overflow-hidden transform scale-95 transition-transform" id="modal-content">
-            <div class="bg-[#143B62] text-white p-4 flex justify-between items-center">
-                <h3 id="modal-titulo" class="font-bold text-lg"><i class="fa-solid fa-address-card mr-2"></i> Editar Contacto</h3>
-                <button onclick="cerrarModal()" class="text-gray-300 hover:text-white text-xl"><i class="fa-solid fa-times"></i></button>
-            </div>
-            
-            <form id="form-contacto" class="p-6 overflow-y-auto custom-scroll flex-1 space-y-4 bg-gray-50">
-                <input type="hidden" id="edit-id">
-                <input type="hidden" id="edit-doc-original">
-                
-                <div class="bg-white p-4 rounded border border-gray-200 shadow-sm">
-                    <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Documento de Identidad / RIF *</label>
-                    <div class="flex gap-2">
-                        <select id="cont-tipo-doc" class="border border-gray-300 rounded px-2 py-2 bg-gray-50 focus:outline-none font-bold text-[#143B62]">
-                            <option value="V">V</option><option value="E">E</option><option value="J">J</option><option value="G">G</option><option value="C">C</option>
-                        </select>
-                        <input type="text" id="cont-num-doc" required placeholder="Ej: 13087656" class="flex-1 border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-[#E67E22] font-semibold text-gray-800">
-                    </div>
-                </div>
-
-                <div class="bg-white p-4 rounded border border-gray-200 shadow-sm space-y-4">
-                    <div>
-                        <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Nombre o Razón Social *</label>
-                        <input type="text" id="cont-nombre" required class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-[#E67E22] font-bold text-gray-800">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Correo Electrónico</label>
-                        <input type="email" id="cont-correo" class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-[#E67E22] text-gray-800">
-                    </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Celular Principal *</label>
-                            <input type="tel" id="cont-celular" required class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-[#E67E22] text-gray-800 font-semibold">
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Celular / Teléfono 2</label>
-                            <input type="tel" id="cont-celular2" class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-[#E67E22] text-gray-800">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Dirección Fiscal / Principal</label>
-                        <input type="text" id="cont-dir-fiscal" class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-[#E67E22] text-gray-800">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Dirección de Entrega (Opcional)</label>
-                        <input type="text" id="cont-dir-entrega" class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-[#E67E22] text-gray-800">
-                    </div>
-                </div>
-            </form>
-            
-            <div class="p-4 border-t bg-white flex gap-3">
-                <button onclick="cerrarModal()" class="flex-1 py-3 bg-gray-100 text-gray-600 font-bold rounded-lg btn-press">Cancelar</button>
-                <button onclick="guardarContacto()" id="btn-guardar" class="flex-1 py-3 bg-[#25D366] text-white font-bold rounded-lg shadow-lg btn-press flex justify-center items-center gap-2">
-                    <i class="fa-solid fa-save"></i> Guardar
-                </button>
-            </div>
-        </div>
-    </div>
-
     <script>
         const SUPABASE_URL = 'https://icvfmdvvochzaktugqvj.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImljdmZtZHZ2b2NoemFrdHVncXZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyNDEzMzEsImV4cCI6MjA5MTgxNzMzMX0.gO3D39piT6KGbMMOzrPGWXUp5-g_nOBAgJ-nwPv8IcQ';
+        
+        let contactos = [];
 
-        let vistaActual = 'clientes'; // 'clientes' o 'proveedores'
-        let directorioActual = []; 
-        let fuse;
+        window.onload = async () => {
+            const nombre = localStorage.getItem('pyp_usuario_nombre');
+            if(nombre) document.getElementById('nombre-usuario').innerText = nombre.split(' ')[0];
+            await cargarContactos();
+        };
 
-        window.onload = cargarDirectorio;
-
-        function cambiarVista(vista) {
-            vistaActual = vista;
-            
-            // Actualizar botones de pestaña
-            const btnCli = document.getElementById('tab-clientes');
-            const btnProv = document.getElementById('tab-proveedores');
-            
-            if(vista === 'clientes') {
-                btnCli.className = "px-6 py-1.5 rounded-md font-bold text-sm bg-white text-[#143B62] shadow-sm transition";
-                btnProv.className = "px-6 py-1.5 rounded-md font-bold text-sm text-gray-500 hover:text-gray-800 transition";
-                document.getElementById('btn-nuevo-texto').innerText = "Nuevo Cliente";
-            } else {
-                btnProv.className = "px-6 py-1.5 rounded-md font-bold text-sm bg-white text-[#143B62] shadow-sm transition";
-                btnCli.className = "px-6 py-1.5 rounded-md font-bold text-sm text-gray-500 hover:text-gray-800 transition";
-                document.getElementById('btn-nuevo-texto').innerText = "Nuevo Proveedor";
-            }
-            
-            document.getElementById('busqueda-contactos').value = '';
-            cargarDirectorio();
-        }
-
-        async function cargarDirectorio() {
-            document.getElementById('tabla-contactos').innerHTML = '<tr><td colspan="5" class="p-10 text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin text-2xl"></i> Cargando...</td></tr>';
-            try {
-                const tablaSQL = vistaActual === 'clientes' ? 'clientes' : 'proveedores';
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/${tablaSQL}?select=*&order=nombre_razon_social.asc`, { 
-                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } 
-                });
-                
-                if(!res.ok) throw new Error("Error de red");
-                directorioActual = await res.json();
-                
-                fuse = new Fuse(directorioActual, { keys: ['nombre_razon_social', 'documento_identidad', 'celular', 'correo'], threshold: 0.3 });
-                dibujarTabla(directorioActual);
-            } catch (e) {
-                document.getElementById('tabla-contactos').innerHTML = '<tr><td colspan="5" class="p-10 text-center text-red-500 font-bold">Error al cargar la base de datos.</td></tr>';
-            }
-        }
-
-        function dibujarTabla(arr) {
-            const tbody = document.getElementById('tabla-contactos');
-            if(arr.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-gray-400 font-semibold"><i class="fa-solid fa-users-slash text-4xl mb-2 opacity-50 block"></i> No hay ${vistaActual} registrados.</td></tr>`;
-                return;
-            }
-
-            tbody.innerHTML = arr.map(c => {
-                const cStr = encodeURIComponent(JSON.stringify(c));
-                const badgeColor = vistaActual === 'clientes' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700';
-                const cel2 = c["Celular 2"] || c.celular_2 || ''; // Por si acaso las columnas difieren
-                
-                return `
-                <tr class="hover:bg-gray-50 border-b border-gray-100 transition">
-                    <td class="p-4">
-                        <span class="text-xs font-bold ${badgeColor} px-2 py-1 rounded">${c.documento_identidad}</span>
-                    </td>
-                    <td class="p-4">
-                        <p class="font-bold text-gray-800 text-sm">${c.nombre_razon_social}</p>
-                    </td>
-                    <td class="p-4 text-xs text-gray-600">
-                        <p><i class="fa-solid fa-phone mr-1 text-gray-400"></i> ${c.celular || 'N/A'}</p>
-                        ${c.correo ? `<p><i class="fa-solid fa-envelope mr-1 text-gray-400"></i> ${c.correo}</p>` : ''}
-                    </td>
-                    <td class="p-4 text-xs text-gray-500 line-clamp-2 max-w-xs">
-                        ${c.direccion_fiscal || 'Sin dirección registrada'}
-                    </td>
-                    <td class="p-4 text-center">
-                        <button onclick="editarContacto('${cStr}')" class="p-2 bg-blue-50 text-[#143B62] rounded-lg hover:bg-[#143B62] hover:text-white transition btn-press border border-blue-200 shadow-sm" title="Editar">
-                            <i class="fa-solid fa-pen-to-square"></i>
-                        </button>
-                    </td>
-                </tr>`;
-            }).join('');
-        }
-
-        function filtrarTabla() {
-            const texto = document.getElementById('busqueda-contactos').value;
-            if(texto.trim() === '') { dibujarTabla(directorioActual); return; }
-            const resultados = fuse.search(texto).map(r => r.item);
-            dibujarTabla(resultados);
-        }
-
-        // --- MODAL Y FORMULARIO ---
-        function abrirModalNuevo() {
-            document.getElementById('form-contacto').reset();
-            document.getElementById('edit-id').value = '';
-            document.getElementById('edit-doc-original').value = '';
-            document.getElementById('modal-titulo').innerHTML = `<i class="fa-solid fa-user-plus mr-2"></i> Nuevo ${vistaActual === 'clientes' ? 'Cliente' : 'Proveedor'}`;
-            
-            document.getElementById('modal-contacto').classList.remove('hidden');
-            setTimeout(() => document.getElementById('modal-content').classList.replace('scale-95', 'scale-100'), 10);
-        }
-
-        function editarContacto(cStr) {
-            const c = JSON.parse(decodeURIComponent(cStr));
-            document.getElementById('modal-titulo').innerHTML = `<i class="fa-solid fa-user-pen mr-2"></i> Editar ${vistaActual === 'clientes' ? 'Cliente' : 'Proveedor'}`;
-            
-            document.getElementById('edit-id').value = c.id || '';
-            document.getElementById('edit-doc-original').value = c.documento_identidad;
-            
-            // Separar tipo de doc y número
-            const docFull = c.documento_identidad || '';
-            if(docFull.length > 0) {
-                const tipo = docFull.charAt(0).toUpperCase();
-                document.getElementById('cont-tipo-doc').value = tipo;
-                document.getElementById('cont-num-doc').value = docFull.substring(1);
-            }
-
-            document.getElementById('cont-nombre').value = c.nombre_razon_social || '';
-            document.getElementById('cont-correo').value = c.correo || '';
-            document.getElementById('cont-celular').value = c.celular || '';
-            document.getElementById('cont-celular2').value = c["Celular 2"] || c.celular_2 || '';
-            document.getElementById('cont-dir-fiscal').value = c.direccion_fiscal || '';
-            document.getElementById('cont-dir-entrega').value = c.direccion_entrega || '';
-
-            document.getElementById('modal-contacto').classList.remove('hidden');
-            setTimeout(() => document.getElementById('modal-content').classList.replace('scale-95', 'scale-100'), 10);
-        }
-
-        function cerrarModal() {
-            document.getElementById('modal-content').classList.replace('scale-100', 'scale-95');
-            setTimeout(() => document.getElementById('modal-contacto').classList.add('hidden'), 150);
-        }
-
-        async function guardarContacto() {
-            const tipoDoc = document.getElementById('cont-tipo-doc').value;
-            const numDoc = document.getElementById('cont-num-doc').value.trim();
-            const nombre = document.getElementById('cont-nombre').value.trim();
-            
-            if(!numDoc || !nombre) return alert("El documento y el nombre son obligatorios.");
-
-            const data = {
-                documento_identidad: tipoDoc + numDoc,
-                nombre_razon_social: nombre,
-                correo: document.getElementById('cont-correo').value.trim(),
-                celular: document.getElementById('cont-celular').value.trim(),
-                "Celular 2": document.getElementById('cont-celular2').value.trim(),
-                direccion_fiscal: document.getElementById('cont-dir-fiscal').value.trim(),
-                direccion_entrega: document.getElementById('cont-dir-entrega').value.trim()
-            };
-
-            const id = document.getElementById('edit-id').value;
-            const docOriginal = document.getElementById('edit-doc-original').value;
-            const tablaSQL = vistaActual === 'clientes' ? 'clientes' : 'proveedores';
-            
-            const btn = document.getElementById('btn-guardar');
-            const originalHTML = btn.innerHTML;
-            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Guardando...`;
-            btn.disabled = true;
-
-            try {
-                let url = `${SUPABASE_URL}/rest/v1/${tablaSQL}`;
-                let method = 'POST'; // Crear nuevo
-
-                // Si hay docOriginal, significa que estamos editando
-                if(docOriginal) {
-                    url += `?documento_identidad=eq.${docOriginal}`;
-                    method = 'PATCH';
-                }
-
-                const res = await fetch(url, {
-                    method: method,
-                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-
-                if(!res.ok) {
-                    // Posible error de RIF duplicado
-                    if(res.status === 409 || res.status === 400) throw new Error("Ya existe un registro con ese Documento/RIF.");
-                    throw new Error("Error al guardar en la base de datos.");
-                }
-
-                cerrarModal();
-                await cargarDirectorio(); // Recargar la tabla
-                
-            } catch (e) {
-                alert(e.message);
-            } finally {
-                btn.innerHTML = originalHTML;
-                btn.disabled = false;
-            }
-        }
+        // LA FUNCIÓN MAESTRA PARA CERRAR SESIÓN
         function cerrarSesion() {
             if(confirm("¿Estás seguro que deseas cerrar sesión?")) {
                 localStorage.removeItem('pyp_sesion_activa');
@@ -338,6 +117,52 @@
                 localStorage.removeItem('pyp_usuario_nombre');
                 window.location.href = 'login.html';
             }
+        }
+
+        async function cargarContactos() {
+            try {
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/clientes?select=*`, { 
+                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } 
+                });
+                contactos = await res.json();
+                pintarTabla(contactos);
+            } catch(e) {
+                document.getElementById('tabla-contactos').innerHTML = `<tr><td colspan="5" class="p-5 text-center text-red-500 font-bold">Error cargando contactos.</td></tr>`;
+            }
+        }
+
+        function pintarTabla(arr) {
+            const tbody = document.getElementById('tabla-contactos');
+            if(!arr.length) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-gray-500 font-bold">No se encontraron contactos.</td></tr>`;
+                return;
+            }
+            
+            tbody.innerHTML = arr.map(c => `
+                <tr class="hover:bg-gray-50 transition border-b border-gray-100">
+                    <td class="p-4 font-bold text-blue-600 text-xs">${c.documento_identidad || '-'}</td>
+                    <td class="p-4 font-bold text-gray-800">${c.nombre_razon_social || '-'}</td>
+                    <td class="p-4 text-xs text-gray-600">
+                        <div class="flex items-center gap-2 mb-1"><i class="fa-solid fa-phone text-gray-400"></i> ${c.celular || c.celular_principal || 'N/A'}</div>
+                        ${c.correo ? `<div class="flex items-center gap-2"><i class="fa-solid fa-envelope text-gray-400"></i> ${c.correo}</div>` : ''}
+                    </td>
+                    <td class="p-4 text-xs text-gray-500 max-w-[200px] truncate" title="${c.direccion_fiscal || c.direccion_entrega || ''}">
+                        ${c.direccion_fiscal || c.direccion_entrega || 'Sin dirección registrada'}
+                    </td>
+                    <td class="p-4 text-center">
+                        <button onclick="alert('Función de edición en construcción')" class="bg-gray-100 hover:bg-gray-200 text-[#143B62] px-3 py-1.5 rounded shadow-sm transition"><i class="fa-solid fa-pen-to-square"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function filtrarContactos() {
+            const texto = document.getElementById('buscador-contactos').value.toLowerCase();
+            const filtrados = contactos.filter(c => 
+                (c.nombre_razon_social && c.nombre_razon_social.toLowerCase().includes(texto)) || 
+                (c.documento_identidad && c.documento_identidad.toLowerCase().includes(texto))
+            );
+            pintarTabla(filtrados);
         }
     </script>
 </body>
