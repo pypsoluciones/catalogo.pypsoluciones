@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>P&P POS | Facturación y Cotizaciones</title>
+    <title>P&P POS | Facturación y Despachos</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.js"></script>
@@ -14,14 +14,11 @@
         .ticket-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
         .btn-press:active { transform: scale(0.95); transition: transform 0.1s; }
         #reader video { border-radius: 10px; width: 100% !important; }
-        
-        /* CORRECCIÓN: El acordeón solo funciona en pantallas pequeñas (móviles) */
         @media (max-width: 1023px) {
             .seccion-contenido { transition: max-height 0.3s ease-out, opacity 0.2s; overflow: hidden; max-height: 2000px; }
             .seccion-cerrada { max-height: 0 !important; opacity: 0; pointer-events: none; padding-top: 0 !important; padding-bottom: 0 !important; border: none !important; }
         }
         @media (min-width: 1024px) {
-            /* En PC (lg), forzamos a que siempre se vea sin importar las clases del acordeón */
             .seccion-contenido { max-height: none !important; opacity: 1 !important; display: flex !important; }
             #cont-cli { display: block !important; }
         }
@@ -49,10 +46,8 @@
         
         <section class="w-full lg:flex-1 flex flex-col bg-white lg:border-r border-gray-200">
             <button onclick="toggleAcordeon('cont-prod', 'ico-prod')" class="lg:hidden w-full bg-[#143B62] text-white p-3 flex justify-between items-center font-bold text-sm shadow-sm">
-                <span><i class="fa-solid fa-box-open mr-2"></i> 1. Catálogo de Productos</span>
-                <i id="ico-prod" class="fa-solid fa-chevron-up"></i>
+                <span><i class="fa-solid fa-box-open mr-2"></i> 1. Catálogo de Productos</span><i id="ico-prod" class="fa-solid fa-chevron-up"></i>
             </button>
-
             <div id="cont-prod" class="seccion-contenido flex flex-col lg:h-full">
                 <div class="p-3 bg-white border-b sticky top-0 z-10">
                     <div class="relative flex gap-2">
@@ -71,13 +66,12 @@
         <section class="w-full lg:w-[420px] bg-white flex flex-col shrink-0 lg:h-full border-t lg:border-t-0 shadow-xl z-20">
             
             <button onclick="toggleAcordeon('cont-cli', 'ico-cli')" class="lg:hidden w-full bg-gray-800 text-white p-3 flex justify-between items-center font-bold text-sm">
-                <span><i class="fa-solid fa-user-tag mr-2"></i> 2. Datos del Cliente</span>
-                <i id="ico-cli" class="fa-solid fa-chevron-down"></i>
+                <span><i class="fa-solid fa-user-tag mr-2"></i> 2. Datos del Cliente</span><i id="ico-cli" class="fa-solid fa-chevron-down"></i>
             </button>
 
             <div id="cont-cli" class="seccion-contenido seccion-cerrada bg-gray-50 border-b p-3 space-y-2">
                 <div class="flex justify-between items-center">
-                    <span class="text-[10px] font-bold text-gray-500 uppercase">Facturación / Cotización</span>
+                    <span class="text-[10px] font-bold text-gray-500 uppercase">Facturación / Despacho</span>
                     <div class="flex gap-1">
                         <button onclick="abrirModalDirectorio()" class="bg-blue-600 text-white px-2 py-1 rounded text-[10px] font-bold flex items-center gap-1"><i class="fa-solid fa-address-book"></i> Directorio</button>
                         <button onclick="limpiarCliente()" class="bg-gray-400 text-white px-2 py-1 rounded text-[10px]"><i class="fa-solid fa-eraser"></i></button>
@@ -97,8 +91,7 @@
             </div>
 
             <button onclick="toggleAcordeon('cont-car', 'ico-car')" class="lg:hidden w-full bg-[#E67E22] text-white p-3 flex justify-between items-center font-bold text-sm">
-                <span><i class="fa-solid fa-cart-shopping mr-2"></i> 3. Ticket de Compra</span>
-                <i id="ico-car" class="fa-solid fa-chevron-down"></i>
+                <span><i class="fa-solid fa-cart-shopping mr-2"></i> 3. Ticket de Compra</span><i id="ico-car" class="fa-solid fa-chevron-down"></i>
             </button>
 
             <div id="cont-car" class="seccion-contenido seccion-cerrada flex-col lg:flex-1 bg-white">
@@ -111,22 +104,25 @@
                         <div class="flex justify-between"><span>IVA:</span><select id="pos-tipo-iva" onchange="actualizarTicket()" class="bg-transparent border rounded px-1"><option value="0">0%</option><option value="0.16">16%</option></select> <span id="pos-iva" class="font-bold">$0.00</span></div>
                     </div>
                     
-                    <div class="flex justify-between items-end mb-4 border-t pt-2">
+                    <div class="flex justify-between items-end mb-3 border-t pt-2">
                         <div><p class="text-[9px] font-black uppercase text-gray-400">Total a Pagar</p><p class="text-3xl font-black text-[#143B62]" id="pos-total-usd">$0.00</p></div>
                         <div class="text-right text-[#E67E22] font-black text-sm" id="pos-total-bs">Bs. 0.00</div>
                     </div>
 
                     <div class="grid grid-cols-2 gap-2 mb-3">
-                        <select id="pos-metodo-pago" class="border rounded px-2 py-2 text-xs font-bold"><option>Pago Móvil</option><option>Efectivo $</option><option>Zelle</option><option>Punto</option></select>
-                        <button onclick="limpiarTodoTicket()" class="bg-red-50 text-red-500 border border-red-200 rounded text-xs font-bold btn-press">Anular</button>
+                        <select id="pos-metodo-pago" class="border rounded px-2 py-2 text-xs font-bold"><option>Pago Móvil</option><option>Efectivo $</option><option>Zelle</option><option>Punto</option><option>Por Cobrar</option></select>
+                        <button onclick="limpiarTodoTicket()" class="bg-red-50 text-red-500 border border-red-200 rounded text-xs font-bold btn-press">Anular Ticket</button>
                     </div>
 
                     <div class="flex gap-2 pb-2">
-                        <button onclick="procesarTransaccion('Presupuesto')" class="flex-1 bg-gray-800 text-white py-3 rounded-xl font-bold btn-press text-xs flex flex-col items-center justify-center">
-                            <i class="fa-solid fa-file-invoice mb-1"></i> COTIZAR
+                        <button onclick="procesarTransaccion('Presupuesto')" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-2.5 rounded-lg font-bold btn-press text-[10px] flex flex-col items-center justify-center transition">
+                            <i class="fa-solid fa-file-invoice mb-1 text-sm"></i> COTIZAR
                         </button>
-                        <button onclick="procesarTransaccion('Venta')" class="flex-[2] bg-[#25D366] text-white py-3 rounded-xl font-black btn-press text-lg uppercase shadow-lg flex items-center justify-center gap-2">
-                            <i class="fa-solid fa-check-double"></i> VENDER
+                        <button onclick="procesarTransaccion('Nota de Entrega')" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-lg font-bold btn-press text-[10px] flex flex-col items-center justify-center transition shadow-md">
+                            <i class="fa-solid fa-truck-fast mb-1 text-sm"></i> DESPACHAR
+                        </button>
+                        <button onclick="procesarTransaccion('Venta')" class="flex-[1.5] bg-[#25D366] hover:bg-[#1ebd5c] text-white py-2.5 rounded-lg font-black btn-press text-sm uppercase shadow-lg flex flex-col items-center justify-center transition">
+                            <i class="fa-solid fa-check-double mb-1 text-lg"></i> VENDER
                         </button>
                     </div>
                 </div>
@@ -134,21 +130,14 @@
         </section>
     </main>
 
-    <div id="toast-add" class="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-5 py-2 rounded-full shadow-2xl transition-opacity duration-200 opacity-0 pointer-events-none z-[200] font-bold text-xs flex items-center gap-2">
-        <i class="fa-solid fa-check-circle text-green-400 text-base"></i> Agregado al ticket
-    </div>
+    <div id="toast-add" class="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-5 py-2 rounded-full shadow-2xl transition-opacity duration-200 opacity-0 pointer-events-none z-[200] font-bold text-xs flex items-center gap-2"><i class="fa-solid fa-check-circle text-green-400 text-base"></i> Agregado al ticket</div>
 
     <div id="modal-ticket" class="fixed inset-0 bg-black/80 z-[150] hidden flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-sm rounded-xl overflow-hidden flex flex-col max-h-[90vh]">
-            <div class="bg-[#143B62] text-white p-3 flex justify-between items-center shrink-0">
-                <h3 class="font-bold text-sm"><i class="fa-solid fa-receipt mr-2"></i> Documento Generado</h3>
-                <button onclick="cerrarTicket()" class="text-gray-300 hover:text-white text-lg"><i class="fa-solid fa-times"></i></button>
-            </div>
-            <div class="flex-1 overflow-y-auto p-6 bg-gray-100 flex justify-center custom-scroll">
-                <div id="ticket-imprimir" class="bg-white p-5 w-full text-black font-mono text-[11px] leading-snug shadow-xl"></div>
-            </div>
+            <div class="bg-[#143B62] text-white p-3 flex justify-between items-center shrink-0"><h3 class="font-bold text-sm"><i class="fa-solid fa-receipt mr-2"></i> Documento Generado</h3><button onclick="cerrarTicket()" class="text-gray-300 hover:text-white text-lg"><i class="fa-solid fa-times"></i></button></div>
+            <div class="flex-1 overflow-y-auto p-6 bg-gray-100 flex justify-center custom-scroll"><div id="ticket-imprimir" class="bg-white p-5 w-full text-black font-mono text-[11px] leading-snug shadow-xl"></div></div>
             <div class="p-3 bg-white border-t flex gap-2 shrink-0">
-                <button onclick="cerrarTicket()" class="flex-1 bg-gray-200 text-gray-700 py-3 rounded font-bold btn-press">Nueva Venta</button>
+                <button onclick="cerrarTicket()" class="flex-1 bg-gray-200 text-gray-700 py-3 rounded font-bold btn-press">Cerrar</button>
                 <button onclick="imprimirTicket()" class="flex-1 bg-[#E67E22] text-white py-3 rounded font-bold btn-press"><i class="fa-solid fa-print"></i> Imprimir</button>
             </div>
         </div>
@@ -164,46 +153,21 @@
         window.onload = async () => {
             const nombreUsr = localStorage.getItem('pyp_usuario_nombre');
             if(nombreUsr) document.getElementById('nombre-cajero').innerText = nombreUsr.split(' ')[0];
-
             const rT = await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?select=tasa&order=fecha_actualizacion.desc&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }); const dT = await rT.json(); if(dT.length) { tasaBCV = dT[0].tasa; document.getElementById('tasa-actual').innerText = `Bs. ${tasaBCV.toFixed(2)}`; }
             const rP = await fetch(`${SUPABASE_URL}/rest/v1/vista_catalogo_web?select=*&limit=1000`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }); inventario = await rP.json(); fuse = new Fuse(inventario, { keys: ['nombre', 'id_producto_sku'], threshold: 0.3 });
             const rC = await fetch(`${SUPABASE_URL}/rest/v1/clientes?select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }); clientes = rC.ok ? await rC.json() : []; fuseCli = new Fuse(clientes, { keys: ['nombre_razon_social', 'documento_identidad'], threshold: 0.3 });
             pintarCategorias(); pintarGrilla(inventario); actualizarTicket();
         };
 
-        function toggleAcordeon(id, idIco) {
-            if(window.innerWidth >= 1024) return;
-            const c = document.getElementById(id); const i = document.getElementById(idIco);
-            if(c.classList.contains('seccion-cerrada')) { c.classList.remove('seccion-cerrada'); i.className = "fa-solid fa-chevron-up"; } 
-            else { c.classList.add('seccion-cerrada'); i.className = "fa-solid fa-chevron-down"; }
-        }
-
+        function toggleAcordeon(id, idIco) { if(window.innerWidth >= 1024) return; const c = document.getElementById(id); const i = document.getElementById(idIco); if(c.classList.contains('seccion-cerrada')) { c.classList.remove('seccion-cerrada'); i.className = "fa-solid fa-chevron-up"; } else { c.classList.add('seccion-cerrada'); i.className = "fa-solid fa-chevron-down"; } }
         function abrirScanner() { document.getElementById('modal-scanner').classList.remove('hidden'); html5QrCode = new Html5Qrcode("reader"); html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (t) => { cerrarScanner(); const p = inventario.find(x => x.id_producto_sku === t); if(p) { agregarAlTicket(encodeURIComponent(JSON.stringify(p))); if(window.innerWidth < 1024) { document.getElementById('cont-car').classList.remove('seccion-cerrada'); document.getElementById('ico-car').className="fa-solid fa-chevron-up"; } } else alert("Código no encontrado"); }, () => {}); }
         function cerrarScanner() { if(html5QrCode) html5QrCode.stop().then(()=>html5QrCode.clear()); document.getElementById('modal-scanner').classList.add('hidden'); }
-
         function pintarCategorias() { const cats = [...new Set(inventario.map(p => p.categoria_producto).filter(c => c))].sort(); document.getElementById('pos-categorias').innerHTML = `<button onclick="filtrarCat('Todas')" class="px-4 py-1 rounded-full text-[10px] font-bold bg-gray-200">Todas</button>` + cats.map(c => `<button onclick="filtrarCat('${c}')" class="px-4 py-1 rounded-full text-[10px] font-bold bg-gray-200 whitespace-nowrap">${c}</button>`).join(''); }
         function filtrarCat(c) { pintarGrilla(c === 'Todas' ? inventario : inventario.filter(p => p.categoria_producto === c)); }
         function buscarProductoPOS() { const t = document.getElementById('pos-buscador').value; pintarGrilla(t ? fuse.search(t).map(r => r.item) : inventario); }
         
-        function pintarGrilla(arr) { 
-            document.getElementById('pos-contenedor-productos').innerHTML = arr.map(p => `
-                <div class="bg-white border border-gray-200 rounded-xl p-2 flex flex-col h-36 shadow-sm">
-                    <div class="h-20 w-full flex justify-center"><img src="${p.imagen_principal}" class="max-h-full object-contain"></div>
-                    <h4 class="text-[9px] font-bold text-gray-700 line-clamp-2 mt-1 leading-tight">${p.nombre}</h4>
-                    <div class="mt-auto flex justify-between items-end">
-                        <div><p class="text-[8px] text-gray-400 font-mono">${p.id_producto_sku}</p><p class="text-xs font-black text-[#143B62]">$${(Number(p.precio_detal_usd)||0).toFixed(2)}</p></div>
-                        <button onclick="agregarAlTicket('${encodeURIComponent(JSON.stringify(p))}')" class="bg-[#E67E22] text-white w-7 h-7 rounded-lg flex items-center justify-center hover:bg-orange-600 transition btn-press shadow-sm" title="Agregar al Ticket"><i class="fa-solid fa-plus"></i></button>
-                    </div>
-                </div>
-            `).join(''); 
-        }
-
-        function agregarAlTicket(str) { 
-            const p = JSON.parse(decodeURIComponent(str)); const idx = ticket.findIndex(i => i.id_producto_sku === p.id_producto_sku); 
-            if(idx !== -1) ticket[idx].cantidad++; else { p.cantidad = 1; ticket.unshift(p); } actualizarTicket(); 
-            const t = document.getElementById('toast-add'); t.classList.remove('opacity-0'); setTimeout(() => t.classList.add('opacity-0'), 1000);
-        }
-
+        function pintarGrilla(arr) { document.getElementById('pos-contenedor-productos').innerHTML = arr.map(p => `<div class="bg-white border border-gray-200 rounded-xl p-2 flex flex-col h-36 shadow-sm"><div class="h-20 w-full flex justify-center"><img src="${p.imagen_principal}" class="max-h-full object-contain"></div><h4 class="text-[9px] font-bold text-gray-700 line-clamp-2 mt-1 leading-tight">${p.nombre}</h4><div class="mt-auto flex justify-between items-end"><div><p class="text-[8px] text-gray-400 font-mono">${p.id_producto_sku}</p><p class="text-xs font-black text-[#143B62]">$${(Number(p.precio_detal_usd)||0).toFixed(2)}</p></div><button onclick="agregarAlTicket('${encodeURIComponent(JSON.stringify(p))}')" class="bg-[#E67E22] text-white w-7 h-7 rounded-lg flex items-center justify-center hover:bg-orange-600 transition btn-press shadow-sm" title="Agregar"><i class="fa-solid fa-plus"></i></button></div></div>`).join(''); }
+        function agregarAlTicket(str) { const p = JSON.parse(decodeURIComponent(str)); const idx = ticket.findIndex(i => i.id_producto_sku === p.id_producto_sku); if(idx !== -1) ticket[idx].cantidad++; else { p.cantidad = 1; ticket.unshift(p); } actualizarTicket(); const t = document.getElementById('toast-add'); t.classList.remove('opacity-0'); setTimeout(() => t.classList.add('opacity-0'), 1000); }
         function cambiarCant(sku, d) { const i = ticket.findIndex(x => x.id_producto_sku === sku); if(i !== -1) { ticket[i].cantidad += d; if(ticket[i].cantidad <= 0) ticket.splice(i, 1); actualizarTicket(); } }
         function calcularP(p, c) { let u = Number(p.precio_detal_usd)||0; if(p.requerido_precio_3 && c >= p.requerido_precio_3) u = Number(p.precio_tier3_usd); else if(p.requerido_precio_2 && c >= p.requerido_precio_2) u = Number(p.precio_tier2_usd); else if(p.requerido_precio_1 && c >= p.requerido_precio_1) u = Number(p.precio_tier1_usd); return u; }
         
@@ -226,6 +190,7 @@
         function limpiarCliente() { document.getElementById('pos-cedula').value=''; document.getElementById('pos-nombre').value=''; document.getElementById('pos-telefono').value=''; document.getElementById('pos-correo').value=''; document.getElementById('pos-direccion').value=''; }
         function limpiarTodoTicket() { ticket = []; limpiarCliente(); actualizarTicket(); }
 
+        // --- PROCESAMIENTO DUAL (Venta, Cotización, Despacho) ---
         async function procesarTransaccion(tipo) {
             if(!ticket.length) return alert("Carrito vacío");
             const doc = document.getElementById('pos-cedula').value ? document.getElementById('pos-tipo-doc').value + document.getElementById('pos-cedula').value : 'Consumidor Final';
@@ -237,17 +202,27 @@
                     const bC = { documento_identidad: doc, nombre_razon_social: nom, celular: document.getElementById('pos-telefono').value, correo: document.getElementById('pos-correo').value, direccion_fiscal: document.getElementById('pos-direccion').value };
                     await fetch(`${SUPABASE_URL}/rest/v1/clientes?on_conflict=documento_identidad`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' }, body: JSON.stringify(bC) });
                 }
-                const est = tipo === 'Presupuesto' ? 'Pendiente' : 'Completada';
-                const bF = { tipo_transaccion: tipo, cliente_documento: doc, cliente_nombre: nom, subtotal_usd: parseFloat(document.getElementById('pos-subtotal').innerText.replace('$','')), descuento_usd: parseFloat(document.getElementById('pos-descuento').innerText.replace('-$','')), total_usd: parseFloat(document.getElementById('pos-total-usd').innerText.replace('$','')), total_bs: parseFloat(document.getElementById('pos-total-bs').innerText.replace('Bs. ','')), tasa_bcv_aplicada: tasaBCV, metodos_pago: document.getElementById('pos-metodo-pago').value, estatus: est };
+                
+                // Lógica de Estatus
+                let estatus = 'Completada'; // Para Ventas
+                if(tipo === 'Presupuesto') estatus = 'Pendiente';
+                if(tipo === 'Nota de Entrega') estatus = 'Por Facturar';
+
+                const bF = { tipo_transaccion: tipo, cliente_documento: doc, cliente_nombre: nom, subtotal_usd: parseFloat(document.getElementById('pos-subtotal').innerText.replace('$','')), descuento_usd: parseFloat(document.getElementById('pos-descuento').innerText.replace('-$','')), total_usd: parseFloat(document.getElementById('pos-total-usd').innerText.replace('$','')), total_bs: parseFloat(document.getElementById('pos-total-bs').innerText.replace('Bs. ','')), tasa_bcv_aplicada: tasaBCV, metodos_pago: document.getElementById('pos-metodo-pago').value, estatus: estatus };
                 const rF = await fetch(`${SUPABASE_URL}/rest/v1/facturas`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, body: JSON.stringify(bF) }); const fac = await rF.json();
+                
                 const bD = ticket.map(i => { const pF = calcularP(i, i.cantidad); return { factura_id: fac[0].id_factura, producto_sku: i.id_producto_sku, producto_nombre: i.nombre, cantidad: i.cantidad, precio_unitario_usd: pF, subtotal_usd: (pF*i.cantidad) }; });
                 await fetch(`${SUPABASE_URL}/rest/v1/detalles_factura`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' }, body: JSON.stringify(bD) });
                 
                 generarTicketVisual(fac[0], ticket, tipo);
-            } catch(e) { alert("Error"); } finally { btns.forEach(b => b.disabled = false); }
+            } catch(e) { alert("Error al procesar la transacción."); } finally { btns.forEach(b => b.disabled = false); }
         }
 
         function generarTicketVisual(factura, items, tipo) {
+            let tituloDoc = 'FACTURA DE VENTA';
+            if(tipo === 'Presupuesto') tituloDoc = 'COTIZACIÓN';
+            if(tipo === 'Nota de Entrega') tituloDoc = 'NOTA DE ENTREGA (Despacho)';
+
             let html = `
                 <div style="text-align:center; border-bottom: 1px dashed #000; padding-bottom: 10px; margin-bottom: 10px;">
                     <h2 style="font-size: 16px; font-weight: bold; margin:0;">P&P SOLUCIONES</h2>
@@ -255,7 +230,7 @@
                     <p style="margin:2px 0;">WhatsApp: +58 414-0285806</p>
                 </div>
                 <div style="text-align:center; border-bottom: 1px dashed #000; padding-bottom: 10px; margin-bottom: 10px;">
-                    <h3 style="font-size: 14px; font-weight: bold; margin:0;">${tipo === 'Presupuesto' ? 'COTIZACIÓN' : 'FACTURA DE VENTA'}</h3>
+                    <h3 style="font-size: 14px; font-weight: bold; margin:0;">${tituloDoc}</h3>
                     <p style="margin:2px 0; font-weight: bold;">Nº 00${factura.correlativo}</p>
                     <p style="margin:2px 0;">Fecha: ${new Date().toLocaleDateString('es-ES')} ${new Date().toLocaleTimeString('es-ES')}</p>
                 </div>
@@ -266,13 +241,19 @@
                 <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px;">
                     <tr style="border-bottom: 1px solid #000;"><th style="text-align:left; padding-bottom:2px;">Cant</th><th style="text-align:left; padding-bottom:2px;">Desc</th><th style="text-align:right; padding-bottom:2px;">Total</th></tr>`;
             items.forEach(item => { const precioF = calcularP(item, item.cantidad); html += `<tr><td style="padding: 2px 0; vertical-align: top;">${item.cantidad}</td><td style="padding: 2px 5px 2px 0; vertical-align: top;">${item.nombre}</td><td style="padding: 2px 0; text-align: right; vertical-align: top;">$${(precioF * item.cantidad).toFixed(2)}</td></tr>`; });
+            
+            let msjPie = '¡Gracias por su compra!';
+            if(tipo === 'Presupuesto') msjPie = 'Precios sujetos a cambio sin previo aviso.';
+            if(tipo === 'Nota de Entrega') msjPie = 'Documento de entrega. Por facturar.';
+
             html += `</table>
                 <div style="border-top: 1px dashed #000; padding-top: 10px; text-align: right;">
                     <p style="margin:2px 0;">Subtotal: $${factura.subtotal_usd.toFixed(2)}</p>
                     <p style="margin:2px 0;">Descuento: -$${factura.descuento_usd.toFixed(2)}</p>
                     <h3 style="margin:5px 0; font-size: 14px;">TOTAL USD: $${factura.total_usd.toFixed(2)}</h3>
                     <h3 style="margin:0; font-size: 12px;">TOTAL Bs: ${factura.total_bs.toFixed(2)}</h3>
-                </div>`;
+                </div>
+                <div style="text-align:center; margin-top: 15px;"><p style="margin:0; font-weight:bold;">*** ${msjPie} ***</p></div>`;
             document.getElementById('ticket-imprimir').innerHTML = html; document.getElementById('modal-ticket').classList.remove('hidden');
         }
         function cerrarTicket() { document.getElementById('modal-ticket').classList.add('hidden'); limpiarTodoTicket(); }
