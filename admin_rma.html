@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin | Garantías y Devoluciones (RMA)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
+        .btn-press:active { transform: scale(0.95); }
+    </style>
+    <script>if (localStorage.getItem('pyp_sesion_activa') !== 'true') window.location.href = 'login.html';</script>
+</head>
+<body class="bg-[#f0f2f5] font-sans flex h-screen overflow-hidden text-gray-800">
+
+    <aside class="w-64 bg-[#143B62] text-white flex flex-col hidden md:flex shrink-0 shadow-xl z-20">
+        <div class="p-6 border-b border-white/10 flex items-center gap-3">
+            <i class="fa-solid fa-layer-group text-[#E67E22] text-3xl"></i>
+            <h2 class="font-bold text-xl tracking-wide">P&P Admin</h2>
+        </div>
+        <nav class="flex-1 p-4 space-y-1 overflow-y-auto custom-scroll text-sm">
+            <a href="admin_dashboard.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-chart-pie w-5"></i> Dashboard</a>
+            <a href="admin_ventas.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-cash-register w-5"></i> Ventas (POS)</a>
+            <a href="admin_notas.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-truck-fast w-5"></i> Despachos</a>
+            <a href="admin_presupuestos.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-file-invoice w-5"></i> Cotizaciones</a>
+            <a href="#" class="flex items-center gap-3 bg-[#E67E22] text-white px-4 py-2.5 rounded-lg font-bold shadow-md"><i class="fa-solid fa-rotate-left w-5"></i> RMA / Garantías</a>
+            <a href="admin_compras.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-truck-ramp-box w-5"></i> Compras</a>
+            <a href="admin_productos.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-boxes-stacked w-5"></i> Inventario</a>
+            <a href="admin_taller.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-screwdriver-wrench w-5"></i> Taller</a>
+            <a href="admin_bancos.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-building-columns w-5"></i> Bancos / Cajas</a>
+            <a href="admin_usuarios.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-users-gear w-5"></i> Usuarios y Roles</a>
+            <a href="admin_contactos.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-address-book w-5"></i> Directorio</a>
+        </nav>
+    </aside>
+
+    <main class="flex-1 flex flex-col h-screen overflow-hidden bg-gray-50">
+        <header class="bg-white shadow-sm px-6 py-4 flex justify-between items-center z-10 shrink-0">
+            <div>
+                <h1 class="text-xl font-bold text-[#143B62] flex items-center gap-2"><i class="fa-solid fa-rotate-left"></i> Devoluciones y Garantías (RMA)</h1>
+                <p class="text-xs text-gray-500 font-bold mt-1">Gestión de reclamos y cambios de mercancía defectuosa.</p>
+            </div>
+            <button onclick="abrirModalRMA()" class="bg-[#25D366] hover:bg-[#1ebd5c] text-white px-4 py-2 rounded-lg font-bold text-sm shadow-md transition flex items-center gap-2 btn-press">
+                <i class="fa-solid fa-plus-circle"></i> Nuevo Reclamo
+            </button>
+        </header>
+
+        <div class="flex-1 overflow-auto p-4 md:p-6 custom-scroll">
+            <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                <table class="w-full text-left text-sm border-collapse">
+                    <thead class="bg-[#143B62] text-white text-[10px] uppercase font-black">
+                        <tr>
+                            <th class="p-4 rounded-tl-xl">RMA #</th>
+                            <th class="p-4">Cliente / Factura</th>
+                            <th class="p-4">Producto Devuelto</th>
+                            <th class="p-4">Motivo</th>
+                            <th class="p-4 text-center">Estatus</th>
+                            <th class="p-4 text-center rounded-tr-xl">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-rma" class="divide-y divide-gray-100">
+                        <tr><td colspan="6" class="p-10 text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin text-xl"></i> Cargando reclamos...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <div id="modal-rma" class="fixed inset-0 bg-black/60 z-[100] hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg flex flex-col transform scale-95 transition-transform" id="modal-content">
+            <div class="bg-[#143B62] text-white p-4 flex justify-between items-center">
+                <h3 class="font-bold text-lg"><i class="fa-solid fa-rotate-left mr-2"></i> Ingresar Reclamo (RMA)</h3>
+                <button onclick="cerrarModal()" class="text-gray-300 hover:text-white text-xl"><i class="fa-solid fa-times"></i></button>
+            </div>
+            
+            <form id="form-rma" onsubmit="guardarRMA(event)" class="p-6 bg-gray-50 space-y-4">
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Nº Factura Ref.</label>
+                        <input type="text" id="rma-factura" placeholder="Ej: 00125" class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:border-[#E67E22] outline-none font-bold text-gray-800">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Nombre del Cliente *</label>
+                        <input type="text" id="rma-cliente" required placeholder="Nombre..." class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:border-[#E67E22] outline-none font-semibold text-gray-800">
+                    </div>
+                </div>
+
+                <div class="bg-white p-3 border border-gray-200 rounded-lg space-y-3">
+                    <h4 class="text-xs font-bold text-gray-400 uppercase border-b pb-1">Datos del Producto</h4>
+                    <div class="grid grid-cols-3 gap-2">
+                        <div class="col-span-2">
+                            <label class="block text-[10px] font-bold text-gray-500 mb-1">Nombre del Producto *</label>
+                            <input type="text" id="rma-prod-nombre" required placeholder="Ej: Memoria RAM 8GB" class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-500 mb-1">SKU / Código</label>
+                            <input type="text" id="rma-prod-sku" placeholder="SKU..." class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm outline-none">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-500 mb-1">Cantidad Devuelta</label>
+                        <input type="number" id="rma-cantidad" min="1" value="1" class="w-24 border border-gray-300 rounded px-2 py-1.5 text-sm outline-none font-bold">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Motivo del Reclamo *</label>
+                    <textarea id="rma-motivo" required rows="2" placeholder="Ej: El equipo no enciende..." class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:border-[#E67E22] outline-none"></textarea>
+                </div>
+                
+                <div class="pt-4 flex gap-3">
+                    <button type="button" onclick="cerrarModal()" class="flex-1 py-3 bg-gray-200 text-gray-700 font-bold rounded-lg btn-press">Cancelar</button>
+                    <button type="submit" id="btn-guardar" class="flex-[2] py-3 bg-[#143B62] text-white font-bold rounded-lg shadow-md btn-press flex justify-center items-center gap-2">
+                        Registrar Ingreso
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-gestionar" class="fixed inset-0 bg-black/60 z-[100] hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm flex flex-col transform scale-95 transition-transform" id="modal-gestionar-content">
+            <div class="bg-orange-500 text-white p-4 flex justify-between items-center">
+                <h3 class="font-bold text-lg"><i class="fa-solid fa-clipboard-check mr-2"></i> Resolver Garantía</h3>
+                <button onclick="cerrarGestionar()" class="text-white hover:text-gray-200 text-xl"><i class="fa-solid fa-times"></i></button>
+            </div>
+            
+            <div class="p-6 bg-gray-50 space-y-4">
+                <input type="hidden" id="gest-id">
+                <p class="text-xs text-gray-600 font-bold mb-4">Selecciona el dictamen final para este reclamo:</p>
+                
+                <div class="space-y-2">
+                    <button onclick="actualizarEstatus('Aprobado - Cambio')" class="w-full bg-green-100 hover:bg-green-600 hover:text-white text-green-700 font-bold py-3 rounded-lg border border-green-200 transition text-sm flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-box"></i> Aprobar: Cambio Físico
+                    </button>
+                    <button onclick="actualizarEstatus('Aprobado - Nota Crédito')" class="w-full bg-blue-100 hover:bg-blue-600 hover:text-white text-blue-700 font-bold py-3 rounded-lg border border-blue-200 transition text-sm flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-file-invoice-dollar"></i> Aprobar: Nota de Crédito
+                    </button>
+                    <button onclick="actualizarEstatus('Rechazado')" class="w-full bg-red-100 hover:bg-red-600 hover:text-white text-red-700 font-bold py-3 rounded-lg border border-red-200 transition text-sm flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-ban"></i> Rechazar Reclamo
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://icvfmdvvochzaktugqvj.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImljdmZtZHZ2b2NoemFrdHVncXZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyNDEzMzEsImV4cCI6MjA5MTgxNzMzMX0.gO3D39piT6KGbMMOzrPGWXUp5-g_nOBAgJ-nwPv8IcQ';
+
+        window.onload = cargarRMAs;
+
+        async function cargarRMAs() {
+            try {
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/rma_garantias?order=fecha_ingreso.desc`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } });
+                const data = await res.json();
+                
+                const tbody = document.getElementById('tabla-rma');
+                if(!data.length) { tbody.innerHTML = `<tr><td colspan="6" class="p-10 text-center text-gray-400 font-bold"><i class="fa-solid fa-box-open text-4xl mb-3 block opacity-50"></i> No hay reclamos activos.</td></tr>`; return; }
+
+                tbody.innerHTML = data.map(c => {
+                    let badgeColor = 'bg-orange-100 text-orange-600 border-orange-200 animate-pulse';
+                    if(c.estatus.includes('Aprobado')) badgeColor = 'bg-green-100 text-green-700 border-green-200';
+                    if(c.estatus === 'Rechazado') badgeColor = 'bg-red-100 text-red-700 border-red-200 opacity-70';
+                    
+                    let badge = `<span class="px-3 py-1 rounded-full text-[9px] font-black border ${badgeColor} uppercase">${c.estatus}</span>`;
+                    
+                    let btn = `<button onclick="abrirGestionar('${c.id_rma}')" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded shadow-sm text-xs font-bold transition flex justify-center items-center gap-1 mx-auto"><i class="fa-solid fa-cog"></i> Resolver</button>`;
+                    if(c.estatus !== 'En Revisión') btn = `<span class="text-gray-300 font-bold text-xs"><i class="fa-solid fa-lock"></i> Cerrado</span>`;
+                    
+                    return `
+                    <tr class="hover:bg-gray-50 transition border-b border-gray-100">
+                        <td class="p-4 font-mono font-bold text-gray-500">RMA-00${c.correlativo}</td>
+                        <td class="p-4"><p class="font-bold text-[#143B62]">${c.cliente_nombre}</p><p class="text-[9px] text-gray-400">Fac: ${c.factura_referencia || 'N/A'}</p></td>
+                        <td class="p-4"><p class="text-xs font-bold text-gray-700">${c.producto_nombre}</p><p class="text-[9px] text-gray-400">Cant: ${c.cantidad} | SKU: ${c.producto_sku || 'N/A'}</p></td>
+                        <td class="p-4 text-xs text-gray-500 italic">"${c.motivo_reclamo}"</td>
+                        <td class="p-4 text-center">${badge}</td>
+                        <td class="p-4 text-center">${btn}</td>
+                    </tr>`;
+                }).join('');
+            } catch(e) { alert("Error cargando RMAs."); }
+        }
+
+        function abrirModalRMA() {
+            document.getElementById('form-rma').reset();
+            document.getElementById('modal-rma').classList.remove('hidden');
+            setTimeout(() => document.getElementById('modal-content').classList.replace('scale-95', 'scale-100'), 10);
+        }
+
+        function cerrarModal() {
+            document.getElementById('modal-content').classList.replace('scale-100', 'scale-95');
+            setTimeout(() => document.getElementById('modal-rma').classList.add('hidden'), 150);
+        }
+
+        async function guardarRMA(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btn-guardar');
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Registrando...`; btn.disabled = true;
+
+            try {
+                const data = {
+                    factura_referencia: document.getElementById('rma-factura').value.trim(),
+                    cliente_nombre: document.getElementById('rma-cliente').value.trim(),
+                    producto_nombre: document.getElementById('rma-prod-nombre').value.trim(),
+                    producto_sku: document.getElementById('rma-prod-sku').value.trim(),
+                    cantidad: parseFloat(document.getElementById('rma-cantidad').value) || 1,
+                    motivo_reclamo: document.getElementById('rma-motivo').value.trim(),
+                    estatus: 'En Revisión'
+                };
+
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/rma_garantias`, {
+                    method: 'POST',
+                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if(!res.ok) throw new Error("Error registrando RMA");
+
+                cerrarModal();
+                cargarRMAs();
+            } catch(error) {
+                alert("Error al registrar la garantía.");
+            } finally {
+                btn.innerHTML = `Registrar Ingreso`; btn.disabled = false;
+            }
+        }
+
+        // --- LÓGICA DE RESOLUCIÓN ---
+        function abrirGestionar(id) {
+            document.getElementById('gest-id').value = id;
+            document.getElementById('modal-gestionar').classList.remove('hidden');
+            setTimeout(() => document.getElementById('modal-gestionar-content').classList.replace('scale-95', 'scale-100'), 10);
+        }
+
+        function cerrarGestionar() {
+            document.getElementById('modal-gestionar-content').classList.replace('scale-100', 'scale-95');
+            setTimeout(() => document.getElementById('modal-gestionar').classList.add('hidden'), 150);
+        }
+
+        async function actualizarEstatus(nuevoEstatus) {
+            if(!confirm(`¿Estás seguro de marcar este reclamo como: ${nuevoEstatus}?`)) return;
+            const id = document.getElementById('gest-id').value;
+
+            try {
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/rma_garantias?id_rma=eq.${id}`, {
+                    method: 'PATCH',
+                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ estatus: nuevoEstatus })
+                });
+
+                if(!res.ok) throw new Error("Error actualizando");
+                cerrarGestionar();
+                cargarRMAs();
+                
+                if(nuevoEstatus === 'Aprobado - Cambio') alert("Recuerda procesar una Venta en 0$ o una Nota de Entrega para sacar el producto de reemplazo del inventario.");
+
+            } catch(e) { alert("Error al resolver el reclamo."); }
+        }
+    </script>
+</body>
+</html>
