@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>P&P Admin | Ingreso de Compras</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.js"></script>
+    <style>
+        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
+        .btn-press:active { transform: scale(0.95); }
+    </style>
+    <script>
+        if (localStorage.getItem('pyp_sesion_activa') !== 'true') window.location.href = 'login.html';
+    </script>
+</head>
+<body class="bg-[#f0f2f5] font-sans flex h-screen overflow-hidden text-gray-800">
+
+    <aside class="w-64 bg-[#143B62] text-white flex flex-col hidden md:flex shrink-0 shadow-xl z-20">
+        <div class="p-6 border-b border-white/10 flex items-center gap-3">
+            <i class="fa-solid fa-layer-group text-[#E67E22] text-3xl"></i>
+            <h2 class="font-bold text-xl tracking-wide">P&P Admin</h2>
+        </div>
+        <nav class="flex-1 p-4 space-y-2">
+            <a href="admin_dashboard.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-3 rounded-lg font-semibold transition"><i class="fa-solid fa-chart-pie w-5"></i> Dashboard</a>
+            <a href="admin_ventas.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-3 rounded-lg font-semibold transition"><i class="fa-solid fa-cash-register w-5"></i> Ventas (POS)</a>
+            <a href="#" class="flex items-center gap-3 bg-[#E67E22] text-white px-4 py-3 rounded-lg font-bold shadow-md"><i class="fa-solid fa-truck-ramp-box w-5"></i> Ingreso Compras</a>
+            <a href="admin_productos.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-3 rounded-lg font-semibold transition"><i class="fa-solid fa-boxes-stacked w-5"></i> Inventario</a>
+        </nav>
+    </aside>
+
+    <main class="flex-1 flex flex-col h-screen overflow-hidden bg-gray-50">
+        
+        <header class="bg-white shadow-sm px-6 py-4 flex justify-between items-center z-10 shrink-0">
+            <h1 class="text-xl font-bold text-[#143B62]"><i class="fa-solid fa-truck-ramp-box mr-2"></i> Recepción de Mercancía</h1>
+            <div class="text-sm font-bold bg-green-50 text-green-700 px-3 py-1 rounded border border-green-200">
+                Tasa Actual: <span id="tasa-actual">Cargando...</span>
+            </div>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-4 custom-scroll flex flex-col lg:flex-row gap-4">
+            
+            <div class="w-full lg:w-1/3 flex flex-col gap-4 shrink-0">
+                
+                <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+                    <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4 border-b pb-2">1. Datos del Proveedor</h3>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-400 uppercase">RIF / Documento *</label>
+                            <div class="flex gap-2">
+                                <select id="prov-tipo" class="border border-gray-300 rounded px-2 py-1.5 text-sm focus:outline-none"><option>J</option><option>G</option><option>V</option><option>E</option></select>
+                                <input type="text" id="prov-rif" placeholder="Ej: 301234567" class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-[#E67E22]">
+                                <button onclick="buscarProveedor()" class="bg-[#143B62] text-white px-3 rounded hover:bg-[#0f2d4a] transition"><i class="fa-solid fa-search"></i></button>
+                            </div>
+                            <p id="msg-prov" class="text-[10px] mt-1 font-bold h-3"></p>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-400 uppercase">Razón Social *</label>
+                            <input type="text" id="prov-nombre" class="w-full border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-[#E67E22] font-semibold text-gray-800">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-400 uppercase">Nº de Factura del Proveedor *</label>
+                            <input type="text" id="prov-factura-num" placeholder="Ej: 001-002345" class="w-full border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-blue-500 font-mono font-bold text-blue-600">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex-1 flex flex-col">
+                    <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4 border-b pb-2">2. Agregar Productos</h3>
+                    <div class="relative mb-3">
+                        <i class="fa-solid fa-barcode absolute left-3 top-2.5 text-gray-400"></i>
+                        <input type="text" id="buscador-prod" oninput="buscarPredictivo()" placeholder="Buscar por SKU o Nombre..." class="w-full bg-gray-50 border border-gray-300 rounded-lg pl-10 pr-4 py-2 text-sm focus:outline-none focus:border-[#143B62]">
+                    </div>
+                    
+                    <div id="lista-busqueda" class="flex-1 overflow-y-auto custom-scroll space-y-2 border border-gray-100 p-2 rounded bg-gray-50">
+                        <p class="text-center text-xs text-gray-400 py-4">Escribe para buscar un producto del catálogo.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex-1 bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col overflow-hidden">
+                <div class="p-4 bg-gray-50 border-b flex justify-between items-center">
+                    <h3 class="text-sm font-bold text-[#143B62] uppercase tracking-wider">3. Detalle de Recepción</h3>
+                    <button onclick="limpiarTodo()" class="text-red-500 hover:text-red-700 text-xs font-bold transition"><i class="fa-solid fa-trash"></i> Limpiar Todo</button>
+                </div>
+                
+                <div class="flex-1 overflow-auto custom-scroll p-4">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="text-[10px] text-gray-400 uppercase border-b-2 border-gray-200">
+                                <th class="pb-2">Producto</th>
+                                <th class="pb-2 text-center">Cant. Recibida</th>
+                                <th class="pb-2 text-right">Costo Unit. (US$)</th>
+                                <th class="pb-2 text-right">Subtotal</th>
+                                <th class="pb-2 text-center"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-recepcion" class="divide-y divide-gray-100">
+                            <tr><td colspan="5" class="py-10 text-center text-gray-400 font-semibold"><i class="fa-solid fa-boxes-packing text-4xl mb-2 opacity-50 block"></i> No has agregado productos a la recepción.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="bg-gray-50 p-5 border-t shrink-0">
+                    <div class="flex justify-end gap-8 mb-4">
+                        <div class="text-right">
+                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Total Compra (USD)</p>
+                            <p class="text-3xl font-black text-[#143B62]" id="total-compra-usd">US$ 0.00</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Total (Bs)</p>
+                            <p class="text-xl font-bold text-[#E67E22]" id="total-compra-bs">Bs. 0.00</p>
+                        </div>
+                    </div>
+                    <button onclick="procesarCompra()" class="w-full bg-[#143B62] hover:bg-[#0f2d4a] text-white font-bold py-3.5 rounded-lg shadow-md transition btn-press text-lg uppercase tracking-wider flex justify-center items-center gap-2">
+                        <i class="fa-solid fa-check-double text-xl"></i> Registrar Compra y Sumar Stock
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        const SUPABASE_URL = 'https://icvfmdvvochzaktugqvj.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImljdmZtZHZ2b2NoemFrdHVncXZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyNDEzMzEsImV4cCI6MjA5MTgxNzMzMX0.gO3D39piT6KGbMMOzrPGWXUp5-g_nOBAgJ-nwPv8IcQ';
+
+        let inventario = []; let fuse; let listaRecepcion = []; let tasaBCV = 1;
+
+        window.onload = async () => {
+            try {
+                const resTasa = await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?select=tasa&order=fecha_actualizacion.desc&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } });
+                const dataTasa = await resTasa.json();
+                if(dataTasa.length > 0) { tasaBCV = dataTasa[0].tasa; document.getElementById('tasa-actual').innerText = `Bs. ${tasaBCV.toFixed(2)}`; }
+
+                const resProd = await fetch(`${SUPABASE_URL}/rest/v1/vista_catalogo_web?select=*&limit=1000`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } });
+                inventario = await resProd.json();
+                fuse = new Fuse(inventario, { keys: ['nombre', 'id_producto_sku'], threshold: 0.3 });
+            } catch(e) { alert("Error cargando base de datos"); }
+        };
+
+        // --- BUSCADOR Y PROVEEDOR ---
+        async function buscarProveedor() {
+            const rif = document.getElementById('prov-rif').value.trim(); const msg = document.getElementById('msg-prov');
+            if(!rif) return; msg.innerText = "Buscando..."; msg.className = "text-[10px] mt-1 text-gray-500 font-bold h-3";
+            try {
+                // Asumiendo que usamos la tabla proveedores o clientes unificada
+                const doc = document.getElementById('prov-tipo').value + rif;
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/proveedores?documento_identidad=eq.${doc}`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } });
+                const datos = await res.json();
+                if(datos.length > 0) { document.getElementById('prov-nombre').value = datos[0].nombre_razon_social; msg.innerHTML = '<i class="fa-solid fa-check text-green-500"></i> Encontrado'; } 
+                else { document.getElementById('prov-nombre').value = ''; msg.innerHTML = '<i class="fa-solid fa-plus text-[#E67E22]"></i> Proveedor Nuevo'; document.getElementById('prov-nombre').focus(); }
+            } catch (e) { msg.innerText = ""; }
+        }
+
+        function buscarPredictivo() {
+            const texto = document.getElementById('buscador-prod').value; const cont = document.getElementById('lista-busqueda');
+            if (texto.trim() === '') { cont.innerHTML = '<p class="text-center text-xs text-gray-400 py-4">Escribe para buscar.</p>'; return; }
+            const resultados = fuse.search(texto).slice(0, 10).map(r => r.item);
+            
+            if(resultados.length === 0) cont.innerHTML = `<p class="text-center text-xs text-red-400 py-4 font-bold">No encontrado</p>`;
+            else cont.innerHTML = resultados.map(p => {
+                const pStr = encodeURIComponent(JSON.stringify(p));
+                return `
+                    <div onclick="agregarARecepcion('${pStr}')" class="bg-white border border-gray-200 p-2 rounded cursor-pointer hover:border-[#143B62] transition flex items-center gap-3 shadow-sm">
+                        <img src="${p.imagen_principal}" class="w-8 h-8 object-contain rounded">
+                        <div><p class="text-xs font-bold text-[#143B62] line-clamp-1">${p.nombre}</p><p class="text-[10px] text-gray-400">${p.id_producto_sku}</p></div>
+                    </div>`;
+            }).join('');
+        }
+
+        // --- RECEPCIÓN Y CÁLCULOS ---
+        function agregarARecepcion(prodStr) {
+            const p = JSON.parse(decodeURIComponent(prodStr));
+            const existe = listaRecepcion.find(item => item.id_producto_sku === p.id_producto_sku);
+            if (!existe) {
+                // Se agrega con Cantidad 1 y Costo 0 (Para que el usuario lo llene)
+                p.cantidad_recibida = 1; p.costo_unitario_usd = 0; listaRecepcion.unshift(p);
+                actualizarTablaRecepcion();
+            }
+            document.getElementById('buscador-prod').value = ''; document.getElementById('lista-busqueda').innerHTML = '';
+        }
+
+        function actualizarLinea(sku, campo, valor) {
+            const index = listaRecepcion.findIndex(item => item.id_producto_sku === sku);
+            if (index !== -1) {
+                listaRecepcion[index][campo] = parseFloat(valor) || 0;
+                actualizarTablaRecepcion();
+            }
+        }
+
+        function eliminarLinea(sku) { listaRecepcion = listaRecepcion.filter(item => item.id_producto_sku !== sku); actualizarTablaRecepcion(); }
+
+        function actualizarTablaRecepcion() {
+            const tbody = document.getElementById('tabla-recepcion'); let totalC = 0;
+            if(listaRecepcion.length === 0) { 
+                tbody.innerHTML = '<tr><td colspan="5" class="py-10 text-center text-gray-400 font-semibold"><i class="fa-solid fa-boxes-packing text-4xl mb-2 opacity-50 block"></i> No has agregado productos.</td></tr>'; 
+                document.getElementById('total-compra-usd').innerText = 'US$ 0.00'; document.getElementById('total-compra-bs').innerText = 'Bs. 0.00'; return; 
+            }
+
+            tbody.innerHTML = listaRecepcion.map(item => {
+                const subT = item.cantidad_recibida * item.costo_unitario_usd; totalC += subT;
+                return `
+                    <tr class="border-b border-gray-100 hover:bg-gray-50 transition">
+                        <td class="py-2">
+                            <p class="text-xs font-bold text-[#143B62] line-clamp-1">${item.nombre}</p>
+                            <p class="text-[9px] text-gray-400">${item.id_producto_sku}</p>
+                        </td>
+                        <td class="py-2 text-center w-24">
+                            <input type="number" value="${item.cantidad_recibida}" min="1" onchange="actualizarLinea('${item.id_producto_sku}', 'cantidad_recibida', this.value)" class="w-16 border border-gray-300 rounded px-1 py-1 text-center text-sm font-bold focus:border-[#E67E22] outline-none">
+                        </td>
+                        <td class="py-2 text-right w-28">
+                            <div class="flex items-center justify-end text-sm">
+                                <span class="text-gray-400 mr-1">$</span>
+                                <input type="number" step="0.01" value="${item.costo_unitario_usd}" onchange="actualizarLinea('${item.id_producto_sku}', 'costo_unitario_usd', this.value)" class="w-20 border border-gray-300 rounded px-1 py-1 text-right font-bold text-green-700 focus:border-[#E67E22] outline-none">
+                            </div>
+                        </td>
+                        <td class="py-2 text-right font-black text-gray-800 w-24">US$ ${subT.toFixed(2)}</td>
+                        <td class="py-2 text-center w-10">
+                            <button onclick="eliminarLinea('${item.id_producto_sku}')" class="text-gray-300 hover:text-red-500 transition"><i class="fa-solid fa-times"></i></button>
+                        </td>
+                    </tr>`;
+            }).join('');
+
+            document.getElementById('total-compra-usd').innerText = `US$ ${totalC.toFixed(2)}`;
+            document.getElementById('total-compra-bs').innerText = `Bs. ${(totalC * tasaBCV).toFixed(2)}`;
+        }
+
+        function limpiarTodo() {
+            document.getElementById('prov-rif').value = ''; document.getElementById('prov-nombre').value = ''; document.getElementById('prov-factura-num').value = '';
+            listaRecepcion = []; actualizarTablaRecepcion();
+        }
+
+        // --- PROCESAR EN SUPABASE ---
+        async function procesarCompra() {
+            if(listaRecepcion.length === 0) return alert("Debe agregar productos a la recepción.");
+            
+            const numFactura = document.getElementById('prov-factura-num').value.trim();
+            const provNombre = document.getElementById('prov-nombre').value.trim();
+            const provDoc = document.getElementById('prov-tipo').value + document.getElementById('prov-rif').value.trim();
+            
+            if(!numFactura || !provNombre || document.getElementById('prov-rif').value.trim() === '') return alert("Complete los datos obligatorios del proveedor y el N° de Factura.");
+            
+            const totalUSD = parseFloat(document.getElementById('total-compra-usd').innerText.replace('US$ ', ''));
+            const totalBS = parseFloat(document.getElementById('total-compra-bs').innerText.replace('Bs. ', ''));
+
+            const btn = document.querySelector('button[onclick="procesarCompra()"]');
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-xl"></i> Procesando...`; btn.disabled = true;
+
+            try {
+                // 1. Insertar Factura como TIPO COMPRA
+                const bodyFactura = {
+                    tipo_transaccion: 'Compra',
+                    numero_control_ext: numFactura,
+                    cliente_documento: provDoc, // Usamos la misma columna para no crear redundancia
+                    cliente_nombre: provNombre,
+                    subtotal_usd: totalUSD,
+                    total_usd: totalUSD,
+                    total_bs: totalBS,
+                    tasa_bcv_aplicada: tasaBCV,
+                    estatus: 'Completada'
+                };
+
+                const resFactura = await fetch(`${SUPABASE_URL}/rest/v1/facturas`, { 
+                    method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
+                    body: JSON.stringify(bodyFactura)
+                });
+                
+                if(!resFactura.ok) throw new Error("Error registrando la compra matriz");
+                const facData = await resFactura.json();
+                const idFactura = facData[0].id_factura;
+
+                // 2. Insertar Detalles (Cuidado: Aquí pasamos el COSTO, no el precio de venta)
+                const bodyDetalles = listaRecepcion.map(item => ({
+                    factura_id: idFactura,
+                    producto_sku: item.id_producto_sku,
+                    producto_nombre: item.nombre,
+                    cantidad: item.cantidad_recibida,
+                    precio_unitario_usd: item.costo_unitario_usd, // Guardamos a cómo nos costó
+                    subtotal_usd: item.cantidad_recibida * item.costo_unitario_usd
+                }));
+
+                const resDetalles = await fetch(`${SUPABASE_URL}/rest/v1/detalles_factura`, { 
+                    method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(bodyDetalles)
+                });
+
+                if(!resDetalles.ok) throw new Error("Error guardando renglones");
+
+                // El Trigger de SQL que hicimos en el Paso 1 se ejecutará automáticamente en Supabase sumando el Stock
+                alert(`¡Compra registrada con éxito!\nEl stock de ${listaRecepcion.length} artículos ha sido actualizado.`);
+                limpiarTodo();
+
+            } catch (error) {
+                console.error(error); alert("Ocurrió un error al procesar la compra.");
+            } finally {
+                btn.innerHTML = `<i class="fa-solid fa-check-double text-xl"></i> Registrar Compra y Sumar Stock`; btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
