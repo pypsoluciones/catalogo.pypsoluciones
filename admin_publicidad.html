@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin | Publicidad P&P</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .btn-press:active { transform: scale(0.95); }
+        .modal-scroll::-webkit-scrollbar { width: 6px; }
+        .modal-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
+    </style>
+</head>
+<body class="bg-[#f0f2f5] font-sans flex h-screen overflow-hidden text-gray-800">
+
+    <aside class="w-64 bg-[#143B62] text-white flex flex-col hidden md:flex shrink-0 shadow-xl z-20">
+        <div class="p-6 border-b border-white/10 flex items-center gap-3">
+            <i class="fa-solid fa-layer-group text-[#E67E22] text-3xl"></i>
+            <h2 class="font-bold text-xl tracking-wide">P&P Admin</h2>
+        </div>
+        <nav class="flex-1 p-4 space-y-2">
+            <a href="admin_dashboard.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-3 rounded-lg font-semibold transition"><i class="fa-solid fa-chart-pie w-5"></i> Dashboard</a>
+            <a href="admin_ventas.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-3 rounded-lg font-semibold transition"><i class="fa-solid fa-cash-register w-5"></i> Punto de Venta</a>
+            <a href="admin_productos.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-3 rounded-lg font-semibold transition"><i class="fa-solid fa-boxes-stacked w-5"></i> Inventario</a>
+            <a href="#" class="flex items-center gap-3 bg-[#E67E22] text-white px-4 py-3 rounded-lg font-bold shadow-md"><i class="fa-solid fa-image w-5"></i> Publicidad Web</a>
+        </nav>
+    </aside>
+
+    <main class="flex-1 flex flex-col h-screen overflow-hidden">
+        <header class="bg-white shadow-sm px-6 py-4 flex justify-between items-center z-10 shrink-0">
+            <h1 class="text-xl font-bold text-gray-800">Gestor de Banners y Publicidad</h1>
+        </header>
+
+        <div class="flex-1 overflow-auto p-4 md:p-6 bg-[#f8f9fa]">
+            <div class="max-w-5xl mx-auto space-y-8" id="contenedor-banners">
+                <div class="text-center py-10 text-gray-400"><i class="fa-solid fa-spinner fa-spin text-3xl"></i></div>
+            </div>
+        </div>
+    </main>
+
+    <div id="modal-banner" class="fixed inset-0 bg-black/60 z-[100] hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg flex flex-col transform scale-95 transition-transform" id="modal-content">
+            <div class="bg-[#143B62] text-white p-4 flex justify-between items-center">
+                <h3 class="font-bold text-lg"><i class="fa-solid fa-pen-to-square mr-2"></i> Editar Banner</h3>
+                <button onclick="cerrarModal()" class="text-gray-300 hover:text-white text-xl"><i class="fa-solid fa-times"></i></button>
+            </div>
+            
+            <div class="p-6 space-y-4 bg-gray-50">
+                <input type="hidden" id="edit-seccion">
+                
+                <div class="flex justify-center mb-4">
+                    <img id="preview-img" src="" class="h-32 object-cover rounded border border-gray-300 shadow-sm w-full max-w-[300px]">
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">URL de la Imagen</label>
+                    <input type="text" id="ban-img" oninput="document.getElementById('preview-img').src=this.value" class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-[#E67E22]">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Título (Texto Principal)</label>
+                    <input type="text" id="ban-titulo" class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-[#E67E22] font-bold">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Subtítulo / Texto Secundario</label>
+                    <input type="text" id="ban-subtitulo" class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-[#E67E22]">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Link de Destino (URL)</label>
+                    <input type="text" id="ban-link" placeholder="Ej: https://pypsoluciones.com/?producto=123" class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-[#E67E22] text-blue-600">
+                </div>
+            </div>
+            
+            <div class="p-4 border-t flex gap-3 bg-white rounded-b-xl">
+                <button onclick="cerrarModal()" class="flex-1 py-3 bg-gray-100 text-gray-600 font-bold rounded-lg btn-press">Cancelar</button>
+                <button onclick="guardarBanner()" class="flex-1 py-3 bg-[#E67E22] text-white font-bold rounded-lg shadow-lg btn-press">Guardar Cambios</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://icvfmdvvochzaktugqvj.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImljdmZtZHZ2b2NoemFrdHVncXZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyNDEzMzEsImV4cCI6MjA5MTgxNzMzMX0.gO3D39piT6KGbMMOzrPGWXUp5-g_nOBAgJ-nwPv8IcQ';
+
+        let banners = [];
+
+        window.onload = cargarBanners;
+
+        async function cargarBanners() {
+            try {
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/vitrinas_publicidad?select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } });
+                banners = await res.json();
+                dibujarBanners();
+            } catch(e) { console.error(e); }
+        }
+
+        function dibujarBanners() {
+            const cont = document.getElementById('contenedor-banners');
+            let html = '';
+
+            // Agrupar visualmente para el admin
+            const hero = banners.find(b => b.seccion === 'hero');
+            const destPrincipal = banners.find(b => b.seccion === 'destacado_principal');
+            const destMinis = banners.filter(b => b.seccion.startsWith('destacado_mini_'));
+            const amazons = banners.filter(b => b.seccion.startsWith('amazon_'));
+
+            // 1. Hero
+            if(hero) {
+                html += `<div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="bg-gray-50 px-4 py-2 border-b flex justify-between items-center"><h3 class="font-bold text-sm text-gray-600 uppercase">Banner Principal (Hero)</h3><button onclick="editar('${hero.seccion}')" class="text-blue-600 hover:text-blue-800 text-sm font-bold"><i class="fa-solid fa-pen"></i> Editar</button></div>
+                    <div class="flex items-center gap-4 p-4"><img src="${hero.imagen_url}" class="w-32 h-20 object-cover rounded border"><div><p class="font-bold text-lg">${hero.titulo}</p><p class="text-sm text-gray-500">${hero.subtitulo}</p></div></div>
+                </div>`;
+            }
+
+            // 2. Destacado Grande + 4 Minis
+            html += `<h2 class="text-lg font-bold text-[#143B62] mt-8 mb-4 border-l-4 border-[#E67E22] pl-2">Sección: Colecciones (1 Grande, 4 Pequeños)</h2>`;
+            if(destPrincipal) {
+                html += `<div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-4">
+                    <div class="bg-gray-50 px-4 py-2 border-b flex justify-between items-center"><h3 class="font-bold text-sm text-gray-600 uppercase">Imagen Grande</h3><button onclick="editar('${destPrincipal.seccion}')" class="text-blue-600 hover:text-blue-800 text-sm font-bold"><i class="fa-solid fa-pen"></i> Editar</button></div>
+                    <div class="flex items-center gap-4 p-4"><img src="${destPrincipal.imagen_url}" class="w-32 h-20 object-cover rounded border"><div><p class="font-bold text-lg">${destPrincipal.titulo}</p></div></div>
+                </div>`;
+            }
+            
+            html += `<div class="grid grid-cols-2 md:grid-cols-4 gap-4">`;
+            destMinis.forEach(m => {
+                html += `<div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
+                    <div class="bg-gray-50 px-3 py-2 border-b flex justify-between items-center"><span class="text-xs font-bold text-gray-500">Miniatura</span><button onclick="editar('${m.seccion}')" class="text-blue-600"><i class="fa-solid fa-pen"></i></button></div>
+                    <div class="p-3 flex-1 flex flex-col items-center text-center"><img src="${m.imagen_url}" class="w-full h-20 object-cover rounded mb-2"><p class="font-bold text-sm">${m.titulo}</p></div>
+                </div>`;
+            });
+            html += `</div>`;
+
+            // 3. Amazon Style
+            html += `<h2 class="text-lg font-bold text-[#143B62] mt-8 mb-4 border-l-4 border-[#143B62] pl-2">Sección: Categorías (3 Banners Medianos)</h2>`;
+            html += `<div class="grid grid-cols-1 md:grid-cols-3 gap-4">`;
+            amazons.forEach(a => {
+                html += `<div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
+                    <div class="bg-gray-50 px-3 py-2 border-b flex justify-between items-center"><span class="text-xs font-bold text-gray-500">Banner Categoría</span><button onclick="editar('${a.seccion}')" class="text-blue-600"><i class="fa-solid fa-pen"></i></button></div>
+                    <div class="p-4 flex-1 flex flex-col items-start"><img src="${a.imagen_url}" class="w-full h-24 object-cover rounded mb-3"><p class="font-bold text-md">${a.titulo}</p><p class="text-xs text-blue-600">${a.subtitulo}</p></div>
+                </div>`;
+            });
+            html += `</div>`;
+
+            cont.innerHTML = html;
+        }
+
+        function editar(seccion) {
+            const ban = banners.find(b => b.seccion === seccion);
+            document.getElementById('edit-seccion').value = ban.seccion;
+            document.getElementById('ban-img').value = ban.imagen_url;
+            document.getElementById('preview-img').src = ban.imagen_url;
+            document.getElementById('ban-titulo').value = ban.titulo || '';
+            document.getElementById('ban-subtitulo').value = ban.subtitulo || '';
+            document.getElementById('ban-link').value = ban.link_url || '';
+
+            document.getElementById('modal-banner').classList.remove('hidden');
+            setTimeout(() => document.getElementById('modal-content').classList.replace('scale-95', 'scale-100'), 10);
+        }
+
+        function cerrarModal() {
+            document.getElementById('modal-content').classList.replace('scale-100', 'scale-95');
+            setTimeout(() => document.getElementById('modal-banner').classList.add('hidden'), 150);
+        }
+
+        async function guardarBanner() {
+            const seccion = document.getElementById('edit-seccion').value;
+            const data = {
+                imagen_url: document.getElementById('ban-img').value,
+                titulo: document.getElementById('ban-titulo').value,
+                subtitulo: document.getElementById('ban-subtitulo').value,
+                link_url: document.getElementById('ban-link').value
+            };
+
+            const btn = document.querySelector('button[onclick="guardarBanner()"]');
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Guardando...`;
+
+            try {
+                await fetch(`${SUPABASE_URL}/rest/v1/vitrinas_publicidad?seccion=eq.${seccion}`, {
+                    method: 'PATCH',
+                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                cerrarModal();
+                await cargarBanners();
+            } catch (e) {
+                alert("Error al guardar.");
+            } finally {
+                btn.innerHTML = `Guardar Cambios`;
+            }
+        }
+    </script>
+</body>
+</html>
