@@ -100,7 +100,7 @@
                     <thead class="bg-gray-100 text-gray-500 text-[10px] uppercase sticky top-0 shadow-sm">
                         <tr><th class="p-3 pl-4">Documento</th><th class="p-3">Cliente / Razón Social</th><th class="p-3 text-center">Acción</th></tr>
                     </thead>
-                    <tbody id="tabla-modal-dir" class="divide-y divide-gray-100"></tbody>
+                    <tbody id="tabla-modal-dir"></tbody>
                 </table>
             </div>
         </div>
@@ -114,7 +114,7 @@
 
         window.onload = async () => {
             cargarTablero();
-            // Cargar Directorio de Clientes
+            // Cargar Directorio
             try {
                 const resCli = await fetch(`${SUPABASE_URL}/rest/v1/clientes?select=documento_identidad,nombre_razon_social`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } });
                 clientesUnicos = resCli.ok ? await resCli.json() : [];
@@ -123,35 +123,11 @@
         };
 
         // --- DIRECTORIO LOGIC ---
-        function abrirModalDirectorio() {
-            dibujarTablaModal(clientesUnicos);
-            document.getElementById('buscador-modal').value = '';
-            document.getElementById('modal-directorio').classList.remove('hidden');
-            setTimeout(() => document.getElementById('modal-dir-content').classList.replace('scale-95', 'scale-100'), 10);
-        }
-
-        function cerrarModalDirectorio() {
-            document.getElementById('modal-dir-content').classList.replace('scale-100', 'scale-95');
-            setTimeout(() => document.getElementById('modal-directorio').classList.add('hidden'), 150);
-        }
-
-        function dibujarTablaModal(arr) {
-            const tbody = document.getElementById('tabla-modal-dir');
-            if(arr.length === 0) { tbody.innerHTML = `<tr><td colspan="3" class="p-6 text-center text-gray-400">No hay clientes.</td></tr>`; return; }
-            tbody.innerHTML = arr.map(c => `<tr class="hover:bg-gray-50 transition border-b border-gray-100"><td class="p-3 pl-4 font-bold text-gray-500">${c.documento_identidad}</td><td class="p-3 font-bold text-[#143B62]">${c.nombre_razon_social}</td><td class="p-3 text-center"><button onclick="seleccionarCli('${c.documento_identidad}', \`${c.nombre_razon_social}\`)" class="bg-blue-100 text-[#143B62] hover:bg-[#143B62] hover:text-white px-3 py-1.5 rounded transition text-xs font-bold">Seleccionar</button></td></tr>`).join('');
-        }
-
-        function filtrarModalDirectorio() {
-            const txt = document.getElementById('buscador-modal').value;
-            if(txt.trim() === '') return dibujarTablaModal(clientesUnicos);
-            dibujarTablaModal(fuseCli.search(txt).map(r => r.item));
-        }
-
-        function seleccionarCli(doc, nom) {
-            document.getElementById('os-doc').value = doc;
-            document.getElementById('os-nombre').value = nom;
-            cerrarModalDirectorio();
-        }
+        function abrirModalDirectorio() { dibujarTablaModal(clientesUnicos); document.getElementById('buscador-modal').value = ''; document.getElementById('modal-directorio').classList.remove('hidden'); setTimeout(() => document.getElementById('modal-dir-content').classList.replace('scale-95', 'scale-100'), 10); }
+        function cerrarModalDirectorio() { document.getElementById('modal-dir-content').classList.replace('scale-100', 'scale-95'); setTimeout(() => document.getElementById('modal-directorio').classList.add('hidden'), 150); }
+        function dibujarTablaModal(arr) { const tbody = document.getElementById('tabla-modal-dir'); if(arr.length === 0) { tbody.innerHTML = `<tr><td colspan="3" class="p-6 text-center text-gray-400">No hay clientes.</td></tr>`; return; } tbody.innerHTML = arr.map(c => `<tr class="hover:bg-gray-50 transition border-b border-gray-100"><td class="p-3 pl-4 font-bold text-gray-500">${c.documento_identidad}</td><td class="p-3 font-bold text-[#143B62]">${c.nombre_razon_social}</td><td class="p-3 text-center"><button onclick="seleccionarCli('${c.documento_identidad}', \`${c.nombre_razon_social}\`)" class="bg-blue-100 text-[#143B62] hover:bg-[#143B62] hover:text-white px-3 py-1.5 rounded transition text-xs font-bold">Seleccionar</button></td></tr>`).join(''); }
+        function filtrarModalDirectorio() { const txt = document.getElementById('buscador-modal').value; if(txt.trim() === '') return dibujarTablaModal(clientesUnicos); dibujarTablaModal(fuseCli.search(txt).map(r => r.item)); }
+        function seleccionarCli(doc, nom) { document.getElementById('os-doc').value = doc; document.getElementById('os-nombre').value = nom; cerrarModalDirectorio(); }
 
         // --- KANBAN LOGIC ---
         async function cargarTablero() {
@@ -160,10 +136,8 @@
                 const ordenes = await res.json();
                 ['Recibido', 'Revision', 'Repuesto', 'Listo'].forEach(c => document.getElementById(`col-${c}`).innerHTML = '');
                 ordenes.forEach(o => {
-                    let colId = o.estatus;
-                    if(colId === 'En Revisión') colId = 'Revision'; if(colId === 'Esperando Repuesto') colId = 'Repuesto';
-                    const el = document.getElementById(`col-${colId}`);
-                    if(el) el.innerHTML += generarCardOS(o);
+                    let colId = o.estatus; if(colId === 'En Revisión') colId = 'Revision'; if(colId === 'Esperando Repuesto') colId = 'Repuesto';
+                    const el = document.getElementById(`col-${colId}`); if(el) el.innerHTML += generarCardOS(o);
                 });
             } catch(e) { console.error(e); }
         }
@@ -171,16 +145,11 @@
         function generarCardOS(o) {
             return `
                 <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 card-anim hover:shadow-md transition cursor-pointer relative group">
-                    <div class="flex justify-between items-start mb-2">
-                        <span class="text-[10px] font-bold text-gray-400 font-mono">#OS-${o.correlativo}</span>
-                        <div class="flex gap-1"><button onclick="cambiarEstatus('${o.id_orden}', 'adelante')" class="text-blue-500 hover:scale-110"><i class="fa-solid fa-circle-arrow-right"></i></button></div>
-                    </div>
+                    <div class="flex justify-between items-start mb-2"><span class="text-[10px] font-bold text-gray-400 font-mono">#OS-${o.correlativo}</span><div class="flex gap-1"><button onclick="cambiarEstatus('${o.id_orden}', 'adelante')" class="text-blue-500 hover:scale-110"><i class="fa-solid fa-circle-arrow-right"></i></button></div></div>
                     <h4 class="font-black text-[#143B62] leading-tight mb-1 uppercase text-sm">${o.equipo}</h4>
                     <p class="text-xs text-gray-600 font-bold mb-3">${o.cliente_nombre}</p>
                     <div class="bg-gray-50 p-2 rounded text-[10px] text-gray-500 italic mb-3">"${o.falla_reportada || 'Sin detalle'}"</div>
-                    <div class="flex justify-between items-center text-[9px] text-gray-400">
-                        <span><i class="fa-solid fa-calendar mr-1"></i> ${new Date(o.fecha_ingreso).toLocaleDateString()}</span>
-                    </div>
+                    <div class="flex justify-between items-center text-[9px] text-gray-400"><span><i class="fa-solid fa-calendar mr-1"></i> ${new Date(o.fecha_ingreso).toLocaleDateString()}</span></div>
                 </div>`;
         }
 
@@ -197,10 +166,8 @@
         }
 
         async function cambiarEstatus(id, direccion) {
-            const res = await fetch(`${SUPABASE_URL}/rest/v1/ordenes_servicio?id_orden=eq.${id}`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } });
-            const data = await res.json();
-            const actual = data[0].estatus;
-            let nuevo = actual;
+            const res = await fetch(`${SUPABASE_URL}/rest/v1/ordenes_servicio?id_orden=eq.${id}`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }); const data = await res.json();
+            const actual = data[0].estatus; let nuevo = actual;
             if(actual === 'Recibido') nuevo = 'En Revisión'; else if(actual === 'En Revisión') nuevo = 'Esperando Repuesto'; else if(actual === 'Esperando Repuesto') nuevo = 'Listo';
             await fetch(`${SUPABASE_URL}/rest/v1/ordenes_servicio?id_orden=eq.${id}`, { method: 'PATCH', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ estatus: nuevo }) });
             cargarTablero();
