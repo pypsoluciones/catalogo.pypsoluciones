@@ -28,6 +28,7 @@
             <a href="admin_ventas.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-3 rounded-lg font-semibold transition"><i class="fa-solid fa-cash-register w-5"></i> Ventas (POS)</a>
             <a href="#" class="flex items-center gap-3 bg-[#E67E22] text-white px-4 py-3 rounded-lg font-bold shadow-md"><i class="fa-solid fa-truck-ramp-box w-5"></i> Ingreso Compras</a>
             <a href="admin_productos.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-3 rounded-lg font-semibold transition"><i class="fa-solid fa-boxes-stacked w-5"></i> Inventario</a>
+            <a href="admin_contactos.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-3 rounded-lg font-semibold transition"><i class="fa-solid fa-address-book w-5"></i> Directorio</a>
         </nav>
     </aside>
 
@@ -48,8 +49,8 @@
                     <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4 border-b pb-2">1. Datos del Proveedor</h3>
                     
                     <div class="mb-4 relative">
-                        <label class="block text-[10px] font-bold text-[#E67E22] uppercase mb-1"><i class="fa-solid fa-magnifying-glass"></i> Buscar en Directorio</label>
-                        <input type="text" id="buscador-prov" oninput="buscarProvPredictivo()" onclick="event.stopPropagation()" placeholder="Escribe nombre o RIF guardado..." class="w-full bg-gray-50 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-[#143B62]">
+                        <label class="block text-[10px] font-bold text-[#E67E22] uppercase mb-1"><i class="fa-solid fa-magnifying-glass"></i> Buscar Proveedor</label>
+                        <input type="text" id="buscador-prov" oninput="buscarProvPredictivo()" onclick="event.stopPropagation()" placeholder="Nombre o RIF de tu proveedor..." class="w-full bg-gray-50 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-[#143B62]">
                         <div id="lista-prov" class="absolute w-full bg-white shadow-xl rounded-b-lg border border-gray-200 mt-1 hidden z-50 max-h-48 overflow-y-auto custom-scroll"></div>
                     </div>
 
@@ -58,11 +59,7 @@
                             <label class="block text-[10px] font-bold text-gray-400 uppercase">RIF / Documento *</label>
                             <div class="flex gap-2">
                                 <select id="prov-tipo" class="border border-gray-300 rounded px-2 py-1.5 text-sm focus:outline-none font-bold text-[#143B62]">
-                                    <option value="J">J</option>
-                                    <option value="G">G</option>
-                                    <option value="V">V</option>
-                                    <option value="E">E</option>
-                                    <option value="C">C</option>
+                                    <option value="J">J</option><option value="G">G</option><option value="V">V</option><option value="E">E</option><option value="C">C</option>
                                 </select>
                                 <input type="text" id="prov-rif" placeholder="Ej: 301234567" class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-[#E67E22]">
                             </div>
@@ -139,29 +136,27 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImljdmZtZHZ2b2NoemFrdHVncXZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyNDEzMzEsImV4cCI6MjA5MTgxNzMzMX0.gO3D39piT6KGbMMOzrPGWXUp5-g_nOBAgJ-nwPv8IcQ';
 
         let inventario = []; let fuseProd; 
-        let directorioPersonas = []; let fuseProv;
+        let proveedoresUnicos = []; let fuseProv;
         let listaRecepcion = []; let tasaBCV = 1;
 
-       window.onload = async () => {
+        window.onload = async () => {
             try {
-                // 1. Cargar Tasa
+                // 1. Tasa
                 try {
                     const resTasa = await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?select=tasa&order=fecha_actualizacion.desc&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } });
                     const dataTasa = await resTasa.json();
                     if(dataTasa.length > 0) { tasaBCV = dataTasa[0].tasa; document.getElementById('tasa-actual').innerText = `Bs. ${tasaBCV.toFixed(2)}`; }
                 } catch(e) {}
 
-                // 2. Cargar Inventario
+                // 2. Inventario
                 const resProd = await fetch(`${SUPABASE_URL}/rest/v1/vista_catalogo_web?select=*&limit=1000`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } });
                 inventario = await resProd.json();
                 fuseProd = new Fuse(inventario, { keys: ['nombre', 'id_producto_sku'], threshold: 0.3 });
 
-                // 3. Cargar SÓLO Proveedores (Corregido)
+                // 3. SOLO PROVEEDORES (Cero Clientes)
                 const resProv = await fetch(`${SUPABASE_URL}/rest/v1/proveedores?select=documento_identidad,nombre_razon_social`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } });
-                directorioPersonas = resProv.ok ? await resProv.json() : [];
-                
-                // Inicializamos el buscador solo con los proveedores
-                fuseProv = new Fuse(directorioPersonas, { keys: ['nombre_razon_social', 'documento_identidad'], threshold: 0.3 });
+                proveedoresUnicos = resProv.ok ? await resProv.json() : [];
+                fuseProv = new Fuse(proveedoresUnicos, { keys: ['nombre_razon_social', 'documento_identidad'], threshold: 0.3 });
 
             } catch(e) { console.error("Error cargando base de datos", e); }
         };
@@ -170,7 +165,7 @@
             document.getElementById('lista-prov').classList.add('hidden');
         }
 
-        // --- BUSCADOR DIRECTORIO (PROVEEDORES/CLIENTES) ---
+        // --- BUSCADOR PROVEEDORES ---
         function buscarProvPredictivo() {
             const texto = document.getElementById('buscador-prov').value; 
             const cont = document.getElementById('lista-prov');
@@ -180,13 +175,11 @@
             const resultados = fuseProv.search(texto).slice(0, 6).map(r => r.item);
             
             if(resultados.length === 0) {
-                cont.innerHTML = '<p class="p-3 text-xs text-gray-500 text-center">No encontrado. Llena los datos manualmente abajo.</p>';
+                cont.innerHTML = '<p class="p-3 text-xs text-[#E67E22] text-center font-bold">No encontrado. Regístralo en el Directorio.</p>';
             } else {
                 cont.innerHTML = resultados.map(p => {
-                    // Evitar nulos
                     const doc = p.documento_identidad || '';
                     const nom = p.nombre_razon_social || 'Sin Nombre';
-                    // Pasamos los valores escapando comillas simples si las hubiera
                     return `
                         <div class="p-3 border-b hover:bg-gray-50 cursor-pointer transition flex justify-between items-center" onclick="seleccionarProv('${doc}', \`${nom}\`)">
                             <span class="text-xs font-bold text-[#143B62]">${nom}</span>
@@ -198,33 +191,24 @@
         }
 
         function seleccionarProv(documentoCompleto, nombre) {
-            // Ejemplo: documentoCompleto = "J12345678" -> tipo = "J", rif = "12345678"
             if(documentoCompleto && documentoCompleto.length > 0) {
                 const tipo = documentoCompleto.charAt(0).toUpperCase();
                 const numero = documentoCompleto.substring(1);
-                
-                // Seleccionar el tipo en el combo
                 const combo = document.getElementById('prov-tipo');
-                if([...combo.options].some(o => o.value === tipo)) {
-                    combo.value = tipo;
-                }
+                if([...combo.options].some(o => o.value === tipo)) { combo.value = tipo; }
                 document.getElementById('prov-rif').value = numero;
             }
-            
             document.getElementById('prov-nombre').value = nombre;
-            
-            // Limpiar buscador visual
             document.getElementById('buscador-prov').value = '';
             document.getElementById('lista-prov').classList.add('hidden');
         }
 
-        // --- BUSCADOR DE PRODUCTOS ---
+        // --- BUSCADOR PRODUCTOS ---
         function buscarProdPredictivo() {
             const texto = document.getElementById('buscador-prod').value; 
             const cont = document.getElementById('lista-busqueda-prod');
             
             if (texto.trim() === '') { cont.innerHTML = '<p class="text-center text-xs text-gray-400 py-4">Escribe para buscar un producto.</p>'; return; }
-            
             const resultados = fuseProd.search(texto).slice(0, 10).map(r => r.item);
             
             if(resultados.length === 0) cont.innerHTML = `<p class="text-center text-xs text-red-400 py-4 font-bold">No encontrado</p>`;
@@ -238,7 +222,7 @@
             }).join('');
         }
 
-        // --- RECEPCIÓN Y CÁLCULOS ---
+        // --- RECEPCIÓN ---
         function agregarARecepcion(prodStr) {
             const p = JSON.parse(decodeURIComponent(prodStr));
             const existe = listaRecepcion.find(item => item.id_producto_sku === p.id_producto_sku);
@@ -251,10 +235,7 @@
 
         function actualizarLinea(sku, campo, valor) {
             const index = listaRecepcion.findIndex(item => item.id_producto_sku === sku);
-            if (index !== -1) {
-                listaRecepcion[index][campo] = parseFloat(valor) || 0;
-                actualizarTablaRecepcion();
-            }
+            if (index !== -1) { listaRecepcion[index][campo] = parseFloat(valor) || 0; actualizarTablaRecepcion(); }
         }
 
         function eliminarLinea(sku) { listaRecepcion = listaRecepcion.filter(item => item.id_producto_sku !== sku); actualizarTablaRecepcion(); }
@@ -274,19 +255,10 @@
                             <p class="text-xs font-bold text-[#143B62] line-clamp-1">${item.nombre}</p>
                             <p class="text-[9px] text-gray-400">${item.id_producto_sku}</p>
                         </td>
-                        <td class="py-2 text-center w-24">
-                            <input type="number" value="${item.cantidad_recibida}" min="1" onchange="actualizarLinea('${item.id_producto_sku}', 'cantidad_recibida', this.value)" class="w-16 border border-gray-300 rounded px-1 py-1 text-center text-sm font-bold focus:border-[#E67E22] outline-none">
-                        </td>
-                        <td class="py-2 text-right w-28">
-                            <div class="flex items-center justify-end text-sm">
-                                <span class="text-gray-400 mr-1">$</span>
-                                <input type="number" step="0.01" value="${item.costo_unitario_usd}" onchange="actualizarLinea('${item.id_producto_sku}', 'costo_unitario_usd', this.value)" class="w-20 border border-gray-300 rounded px-1 py-1 text-right font-bold text-green-700 focus:border-[#E67E22] outline-none">
-                            </div>
-                        </td>
+                        <td class="py-2 text-center w-24"><input type="number" value="${item.cantidad_recibida}" min="1" onchange="actualizarLinea('${item.id_producto_sku}', 'cantidad_recibida', this.value)" class="w-16 border border-gray-300 rounded px-1 py-1 text-center text-sm font-bold focus:border-[#E67E22] outline-none"></td>
+                        <td class="py-2 text-right w-28"><div class="flex items-center justify-end text-sm"><span class="text-gray-400 mr-1">$</span><input type="number" step="0.01" value="${item.costo_unitario_usd}" onchange="actualizarLinea('${item.id_producto_sku}', 'costo_unitario_usd', this.value)" class="w-20 border border-gray-300 rounded px-1 py-1 text-right font-bold text-green-700 focus:border-[#E67E22] outline-none"></div></td>
                         <td class="py-2 text-right font-black text-gray-800 w-24">US$ ${subT.toFixed(2)}</td>
-                        <td class="py-2 text-center w-10">
-                            <button onclick="eliminarLinea('${item.id_producto_sku}')" class="text-gray-300 hover:text-red-500 transition"><i class="fa-solid fa-times"></i></button>
-                        </td>
+                        <td class="py-2 text-center w-10"><button onclick="eliminarLinea('${item.id_producto_sku}')" class="text-gray-300 hover:text-red-500 transition"><i class="fa-solid fa-times"></i></button></td>
                     </tr>`;
             }).join('');
 
@@ -302,7 +274,6 @@
         // --- PROCESAR EN SUPABASE ---
         async function procesarCompra() {
             if(listaRecepcion.length === 0) return alert("Debe agregar productos a la recepción.");
-            
             const numFactura = document.getElementById('prov-factura-num').value.trim();
             const provNombre = document.getElementById('prov-nombre').value.trim();
             const provDoc = document.getElementById('prov-tipo').value + document.getElementById('prov-rif').value.trim();
@@ -316,50 +287,19 @@
             btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-xl"></i> Procesando...`; btn.disabled = true;
 
             try {
-                // 1. Insertar Factura como TIPO COMPRA
-                const bodyFactura = {
-                    tipo_transaccion: 'Compra',
-                    numero_control_ext: numFactura,
-                    cliente_documento: provDoc, 
-                    cliente_nombre: provNombre,
-                    subtotal_usd: totalUSD,
-                    total_usd: totalUSD,
-                    total_bs: totalBS,
-                    tasa_bcv_aplicada: tasaBCV,
-                    estatus: 'Completada'
-                };
-
-                const resFactura = await fetch(`${SUPABASE_URL}/rest/v1/facturas`, { 
-                    method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
-                    body: JSON.stringify(bodyFactura)
-                });
-                
+                const bodyFactura = { tipo_transaccion: 'Compra', numero_control_ext: numFactura, cliente_documento: provDoc, cliente_nombre: provNombre, subtotal_usd: totalUSD, total_usd: totalUSD, total_bs: totalBS, tasa_bcv_aplicada: tasaBCV, estatus: 'Completada' };
+                const resFactura = await fetch(`${SUPABASE_URL}/rest/v1/facturas`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, body: JSON.stringify(bodyFactura) });
                 if(!resFactura.ok) throw new Error("Error registrando la compra matriz");
                 const facData = await resFactura.json();
-                const idFactura = facData[0].id_factura;
-
-                // 2. Insertar Detalles 
-                const bodyDetalles = listaRecepcion.map(item => ({
-                    factura_id: idFactura,
-                    producto_sku: item.id_producto_sku,
-                    producto_nombre: item.nombre,
-                    cantidad: item.cantidad_recibida,
-                    precio_unitario_usd: item.costo_unitario_usd,
-                    subtotal_usd: item.cantidad_recibida * item.costo_unitario_usd
-                }));
-
-                const resDetalles = await fetch(`${SUPABASE_URL}/rest/v1/detalles_factura`, { 
-                    method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify(bodyDetalles)
-                });
-
+                
+                const bodyDetalles = listaRecepcion.map(item => ({ factura_id: facData[0].id_factura, producto_sku: item.id_producto_sku, producto_nombre: item.nombre, cantidad: item.cantidad_recibida, precio_unitario_usd: item.costo_unitario_usd, subtotal_usd: item.cantidad_recibida * item.costo_unitario_usd }));
+                const resDetalles = await fetch(`${SUPABASE_URL}/rest/v1/detalles_factura`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' }, body: JSON.stringify(bodyDetalles) });
                 if(!resDetalles.ok) throw new Error("Error guardando renglones");
 
-                alert(`¡Compra registrada con éxito!\nEl stock de ${listaRecepcion.length} artículos ha sido actualizado en el sistema.`);
+                alert(`¡Compra registrada con éxito!\nEl stock ha sido actualizado.`);
                 limpiarTodo();
-
             } catch (error) {
-                console.error(error); alert("Ocurrió un error al procesar la compra.");
+                alert("Ocurrió un error al procesar la compra.");
             } finally {
                 btn.innerHTML = `<i class="fa-solid fa-check-double text-xl"></i> Registrar Compra y Sumar Stock`; btn.disabled = false;
             }
