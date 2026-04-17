@@ -318,6 +318,17 @@
         <div id="toast-add" class="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-5 py-2 rounded-full shadow-2xl transition-opacity duration-200 opacity-0 pointer-events-none z-[200] font-bold text-xs flex items-center gap-2">
         <i class="fa-solid fa-check-circle text-green-400 text-base"></i> Agregado al ticket
     </div>
+        function agregarAlTicket(str) { 
+            const p = JSON.parse(decodeURIComponent(str)); 
+            const idx = ticket.findIndex(i => i.id_producto_sku === p.id_producto_sku); 
+            if(idx !== -1) ticket[idx].cantidad++; else { p.cantidad = 1; ticket.unshift(p); } 
+            actualizarTicket();
+            
+            // LA MAGIA VISUAL: Mostrar el Toast por 1 segundo
+            const t = document.getElementById('toast-add');
+            t.classList.remove('opacity-0');
+            setTimeout(() => t.classList.add('opacity-0'), 1000);
+        }
     </script>
 </body>
 </html>
