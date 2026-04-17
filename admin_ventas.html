@@ -30,14 +30,20 @@
     <header class="bg-[#143B62] text-white shadow-md z-30 shrink-0 sticky top-0">
         <div class="px-4 py-3 flex justify-between items-center">
             <div class="flex items-center gap-3">
-                <button onclick="window.location.href='admin_dashboard.html'" class="text-xl btn-press hover:text-[#E67E22] transition"><i class="fa-solid fa-home"></i></button>
-                <h1 class="font-bold text-lg tracking-wide">P&P <span class="text-[#E67E22]">POS</span></h1>
+                <button onclick="window.location.href='admin_dashboard.html'" class="text-xl btn-press hover:text-[#E67E22] transition" title="Ir al Dashboard"><i class="fa-solid fa-home"></i></button>
+                <h1 class="font-bold text-lg tracking-wide hidden sm:block">P&P <span class="text-[#E67E22]">POS</span></h1>
             </div>
+            
             <div class="flex items-center gap-2">
-                <div class="hidden sm:block bg-black/20 px-3 py-1 rounded text-[10px] font-bold">Tasa: <span class="text-yellow-400" id="tasa-actual">...</span></div>
-                <div class="bg-[#E67E22] px-3 py-1 rounded shadow text-[10px] font-bold flex items-center gap-1">
-                    <i class="fa-solid fa-user"></i> <span id="nombre-cajero">Admin</span>
+                <div class="hidden sm:block bg-black/20 px-3 py-1.5 rounded text-[10px] font-bold">Tasa: <span class="text-yellow-400" id="tasa-actual">...</span></div>
+                
+                <div class="bg-blue-800 border border-blue-700 px-3 py-1.5 rounded shadow-sm text-[10px] font-bold flex items-center gap-2">
+                    <i class="fa-solid fa-user-tie text-[#E67E22]"></i> <span id="nombre-cajero">Cajero</span>
                 </div>
+                
+                <button onclick="cerrarSesion()" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded shadow-sm text-[10px] font-bold flex items-center gap-1 transition btn-press">
+                    <i class="fa-solid fa-power-off"></i> <span class="hidden sm:inline">Cerrar Sesión</span>
+                </button>
             </div>
         </div>
     </header>
@@ -159,6 +165,16 @@
             pintarCategorias(); pintarGrilla(inventario); actualizarTicket();
         };
 
+        // FUNCIÓN CERRAR SESIÓN
+        function cerrarSesion() {
+            if(confirm("¿Estás seguro que deseas cerrar sesión?")) {
+                localStorage.removeItem('pyp_sesion_activa');
+                localStorage.removeItem('pyp_usuario_rol');
+                localStorage.removeItem('pyp_usuario_nombre');
+                window.location.href = 'login.html';
+            }
+        }
+
         function toggleAcordeon(id, idIco) { if(window.innerWidth >= 1024) return; const c = document.getElementById(id); const i = document.getElementById(idIco); if(c.classList.contains('seccion-cerrada')) { c.classList.remove('seccion-cerrada'); i.className = "fa-solid fa-chevron-up"; } else { c.classList.add('seccion-cerrada'); i.className = "fa-solid fa-chevron-down"; } }
         function abrirScanner() { document.getElementById('modal-scanner').classList.remove('hidden'); html5QrCode = new Html5Qrcode("reader"); html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (t) => { cerrarScanner(); const p = inventario.find(x => x.id_producto_sku === t); if(p) { agregarAlTicket(encodeURIComponent(JSON.stringify(p))); if(window.innerWidth < 1024) { document.getElementById('cont-car').classList.remove('seccion-cerrada'); document.getElementById('ico-car').className="fa-solid fa-chevron-up"; } } else alert("Código no encontrado"); }, () => {}); }
         function cerrarScanner() { if(html5QrCode) html5QrCode.stop().then(()=>html5QrCode.clear()); document.getElementById('modal-scanner').classList.add('hidden'); }
@@ -190,7 +206,6 @@
         function limpiarCliente() { document.getElementById('pos-cedula').value=''; document.getElementById('pos-nombre').value=''; document.getElementById('pos-telefono').value=''; document.getElementById('pos-correo').value=''; document.getElementById('pos-direccion').value=''; }
         function limpiarTodoTicket() { ticket = []; limpiarCliente(); actualizarTicket(); }
 
-        // --- PROCESAMIENTO DUAL (Venta, Cotización, Despacho) ---
         async function procesarTransaccion(tipo) {
             if(!ticket.length) return alert("Carrito vacío");
             const doc = document.getElementById('pos-cedula').value ? document.getElementById('pos-tipo-doc').value + document.getElementById('pos-cedula').value : 'Consumidor Final';
@@ -202,11 +217,7 @@
                     const bC = { documento_identidad: doc, nombre_razon_social: nom, celular: document.getElementById('pos-telefono').value, correo: document.getElementById('pos-correo').value, direccion_fiscal: document.getElementById('pos-direccion').value };
                     await fetch(`${SUPABASE_URL}/rest/v1/clientes?on_conflict=documento_identidad`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' }, body: JSON.stringify(bC) });
                 }
-                
-                // Lógica de Estatus
-                let estatus = 'Completada'; // Para Ventas
-                if(tipo === 'Presupuesto') estatus = 'Pendiente';
-                if(tipo === 'Nota de Entrega') estatus = 'Por Facturar';
+                let estatus = 'Completada'; if(tipo === 'Presupuesto') estatus = 'Pendiente'; if(tipo === 'Nota de Entrega') estatus = 'Por Facturar';
 
                 const bF = { tipo_transaccion: tipo, cliente_documento: doc, cliente_nombre: nom, subtotal_usd: parseFloat(document.getElementById('pos-subtotal').innerText.replace('$','')), descuento_usd: parseFloat(document.getElementById('pos-descuento').innerText.replace('-$','')), total_usd: parseFloat(document.getElementById('pos-total-usd').innerText.replace('$','')), total_bs: parseFloat(document.getElementById('pos-total-bs').innerText.replace('Bs. ','')), tasa_bcv_aplicada: tasaBCV, metodos_pago: document.getElementById('pos-metodo-pago').value, estatus: estatus };
                 const rF = await fetch(`${SUPABASE_URL}/rest/v1/facturas`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, body: JSON.stringify(bF) }); const fac = await rF.json();
@@ -219,41 +230,11 @@
         }
 
         function generarTicketVisual(factura, items, tipo) {
-            let tituloDoc = 'FACTURA DE VENTA';
-            if(tipo === 'Presupuesto') tituloDoc = 'COTIZACIÓN';
-            if(tipo === 'Nota de Entrega') tituloDoc = 'NOTA DE ENTREGA (Despacho)';
-
-            let html = `
-                <div style="text-align:center; border-bottom: 1px dashed #000; padding-bottom: 10px; margin-bottom: 10px;">
-                    <h2 style="font-size: 16px; font-weight: bold; margin:0;">P&P SOLUCIONES</h2>
-                    <p style="margin:2px 0;">J-XXXXXXXX-X</p>
-                    <p style="margin:2px 0;">WhatsApp: +58 414-0285806</p>
-                </div>
-                <div style="text-align:center; border-bottom: 1px dashed #000; padding-bottom: 10px; margin-bottom: 10px;">
-                    <h3 style="font-size: 14px; font-weight: bold; margin:0;">${tituloDoc}</h3>
-                    <p style="margin:2px 0; font-weight: bold;">Nº 00${factura.correlativo}</p>
-                    <p style="margin:2px 0;">Fecha: ${new Date().toLocaleDateString('es-ES')} ${new Date().toLocaleTimeString('es-ES')}</p>
-                </div>
-                <div style="border-bottom: 1px dashed #000; padding-bottom: 10px; margin-bottom: 10px;">
-                    <p style="margin:2px 0;"><strong>Cliente:</strong> ${factura.cliente_nombre}</p>
-                    <p style="margin:2px 0;"><strong>CI/RIF:</strong> ${factura.cliente_documento}</p>
-                </div>
-                <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px;">
-                    <tr style="border-bottom: 1px solid #000;"><th style="text-align:left; padding-bottom:2px;">Cant</th><th style="text-align:left; padding-bottom:2px;">Desc</th><th style="text-align:right; padding-bottom:2px;">Total</th></tr>`;
+            let tituloDoc = 'FACTURA DE VENTA'; if(tipo === 'Presupuesto') tituloDoc = 'COTIZACIÓN'; if(tipo === 'Nota de Entrega') tituloDoc = 'NOTA DE ENTREGA';
+            let html = `<div style="text-align:center; border-bottom: 1px dashed #000; padding-bottom: 10px; margin-bottom: 10px;"><h2 style="font-size: 16px; font-weight: bold; margin:0;">P&P SOLUCIONES</h2><p style="margin:2px 0;">J-XXXXXXXX-X</p><p style="margin:2px 0;">WhatsApp: +58 414-0285806</p></div><div style="text-align:center; border-bottom: 1px dashed #000; padding-bottom: 10px; margin-bottom: 10px;"><h3 style="font-size: 14px; font-weight: bold; margin:0;">${tituloDoc}</h3><p style="margin:2px 0; font-weight: bold;">Nº 00${factura.correlativo}</p><p style="margin:2px 0;">Fecha: ${new Date().toLocaleDateString('es-ES')} ${new Date().toLocaleTimeString('es-ES')}</p></div><div style="border-bottom: 1px dashed #000; padding-bottom: 10px; margin-bottom: 10px;"><p style="margin:2px 0;"><strong>Cliente:</strong> ${factura.cliente_nombre}</p><p style="margin:2px 0;"><strong>CI/RIF:</strong> ${factura.cliente_documento}</p></div><table style="width: 100%; border-collapse: collapse; margin-bottom: 10px;"><tr style="border-bottom: 1px solid #000;"><th style="text-align:left; padding-bottom:2px;">Cant</th><th style="text-align:left; padding-bottom:2px;">Desc</th><th style="text-align:right; padding-bottom:2px;">Total</th></tr>`;
             items.forEach(item => { const precioF = calcularP(item, item.cantidad); html += `<tr><td style="padding: 2px 0; vertical-align: top;">${item.cantidad}</td><td style="padding: 2px 5px 2px 0; vertical-align: top;">${item.nombre}</td><td style="padding: 2px 0; text-align: right; vertical-align: top;">$${(precioF * item.cantidad).toFixed(2)}</td></tr>`; });
-            
-            let msjPie = '¡Gracias por su compra!';
-            if(tipo === 'Presupuesto') msjPie = 'Precios sujetos a cambio sin previo aviso.';
-            if(tipo === 'Nota de Entrega') msjPie = 'Documento de entrega. Por facturar.';
-
-            html += `</table>
-                <div style="border-top: 1px dashed #000; padding-top: 10px; text-align: right;">
-                    <p style="margin:2px 0;">Subtotal: $${factura.subtotal_usd.toFixed(2)}</p>
-                    <p style="margin:2px 0;">Descuento: -$${factura.descuento_usd.toFixed(2)}</p>
-                    <h3 style="margin:5px 0; font-size: 14px;">TOTAL USD: $${factura.total_usd.toFixed(2)}</h3>
-                    <h3 style="margin:0; font-size: 12px;">TOTAL Bs: ${factura.total_bs.toFixed(2)}</h3>
-                </div>
-                <div style="text-align:center; margin-top: 15px;"><p style="margin:0; font-weight:bold;">*** ${msjPie} ***</p></div>`;
+            let msjPie = '¡Gracias por su compra!'; if(tipo === 'Presupuesto') msjPie = 'Precios sujetos a cambio sin previo aviso.'; if(tipo === 'Nota de Entrega') msjPie = 'Documento de entrega. Por facturar.';
+            html += `</table><div style="border-top: 1px dashed #000; padding-top: 10px; text-align: right;"><p style="margin:2px 0;">Subtotal: $${factura.subtotal_usd.toFixed(2)}</p><p style="margin:2px 0;">Descuento: -$${factura.descuento_usd.toFixed(2)}</p><h3 style="margin:5px 0; font-size: 14px;">TOTAL USD: $${factura.total_usd.toFixed(2)}</h3><h3 style="margin:0; font-size: 12px;">TOTAL Bs: ${factura.total_bs.toFixed(2)}</h3></div><div style="text-align:center; margin-top: 15px;"><p style="margin:0; font-weight:bold;">*** ${msjPie} ***</p></div>`;
             document.getElementById('ticket-imprimir').innerHTML = html; document.getElementById('modal-ticket').classList.remove('hidden');
         }
         function cerrarTicket() { document.getElementById('modal-ticket').classList.add('hidden'); limpiarTodoTicket(); }
