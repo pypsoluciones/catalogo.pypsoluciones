@@ -60,7 +60,6 @@
             <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col h-full">
                 
                 <div class="p-4 border-b border-gray-100 flex gap-3 bg-gray-50 justify-between items-center">
-                    
                     <div class="flex gap-2">
                         <button id="btn-clientes" onclick="cambiarPestana('Clientes')" class="bg-white border border-gray-300 px-4 py-1.5 rounded font-bold text-sm shadow-sm text-[#143B62] transition btn-press">Clientes</button>
                         <button id="btn-proveedores" onclick="cambiarPestana('Proveedores')" class="bg-gray-100 text-gray-500 px-4 py-1.5 rounded font-semibold text-sm hover:bg-gray-200 transition btn-press">Proveedores</button>
@@ -90,8 +89,7 @@
                             </tr>
                         </thead>
                         <tbody id="tabla-contactos" class="divide-y divide-gray-100">
-                            <tr><td colspan="5" class="p-10 text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin text-xl mb-2 block"></i> Cargando directorio...</td></tr>
-                        </tbody>
+                            </tbody>
                     </table>
                 </div>
 
@@ -103,13 +101,13 @@
         const SUPABASE_URL = 'https://icvfmdvvochzaktugqvj.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImljdmZtZHZ2b2NoemFrdHVncXZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyNDEzMzEsImV4cCI6MjA5MTgxNzMzMX0.gO3D39piT6KGbMMOzrPGWXUp5-g_nOBAgJ-nwPv8IcQ';
         
-        let contactos = [];
-        let pestanaActual = 'Clientes'; // Estado inicial
+        let dataActual = [];
+        let pestanaActual = 'Clientes';
 
         window.onload = async () => {
             const nombre = localStorage.getItem('pyp_usuario_nombre');
             if(nombre) document.getElementById('nombre-usuario').innerText = nombre.split(' ')[0];
-            await cargarContactos();
+            await cargarDatosDesdeBD('Clientes');
         };
 
         function cerrarSesion() {
@@ -121,50 +119,36 @@
             }
         }
 
-        async function cargarContactos() {
+        // --- MAGIA NUEVA: Consultas Independientes a Supabase ---
+        async function cargarDatosDesdeBD(tipo) {
+            pestanaActual = tipo;
+            const tbody = document.getElementById('tabla-contactos');
+            tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin text-xl mb-2 block"></i> Cargando ${tipo.toLowerCase()}...</td></tr>`;
+
+            // Si es Clientes busca en la tabla "clientes", si es Proveedores busca en "proveedores"
+            const nombreTabla = tipo === 'Clientes' ? 'clientes' : 'proveedores';
+
             try {
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/clientes?select=*`, { 
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/${nombreTabla}?select=*`, { 
                     headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } 
                 });
-                contactos = await res.json();
-                aplicarFiltros(); // Pintamos usando los filtros por defecto
+                
+                if (!res.ok) throw new Error("Tabla no encontrada");
+                
+                dataActual = await res.json();
+                aplicarFiltros();
             } catch(e) {
-                document.getElementById('tabla-contactos').innerHTML = `<tr><td colspan="5" class="p-5 text-center text-red-500 font-bold">Error cargando contactos.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" class="p-5 text-center text-red-500 font-bold">Error cargando. Por favor asegúrate de que la tabla '${nombreTabla}' exista en Supabase.</td></tr>`;
+                dataActual = [];
             }
         }
 
-        function pintarTabla(arr) {
-            const tbody = document.getElementById('tabla-contactos');
-            if(!arr.length) {
-                tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-gray-500 font-bold">No se encontraron contactos en esta categoría.</td></tr>`;
-                return;
-            }
-            
-            tbody.innerHTML = arr.map(c => `
-                <tr class="hover:bg-gray-50 transition border-b border-gray-100">
-                    <td class="p-4 font-bold text-blue-600 text-xs">${c.documento_identidad || '-'}</td>
-                    <td class="p-4 font-bold text-gray-800">${c.nombre_razon_social || '-'}</td>
-                    <td class="p-4 text-xs text-gray-600">
-                        <div class="flex items-center gap-2 mb-1"><i class="fa-solid fa-phone text-gray-400"></i> ${c.celular || c.celular_principal || 'N/A'}</div>
-                        ${c.correo ? `<div class="flex items-center gap-2"><i class="fa-solid fa-envelope text-gray-400"></i> ${c.correo}</div>` : ''}
-                    </td>
-                    <td class="p-4 text-xs text-gray-500 max-w-[200px] truncate" title="${c.direccion_fiscal || c.direccion_entrega || ''}">
-                        ${c.direccion_fiscal || c.direccion_entrega || 'Sin dirección registrada'}
-                    </td>
-                    <td class="p-4 text-center">
-                        <button onclick="alert('Función de edición en construcción')" class="bg-gray-100 hover:bg-gray-200 text-[#143B62] px-3 py-1.5 rounded shadow-sm transition"><i class="fa-solid fa-pen-to-square"></i></button>
-                    </td>
-                </tr>
-            `).join('');
-        }
-
-        // --- LÓGICA PARA CAMBIAR PESTAÑA Y FILTRAR ---
         function cambiarPestana(pestana) {
-            pestanaActual = pestana;
+            if(pestana === pestanaActual) return; // Si ya estoy ahí, no hace nada
+
             const btnC = document.getElementById('btn-clientes');
             const btnP = document.getElementById('btn-proveedores');
             
-            // Cambiar estilos visuales de los botones
             if(pestana === 'Clientes') {
                 btnC.className = "bg-white border border-gray-300 px-4 py-1.5 rounded font-bold text-sm shadow-sm text-[#143B62] transition btn-press";
                 btnP.className = "bg-gray-100 text-gray-500 px-4 py-1.5 rounded font-semibold text-sm hover:bg-gray-200 transition btn-press";
@@ -173,28 +157,49 @@
                 btnC.className = "bg-gray-100 text-gray-500 px-4 py-1.5 rounded font-semibold text-sm hover:bg-gray-200 transition btn-press";
             }
             
-            aplicarFiltros();
+            document.getElementById('buscador-contactos').value = ''; // Limpiar buscador
+            cargarDatosDesdeBD(pestana); // Hacer nueva consulta a la BD
+        }
+
+        function pintarTabla(arr) {
+            const tbody = document.getElementById('tabla-contactos');
+            if(!arr.length) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-gray-500 font-bold">No hay registros para mostrar.</td></tr>`;
+                return;
+            }
+            
+            tbody.innerHTML = arr.map(c => {
+                // Adaptación flexible por si las columnas se llaman distinto en la tabla de proveedores
+                const doc = c.documento_identidad || c.rif || c.cedula || '-';
+                const nom = c.nombre_razon_social || c.nombre || c.empresa || '-';
+                const cel = c.celular || c.celular_principal || c.telefono || 'N/A';
+                const dir = c.direccion_fiscal || c.direccion_entrega || c.direccion || 'Sin dirección registrada';
+                
+                return `
+                <tr class="hover:bg-gray-50 transition border-b border-gray-100">
+                    <td class="p-4 font-bold text-blue-600 text-xs">${doc}</td>
+                    <td class="p-4 font-bold text-gray-800">${nom}</td>
+                    <td class="p-4 text-xs text-gray-600">
+                        <div class="flex items-center gap-2 mb-1"><i class="fa-solid fa-phone text-gray-400"></i> ${cel}</div>
+                        ${c.correo ? `<div class="flex items-center gap-2"><i class="fa-solid fa-envelope text-gray-400"></i> ${c.correo}</div>` : ''}
+                    </td>
+                    <td class="p-4 text-xs text-gray-500 max-w-[200px] truncate" title="${dir}">${dir}</td>
+                    <td class="p-4 text-center">
+                        <button onclick="alert('Función en construcción')" class="bg-gray-100 hover:bg-gray-200 text-[#143B62] px-3 py-1.5 rounded shadow-sm transition"><i class="fa-solid fa-pen-to-square"></i></button>
+                    </td>
+                </tr>
+                `;
+            }).join('');
         }
 
         function aplicarFiltros() {
             const texto = document.getElementById('buscador-contactos').value.toLowerCase();
             
-            const filtrados = contactos.filter(c => {
-                // 1. Filtro por Búsqueda de Texto
-                const coincideTexto = (c.nombre_razon_social && c.nombre_razon_social.toLowerCase().includes(texto)) || 
-                                      (c.documento_identidad && c.documento_identidad.toLowerCase().includes(texto));
+            const filtrados = dataActual.filter(c => {
+                const doc = c.documento_identidad || c.rif || c.cedula || '';
+                const nom = c.nombre_razon_social || c.nombre || c.empresa || '';
                 
-                // 2. Filtro por Pestaña (Cliente o Proveedor)
-                let coincideTipo = true; 
-                // Asume que tienes una columna llamada 'tipo_contacto' o 'tipo'. Si no la tienes, muestra todos.
-                const tipoDB = c.tipo_contacto || c.tipo || c.tipo_cliente; 
-                
-                if(tipoDB) {
-                    if(pestanaActual === 'Clientes') coincideTipo = tipoDB.toLowerCase().includes('cliente');
-                    if(pestanaActual === 'Proveedores') coincideTipo = tipoDB.toLowerCase().includes('proveedor');
-                }
-
-                return coincideTexto && coincideTipo;
+                return nom.toLowerCase().includes(texto) || doc.toLowerCase().includes(texto);
             });
             
             pintarTabla(filtrados);
