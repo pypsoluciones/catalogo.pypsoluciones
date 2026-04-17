@@ -35,11 +35,16 @@
     </aside>
 
     <main class="flex-1 flex flex-col h-screen overflow-hidden bg-gray-50">
-        <header class="bg-white shadow-sm px-6 py-4 flex justify-between items-center z-10 shrink-0">
-            <h1 class="text-xl font-bold text-[#143B62] flex items-center gap-2"><i class="fa-solid fa-building-columns"></i> Gestión de Bancos y Tesorería</h1>
-            <button onclick="abrirModalTransaccion()" class="bg-[#25D366] hover:bg-[#1ebd5c] text-white px-4 py-2 rounded-lg font-bold text-sm shadow-md transition flex items-center gap-2 btn-press">
-                <i class="fa-solid fa-money-bill-transfer"></i> Nueva Transacción
-            </button>
+        <header class="bg-white shadow-sm px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-4 z-10 shrink-0">
+            <h1 class="text-xl font-bold text-[#143B62] flex items-center gap-2"><i class="fa-solid fa-building-columns"></i> Bancos y Tesorería</h1>
+            <div class="flex gap-2">
+                <button onclick="abrirModalCuenta()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-bold text-sm shadow-md transition flex items-center gap-2 btn-press">
+                    <i class="fa-solid fa-plus"></i> Nueva Cuenta
+                </button>
+                <button onclick="abrirModalTransaccion()" class="bg-[#25D366] hover:bg-[#1ebd5c] text-white px-4 py-2 rounded-lg font-bold text-sm shadow-md transition flex items-center gap-2 btn-press">
+                    <i class="fa-solid fa-money-bill-transfer"></i> Movimiento
+                </button>
+            </div>
         </header>
 
         <div class="flex-1 overflow-auto p-6 custom-scroll">
@@ -65,6 +70,51 @@
 
         </div>
     </main>
+
+    <div id="modal-cuenta" class="fixed inset-0 bg-black/60 z-[100] hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm flex flex-col transform scale-95 transition-transform" id="modal-cuenta-content">
+            <div class="bg-[#143B62] text-white p-4 flex justify-between items-center">
+                <h3 class="font-bold text-lg"><i class="fa-solid fa-piggy-bank mr-2"></i> Nueva Cuenta / Caja</h3>
+                <button onclick="cerrarModalCuenta()" class="text-gray-300 hover:text-white text-xl"><i class="fa-solid fa-times"></i></button>
+            </div>
+            
+            <form id="form-cuenta" onsubmit="guardarCuenta(event)" class="p-6 bg-gray-50 space-y-4">
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Nombre de la Cuenta *</label>
+                    <input type="text" id="cta-nombre" required placeholder="Ej: Mercantil, Caja Fuerte 2" class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:border-[#E67E22] outline-none font-bold text-gray-800">
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Tipo *</label>
+                        <select id="cta-tipo" class="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none bg-white font-semibold text-gray-700">
+                            <option value="Banco Nacional">Banco Nacional</option>
+                            <option value="Billetera Digital">Billetera (Zelle, etc)</option>
+                            <option value="Efectivo">Caja de Efectivo</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Moneda *</label>
+                        <select id="cta-moneda" class="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none bg-white font-black text-[#143B62]">
+                            <option value="BS">Bolívares (Bs)</option>
+                            <option value="USD">Dólares (USD)</option>
+                            <option value="EUR">Euros (EUR)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Saldo Inicial (Opcional)</label>
+                    <input type="number" id="cta-saldo" step="0.01" value="0.00" class="w-full border border-gray-300 rounded px-3 py-2 text-lg focus:border-[#E67E22] outline-none font-black text-[#143B62]">
+                </div>
+                
+                <div class="pt-4 flex gap-3">
+                    <button type="button" onclick="cerrarModalCuenta()" class="flex-1 py-3 bg-gray-200 text-gray-700 font-bold rounded-lg btn-press">Cancelar</button>
+                    <button type="submit" id="btn-guardar-cta" class="flex-[2] py-3 bg-[#25D366] text-white font-bold rounded-lg shadow-md btn-press">Guardar Cuenta</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <div id="modal-transaccion" class="fixed inset-0 bg-black/60 z-[100] hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-md flex flex-col transform scale-95 transition-transform" id="modal-content">
@@ -134,7 +184,7 @@
 
         async function cargarCuentas() {
             try {
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/cuentas_bancarias?order=tipo.asc`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } });
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/cuentas_bancarias?order=tipo.asc,nombre.asc`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } });
                 cuentas = await res.json();
                 
                 let totalUSD = 0; let totalBS = 0;
@@ -142,16 +192,14 @@
                 let htmlOpciones = '';
 
                 cuentas.forEach(c => {
-                    // Sumar totales
                     if(c.moneda === 'USD') totalUSD += Number(c.saldo);
                     else if(c.moneda === 'BS') totalBS += Number(c.saldo);
 
-                    // Estilo de tarjeta según el tipo
                     let icono = 'fa-building-columns'; let colorFondo = 'bg-white'; let colorIcono = 'text-blue-500';
                     if(c.tipo === 'Efectivo') { icono = 'fa-money-bill-wave'; colorIcono = 'text-green-500'; }
                     if(c.tipo === 'Billetera Digital') { icono = 'fa-mobile-screen'; colorIcono = 'text-purple-500'; colorFondo = 'bg-gray-50'; }
 
-                    const simbolo = c.moneda === 'USD' ? '$' : 'Bs.';
+                    const simbolo = c.moneda === 'USD' ? '$' : (c.moneda === 'EUR' ? '€' : 'Bs.');
 
                     htmlGrilla += `
                     <div class="${colorFondo} rounded-xl border border-gray-200 p-5 shadow-sm hover:shadow-md transition relative group">
@@ -165,11 +213,10 @@
                         <p class="text-2xl font-black text-[#143B62]">${simbolo} ${Number(c.saldo).toFixed(2)}</p>
                     </div>`;
 
-                    // Llenar los selects del Modal
                     htmlOpciones += `<option value="${c.id_cuenta}">${c.nombre} (${c.moneda})</option>`;
                 });
 
-                document.getElementById('grilla-cuentas').innerHTML = htmlGrilla;
+                document.getElementById('grilla-cuentas').innerHTML = htmlGrilla || '<div class="col-span-full text-center text-gray-400 py-10">No hay cuentas registradas.</div>';
                 document.getElementById('total-usd').innerText = `$${totalUSD.toFixed(2)}`;
                 document.getElementById('total-bs').innerText = `Bs. ${totalBS.toFixed(2)}`;
 
@@ -179,9 +226,54 @@
             } catch(e) { alert("Error cargando las cuentas bancarias."); }
         }
 
+        // --- LÓGICA MODAL NUEVA CUENTA ---
+        function abrirModalCuenta() {
+            document.getElementById('form-cuenta').reset();
+            document.getElementById('modal-cuenta').classList.remove('hidden');
+            setTimeout(() => document.getElementById('modal-cuenta-content').classList.replace('scale-95', 'scale-100'), 10);
+        }
+
+        function cerrarModalCuenta() {
+            document.getElementById('modal-cuenta-content').classList.replace('scale-100', 'scale-95');
+            setTimeout(() => document.getElementById('modal-cuenta').classList.add('hidden'), 150);
+        }
+
+        async function guardarCuenta(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btn-guardar-cta');
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>...`; btn.disabled = true;
+
+            try {
+                const data = {
+                    nombre: document.getElementById('cta-nombre').value.trim(),
+                    tipo: document.getElementById('cta-tipo').value,
+                    moneda: document.getElementById('cta-moneda').value,
+                    saldo: parseFloat(document.getElementById('cta-saldo').value) || 0,
+                    estatus: 'Activo'
+                };
+
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/cuentas_bancarias`, {
+                    method: 'POST',
+                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if(!res.ok) throw new Error("Error guardando cuenta");
+
+                cerrarModalCuenta();
+                await cargarCuentas();
+            } catch(error) {
+                alert("Error al crear la cuenta.");
+            } finally {
+                btn.innerHTML = 'Guardar Cuenta'; btn.disabled = false;
+            }
+        }
+
+        // --- LÓGICA MODAL TRANSACCIONES ---
         function abrirModalTransaccion() {
+            if(cuentas.length === 0) return alert("Debes crear al menos una cuenta primero.");
             document.getElementById('form-transaccion').reset();
-            cambiarVistaForm(); // Para asegurar que empiece en Egreso (o el que esté checked)
+            cambiarVistaForm(); 
             document.getElementById('modal-transaccion').classList.remove('hidden');
             setTimeout(() => document.getElementById('modal-content').classList.replace('scale-95', 'scale-100'), 10);
         }
@@ -217,58 +309,42 @@
             const monto = parseFloat(document.getElementById('monto-transaccion').value);
             const idOrigen = document.getElementById('cuenta-origen').value;
             const idDestino = document.getElementById('cuenta-destino').value;
-            const concepto = document.getElementById('concepto-transaccion').value.trim();
-
+            
             if (tipo === 'Transferencia' && idOrigen === idDestino) {
                 return alert("No puedes transferir dinero a la misma cuenta.");
             }
 
             const btn = document.getElementById('btn-guardar');
-            const htmlOrg = btn.innerHTML;
-            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Procesando...`;
-            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Procesando...`; btn.disabled = true;
 
             try {
-                // Obtener saldo actual de la cuenta origen
                 const cuentaOrigenData = cuentas.find(c => c.id_cuenta === idOrigen);
                 
-                // VALIDACIONES Y CÁLCULOS
                 if(tipo === 'Egreso') {
-                    const nuevoSaldo = Number(cuentaOrigenData.saldo) - monto;
-                    await actualizarSaldo(idOrigen, nuevoSaldo);
+                    await actualizarSaldo(idOrigen, Number(cuentaOrigenData.saldo) - monto);
                 } 
                 else if (tipo === 'Ingreso') {
-                    // Si es ingreso, el combo "origen" actúa como destino visualmente
-                    const nuevoSaldo = Number(cuentaOrigenData.saldo) + monto;
-                    await actualizarSaldo(idOrigen, nuevoSaldo);
+                    await actualizarSaldo(idOrigen, Number(cuentaOrigenData.saldo) + monto);
                 } 
                 else if (tipo === 'Transferencia') {
                     const cuentaDestinoData = cuentas.find(c => c.id_cuenta === idDestino);
-                    
                     if(cuentaOrigenData.moneda !== cuentaDestinoData.moneda) {
-                        alert("No puedes transferir directamente entre USD y BS. Usa la función de cambio/venta de divisas.");
+                        alert("No puedes transferir directamente entre cuentas de diferente moneda (Ej: De Bs a USD).");
                         throw new Error("Monedas incompatibles");
                     }
-
-                    const saldoOrigenFinal = Number(cuentaOrigenData.saldo) - monto;
-                    const saldoDestinoFinal = Number(cuentaDestinoData.saldo) + monto;
-
-                    await actualizarSaldo(idOrigen, saldoOrigenFinal);
-                    await actualizarSaldo(idDestino, saldoDestinoFinal);
+                    await actualizarSaldo(idOrigen, Number(cuentaOrigenData.saldo) - monto);
+                    await actualizarSaldo(idDestino, Number(cuentaDestinoData.saldo) + monto);
                 }
 
                 cerrarModal();
-                await cargarCuentas(); // Recarga los cuadritos
-
+                await cargarCuentas(); 
             } catch (error) {
                 if(error.message !== "Monedas incompatibles") alert("Ocurrió un error al procesar el movimiento.");
             } finally {
-                btn.innerHTML = htmlOrg;
-                btn.disabled = false;
+                btn.innerHTML = `<i class="fa-solid fa-bolt"></i> Ejecutar`; btn.disabled = false;
             }
         }
 
-        // Función auxiliar para actualizar Supabase
         async function actualizarSaldo(idCuenta, nuevoSaldo) {
             const res = await fetch(`${SUPABASE_URL}/rest/v1/cuentas_bancarias?id_cuenta=eq.${idCuenta}`, {
                 method: 'PATCH',
