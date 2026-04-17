@@ -119,13 +119,11 @@
             }
         }
 
-        // --- MAGIA NUEVA: Consultas Independientes a Supabase ---
         async function cargarDatosDesdeBD(tipo) {
             pestanaActual = tipo;
             const tbody = document.getElementById('tabla-contactos');
             tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin text-xl mb-2 block"></i> Cargando ${tipo.toLowerCase()}...</td></tr>`;
 
-            // Si es Clientes busca en la tabla "clientes", si es Proveedores busca en "proveedores"
             const nombreTabla = tipo === 'Clientes' ? 'clientes' : 'proveedores';
 
             try {
@@ -144,7 +142,7 @@
         }
 
         function cambiarPestana(pestana) {
-            if(pestana === pestanaActual) return; // Si ya estoy ahí, no hace nada
+            if(pestana === pestanaActual) return;
 
             const btnC = document.getElementById('btn-clientes');
             const btnP = document.getElementById('btn-proveedores');
@@ -157,8 +155,8 @@
                 btnC.className = "bg-gray-100 text-gray-500 px-4 py-1.5 rounded font-semibold text-sm hover:bg-gray-200 transition btn-press";
             }
             
-            document.getElementById('buscador-contactos').value = ''; // Limpiar buscador
-            cargarDatosDesdeBD(pestana); // Hacer nueva consulta a la BD
+            document.getElementById('buscador-contactos').value = '';
+            cargarDatosDesdeBD(pestana);
         }
 
         function pintarTabla(arr) {
@@ -169,11 +167,12 @@
             }
             
             tbody.innerHTML = arr.map(c => {
-                // Adaptación flexible por si las columnas se llaman distinto en la tabla de proveedores
-                const doc = c.documento_identidad || c.rif || c.cedula || '-';
-                const nom = c.nombre_razon_social || c.nombre || c.empresa || '-';
-                const cel = c.celular || c.celular_principal || c.telefono || 'N/A';
-                const dir = c.direccion_fiscal || c.direccion_entrega || c.direccion || 'Sin dirección registrada';
+                // RADAR AMPLIADO: Busca cualquier nombre posible de columna
+                const doc = c.documento_identidad || c.rif || c.cedula || c.documento || c.id_proveedor || '-';
+                const nom = c.nombre_razon_social || c.razon_social || c.nombre || c.empresa || c.proveedor || '-';
+                const cel = c.celular || c.celular_principal || c.telefono || c.telefono_principal || c.tlf || c.contacto || 'N/A';
+                const dir = c.direccion_fiscal || c.direccion_entrega || c.direccion || c.direccion_principal || 'Sin dirección registrada';
+                const correo = c.correo || c.email || c.correo_electronico || '';
                 
                 return `
                 <tr class="hover:bg-gray-50 transition border-b border-gray-100">
@@ -181,11 +180,11 @@
                     <td class="p-4 font-bold text-gray-800">${nom}</td>
                     <td class="p-4 text-xs text-gray-600">
                         <div class="flex items-center gap-2 mb-1"><i class="fa-solid fa-phone text-gray-400"></i> ${cel}</div>
-                        ${c.correo ? `<div class="flex items-center gap-2"><i class="fa-solid fa-envelope text-gray-400"></i> ${c.correo}</div>` : ''}
+                        ${correo ? `<div class="flex items-center gap-2"><i class="fa-solid fa-envelope text-gray-400"></i> ${correo}</div>` : ''}
                     </td>
                     <td class="p-4 text-xs text-gray-500 max-w-[200px] truncate" title="${dir}">${dir}</td>
                     <td class="p-4 text-center">
-                        <button onclick="alert('Función en construcción')" class="bg-gray-100 hover:bg-gray-200 text-[#143B62] px-3 py-1.5 rounded shadow-sm transition"><i class="fa-solid fa-pen-to-square"></i></button>
+                        <button onclick="alert('Función de edición en construcción')" class="bg-gray-100 hover:bg-gray-200 text-[#143B62] px-3 py-1.5 rounded shadow-sm transition"><i class="fa-solid fa-pen-to-square"></i></button>
                     </td>
                 </tr>
                 `;
@@ -196,8 +195,8 @@
             const texto = document.getElementById('buscador-contactos').value.toLowerCase();
             
             const filtrados = dataActual.filter(c => {
-                const doc = c.documento_identidad || c.rif || c.cedula || '';
-                const nom = c.nombre_razon_social || c.nombre || c.empresa || '';
+                const doc = c.documento_identidad || c.rif || c.cedula || c.documento || '';
+                const nom = c.nombre_razon_social || c.razon_social || c.nombre || c.empresa || c.proveedor || '';
                 
                 return nom.toLowerCase().includes(texto) || doc.toLowerCase().includes(texto);
             });
