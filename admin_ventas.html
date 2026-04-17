@@ -3,13 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>P&P POS | Facturación</title>
+    <title>P&P POS | Facturación y Cotizaciones</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <style>
-        body { overscroll-behavior-y: none; }
         .hide-scroll::-webkit-scrollbar { display: none; }
         .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
         .ticket-scroll::-webkit-scrollbar { width: 4px; }
@@ -34,9 +33,9 @@
         </div>
     </header>
 
-    <main class="flex-1 flex flex-col lg:flex-row overflow-hidden lg:overflow-visible overflow-y-auto lg:overflow-y-hidden">
+    <main class="flex-1 flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden pb-12 lg:pb-0">
         
-        <section class="w-full lg:flex-1 flex flex-col bg-white lg:border-r border-gray-200 lg:overflow-hidden relative">
+        <section class="w-full lg:flex-1 flex flex-col bg-white lg:border-r border-gray-200 lg:overflow-hidden relative shrink-0">
             <button onclick="toggleSeccion('sec-productos', 'icono-prod')" class="lg:hidden w-full bg-[#143B62] text-white p-3 flex justify-between items-center font-bold text-sm border-b border-white/10 shadow-sm">
                 <span><i class="fa-solid fa-box-open mr-2"></i> Buscar Productos</span><i id="icono-prod" class="fa-solid fa-chevron-up transition-transform"></i>
             </button>
@@ -53,7 +52,7 @@
                     </div>
                     <div class="flex gap-2 mt-3 overflow-x-auto hide-scroll pb-1" id="pos-categorias"></div>
                 </div>
-                <div class="lg:flex-1 overflow-y-auto p-3 bg-[#f8f9fa] h-[50vh] lg:h-auto" id="pos-grilla"><div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3" id="pos-contenedor-productos"></div></div>
+                <div class="lg:flex-1 overflow-y-auto p-3 bg-[#f8f9fa] min-h-[300px] lg:h-auto shrink-0" id="pos-grilla"><div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3" id="pos-contenedor-productos"></div></div>
             </div>
         </section>
 
@@ -65,7 +64,7 @@
 
             <div id="sec-cliente" class="hidden lg:block p-3 bg-gray-50 border-b shrink-0 space-y-2">
                 <div class="flex justify-between items-center mb-1">
-                    <span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Facturar a:</span>
+                    <span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Facturar o Cotizar a:</span>
                     <div class="flex gap-2">
                         <button onclick="abrirModalDirectorio()" class="bg-blue-50 text-blue-600 border border-blue-200 px-2 py-1.5 rounded transition text-[10px] font-bold flex items-center gap-1"><i class="fa-solid fa-address-book"></i> Directorio</button>
                         <button onclick="limpiarCliente()" class="bg-orange-50 text-[#E67E22] border border-orange-200 px-2 py-1.5 rounded transition text-[10px] font-bold flex items-center gap-1"><i class="fa-solid fa-eraser"></i></button>
@@ -77,20 +76,19 @@
                     <button onclick="buscarClientePOS()" class="bg-[#143B62] text-white px-3 rounded btn-press"><i class="fa-solid fa-search"></i></button>
                 </div>
                 <input type="text" id="pos-nombre" placeholder="Nombre o Razón Social (Consumidor Final)" class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm font-semibold text-gray-700">
-                
                 <div class="grid grid-cols-2 gap-2">
-                    <input type="tel" id="pos-telefono" placeholder="Teléfono" class="border border-gray-300 rounded px-2 py-1.5 text-xs focus:border-[#E67E22] outline-none text-gray-600">
-                    <input type="email" id="pos-correo" placeholder="Correo Electrónico" class="border border-gray-300 rounded px-2 py-1.5 text-xs focus:border-[#E67E22] outline-none text-gray-600">
+                    <input type="tel" id="pos-telefono" placeholder="Teléfono" class="border border-gray-300 rounded px-2 py-1.5 text-xs outline-none text-gray-600">
+                    <input type="email" id="pos-correo" placeholder="Correo Electrónico" class="border border-gray-300 rounded px-2 py-1.5 text-xs outline-none text-gray-600">
                 </div>
-                <input type="text" id="pos-direccion" placeholder="Dirección Fiscal" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs focus:border-[#E67E22] outline-none text-gray-600">
+                <input type="text" id="pos-direccion" placeholder="Dirección Fiscal" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none text-gray-600">
             </div>
 
             <button onclick="toggleSeccion('sec-carrito', 'icono-car')" class="lg:hidden w-full bg-[#E67E22] text-white p-3 flex justify-between items-center font-bold text-sm border-b border-orange-600">
                 <span><i class="fa-solid fa-cart-shopping mr-2"></i> Ver Ticket de Compra</span><i id="icono-car" class="fa-solid fa-chevron-down transition-transform"></i>
             </button>
 
-            <div id="sec-carrito" class="hidden lg:flex flex-col lg:flex-1 h-[60vh] lg:h-auto overflow-hidden">
-                <div class="flex-1 overflow-y-auto bg-white p-2 ticket-scroll" id="pos-ticket-items"></div>
+            <div id="sec-carrito" class="hidden lg:flex flex-col lg:flex-1 overflow-hidden shrink-0">
+                <div class="flex-1 overflow-y-auto bg-white p-2 ticket-scroll min-h-[200px]" id="pos-ticket-items"></div>
 
                 <div class="bg-gray-50 p-3 border-t shrink-0">
                     <div class="space-y-1 mb-3">
@@ -102,11 +100,19 @@
                         <div><p class="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-0.5">Total a Cobrar</p><p class="text-3xl font-black text-[#143B62] leading-none" id="pos-total-usd">US$ 0.00</p></div>
                         <div class="text-right"><p class="text-sm font-bold text-[#E67E22]" id="pos-total-bs">Bs. 0.00</p></div>
                     </div>
-                    <div class="grid grid-cols-2 gap-2 mb-2">
-                        <select id="pos-metodo-pago" class="border rounded bg-white text-sm px-2 py-2 font-semibold text-gray-700"><option>Pago Móvil</option><option>Divisas Efectivo</option><option>Punto de Venta</option><option>Zelle</option><option>Transferencia</option></select>
-                        <button onclick="limpiarTodoTicket()" class="border border-red-200 text-red-500 bg-red-50 rounded btn-press text-sm font-bold"><i class="fa-solid fa-trash-can"></i> Anular</button>
+                    <div class="flex justify-between items-center mb-2 gap-2">
+                        <select id="pos-metodo-pago" class="border rounded bg-white text-xs px-1 py-2 font-semibold text-gray-700 flex-1"><option>Pago Móvil</option><option>Divisas Efectivo</option><option>Punto de Venta</option><option>Zelle</option><option>Transferencia</option></select>
+                        <button onclick="limpiarTodoTicket()" class="border border-red-200 text-red-500 bg-red-50 rounded px-3 py-1.5 btn-press text-xs font-bold"><i class="fa-solid fa-trash-can"></i> Anular</button>
                     </div>
-                    <button onclick="procesarFactura()" class="w-full bg-[#25D366] text-white font-black py-4 rounded-lg btn-press text-lg flex justify-center items-center gap-2"><i class="fa-solid fa-check-double text-xl"></i> Procesar Factura</button>
+                    
+                    <div class="flex gap-2">
+                        <button onclick="procesarTransaccion('Presupuesto')" class="w-1/3 bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 rounded-lg btn-press text-xs flex flex-col justify-center items-center gap-1 shadow-md">
+                            <i class="fa-solid fa-file-invoice text-lg"></i> Cotizar
+                        </button>
+                        <button onclick="procesarTransaccion('Venta')" class="w-2/3 bg-[#25D366] hover:bg-[#1ebd5c] text-white font-black py-3 rounded-lg shadow-md btn-press text-lg uppercase tracking-wider flex justify-center items-center gap-2">
+                            <i class="fa-solid fa-check-double text-xl"></i> Vender
+                        </button>
+                    </div>
                 </div>
             </div>
         </section>
@@ -119,7 +125,7 @@
         </div>
     </div>
 
-    <div id="modal-directorio" class="fixed inset-0 bg-black/60 z-[100] hidden flex items-center justify-center p-4"><div class="bg-white rounded-xl w-full max-w-2xl flex flex-col max-h-[85vh] overflow-hidden" id="modal-dir-content"><div class="bg-[#143B62] text-white p-4 flex justify-between items-center"><h3 class="font-bold text-lg"><i class="fa-solid fa-users mr-2"></i> Directorio</h3><button onclick="cerrarModalDirectorio()" class="text-gray-300"><i class="fa-solid fa-times"></i></button></div><div class="p-4 bg-gray-50 border-b"><input type="text" id="buscador-modal" oninput="filtrarModalDirectorio()" placeholder="Buscar cliente..." class="w-full border rounded px-3 py-2 text-sm focus:border-[#E67E22]"></div><div class="p-0 overflow-y-auto flex-1 bg-white"><table class="w-full text-left text-sm border-collapse"><thead class="bg-gray-100 text-[10px] uppercase"><tr><th class="p-3 pl-4">Doc</th><th class="p-3">Cliente</th><th class="p-3 text-center">Acción</th></tr></thead><tbody id="tabla-modal-dir"></tbody></table></div></div></div>
+    <div id="modal-directorio" class="fixed inset-0 bg-black/60 z-[100] hidden flex items-center justify-center p-4"><div class="bg-white rounded-xl w-full max-w-2xl flex flex-col max-h-[85vh] overflow-hidden" id="modal-dir-content"><div class="bg-[#143B62] text-white p-4 flex justify-between items-center"><h3 class="font-bold text-lg"><i class="fa-solid fa-users mr-2"></i> Directorio</h3><button onclick="cerrarModalDirectorio()" class="text-gray-300"><i class="fa-solid fa-times"></i></button></div><div class="p-4 bg-gray-50 border-b"><input type="text" id="buscador-modal" oninput="filtrarModalDirectorio()" placeholder="Buscar cliente..." class="w-full border rounded px-3 py-2 text-sm"></div><div class="p-0 overflow-y-auto flex-1 bg-white"><table class="w-full text-left text-sm border-collapse"><thead class="bg-gray-100 text-[10px] uppercase"><tr><th class="p-3 pl-4">Doc</th><th class="p-3">Cliente</th><th class="p-3 text-center">Acción</th></tr></thead><tbody id="tabla-modal-dir"></tbody></table></div></div></div>
     <div id="modal-alerta" class="fixed inset-0 bg-black/60 z-[110] hidden flex items-center justify-center p-4"><div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm text-center" id="modal-alerta-content"><i id="alerta-icono" class="fa-solid fa-circle-check text-5xl text-green-500 mb-4"></i><h3 id="alerta-titulo" class="text-xl font-bold mb-2"></h3><p id="alerta-mensaje" class="text-sm text-gray-600 mb-6"></p><button onclick="cerrarAlerta()" class="w-full bg-[#143B62] text-white font-bold py-3 rounded-lg btn-press">Aceptar</button></div></div>
 
     <script>
@@ -163,65 +169,53 @@
 
         function abrirModalDirectorio() { document.getElementById('modal-directorio').classList.remove('hidden'); document.getElementById('tabla-modal-dir').innerHTML = clientesUnicos.map(c => `<tr class="border-b"><td class="p-2 pl-4 text-xs">${c.documento_identidad}</td><td class="p-2 text-xs font-bold text-[#143B62]">${c.nombre_razon_social}</td><td class="p-2 text-center"><button onclick="seleccionarCli('${encodeURIComponent(JSON.stringify(c))}')" class="bg-blue-100 text-blue-700 px-2 py-1 text-[10px] font-bold rounded">Sel</button></td></tr>`).join(''); }
         function cerrarModalDirectorio() { document.getElementById('modal-directorio').classList.add('hidden'); }
-        
-        function seleccionarCli(str) { 
-            const c = JSON.parse(decodeURIComponent(str));
-            document.getElementById('pos-cedula').value = c.documento_identidad.substring(1); 
-            document.getElementById('pos-tipo-doc').value = c.documento_identidad.charAt(0); 
-            document.getElementById('pos-nombre').value = c.nombre_razon_social; 
-            document.getElementById('pos-telefono').value = c.celular || ''; 
-            document.getElementById('pos-correo').value = c.correo || ''; 
-            document.getElementById('pos-direccion').value = c.direccion_fiscal || ''; 
-            cerrarModalDirectorio(); 
-        }
-        
-        async function buscarClientePOS() { 
-            const doc = document.getElementById('pos-tipo-doc').value + document.getElementById('pos-cedula').value.trim(); 
-            const res = await fetch(`${SUPABASE_URL}/rest/v1/clientes?documento_identidad=eq.${doc}`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }); 
-            const data = await res.json(); 
-            if(data.length>0) {
-                document.getElementById('pos-nombre').value = data[0].nombre_razon_social;
-                document.getElementById('pos-telefono').value = data[0].celular || '';
-                document.getElementById('pos-correo').value = data[0].correo || '';
-                document.getElementById('pos-direccion').value = data[0].direccion_fiscal || '';
-            }
-        }
-        
+        function seleccionarCli(str) { const c = JSON.parse(decodeURIComponent(str)); document.getElementById('pos-cedula').value = c.documento_identidad.substring(1); document.getElementById('pos-tipo-doc').value = c.documento_identidad.charAt(0); document.getElementById('pos-nombre').value = c.nombre_razon_social; document.getElementById('pos-telefono').value = c.celular || ''; document.getElementById('pos-correo').value = c.correo || ''; document.getElementById('pos-direccion').value = c.direccion_fiscal || ''; cerrarModalDirectorio(); }
+        async function buscarClientePOS() { const doc = document.getElementById('pos-tipo-doc').value + document.getElementById('pos-cedula').value.trim(); const res = await fetch(`${SUPABASE_URL}/rest/v1/clientes?documento_identidad=eq.${doc}`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }); const data = await res.json(); if(data.length>0) { document.getElementById('pos-nombre').value = data[0].nombre_razon_social; document.getElementById('pos-telefono').value = data[0].celular || ''; document.getElementById('pos-correo').value = data[0].correo || ''; document.getElementById('pos-direccion').value = data[0].direccion_fiscal || ''; } }
         function limpiarCliente() { document.getElementById('pos-cedula').value = ''; document.getElementById('pos-nombre').value = ''; document.getElementById('pos-telefono').value = ''; document.getElementById('pos-correo').value = ''; document.getElementById('pos-direccion').value = ''; }
         function limpiarTodoTicket() { ticket=[]; limpiarCliente(); actualizarTicket(); }
 
-        async function procesarFactura() {
+        // LÓGICA DUAL: VENTA O PRESUPUESTO
+        async function procesarTransaccion(tipoDoc) {
             if(ticket.length===0) return alert("Ticket vacío.");
             
             const doc = document.getElementById('pos-cedula').value ? document.getElementById('pos-tipo-doc').value + document.getElementById('pos-cedula').value : 'Consumidor Final'; 
             const nom = document.getElementById('pos-nombre').value || 'Consumidor Final'; 
             
-            const btn = document.querySelector('button[onclick="procesarFactura()"]'); 
-            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Procesando...`; btn.disabled=true;
+            if(tipoDoc === 'Presupuesto' && doc === 'Consumidor Final') {
+                if(!confirm("Advertencia: Estás haciendo una Cotización a 'Consumidor Final'. ¿Deseas continuar de todos modos?")) return;
+            }
+
+            // Cambiar botones a estado de carga
+            const btns = document.querySelectorAll('#sec-carrito button');
+            btns.forEach(b => b.disabled = true);
             
             try {
-                // 1. ACTUALIZAR O INSERTAR CLIENTE (Si no es Consumidor Final)
                 if(doc !== 'Consumidor Final' && document.getElementById('pos-cedula').value.trim() !== '') {
-                    const bodyCli = {
-                        documento_identidad: doc,
-                        nombre_razon_social: nom,
-                        celular: document.getElementById('pos-telefono').value,
-                        correo: document.getElementById('pos-correo').value,
-                        direccion_fiscal: document.getElementById('pos-direccion').value
-                    };
+                    const bodyCli = { documento_identidad: doc, nombre_razon_social: nom, celular: document.getElementById('pos-telefono').value, correo: document.getElementById('pos-correo').value, direccion_fiscal: document.getElementById('pos-direccion').value };
                     await fetch(`${SUPABASE_URL}/rest/v1/clientes?on_conflict=documento_identidad`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' }, body: JSON.stringify(bodyCli) });
                 }
 
-                // 2. CREAR FACTURA
-                const bodyFac = { tipo_transaccion: 'Venta', cliente_documento: doc, cliente_nombre: nom, subtotal_usd: parseFloat(document.getElementById('pos-subtotal').innerText.replace('US$ ','')), descuento_usd: parseFloat(document.getElementById('pos-descuento').innerText.replace('- US$ ','')), total_usd: parseFloat(document.getElementById('pos-total-usd').innerText.replace('US$ ','')), total_bs: parseFloat(document.getElementById('pos-total-bs').innerText.replace('Bs. ','')), tasa_bcv_aplicada: tasaBCV, metodos_pago: document.getElementById('pos-metodo-pago').value, estatus: 'Completada' };
+                // El estatus cambia: Una venta es "Completada", un presupuesto es "Pendiente"
+                const estatus = tipoDoc === 'Presupuesto' ? 'Pendiente' : 'Completada';
+                
+                const bodyFac = { tipo_transaccion: tipoDoc, cliente_documento: doc, cliente_nombre: nom, subtotal_usd: parseFloat(document.getElementById('pos-subtotal').innerText.replace('US$ ','')), descuento_usd: parseFloat(document.getElementById('pos-descuento').innerText.replace('- US$ ','')), total_usd: parseFloat(document.getElementById('pos-total-usd').innerText.replace('US$ ','')), total_bs: parseFloat(document.getElementById('pos-total-bs').innerText.replace('Bs. ','')), tasa_bcv_aplicada: tasaBCV, metodos_pago: document.getElementById('pos-metodo-pago').value, estatus: estatus };
                 const resFac = await fetch(`${SUPABASE_URL}/rest/v1/facturas`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, body: JSON.stringify(bodyFac) }); const fac = await resFac.json();
                 
-                // 3. CREAR DETALLES
                 const bodyDet = ticket.map(i => { const pF = calcularPrecioTiers(i, i.cantidad); return { factura_id: fac[0].id_factura, producto_sku: i.id_producto_sku, producto_nombre: i.nombre, cantidad: i.cantidad, precio_unitario_usd: pF, subtotal_usd: (pF*i.cantidad) }; });
                 await fetch(`${SUPABASE_URL}/rest/v1/detalles_factura`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' }, body: JSON.stringify(bodyDet) });
                 
-                document.getElementById('alerta-titulo').innerText="¡Venta Exitosa!"; document.getElementById('alerta-mensaje').innerText=`Factura #00${fac[0].correlativo} registrada.`; document.getElementById('modal-alerta').classList.remove('hidden'); limpiarTodoTicket();
-            } catch(e) { alert("Error al procesar la venta"); } finally { btn.innerHTML=`<i class="fa-solid fa-check-double"></i> Procesar Factura`; btn.disabled=false; }
+                const titulo = tipoDoc === 'Presupuesto' ? "¡Cotización Guardada!" : "¡Venta Exitosa!";
+                const msj = tipoDoc === 'Presupuesto' ? `Presupuesto #00${fac[0].correlativo} creado. (No restó inventario).` : `Factura #00${fac[0].correlativo} registrada. (Inventario descontado).`;
+                
+                document.getElementById('alerta-titulo').innerText = titulo; 
+                document.getElementById('alerta-mensaje').innerText = msj; 
+                document.getElementById('modal-alerta').classList.remove('hidden'); 
+                limpiarTodoTicket();
+            } catch(e) { 
+                alert("Error al procesar la operación."); 
+            } finally { 
+                btns.forEach(b => b.disabled = false);
+            }
         }
         function cerrarAlerta() { document.getElementById('modal-alerta').classList.add('hidden'); }
     </script>
