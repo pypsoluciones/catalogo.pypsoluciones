@@ -29,7 +29,9 @@
             </div>
             <div class="flex items-center gap-2">
                 <div class="hidden sm:block bg-black/20 px-3 py-1 rounded text-[10px] font-bold">Tasa: <span class="text-yellow-400" id="tasa-actual">...</span></div>
-                <a href="https://pypsoluciones.vercel.app" target="_blank" class="bg-blue-600 px-3 py-1 rounded text-[10px] font-bold shadow btn-press flex items-center gap-1"><i class="fa-solid fa-globe"></i> WEB</a>
+                <div class="bg-[#E67E22] px-3 py-1 rounded shadow text-[10px] font-bold flex items-center gap-1">
+                    <i class="fa-solid fa-user"></i> <span id="nombre-cajero">Admin</span>
+                </div>
             </div>
         </div>
     </header>
@@ -123,18 +125,19 @@
         </section>
     </main>
 
+    <div id="toast-add" class="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-5 py-2 rounded-full shadow-2xl transition-opacity duration-200 opacity-0 pointer-events-none z-[200] font-bold text-xs flex items-center gap-2">
+        <i class="fa-solid fa-check-circle text-green-400 text-base"></i> Agregado al ticket
+    </div>
+
     <div id="modal-ticket" class="fixed inset-0 bg-black/80 z-[150] hidden flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-sm rounded-xl overflow-hidden flex flex-col max-h-[90vh]">
             <div class="bg-[#143B62] text-white p-3 flex justify-between items-center shrink-0">
                 <h3 class="font-bold text-sm"><i class="fa-solid fa-receipt mr-2"></i> Documento Generado</h3>
                 <button onclick="cerrarTicket()" class="text-gray-300 hover:text-white text-lg"><i class="fa-solid fa-times"></i></button>
             </div>
-            
             <div class="flex-1 overflow-y-auto p-6 bg-gray-100 flex justify-center custom-scroll">
-                <div id="ticket-imprimir" class="bg-white p-5 w-full text-black font-mono text-[11px] leading-snug shadow-xl">
-                    </div>
+                <div id="ticket-imprimir" class="bg-white p-5 w-full text-black font-mono text-[11px] leading-snug shadow-xl"></div>
             </div>
-            
             <div class="p-3 bg-white border-t flex gap-2 shrink-0">
                 <button onclick="cerrarTicket()" class="flex-1 bg-gray-200 text-gray-700 py-3 rounded font-bold btn-press">Nueva Venta</button>
                 <button onclick="imprimirTicket()" class="flex-1 bg-[#E67E22] text-white py-3 rounded font-bold btn-press"><i class="fa-solid fa-print"></i> Imprimir</button>
@@ -142,69 +145,59 @@
         </div>
     </div>
 
-    <div id="modal-scanner" class="fixed inset-0 bg-black/80 z-[100] hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-xl w-full max-w-sm overflow-hidden flex flex-col">
-            <div class="bg-[#143B62] text-white p-4 flex justify-between items-center"><h3 class="font-bold">Escáner de Código</h3><button onclick="cerrarScanner()"><i class="fa-solid fa-times"></i></button></div>
-            <div class="p-0 bg-black"><div id="reader" style="width: 100%;"></div></div>
-        </div>
-    </div>
-
-    <div id="modal-directorio" class="fixed inset-0 bg-black/60 z-[100] hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-xl w-full max-w-xl max-h-[80vh] flex flex-col overflow-hidden shadow-2xl">
-            <div class="bg-[#143B62] text-white p-4 flex justify-between items-center"><h3 class="font-bold">Directorio de Clientes</h3><button onclick="cerrarModalDirectorio()"><i class="fa-solid fa-times"></i></button></div>
-            <div class="p-3 bg-gray-100"><input type="text" id="buscador-modal" oninput="filtrarModalDirectorio()" placeholder="Escribe para filtrar..." class="w-full border rounded px-3 py-2 text-sm"></div>
-            <div class="flex-1 overflow-y-auto"><table class="w-full text-left text-sm"><tbody id="tabla-modal-dir" class="divide-y"></tbody></table></div>
-        </div>
-    </div>
+    <div id="modal-scanner" class="fixed inset-0 bg-black/80 z-[100] hidden flex items-center justify-center p-4"><div class="bg-white rounded-xl w-full max-w-sm overflow-hidden flex flex-col"><div class="bg-[#143B62] text-white p-4 flex justify-between items-center"><h3 class="font-bold">Escáner</h3><button onclick="cerrarScanner()"><i class="fa-solid fa-times"></i></button></div><div class="p-0 bg-black"><div id="reader" style="width: 100%;"></div></div></div></div>
+    <div id="modal-directorio" class="fixed inset-0 bg-black/60 z-[100] hidden flex items-center justify-center p-4"><div class="bg-white rounded-xl w-full max-w-xl max-h-[80vh] flex flex-col overflow-hidden shadow-2xl"><div class="bg-[#143B62] text-white p-4 flex justify-between items-center"><h3 class="font-bold">Directorio</h3><button onclick="cerrarModalDirectorio()"><i class="fa-solid fa-times"></i></button></div><div class="p-3 bg-gray-100"><input type="text" id="buscador-modal" oninput="filtrarModalDirectorio()" placeholder="Filtrar..." class="w-full border rounded px-3 py-2 text-sm"></div><div class="flex-1 overflow-y-auto"><table class="w-full text-left text-sm"><tbody id="tabla-modal-dir" class="divide-y"></tbody></table></div></div></div>
 
     <script>
         const SUPABASE_URL = 'https://icvfmdvvochzaktugqvj.supabase.co'; const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImljdmZtZHZ2b2NoemFrdHVncXZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyNDEzMzEsImV4cCI6MjA5MTgxNzMzMX0.gO3D39piT6KGbMMOzrPGWXUp5-g_nOBAgJ-nwPv8IcQ';
         let inventario = []; let fuse; let ticket = []; let tasaBCV = 1; let clientes = []; let fuseCli; let html5QrCode;
 
         window.onload = async () => {
+            // Cargar Nombre de Usuario desde localStorage
+            const nombreUsr = localStorage.getItem('pyp_usuario_nombre');
+            if(nombreUsr) document.getElementById('nombre-cajero').innerText = nombreUsr.split(' ')[0]; // Solo primer nombre
+
             const rT = await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?select=tasa&order=fecha_actualizacion.desc&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }); const dT = await rT.json(); if(dT.length) { tasaBCV = dT[0].tasa; document.getElementById('tasa-actual').innerText = `Bs. ${tasaBCV.toFixed(2)}`; }
             const rP = await fetch(`${SUPABASE_URL}/rest/v1/vista_catalogo_web?select=*&limit=1000`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }); inventario = await rP.json(); fuse = new Fuse(inventario, { keys: ['nombre', 'id_producto_sku'], threshold: 0.3 });
             const rC = await fetch(`${SUPABASE_URL}/rest/v1/clientes?select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }); clientes = rC.ok ? await rC.json() : []; fuseCli = new Fuse(clientes, { keys: ['nombre_razon_social', 'documento_identidad'], threshold: 0.3 });
             pintarCategorias(); pintarGrilla(inventario); actualizarTicket();
         };
 
-        // --- ACORDEONES ---
-        function toggleAcordeon(id, idIco) {
-            if(window.innerWidth >= 1024) return;
-            const c = document.getElementById(id); const i = document.getElementById(idIco);
-            if(c.classList.contains('seccion-cerrada')) { c.classList.remove('seccion-cerrada'); i.className = "fa-solid fa-chevron-up"; } 
-            else { c.classList.add('seccion-cerrada'); i.className = "fa-solid fa-chevron-down"; }
-        }
+        function toggleAcordeon(id, idIco) { if(window.innerWidth >= 1024) return; const c = document.getElementById(id); const i = document.getElementById(idIco); if(c.classList.contains('seccion-cerrada')) { c.classList.remove('seccion-cerrada'); i.className = "fa-solid fa-chevron-up"; } else { c.classList.add('seccion-cerrada'); i.className = "fa-solid fa-chevron-down"; } }
 
-        // --- SCANNER ---
         function abrirScanner() { document.getElementById('modal-scanner').classList.remove('hidden'); html5QrCode = new Html5Qrcode("reader"); html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (t) => { cerrarScanner(); const p = inventario.find(x => x.id_producto_sku === t); if(p) { agregarAlTicket(encodeURIComponent(JSON.stringify(p))); if(window.innerWidth < 1024) toggleAcordeon('cont-car', 'ico-car'); } else alert("Código no encontrado"); }, () => {}); }
         function cerrarScanner() { if(html5QrCode) html5QrCode.stop().then(()=>html5QrCode.clear()); document.getElementById('modal-scanner').classList.add('hidden'); }
 
-        // --- FUNCIONES POS ---
         function pintarCategorias() { const cats = [...new Set(inventario.map(p => p.categoria_producto).filter(c => c))].sort(); document.getElementById('pos-categorias').innerHTML = `<button onclick="filtrarCat('Todas')" class="px-4 py-1 rounded-full text-[10px] font-bold bg-gray-200">Todas</button>` + cats.map(c => `<button onclick="filtrarCat('${c}')" class="px-4 py-1 rounded-full text-[10px] font-bold bg-gray-200 whitespace-nowrap">${c}</button>`).join(''); }
         function filtrarCat(c) { pintarGrilla(c === 'Todas' ? inventario : inventario.filter(p => p.categoria_producto === c)); }
         function buscarProductoPOS() { const t = document.getElementById('pos-buscador').value; pintarGrilla(t ? fuse.search(t).map(r => r.item) : inventario); }
         
-        // LA MAGIA: EL BOTÓN DE "AGREGAR" SEPARADO
         function pintarGrilla(arr) { 
             document.getElementById('pos-contenedor-productos').innerHTML = arr.map(p => `
                 <div class="bg-white border border-gray-200 rounded-xl p-2 flex flex-col h-36 shadow-sm">
                     <div class="h-20 w-full flex justify-center"><img src="${p.imagen_principal}" class="max-h-full object-contain"></div>
                     <h4 class="text-[9px] font-bold text-gray-700 line-clamp-2 mt-1 leading-tight">${p.nombre}</h4>
                     <div class="mt-auto flex justify-between items-end">
-                        <div>
-                            <p class="text-[8px] text-gray-400 font-mono">${p.id_producto_sku}</p>
-                            <p class="text-xs font-black text-[#143B62]">$${(Number(p.precio_detal_usd)||0).toFixed(2)}</p>
-                        </div>
-                        <button onclick="agregarAlTicket('${encodeURIComponent(JSON.stringify(p))}')" class="bg-[#E67E22] text-white w-7 h-7 rounded-lg flex items-center justify-center hover:bg-orange-600 transition btn-press shadow-sm" title="Agregar al Ticket">
-                            <i class="fa-solid fa-plus"></i>
-                        </button>
+                        <div><p class="text-[8px] text-gray-400 font-mono">${p.id_producto_sku}</p><p class="text-xs font-black text-[#143B62]">$${(Number(p.precio_detal_usd)||0).toFixed(2)}</p></div>
+                        <button onclick="agregarAlTicket('${encodeURIComponent(JSON.stringify(p))}')" class="bg-[#E67E22] text-white w-7 h-7 rounded-lg flex items-center justify-center hover:bg-orange-600 transition btn-press shadow-sm" title="Agregar al Ticket"><i class="fa-solid fa-plus"></i></button>
                     </div>
                 </div>
             `).join(''); 
         }
 
-        function agregarAlTicket(s) { const p = JSON.parse(decodeURIComponent(s)); const i = ticket.findIndex(x => x.id_producto_sku === p.id_producto_sku); if(i !== -1) ticket[i].cantidad++; else { p.cantidad = 1; ticket.unshift(p); } actualizarTicket(); }
+        // LÓGICA DE AGREGAR Y MOSTRAR TOAST
+        function agregarAlTicket(str) { 
+            const p = JSON.parse(decodeURIComponent(str)); 
+            const idx = ticket.findIndex(i => i.id_producto_sku === p.id_producto_sku); 
+            if(idx !== -1) ticket[idx].cantidad++; else { p.cantidad = 1; ticket.unshift(p); } 
+            actualizarTicket(); 
+            
+            // Mostrar Toast
+            const t = document.getElementById('toast-add');
+            t.classList.remove('opacity-0');
+            setTimeout(() => t.classList.add('opacity-0'), 1000);
+        }
+
         function cambiarCant(sku, d) { const i = ticket.findIndex(x => x.id_producto_sku === sku); if(i !== -1) { ticket[i].cantidad += d; if(ticket[i].cantidad <= 0) ticket.splice(i, 1); actualizarTicket(); } }
         function calcularP(p, c) { let u = Number(p.precio_detal_usd)||0; if(p.requerido_precio_3 && c >= p.requerido_precio_3) u = Number(p.precio_tier3_usd); else if(p.requerido_precio_2 && c >= p.requerido_precio_2) u = Number(p.precio_tier2_usd); else if(p.requerido_precio_1 && c >= p.requerido_precio_1) u = Number(p.precio_tier1_usd); return u; }
         
@@ -228,7 +221,7 @@
         function limpiarCliente() { document.getElementById('pos-cedula').value=''; document.getElementById('pos-nombre').value=''; document.getElementById('pos-telefono').value=''; document.getElementById('pos-correo').value=''; document.getElementById('pos-direccion').value=''; }
         function limpiarTodoTicket() { ticket = []; limpiarCliente(); actualizarTicket(); }
 
-        // --- TRANSACCIONES Y TICKET VISUAL ---
+        // --- TRANSACCIONES ---
         async function procesarTransaccion(tipo) {
             if(!ticket.length) return alert("Carrito vacío");
             const doc = document.getElementById('pos-cedula').value ? document.getElementById('pos-tipo-doc').value + document.getElementById('pos-cedula').value : 'Consumidor Final';
@@ -242,19 +235,14 @@
                 }
                 const est = tipo === 'Presupuesto' ? 'Pendiente' : 'Completada';
                 const bF = { tipo_transaccion: tipo, cliente_documento: doc, cliente_nombre: nom, subtotal_usd: parseFloat(document.getElementById('pos-subtotal').innerText.replace('$','')), descuento_usd: parseFloat(document.getElementById('pos-descuento').innerText.replace('-$','')), total_usd: parseFloat(document.getElementById('pos-total-usd').innerText.replace('$','')), total_bs: parseFloat(document.getElementById('pos-total-bs').innerText.replace('Bs. ','')), tasa_bcv_aplicada: tasaBCV, metodos_pago: document.getElementById('pos-metodo-pago').value, estatus: est };
-                
                 const rF = await fetch(`${SUPABASE_URL}/rest/v1/facturas`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, body: JSON.stringify(bF) }); const fac = await rF.json();
-                
                 const bD = ticket.map(i => { const pF = calcularP(i, i.cantidad); return { factura_id: fac[0].id_factura, producto_sku: i.id_producto_sku, producto_nombre: i.nombre, cantidad: i.cantidad, precio_unitario_usd: pF, subtotal_usd: (pF*i.cantidad) }; });
                 await fetch(`${SUPABASE_URL}/rest/v1/detalles_factura`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' }, body: JSON.stringify(bD) });
                 
-                // EN LUGAR DE LA ALERTA BÁSICA, MOSTRAMOS EL TICKET DE IMPRESIÓN
                 generarTicketVisual(fac[0], ticket, tipo);
-
             } catch(e) { alert("Error"); } finally { btns.forEach(b => b.disabled = false); }
         }
 
-        // LA NUEVA FUNCION DEL RECIBO VISUAL
         function generarTicketVisual(factura, items, tipo) {
             let html = `
                 <div style="text-align:center; border-bottom: 1px dashed #000; padding-bottom: 10px; margin-bottom: 10px;">
@@ -273,73 +261,20 @@
                     <p style="margin:2px 0;"><strong>CI/RIF:</strong> ${factura.cliente_documento}</p>
                 </div>
                 <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px;">
-                    <tr style="border-bottom: 1px solid #000;"><th style="text-align:left; padding-bottom:2px;">Cant</th><th style="text-align:left; padding-bottom:2px;">Desc</th><th style="text-align:right; padding-bottom:2px;">Total</th></tr>
-            `;
-
-            items.forEach(item => {
-                const precioF = calcularP(item, item.cantidad);
-                html += `<tr>
-                    <td style="padding: 2px 0; vertical-align: top;">${item.cantidad}</td>
-                    <td style="padding: 2px 5px 2px 0; vertical-align: top;">${item.nombre}</td>
-                    <td style="padding: 2px 0; text-align: right; vertical-align: top;">$${(precioF * item.cantidad).toFixed(2)}</td>
-                </tr>`;
-            });
-
-            html += `
-                </table>
+                    <tr style="border-bottom: 1px solid #000;"><th style="text-align:left; padding-bottom:2px;">Cant</th><th style="text-align:left; padding-bottom:2px;">Desc</th><th style="text-align:right; padding-bottom:2px;">Total</th></tr>`;
+            items.forEach(item => { const precioF = calcularP(item, item.cantidad); html += `<tr><td style="padding: 2px 0; vertical-align: top;">${item.cantidad}</td><td style="padding: 2px 5px 2px 0; vertical-align: top;">${item.nombre}</td><td style="padding: 2px 0; text-align: right; vertical-align: top;">$${(precioF * item.cantidad).toFixed(2)}</td></tr>`; });
+            html += `</table>
                 <div style="border-top: 1px dashed #000; padding-top: 10px; text-align: right;">
                     <p style="margin:2px 0;">Subtotal: $${factura.subtotal_usd.toFixed(2)}</p>
                     <p style="margin:2px 0;">Descuento: -$${factura.descuento_usd.toFixed(2)}</p>
                     <h3 style="margin:5px 0; font-size: 14px;">TOTAL USD: $${factura.total_usd.toFixed(2)}</h3>
                     <h3 style="margin:0; font-size: 12px;">TOTAL Bs: ${factura.total_bs.toFixed(2)}</h3>
                 </div>
-                <div style="text-align:center; margin-top: 15px;">
-                    <p style="margin:0;">*** ${tipo === 'Presupuesto' ? 'Precios sujetos a cambio.' : '¡Gracias por su compra!'} ***</p>
-                </div>
-            `;
-            
-            document.getElementById('ticket-imprimir').innerHTML = html;
-            document.getElementById('modal-ticket').classList.remove('hidden');
+                <div style="text-align:center; margin-top: 15px;"><p style="margin:0;">*** ${tipo === 'Presupuesto' ? 'Precios sujetos a cambio.' : '¡Gracias por su compra!'} ***</p></div>`;
+            document.getElementById('ticket-imprimir').innerHTML = html; document.getElementById('modal-ticket').classList.remove('hidden');
         }
-
-        function cerrarTicket() {
-            document.getElementById('modal-ticket').classList.add('hidden');
-            limpiarTodoTicket(); // Ahora sí, vaciamos el carrito DESPUÉS de ver el ticket
-        }
-
-        function imprimirTicket() {
-            const contenido = document.getElementById('ticket-imprimir').innerHTML;
-            const ventana = window.open('', '', 'width=400,height=600');
-            ventana.document.write(`<html><head><title>Ticket de Impresión</title><style>body{font-family: monospace; font-size: 12px; margin: 0; padding: 10px; color: #000;}</style></head><body>${contenido}</body></html>`);
-            ventana.document.close();
-            // Le damos un respiro pequeño para que cargue los estilos
-            setTimeout(() => { ventana.print(); }, 200);
-        }
-        <div id="toast-add" class="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-5 py-2 rounded-full shadow-2xl transition-opacity duration-200 opacity-0 pointer-events-none z-[200] font-bold text-xs flex items-center gap-2">
-        <i class="fa-solid fa-check-circle text-green-400 text-base"></i> Agregado al ticket
-    </div>
-        function agregarAlTicket(str) { 
-            const p = JSON.parse(decodeURIComponent(str)); 
-            const idx = ticket.findIndex(i => i.id_producto_sku === p.id_producto_sku); 
-            if(idx !== -1) ticket[idx].cantidad++; else { p.cantidad = 1; ticket.unshift(p); } 
-            actualizarTicket();
-            
-            // LA MAGIA VISUAL: Mostrar el Toast por 1 segundo
-            const t = document.getElementById('toast-add');
-            t.classList.remove('opacity-0');
-            setTimeout(() => t.classList.add('opacity-0'), 1000);
-        }
-        function agregarAlTicket(str) { 
-            const p = JSON.parse(decodeURIComponent(str)); 
-            const idx = ticket.findIndex(i => i.id_producto_sku === p.id_producto_sku); 
-            if(idx !== -1) ticket[idx].cantidad++; else { p.cantidad = 1; ticket.unshift(p); } 
-            actualizarTicket();
-            
-            // LA MAGIA VISUAL: Mostrar el Toast por 1 segundo
-            const t = document.getElementById('toast-add');
-            t.classList.remove('opacity-0');
-            setTimeout(() => t.classList.add('opacity-0'), 1000);
-        }
+        function cerrarTicket() { document.getElementById('modal-ticket').classList.add('hidden'); limpiarTodoTicket(); }
+        function imprimirTicket() { const c = document.getElementById('ticket-imprimir').innerHTML; const v = window.open('', '', 'width=400,height=600'); v.document.write(`<html><head><title>Ticket</title><style>body{font-family: monospace; font-size: 12px; margin: 0; padding: 10px; color: #000;}</style></head><body>${c}</body></html>`); v.document.close(); setTimeout(() => { v.print(); }, 200); }
     </script>
 </body>
 </html>
