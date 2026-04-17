@@ -60,19 +60,21 @@
             <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col h-full">
                 
                 <div class="p-4 border-b border-gray-100 flex gap-3 bg-gray-50 justify-between items-center">
+                    
                     <div class="flex gap-2">
-                        <button class="bg-white border border-gray-300 px-4 py-1.5 rounded font-bold text-sm shadow-sm text-[#143B62]">Clientes</button>
-                        <button class="bg-gray-100 text-gray-500 px-4 py-1.5 rounded font-semibold text-sm hover:bg-gray-200 transition">Proveedores</button>
+                        <button id="btn-clientes" onclick="cambiarPestana('Clientes')" class="bg-white border border-gray-300 px-4 py-1.5 rounded font-bold text-sm shadow-sm text-[#143B62] transition btn-press">Clientes</button>
+                        <button id="btn-proveedores" onclick="cambiarPestana('Proveedores')" class="bg-gray-100 text-gray-500 px-4 py-1.5 rounded font-semibold text-sm hover:bg-gray-200 transition btn-press">Proveedores</button>
                     </div>
+
                     <button onclick="alert('Módulo de creación en construcción')" class="bg-[#25D366] hover:bg-[#1ebd5c] text-white px-4 py-2 rounded-lg font-bold text-sm shadow-sm transition flex items-center gap-2 btn-press">
-                        <i class="fa-solid fa-plus"></i> <span class="hidden sm:inline">Nuevo Cliente</span>
+                        <i class="fa-solid fa-plus"></i> <span class="hidden sm:inline">Nuevo Contacto</span>
                     </button>
                 </div>
 
                 <div class="p-4 border-b border-gray-100 bg-white">
                     <div class="relative">
                         <i class="fa-solid fa-search absolute left-3 top-2.5 text-gray-400"></i>
-                        <input type="text" id="buscador-contactos" oninput="filtrarContactos()" placeholder="Buscar por RIF, Cédula, Nombre o Empresa..." class="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2 text-sm focus:outline-none focus:border-[#E67E22]">
+                        <input type="text" id="buscador-contactos" oninput="aplicarFiltros()" placeholder="Buscar por RIF, Cédula, Nombre o Empresa..." class="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2 text-sm focus:outline-none focus:border-[#E67E22]">
                     </div>
                 </div>
 
@@ -102,6 +104,7 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImljdmZtZHZ2b2NoemFrdHVncXZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyNDEzMzEsImV4cCI6MjA5MTgxNzMzMX0.gO3D39piT6KGbMMOzrPGWXUp5-g_nOBAgJ-nwPv8IcQ';
         
         let contactos = [];
+        let pestanaActual = 'Clientes'; // Estado inicial
 
         window.onload = async () => {
             const nombre = localStorage.getItem('pyp_usuario_nombre');
@@ -109,7 +112,6 @@
             await cargarContactos();
         };
 
-        // LA FUNCIÓN MAESTRA PARA CERRAR SESIÓN
         function cerrarSesion() {
             if(confirm("¿Estás seguro que deseas cerrar sesión?")) {
                 localStorage.removeItem('pyp_sesion_activa');
@@ -125,7 +127,7 @@
                     headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } 
                 });
                 contactos = await res.json();
-                pintarTabla(contactos);
+                aplicarFiltros(); // Pintamos usando los filtros por defecto
             } catch(e) {
                 document.getElementById('tabla-contactos').innerHTML = `<tr><td colspan="5" class="p-5 text-center text-red-500 font-bold">Error cargando contactos.</td></tr>`;
             }
@@ -134,7 +136,7 @@
         function pintarTabla(arr) {
             const tbody = document.getElementById('tabla-contactos');
             if(!arr.length) {
-                tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-gray-500 font-bold">No se encontraron contactos.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-gray-500 font-bold">No se encontraron contactos en esta categoría.</td></tr>`;
                 return;
             }
             
@@ -156,12 +158,45 @@
             `).join('');
         }
 
-        function filtrarContactos() {
+        // --- LÓGICA PARA CAMBIAR PESTAÑA Y FILTRAR ---
+        function cambiarPestana(pestana) {
+            pestanaActual = pestana;
+            const btnC = document.getElementById('btn-clientes');
+            const btnP = document.getElementById('btn-proveedores');
+            
+            // Cambiar estilos visuales de los botones
+            if(pestana === 'Clientes') {
+                btnC.className = "bg-white border border-gray-300 px-4 py-1.5 rounded font-bold text-sm shadow-sm text-[#143B62] transition btn-press";
+                btnP.className = "bg-gray-100 text-gray-500 px-4 py-1.5 rounded font-semibold text-sm hover:bg-gray-200 transition btn-press";
+            } else {
+                btnP.className = "bg-white border border-gray-300 px-4 py-1.5 rounded font-bold text-sm shadow-sm text-[#143B62] transition btn-press";
+                btnC.className = "bg-gray-100 text-gray-500 px-4 py-1.5 rounded font-semibold text-sm hover:bg-gray-200 transition btn-press";
+            }
+            
+            aplicarFiltros();
+        }
+
+        function aplicarFiltros() {
             const texto = document.getElementById('buscador-contactos').value.toLowerCase();
-            const filtrados = contactos.filter(c => 
-                (c.nombre_razon_social && c.nombre_razon_social.toLowerCase().includes(texto)) || 
-                (c.documento_identidad && c.documento_identidad.toLowerCase().includes(texto))
-            );
+            
+            const filtrados = contactos.filter(c => {
+                // 1. Filtro por Búsqueda de Texto
+                const coincideTexto = (c.nombre_razon_social && c.nombre_razon_social.toLowerCase().includes(texto)) || 
+                                      (c.documento_identidad && c.documento_identidad.toLowerCase().includes(texto));
+                
+                // 2. Filtro por Pestaña (Cliente o Proveedor)
+                let coincideTipo = true; 
+                // Asume que tienes una columna llamada 'tipo_contacto' o 'tipo'. Si no la tienes, muestra todos.
+                const tipoDB = c.tipo_contacto || c.tipo || c.tipo_cliente; 
+                
+                if(tipoDB) {
+                    if(pestanaActual === 'Clientes') coincideTipo = tipoDB.toLowerCase().includes('cliente');
+                    if(pestanaActual === 'Proveedores') coincideTipo = tipoDB.toLowerCase().includes('proveedor');
+                }
+
+                return coincideTexto && coincideTipo;
+            });
+            
             pintarTabla(filtrados);
         }
     </script>
