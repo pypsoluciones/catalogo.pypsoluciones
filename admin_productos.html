@@ -3,23 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin | Inventario P&P</title>
+    <title>Admin | Inventario</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        .modal-scroll::-webkit-scrollbar { width: 6px; }
-        .modal-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
+        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
         .btn-press:active { transform: scale(0.95); }
     </style>
-    <script>
-        if (localStorage.getItem('pyp_sesion_activa') !== 'true') {
-            window.location.href = 'login.html';
-        }
-        function cerrarSesion() {
-            localStorage.removeItem('pyp_sesion_activa');
-            window.location.href = 'login.html';
-        }
-    </script>
+    <script>if (localStorage.getItem('pyp_sesion_activa') !== 'true') window.location.href = 'login.html';</script>
 </head>
 <body class="bg-[#f0f2f5] font-sans flex h-screen overflow-hidden text-gray-800">
 
@@ -28,235 +20,90 @@
             <i class="fa-solid fa-layer-group text-[#E67E22] text-3xl"></i>
             <h2 class="font-bold text-xl tracking-wide">P&P Admin</h2>
         </div>
-        <nav class="flex-1 p-4 space-y-2">
-            <a href="admin_dashboard.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-3 rounded-lg font-semibold transition">
-                <i class="fa-solid fa-chart-pie w-5"></i> Dashboard
-            </a>
-            <a href="admin_ventas.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-3 rounded-lg font-semibold transition">
-                <i class="fa-solid fa-cash-register w-5"></i> Punto de Venta
-            </a>
-            <a href="#" class="flex items-center gap-3 bg-[#E67E22] text-white px-4 py-3 rounded-lg font-bold shadow-md">
-                <i class="fa-solid fa-boxes-stacked w-5"></i> Inventario
-            </a>
+        <nav class="flex-1 p-4 space-y-1 overflow-y-auto custom-scroll text-sm">
+            <a href="admin_dashboard.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-chart-pie w-5"></i> Dashboard</a>
+            <a href="admin_ventas.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-cash-register w-5"></i> Ventas (POS)</a>
+            <a href="admin_notas.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-truck-fast w-5"></i> Despachos</a>
+            <a href="admin_presupuestos.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-file-invoice w-5"></i> Cotizaciones</a>
+            <a href="admin_rma.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-rotate-left w-5"></i> RMA / Garantías</a>
+            <a href="admin_compras.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-truck-ramp-box w-5"></i> Compras</a>
+            <a href="#" class="flex items-center gap-3 bg-[#E67E22] text-white px-4 py-2.5 rounded-lg font-bold shadow-md"><i class="fa-solid fa-boxes-stacked w-5"></i> Inventario</a>
+            <a href="admin_taller.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-screwdriver-wrench w-5"></i> Taller</a>
+            <a href="admin_bancos.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-building-columns w-5"></i> Bancos / Cajas</a>
+            <a href="admin_nomina.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-hand-holding-dollar w-5"></i> Nómina</a>
+            <a href="admin_usuarios.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-users-gear w-5"></i> Usuarios y Roles</a>
+            <a href="admin_contactos.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-address-book w-5"></i> Directorio</a>
         </nav>
+        
+        <div class="p-4 border-t border-white/10 shrink-0 bg-[#0f2d4a]">
+            <button onclick="cerrarSesion()" class="w-full flex items-center justify-center gap-2 bg-red-500/20 text-red-300 hover:bg-red-500 hover:text-white py-2.5 rounded-lg font-bold transition text-sm shadow-sm btn-press">
+                <i class="fa-solid fa-power-off"></i> Cerrar Sesión
+            </button>
+        </div>
     </aside>
 
-    <main class="flex-1 flex flex-col h-screen overflow-hidden">
-        
+    <main class="flex-1 flex flex-col h-screen overflow-hidden bg-gray-50">
         <header class="bg-white shadow-sm px-6 py-4 flex justify-between items-center z-10 shrink-0">
-            <h1 class="text-xl font-bold text-gray-800">Gestión de Inventario</h1>
-            <button onclick="abrirModalNuevo()" class="bg-[#25D366] hover:bg-[#1ebd5c] text-white px-4 py-2 rounded-lg font-bold text-sm shadow-md transition flex items-center gap-2 btn-press">
-                <i class="fa-solid fa-plus"></i> Nuevo Producto
-            </button>
+            <div>
+                <h1 class="text-xl font-bold text-[#143B62] flex items-center gap-2"><i class="fa-solid fa-boxes-stacked"></i> Gestión de Inventario</h1>
+            </div>
+            
+            <div class="flex items-center gap-3">
+                <div class="bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100 flex items-center gap-2 text-xs font-bold text-[#143B62]">
+                    <i class="fa-solid fa-user-tie"></i> <span id="nombre-usuario">Usuario</span>
+                </div>
+                <button onclick="cerrarSesion()" class="md:hidden text-red-500 hover:text-red-700 text-xl transition btn-press"><i class="fa-solid fa-power-off"></i></button>
+            </div>
         </header>
 
-        <div class="p-4 bg-white border-b border-gray-200 flex flex-col md:flex-row gap-4">
-            <div class="relative flex-1">
-                <i class="fa-solid fa-search absolute left-3 top-3 text-gray-400"></i>
-                <input type="text" id="busqueda-inv" oninput="filtrarTabla()" placeholder="Buscar por SKU o Nombre..." class="w-full bg-gray-100 border border-gray-300 rounded-lg pl-10 pr-4 py-2 focus:outline-none focus:border-[#143B62]">
-            </div>
-            <select id="filtro-categoria" onchange="filtrarTabla()" class="bg-gray-100 border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none">
-                <option value="Todas">Todas las Categorías</option>
-            </select>
-        </div>
+        <div class="flex-1 overflow-auto p-4 md:p-6 custom-scroll">
+            <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col h-full">
+                
+                <div class="p-4 border-b border-gray-100 flex gap-3 bg-gray-50">
+                    <div class="relative flex-1">
+                        <i class="fa-solid fa-search absolute left-3 top-2.5 text-gray-400"></i>
+                        <input type="text" id="buscador-inv" oninput="filtrarInventario()" placeholder="Buscar por SKU o Nombre..." class="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2 text-sm focus:outline-none focus:border-[#E67E22] bg-white">
+                    </div>
+                    <button onclick="abrirModalProducto()" class="bg-[#25D366] hover:bg-[#1ebd5c] text-white px-4 py-2 rounded-lg font-bold text-sm shadow-sm transition flex items-center gap-2 btn-press">
+                        <i class="fa-solid fa-plus"></i> <span class="hidden sm:inline">Nuevo Producto</span>
+                    </button>
+                </div>
 
-        <div class="flex-1 overflow-auto p-4 md:p-6">
-            <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                <table class="w-full text-left border-collapse min-w-[800px]">
-                    <thead class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider border-b border-gray-200">
-                        <tr>
-                            <th class="p-4 font-bold">Imagen</th>
-                            <th class="p-4 font-bold">Producto / SKU</th>
-                            <th class="p-4 font-bold">Categoría</th>
-                            <th class="p-4 font-bold text-center">Stock</th>
-                            <th class="p-4 font-bold">Precio (USD)</th>
-                            <th class="p-4 font-bold text-center">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabla-productos" class="divide-y divide-gray-100">
-                        <tr><td colspan="6" class="p-10 text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin text-2xl"></i> Cargando inventario...</td></tr>
-                    </tbody>
-                </table>
+                <div class="flex-1 overflow-y-auto custom-scroll">
+                    <table class="w-full text-left text-sm border-collapse">
+                        <thead class="bg-[#143B62] text-white text-[10px] uppercase font-black sticky top-0 z-10">
+                            <tr>
+                                <th class="p-3 text-center">Imagen</th>
+                                <th class="p-3">Producto / SKU</th>
+                                <th class="p-3">Categoría</th>
+                                <th class="p-3 text-right">Precio Detal</th>
+                                <th class="p-3 text-center">Stock</th>
+                                <th class="p-3 text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-productos" class="divide-y divide-gray-100">
+                            <tr><td colspan="6" class="p-10 text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin text-xl mb-2 block"></i> Cargando inventario...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
             </div>
         </div>
     </main>
 
-    <div id="modal-producto" class="fixed inset-0 bg-black/60 z-[100] hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh] overflow-hidden transform scale-95 transition-transform" id="modal-content">
-            <div class="bg-[#143B62] text-white p-4 flex justify-between items-center">
-                <h3 id="modal-titulo" class="font-bold text-lg">Editar Producto</h3>
-                <button onclick="cerrarModal()" class="text-gray-300 hover:text-white text-xl"><i class="fa-solid fa-times"></i></button>
-            </div>
-            
-            <form id="form-producto" class="p-6 overflow-y-auto modal-scroll flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
-                <input type="hidden" id="edit-sku-original">
-                
-                <div class="md:col-span-2">
-                    <label class="block text-[10px] font-bold text-gray-400 uppercase">Nombre del Producto</label>
-                    <input type="text" id="prod-nombre" required class="w-full border-b-2 border-gray-200 focus:border-[#E67E22] py-2 outline-none font-bold text-lg">
-                </div>
-
-                <div>
-                    <label class="block text-[10px] font-bold text-gray-400 uppercase">SKU (ID Único)</label>
-                    <input type="text" id="prod-sku" required class="w-full border-b border-gray-200 focus:border-[#143B62] py-1 outline-none">
-                </div>
-                <div>
-                    <label class="block text-[10px] font-bold text-gray-400 uppercase">Categoría</label>
-                    <input type="text" id="prod-cat" required class="w-full border-b border-gray-200 focus:border-[#143B62] py-1 outline-none">
-                </div>
-
-                <div>
-                    <label class="block text-[10px] font-bold text-gray-400 uppercase">Stock Actual</label>
-                    <input type="number" id="prod-stock" step="0.01" class="w-full border-b border-gray-200 focus:border-[#143B62] py-1 outline-none font-bold text-blue-600">
-                </div>
-                <div>
-                    <label class="block text-[10px] font-bold text-gray-400 uppercase">Precio General ($)</label>
-                    <input type="number" id="prod-precio" step="0.01" class="w-full border-b border-gray-200 focus:border-[#143B62] py-1 outline-none font-bold text-green-600">
-                </div>
-
-                <div class="md:col-span-2 bg-gray-50 p-4 rounded-lg border border-dashed border-gray-300 mt-2">
-                    <h4 class="text-xs font-black text-[#143B62] uppercase mb-3">Escala de Precios Mayorista</h4>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="flex flex-col gap-2">
-                            <input type="number" id="tier1-req" placeholder="Cant. Min 1" class="text-xs border rounded p-1">
-                            <input type="number" id="tier1-val" step="0.01" placeholder="Precio 1 $" class="text-xs border rounded p-1">
-                        </div>
-                        <div class="flex flex-col gap-2">
-                            <input type="number" id="tier2-req" placeholder="Cant. Min 2" class="text-xs border rounded p-1">
-                            <input type="number" id="tier2-val" step="0.01" placeholder="Precio 2 $" class="text-xs border rounded p-1">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="md:col-span-2">
-                    <label class="block text-[10px] font-bold text-gray-400 uppercase">URL Imagen Principal</label>
-                    <input type="text" id="prod-img" class="w-full border-b border-gray-200 py-1 outline-none text-xs">
-                </div>
-            </form>
-            
-            <div class="p-4 border-t flex gap-3">
-                <button onclick="cerrarModal()" class="flex-1 py-3 bg-gray-100 text-gray-600 font-bold rounded-lg btn-press">Cancelar</button>
-                <button onclick="guardarProducto()" class="flex-1 py-3 bg-[#143B62] text-white font-bold rounded-lg shadow-lg btn-press">Guardar Cambios</button>
-            </div>
-        </div>
-    </div>
-
     <script>
         const SUPABASE_URL = 'https://icvfmdvvochzaktugqvj.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImljdmZtZHZ2b2NoemFrdHVncXZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyNDEzMzEsImV4cCI6MjA5MTgxNzMzMX0.gO3D39piT6KGbMMOzrPGWXUp5-g_nOBAgJ-nwPv8IcQ';
+        
+        let inventario = [];
 
-        let productosFull = [];
+        window.onload = async () => {
+            const nombre = localStorage.getItem('pyp_usuario_nombre');
+            if(nombre) document.getElementById('nombre-usuario').innerText = nombre.split(' ')[0];
+            await cargarInventario();
+        };
 
-        window.onload = cargarInventario;
-
-        async function cargarInventario() {
-            const res = await fetch(`${SUPABASE_URL}/rest/v1/vista_catalogo_web?select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } });
-            productosFull = await res.json();
-            
-            // Llenar categorías filtro
-            const cats = [...new Set(productosFull.map(p => p.categoria_producto))].sort();
-            const combo = document.getElementById('filtro-categoria');
-            cats.forEach(c => { combo.innerHTML += `<option value="${c}">${c}</option>`; });
-
-            dibujarTabla(productosFull);
-        }
-
-        function dibujarTabla(arr) {
-            const body = document.getElementById('tabla-productos');
-            body.innerHTML = arr.map(p => `
-                <tr class="hover:bg-gray-50 border-b border-gray-100 transition">
-                    <td class="p-3"><img src="${p.imagen_principal}" class="w-12 h-12 object-contain rounded border bg-white"></td>
-                    <td class="p-3">
-                        <p class="font-bold text-[#143B62]">${p.nombre}</p>
-                        <p class="text-[10px] text-gray-400 font-mono">${p.id_producto_sku}</p>
-                    </td>
-                    <td class="p-3"><span class="text-xs bg-gray-100 px-2 py-1 rounded-full">${p.categoria_producto}</span></td>
-                    <td class="p-3 text-center font-bold ${p.stock_actual <= 5 ? 'text-red-500' : 'text-gray-700'}">${p.stock_actual}</td>
-                    <td class="p-3 font-black text-green-700">US$ ${(Number(p.precio_detal_usd)||0).toFixed(2)}</td>
-                    <td class="p-3 text-center">
-                        <button onclick="editarProducto('${encodeURIComponent(JSON.stringify(p))}')" class="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition btn-press"><i class="fa-solid fa-pen-to-square"></i></button>
-                    </td>
-                </tr>
-            `).join('');
-        }
-
-        function filtrarTabla() {
-            const texto = document.getElementById('busqueda-inv').value.toLowerCase();
-            const cat = document.getElementById('filtro-categoria').value;
-            const filtrados = productosFull.filter(p => {
-                const matchTexto = p.nombre.toLowerCase().includes(texto) || p.id_producto_sku.toLowerCase().includes(texto);
-                const matchCat = cat === 'Todas' || p.categoria_producto === cat;
-                return matchTexto && matchCat;
-            });
-            dibujarTabla(filtrados);
-        }
-
-        // --- LÓGICA MODAL ---
-        function cerrarModal() {
-            document.getElementById('modal-content').classList.replace('scale-100', 'scale-95');
-            setTimeout(() => document.getElementById('modal-producto').classList.add('hidden'), 150);
-        }
-
-        function editarProducto(pStr) {
-            const p = JSON.parse(decodeURIComponent(pStr));
-            document.getElementById('modal-titulo').innerText = "Editar Producto";
-            document.getElementById('edit-sku-original').value = p.id_producto_sku;
-            document.getElementById('prod-nombre').value = p.nombre;
-            document.getElementById('prod-sku').value = p.id_producto_sku;
-            document.getElementById('prod-cat').value = p.categoria_producto;
-            document.getElementById('prod-stock').value = p.stock_actual;
-            document.getElementById('prod-precio').value = p.precio_detal_usd;
-            
-            document.getElementById('tier1-req').value = p.requerido_precio_1 || '';
-            document.getElementById('tier1-val').value = p.precio_tier1_usd || '';
-            document.getElementById('tier2-req').value = p.requerido_precio_2 || '';
-            document.getElementById('tier2-val').value = p.precio_tier2_usd || '';
-
-            document.getElementById('prod-img').value = p.imagen_principal;
-
-            document.getElementById('modal-producto').classList.remove('hidden');
-            setTimeout(() => document.getElementById('modal-content').classList.replace('scale-95', 'scale-100'), 10);
-        }
-
-        async function guardarProducto() {
-            const skuOriginal = document.getElementById('edit-sku-original').value;
-            const dataProd = {
-                id_producto_sku: document.getElementById('prod-sku').value,
-                nombre: document.getElementById('prod-nombre').value,
-                categoria_producto: document.getElementById('prod-cat').value,
-                stock_actual: parseFloat(document.getElementById('prod-stock').value),
-                imagen_principal: document.getElementById('prod-img').value,
-                requerido_precio_1: parseInt(document.getElementById('tier1-req').value) || null,
-                requerido_precio_2: parseInt(document.getElementById('tier2-req').value) || null
-            };
-
-            const dataPrecio = {
-                id_producto_sku: document.getElementById('prod-sku').value,
-                precio_general_usd: parseFloat(document.getElementById('prod-precio').value),
-                precio_1_usd: parseFloat(document.getElementById('tier1-val').value) || null,
-                precio_2_usd: parseFloat(document.getElementById('tier2-val').value) || null
-            };
-
-            try {
-                // 1. Actualizar tabla Productos
-                await fetch(`${SUPABASE_URL}/rest/v1/productos?id_producto_sku=eq.${skuOriginal}`, {
-                    method: 'PATCH',
-                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify(dataProd)
-                });
-
-                // 2. Actualizar tabla Precios
-                await fetch(`${SUPABASE_URL}/rest/v1/precios?id_producto_sku=eq.${skuOriginal}`, {
-                    method: 'PATCH',
-                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify(dataPrecio)
-                });
-
-                alert("¡Producto actualizado exitosamente!");
-                cerrarModal();
-                cargarInventario();
-            } catch (e) { alert("Error al guardar cambios."); }
-        }
+        // LA FUNCIÓN MAESTRA PARA CERRAR SESIÓN
         function cerrarSesion() {
             if(confirm("¿Estás seguro que deseas cerrar sesión?")) {
                 localStorage.removeItem('pyp_sesion_activa');
@@ -264,6 +111,61 @@
                 localStorage.removeItem('pyp_usuario_nombre');
                 window.location.href = 'login.html';
             }
+        }
+
+        async function cargarInventario() {
+            try {
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/productos?select=*&order=fecha_registro.desc`, { 
+                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } 
+                });
+                inventario = await res.json();
+                pintarTabla(inventario);
+            } catch(e) {
+                document.getElementById('tabla-productos').innerHTML = `<tr><td colspan="6" class="p-5 text-center text-red-500 font-bold">Error cargando productos.</td></tr>`;
+            }
+        }
+
+        function pintarTabla(arr) {
+            const tbody = document.getElementById('tabla-productos');
+            if(!arr.length) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-10 text-center text-gray-500 font-bold">No se encontraron productos.</td></tr>`;
+                return;
+            }
+            
+            tbody.innerHTML = arr.map(p => `
+                <tr class="hover:bg-gray-50 transition border-b border-gray-100">
+                    <td class="p-2 text-center w-16">
+                        <img src="${p.imagen_principal || 'https://via.placeholder.com/150'}" class="w-10 h-10 object-contain mx-auto border rounded bg-white">
+                    </td>
+                    <td class="p-3">
+                        <p class="font-bold text-[#143B62] line-clamp-1">${p.nombre}</p>
+                        <p class="text-[10px] text-gray-400 font-mono">${p.id_producto_sku}</p>
+                    </td>
+                    <td class="p-3 text-xs text-gray-600 font-semibold">${p.categoria_producto || '-'}</td>
+                    <td class="p-3 text-right font-black text-gray-800">$${(Number(p.precio_detal_usd)||0).toFixed(2)}</td>
+                    <td class="p-3 text-center">
+                        <span class="${p.stock_actual > 5 ? 'text-green-600' : 'text-red-500'} font-bold px-2 py-1 rounded bg-gray-100 text-xs">
+                            ${p.stock_actual}
+                        </span>
+                    </td>
+                    <td class="p-3 text-center">
+                        <button onclick="alert('Función de edición en construcción')" class="text-blue-500 hover:text-blue-700 mx-1 transition"><i class="fa-solid fa-edit"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function filtrarInventario() {
+            const texto = document.getElementById('buscador-inv').value.toLowerCase();
+            const filtrados = inventario.filter(p => 
+                (p.nombre && p.nombre.toLowerCase().includes(texto)) || 
+                (p.id_producto_sku && p.id_producto_sku.toLowerCase().includes(texto))
+            );
+            pintarTabla(filtrados);
+        }
+        
+        function abrirModalProducto() {
+            alert("Módulo de creación de producto (Debes integrar aquí tu modal de agregar).");
         }
     </script>
 </body>
