@@ -16,7 +16,7 @@
         if (localStorage.getItem('pyp_sesion_activa') !== 'true') window.location.href = 'login.html';
     </script>
 </head>
-<body class="bg-[#f0f2f5] font-sans flex h-screen overflow-hidden text-gray-800">
+<body class="bg-[#f0f2f5] font-sans flex h-screen overflow-hidden text-gray-800" onclick="cerrarDropdowns()">
 
     <aside class="w-64 bg-[#143B62] text-white flex flex-col hidden md:flex shrink-0 shadow-xl z-20">
         <div class="p-6 border-b border-white/10 flex items-center gap-3">
@@ -44,17 +44,28 @@
             
             <div class="w-full lg:w-1/3 flex flex-col gap-4 shrink-0">
                 
-                <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+                <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm relative">
                     <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4 border-b pb-2">1. Datos del Proveedor</h3>
-                    <div class="space-y-3">
+                    
+                    <div class="mb-4 relative">
+                        <label class="block text-[10px] font-bold text-[#E67E22] uppercase mb-1"><i class="fa-solid fa-magnifying-glass"></i> Buscar en Directorio</label>
+                        <input type="text" id="buscador-prov" oninput="buscarProvPredictivo()" onclick="event.stopPropagation()" placeholder="Escribe nombre o RIF guardado..." class="w-full bg-gray-50 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-[#143B62]">
+                        <div id="lista-prov" class="absolute w-full bg-white shadow-xl rounded-b-lg border border-gray-200 mt-1 hidden z-50 max-h-48 overflow-y-auto custom-scroll"></div>
+                    </div>
+
+                    <div class="space-y-3 pt-3 border-t border-dashed border-gray-200">
                         <div>
                             <label class="block text-[10px] font-bold text-gray-400 uppercase">RIF / Documento *</label>
                             <div class="flex gap-2">
-                                <select id="prov-tipo" class="border border-gray-300 rounded px-2 py-1.5 text-sm focus:outline-none"><option>J</option><option>G</option><option>V</option><option>E</option></select>
+                                <select id="prov-tipo" class="border border-gray-300 rounded px-2 py-1.5 text-sm focus:outline-none font-bold text-[#143B62]">
+                                    <option value="J">J</option>
+                                    <option value="G">G</option>
+                                    <option value="V">V</option>
+                                    <option value="E">E</option>
+                                    <option value="C">C</option>
+                                </select>
                                 <input type="text" id="prov-rif" placeholder="Ej: 301234567" class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-[#E67E22]">
-                                <button onclick="buscarProveedor()" class="bg-[#143B62] text-white px-3 rounded hover:bg-[#0f2d4a] transition"><i class="fa-solid fa-search"></i></button>
                             </div>
-                            <p id="msg-prov" class="text-[10px] mt-1 font-bold h-3"></p>
                         </div>
                         <div>
                             <label class="block text-[10px] font-bold text-gray-400 uppercase">Razón Social *</label>
@@ -62,7 +73,7 @@
                         </div>
                         <div>
                             <label class="block text-[10px] font-bold text-gray-400 uppercase">Nº de Factura del Proveedor *</label>
-                            <input type="text" id="prov-factura-num" placeholder="Ej: 001-002345" class="w-full border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-blue-500 font-mono font-bold text-blue-600">
+                            <input type="text" id="prov-factura-num" placeholder="Ej: 001-002345" class="w-full border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-blue-500 font-mono font-bold text-blue-600 bg-blue-50">
                         </div>
                     </div>
                 </div>
@@ -71,11 +82,11 @@
                     <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4 border-b pb-2">2. Agregar Productos</h3>
                     <div class="relative mb-3">
                         <i class="fa-solid fa-barcode absolute left-3 top-2.5 text-gray-400"></i>
-                        <input type="text" id="buscador-prod" oninput="buscarPredictivo()" placeholder="Buscar por SKU o Nombre..." class="w-full bg-gray-50 border border-gray-300 rounded-lg pl-10 pr-4 py-2 text-sm focus:outline-none focus:border-[#143B62]">
+                        <input type="text" id="buscador-prod" oninput="buscarProdPredictivo()" onclick="event.stopPropagation()" placeholder="Buscar por SKU o Nombre..." class="w-full bg-gray-50 border border-gray-300 rounded-lg pl-10 pr-4 py-2 text-sm focus:outline-none focus:border-[#143B62]">
                     </div>
                     
-                    <div id="lista-busqueda" class="flex-1 overflow-y-auto custom-scroll space-y-2 border border-gray-100 p-2 rounded bg-gray-50">
-                        <p class="text-center text-xs text-gray-400 py-4">Escribe para buscar un producto del catálogo.</p>
+                    <div id="lista-busqueda-prod" class="flex-1 overflow-y-auto custom-scroll space-y-2 border border-gray-100 p-2 rounded bg-gray-50">
+                        <p class="text-center text-xs text-gray-400 py-4">Escribe para buscar un producto.</p>
                     </div>
                 </div>
             </div>
@@ -127,38 +138,98 @@
         const SUPABASE_URL = 'https://icvfmdvvochzaktugqvj.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImljdmZtZHZ2b2NoemFrdHVncXZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyNDEzMzEsImV4cCI6MjA5MTgxNzMzMX0.gO3D39piT6KGbMMOzrPGWXUp5-g_nOBAgJ-nwPv8IcQ';
 
-        let inventario = []; let fuse; let listaRecepcion = []; let tasaBCV = 1;
+        let inventario = []; let fuseProd; 
+        let directorioPersonas = []; let fuseProv;
+        let listaRecepcion = []; let tasaBCV = 1;
 
         window.onload = async () => {
             try {
-                const resTasa = await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?select=tasa&order=fecha_actualizacion.desc&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } });
-                const dataTasa = await resTasa.json();
-                if(dataTasa.length > 0) { tasaBCV = dataTasa[0].tasa; document.getElementById('tasa-actual').innerText = `Bs. ${tasaBCV.toFixed(2)}`; }
+                // 1. Cargar Tasa
+                try {
+                    const resTasa = await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?select=tasa&order=fecha_actualizacion.desc&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } });
+                    const dataTasa = await resTasa.json();
+                    if(dataTasa.length > 0) { tasaBCV = dataTasa[0].tasa; document.getElementById('tasa-actual').innerText = `Bs. ${tasaBCV.toFixed(2)}`; }
+                } catch(e) {}
 
+                // 2. Cargar Inventario
                 const resProd = await fetch(`${SUPABASE_URL}/rest/v1/vista_catalogo_web?select=*&limit=1000`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } });
                 inventario = await resProd.json();
-                fuse = new Fuse(inventario, { keys: ['nombre', 'id_producto_sku'], threshold: 0.3 });
-            } catch(e) { alert("Error cargando base de datos"); }
+                fuseProd = new Fuse(inventario, { keys: ['nombre', 'id_producto_sku'], threshold: 0.3 });
+
+                // 3. Cargar Proveedores Y Clientes (Directorio Unificado)
+                const resProv = await fetch(`${SUPABASE_URL}/rest/v1/proveedores?select=documento_identidad,nombre_razon_social`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } });
+                const provs = resProv.ok ? await resProv.json() : [];
+                
+                const resCli = await fetch(`${SUPABASE_URL}/rest/v1/clientes?select=documento_identidad,nombre_razon_social`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } });
+                const clis = resCli.ok ? await resCli.json() : [];
+                
+                // Unimos ambas tablas para que el buscador encuentre a cualquiera
+                directorioPersonas = [...provs, ...clis];
+                fuseProv = new Fuse(directorioPersonas, { keys: ['nombre_razon_social', 'documento_identidad'], threshold: 0.3 });
+
+            } catch(e) { console.error("Error cargando base de datos", e); }
         };
 
-        // --- BUSCADOR Y PROVEEDOR ---
-        async function buscarProveedor() {
-            const rif = document.getElementById('prov-rif').value.trim(); const msg = document.getElementById('msg-prov');
-            if(!rif) return; msg.innerText = "Buscando..."; msg.className = "text-[10px] mt-1 text-gray-500 font-bold h-3";
-            try {
-                // Asumiendo que usamos la tabla proveedores o clientes unificada
-                const doc = document.getElementById('prov-tipo').value + rif;
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/proveedores?documento_identidad=eq.${doc}`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } });
-                const datos = await res.json();
-                if(datos.length > 0) { document.getElementById('prov-nombre').value = datos[0].nombre_razon_social; msg.innerHTML = '<i class="fa-solid fa-check text-green-500"></i> Encontrado'; } 
-                else { document.getElementById('prov-nombre').value = ''; msg.innerHTML = '<i class="fa-solid fa-plus text-[#E67E22]"></i> Proveedor Nuevo'; document.getElementById('prov-nombre').focus(); }
-            } catch (e) { msg.innerText = ""; }
+        function cerrarDropdowns() {
+            document.getElementById('lista-prov').classList.add('hidden');
         }
 
-        function buscarPredictivo() {
-            const texto = document.getElementById('buscador-prod').value; const cont = document.getElementById('lista-busqueda');
-            if (texto.trim() === '') { cont.innerHTML = '<p class="text-center text-xs text-gray-400 py-4">Escribe para buscar.</p>'; return; }
-            const resultados = fuse.search(texto).slice(0, 10).map(r => r.item);
+        // --- BUSCADOR DIRECTORIO (PROVEEDORES/CLIENTES) ---
+        function buscarProvPredictivo() {
+            const texto = document.getElementById('buscador-prov').value; 
+            const cont = document.getElementById('lista-prov');
+            
+            if (texto.trim() === '') { cont.classList.add('hidden'); return; }
+            
+            const resultados = fuseProv.search(texto).slice(0, 6).map(r => r.item);
+            
+            if(resultados.length === 0) {
+                cont.innerHTML = '<p class="p-3 text-xs text-gray-500 text-center">No encontrado. Llena los datos manualmente abajo.</p>';
+            } else {
+                cont.innerHTML = resultados.map(p => {
+                    // Evitar nulos
+                    const doc = p.documento_identidad || '';
+                    const nom = p.nombre_razon_social || 'Sin Nombre';
+                    // Pasamos los valores escapando comillas simples si las hubiera
+                    return `
+                        <div class="p-3 border-b hover:bg-gray-50 cursor-pointer transition flex justify-between items-center" onclick="seleccionarProv('${doc}', \`${nom}\`)">
+                            <span class="text-xs font-bold text-[#143B62]">${nom}</span>
+                            <span class="text-[10px] bg-gray-100 px-2 py-0.5 rounded text-gray-500">${doc}</span>
+                        </div>`;
+                }).join('');
+            }
+            cont.classList.remove('hidden');
+        }
+
+        function seleccionarProv(documentoCompleto, nombre) {
+            // Ejemplo: documentoCompleto = "J12345678" -> tipo = "J", rif = "12345678"
+            if(documentoCompleto && documentoCompleto.length > 0) {
+                const tipo = documentoCompleto.charAt(0).toUpperCase();
+                const numero = documentoCompleto.substring(1);
+                
+                // Seleccionar el tipo en el combo
+                const combo = document.getElementById('prov-tipo');
+                if([...combo.options].some(o => o.value === tipo)) {
+                    combo.value = tipo;
+                }
+                document.getElementById('prov-rif').value = numero;
+            }
+            
+            document.getElementById('prov-nombre').value = nombre;
+            
+            // Limpiar buscador visual
+            document.getElementById('buscador-prov').value = '';
+            document.getElementById('lista-prov').classList.add('hidden');
+        }
+
+        // --- BUSCADOR DE PRODUCTOS ---
+        function buscarProdPredictivo() {
+            const texto = document.getElementById('buscador-prod').value; 
+            const cont = document.getElementById('lista-busqueda-prod');
+            
+            if (texto.trim() === '') { cont.innerHTML = '<p class="text-center text-xs text-gray-400 py-4">Escribe para buscar un producto.</p>'; return; }
+            
+            const resultados = fuseProd.search(texto).slice(0, 10).map(r => r.item);
             
             if(resultados.length === 0) cont.innerHTML = `<p class="text-center text-xs text-red-400 py-4 font-bold">No encontrado</p>`;
             else cont.innerHTML = resultados.map(p => {
@@ -176,11 +247,10 @@
             const p = JSON.parse(decodeURIComponent(prodStr));
             const existe = listaRecepcion.find(item => item.id_producto_sku === p.id_producto_sku);
             if (!existe) {
-                // Se agrega con Cantidad 1 y Costo 0 (Para que el usuario lo llene)
                 p.cantidad_recibida = 1; p.costo_unitario_usd = 0; listaRecepcion.unshift(p);
                 actualizarTablaRecepcion();
             }
-            document.getElementById('buscador-prod').value = ''; document.getElementById('lista-busqueda').innerHTML = '';
+            document.getElementById('buscador-prod').value = ''; document.getElementById('lista-busqueda-prod').innerHTML = '';
         }
 
         function actualizarLinea(sku, campo, valor) {
@@ -204,7 +274,7 @@
                 const subT = item.cantidad_recibida * item.costo_unitario_usd; totalC += subT;
                 return `
                     <tr class="border-b border-gray-100 hover:bg-gray-50 transition">
-                        <td class="py-2">
+                        <td class="py-2 pl-2">
                             <p class="text-xs font-bold text-[#143B62] line-clamp-1">${item.nombre}</p>
                             <p class="text-[9px] text-gray-400">${item.id_producto_sku}</p>
                         </td>
@@ -254,7 +324,7 @@
                 const bodyFactura = {
                     tipo_transaccion: 'Compra',
                     numero_control_ext: numFactura,
-                    cliente_documento: provDoc, // Usamos la misma columna para no crear redundancia
+                    cliente_documento: provDoc, 
                     cliente_nombre: provNombre,
                     subtotal_usd: totalUSD,
                     total_usd: totalUSD,
@@ -272,13 +342,13 @@
                 const facData = await resFactura.json();
                 const idFactura = facData[0].id_factura;
 
-                // 2. Insertar Detalles (Cuidado: Aquí pasamos el COSTO, no el precio de venta)
+                // 2. Insertar Detalles 
                 const bodyDetalles = listaRecepcion.map(item => ({
                     factura_id: idFactura,
                     producto_sku: item.id_producto_sku,
                     producto_nombre: item.nombre,
                     cantidad: item.cantidad_recibida,
-                    precio_unitario_usd: item.costo_unitario_usd, // Guardamos a cómo nos costó
+                    precio_unitario_usd: item.costo_unitario_usd,
                     subtotal_usd: item.cantidad_recibida * item.costo_unitario_usd
                 }));
 
@@ -289,8 +359,7 @@
 
                 if(!resDetalles.ok) throw new Error("Error guardando renglones");
 
-                // El Trigger de SQL que hicimos en el Paso 1 se ejecutará automáticamente en Supabase sumando el Stock
-                alert(`¡Compra registrada con éxito!\nEl stock de ${listaRecepcion.length} artículos ha sido actualizado.`);
+                alert(`¡Compra registrada con éxito!\nEl stock de ${listaRecepcion.length} artículos ha sido actualizado en el sistema.`);
                 limpiarTodo();
 
             } catch (error) {
