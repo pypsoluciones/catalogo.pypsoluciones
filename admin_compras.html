@@ -46,11 +46,16 @@
             <div class="w-full lg:w-1/3 flex flex-col gap-4 shrink-0">
                 
                 <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm relative">
-                    <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4 border-b pb-2">1. Datos del Proveedor</h3>
+                    <div class="flex justify-between items-center mb-4 border-b pb-2">
+                        <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider">1. Datos del Proveedor</h3>
+                        <button onclick="abrirModalDirectorio()" class="bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-600 hover:text-white px-3 py-1 rounded transition text-xs font-bold flex items-center gap-1 shadow-sm">
+                            <i class="fa-solid fa-book-open"></i> Ver Directorio
+                        </button>
+                    </div>
                     
                     <div class="mb-4 relative">
-                        <label class="block text-[10px] font-bold text-[#E67E22] uppercase mb-1"><i class="fa-solid fa-magnifying-glass"></i> Buscar Proveedor</label>
-                        <input type="text" id="buscador-prov" oninput="buscarProvPredictivo()" onclick="event.stopPropagation()" placeholder="Nombre o RIF de tu proveedor..." class="w-full bg-gray-50 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-[#143B62]">
+                        <label class="block text-[10px] font-bold text-[#E67E22] uppercase mb-1"><i class="fa-solid fa-magnifying-glass"></i> Buscar por Nombre</label>
+                        <input type="text" id="buscador-prov" oninput="buscarProvPredictivo()" onclick="event.stopPropagation()" placeholder="Escribe el nombre aquí..." class="w-full bg-gray-50 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-[#143B62]">
                         <div id="lista-prov" class="absolute w-full bg-white shadow-xl rounded-b-lg border border-gray-200 mt-1 hidden z-50 max-h-48 overflow-y-auto custom-scroll"></div>
                     </div>
 
@@ -81,7 +86,6 @@
                         <i class="fa-solid fa-barcode absolute left-3 top-2.5 text-gray-400"></i>
                         <input type="text" id="buscador-prod" oninput="buscarProdPredictivo()" onclick="event.stopPropagation()" placeholder="Buscar por SKU o Nombre..." class="w-full bg-gray-50 border border-gray-300 rounded-lg pl-10 pr-4 py-2 text-sm focus:outline-none focus:border-[#143B62]">
                     </div>
-                    
                     <div id="lista-busqueda-prod" class="flex-1 overflow-y-auto custom-scroll space-y-2 border border-gray-100 p-2 rounded bg-gray-50">
                         <p class="text-center text-xs text-gray-400 py-4">Escribe para buscar un producto.</p>
                     </div>
@@ -93,7 +97,6 @@
                     <h3 class="text-sm font-bold text-[#143B62] uppercase tracking-wider">3. Detalle de Recepción</h3>
                     <button onclick="limpiarTodo()" class="text-red-500 hover:text-red-700 text-xs font-bold transition"><i class="fa-solid fa-trash"></i> Limpiar Todo</button>
                 </div>
-                
                 <div class="flex-1 overflow-auto custom-scroll p-4">
                     <table class="w-full text-left border-collapse">
                         <thead>
@@ -110,7 +113,6 @@
                         </tbody>
                     </table>
                 </div>
-
                 <div class="bg-gray-50 p-5 border-t shrink-0">
                     <div class="flex justify-end gap-8 mb-4">
                         <div class="text-right">
@@ -127,9 +129,35 @@
                     </button>
                 </div>
             </div>
-
         </div>
     </main>
+
+    <div id="modal-directorio" class="fixed inset-0 bg-black/60 z-[100] hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl flex flex-col max-h-[85vh] overflow-hidden transform scale-95 transition-transform" id="modal-dir-content">
+            <div class="bg-[#143B62] text-white p-4 flex justify-between items-center">
+                <h3 class="font-bold text-lg"><i class="fa-solid fa-book-open mr-2"></i> Directorio de Proveedores</h3>
+                <button onclick="cerrarModalDirectorio()" class="text-gray-300 hover:text-white text-xl"><i class="fa-solid fa-times"></i></button>
+            </div>
+            
+            <div class="p-4 bg-gray-50 border-b border-gray-200">
+                <input type="text" id="buscador-modal" oninput="filtrarModalDirectorio()" placeholder="Escribe para filtrar la tabla..." class="w-full bg-white border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-[#E67E22]">
+            </div>
+
+            <div class="p-0 overflow-y-auto custom-scroll flex-1 bg-white">
+                <table class="w-full text-left text-sm border-collapse">
+                    <thead class="bg-gray-100 text-gray-500 text-[10px] uppercase sticky top-0">
+                        <tr>
+                            <th class="p-3 pl-4">RIF</th>
+                            <th class="p-3">Razón Social</th>
+                            <th class="p-3 text-center">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-modal-dir" class="divide-y divide-gray-100">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 
     <script>
         const SUPABASE_URL = 'https://icvfmdvvochzaktugqvj.supabase.co';
@@ -153,38 +181,75 @@
                 inventario = await resProd.json();
                 fuseProd = new Fuse(inventario, { keys: ['nombre', 'id_producto_sku'], threshold: 0.3 });
 
-                // 3. SOLO PROVEEDORES (Cero Clientes)
-                const resProv = await fetch(`${SUPABASE_URL}/rest/v1/proveedores?select=documento_identidad,nombre_razon_social`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } });
-                proveedoresUnicos = resProv.ok ? await resProv.json() : [];
+                // 3. LA CORRECCIÓN: Leemos las columnas 'rif' y 'razon_social' de tu tabla real
+                const resProv = await fetch(`${SUPABASE_URL}/rest/v1/proveedores?select=rif,razon_social`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } });
+                const rawProvs = resProv.ok ? await resProv.json() : [];
+                
+                // Mapeamos los datos para que el sistema interno no se rompa
+                proveedoresUnicos = rawProvs.map(p => ({
+                    documento_identidad: p.rif, 
+                    nombre_razon_social: p.razon_social
+                }));
+
                 fuseProv = new Fuse(proveedoresUnicos, { keys: ['nombre_razon_social', 'documento_identidad'], threshold: 0.3 });
 
             } catch(e) { console.error("Error cargando base de datos", e); }
         };
 
-        function cerrarDropdowns() {
-            document.getElementById('lista-prov').classList.add('hidden');
+        function cerrarDropdowns() { document.getElementById('lista-prov').classList.add('hidden'); }
+
+        // --- EL NUEVO MODAL DE DIRECTORIO VISUAL ---
+        function abrirModalDirectorio() {
+            dibujarTablaModal(proveedoresUnicos);
+            document.getElementById('buscador-modal').value = '';
+            document.getElementById('modal-directorio').classList.remove('hidden');
+            setTimeout(() => document.getElementById('modal-dir-content').classList.replace('scale-95', 'scale-100'), 10);
         }
 
-        // --- BUSCADOR PROVEEDORES ---
+        function cerrarModalDirectorio() {
+            document.getElementById('modal-dir-content').classList.replace('scale-100', 'scale-95');
+            setTimeout(() => document.getElementById('modal-directorio').classList.add('hidden'), 150);
+        }
+
+        function dibujarTablaModal(arr) {
+            const tbody = document.getElementById('tabla-modal-dir');
+            if(arr.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" class="p-6 text-center text-gray-400">No hay proveedores registrados.</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = arr.map(p => {
+                const doc = p.documento_identidad || '';
+                const nom = p.nombre_razon_social || '';
+                return `
+                <tr class="hover:bg-gray-50 transition">
+                    <td class="p-3 pl-4 font-bold text-gray-500">${doc}</td>
+                    <td class="p-3 font-bold text-[#143B62]">${nom}</td>
+                    <td class="p-3 text-center">
+                        <button onclick="seleccionarProv('${doc}', \`${nom}\`); cerrarModalDirectorio()" class="bg-green-100 text-green-700 hover:bg-green-600 hover:text-white px-3 py-1.5 rounded transition text-xs font-bold">
+                            Seleccionar
+                        </button>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        function filtrarModalDirectorio() {
+            const texto = document.getElementById('buscador-modal').value;
+            if(texto.trim() === '') { dibujarTablaModal(proveedoresUnicos); return; }
+            const resultados = fuseProv.search(texto).map(r => r.item);
+            dibujarTablaModal(resultados);
+        }
+
+        // --- BUSCADOR RÁPIDO PROVEEDORES ---
         function buscarProvPredictivo() {
-            const texto = document.getElementById('buscador-prov').value; 
-            const cont = document.getElementById('lista-prov');
-            
+            const texto = document.getElementById('buscador-prov').value; const cont = document.getElementById('lista-prov');
             if (texto.trim() === '') { cont.classList.add('hidden'); return; }
-            
             const resultados = fuseProv.search(texto).slice(0, 6).map(r => r.item);
-            
-            if(resultados.length === 0) {
-                cont.innerHTML = '<p class="p-3 text-xs text-[#E67E22] text-center font-bold">No encontrado. Regístralo en el Directorio.</p>';
-            } else {
+            if(resultados.length === 0) { cont.innerHTML = '<p class="p-3 text-xs text-[#E67E22] text-center font-bold">No encontrado. Regístralo en el Directorio.</p>'; } 
+            else {
                 cont.innerHTML = resultados.map(p => {
-                    const doc = p.documento_identidad || '';
-                    const nom = p.nombre_razon_social || 'Sin Nombre';
-                    return `
-                        <div class="p-3 border-b hover:bg-gray-50 cursor-pointer transition flex justify-between items-center" onclick="seleccionarProv('${doc}', \`${nom}\`)">
-                            <span class="text-xs font-bold text-[#143B62]">${nom}</span>
-                            <span class="text-[10px] bg-gray-100 px-2 py-0.5 rounded text-gray-500">${doc}</span>
-                        </div>`;
+                    const doc = p.documento_identidad || ''; const nom = p.nombre_razon_social || 'Sin Nombre';
+                    return `<div class="p-3 border-b hover:bg-gray-50 cursor-pointer transition flex justify-between items-center" onclick="seleccionarProv('${doc}', \`${nom}\`)"><span class="text-xs font-bold text-[#143B62]">${nom}</span><span class="text-[10px] bg-gray-100 px-2 py-0.5 rounded text-gray-500">${doc}</span></div>`;
                 }).join('');
             }
             cont.classList.remove('hidden');
@@ -205,20 +270,13 @@
 
         // --- BUSCADOR PRODUCTOS ---
         function buscarProdPredictivo() {
-            const texto = document.getElementById('buscador-prod').value; 
-            const cont = document.getElementById('lista-busqueda-prod');
-            
+            const texto = document.getElementById('buscador-prod').value; const cont = document.getElementById('lista-busqueda-prod');
             if (texto.trim() === '') { cont.innerHTML = '<p class="text-center text-xs text-gray-400 py-4">Escribe para buscar un producto.</p>'; return; }
             const resultados = fuseProd.search(texto).slice(0, 10).map(r => r.item);
-            
             if(resultados.length === 0) cont.innerHTML = `<p class="text-center text-xs text-red-400 py-4 font-bold">No encontrado</p>`;
             else cont.innerHTML = resultados.map(p => {
                 const pStr = encodeURIComponent(JSON.stringify(p));
-                return `
-                    <div onclick="agregarARecepcion('${pStr}')" class="bg-white border border-gray-200 p-2 rounded cursor-pointer hover:border-[#143B62] transition flex items-center gap-3 shadow-sm">
-                        <img src="${p.imagen_principal}" class="w-8 h-8 object-contain rounded">
-                        <div><p class="text-xs font-bold text-[#143B62] line-clamp-1">${p.nombre}</p><p class="text-[10px] text-gray-400">${p.id_producto_sku}</p></div>
-                    </div>`;
+                return `<div onclick="agregarARecepcion('${pStr}')" class="bg-white border border-gray-200 p-2 rounded cursor-pointer hover:border-[#143B62] transition flex items-center gap-3 shadow-sm"><img src="${p.imagen_principal}" class="w-8 h-8 object-contain rounded"><div><p class="text-xs font-bold text-[#143B62] line-clamp-1">${p.nombre}</p><p class="text-[10px] text-gray-400">${p.id_producto_sku}</p></div></div>`;
             }).join('');
         }
 
@@ -226,10 +284,7 @@
         function agregarARecepcion(prodStr) {
             const p = JSON.parse(decodeURIComponent(prodStr));
             const existe = listaRecepcion.find(item => item.id_producto_sku === p.id_producto_sku);
-            if (!existe) {
-                p.cantidad_recibida = 1; p.costo_unitario_usd = 0; listaRecepcion.unshift(p);
-                actualizarTablaRecepcion();
-            }
+            if (!existe) { p.cantidad_recibida = 1; p.costo_unitario_usd = 0; listaRecepcion.unshift(p); actualizarTablaRecepcion(); }
             document.getElementById('buscador-prod').value = ''; document.getElementById('lista-busqueda-prod').innerHTML = '';
         }
 
@@ -242,47 +297,22 @@
 
         function actualizarTablaRecepcion() {
             const tbody = document.getElementById('tabla-recepcion'); let totalC = 0;
-            if(listaRecepcion.length === 0) { 
-                tbody.innerHTML = '<tr><td colspan="5" class="py-10 text-center text-gray-400 font-semibold"><i class="fa-solid fa-boxes-packing text-4xl mb-2 opacity-50 block"></i> No has agregado productos.</td></tr>'; 
-                document.getElementById('total-compra-usd').innerText = 'US$ 0.00'; document.getElementById('total-compra-bs').innerText = 'Bs. 0.00'; return; 
-            }
-
+            if(listaRecepcion.length === 0) { tbody.innerHTML = '<tr><td colspan="5" class="py-10 text-center text-gray-400 font-semibold"><i class="fa-solid fa-boxes-packing text-4xl mb-2 opacity-50 block"></i> No has agregado productos.</td></tr>'; document.getElementById('total-compra-usd').innerText = 'US$ 0.00'; document.getElementById('total-compra-bs').innerText = 'Bs. 0.00'; return; }
             tbody.innerHTML = listaRecepcion.map(item => {
                 const subT = item.cantidad_recibida * item.costo_unitario_usd; totalC += subT;
-                return `
-                    <tr class="border-b border-gray-100 hover:bg-gray-50 transition">
-                        <td class="py-2 pl-2">
-                            <p class="text-xs font-bold text-[#143B62] line-clamp-1">${item.nombre}</p>
-                            <p class="text-[9px] text-gray-400">${item.id_producto_sku}</p>
-                        </td>
-                        <td class="py-2 text-center w-24"><input type="number" value="${item.cantidad_recibida}" min="1" onchange="actualizarLinea('${item.id_producto_sku}', 'cantidad_recibida', this.value)" class="w-16 border border-gray-300 rounded px-1 py-1 text-center text-sm font-bold focus:border-[#E67E22] outline-none"></td>
-                        <td class="py-2 text-right w-28"><div class="flex items-center justify-end text-sm"><span class="text-gray-400 mr-1">$</span><input type="number" step="0.01" value="${item.costo_unitario_usd}" onchange="actualizarLinea('${item.id_producto_sku}', 'costo_unitario_usd', this.value)" class="w-20 border border-gray-300 rounded px-1 py-1 text-right font-bold text-green-700 focus:border-[#E67E22] outline-none"></div></td>
-                        <td class="py-2 text-right font-black text-gray-800 w-24">US$ ${subT.toFixed(2)}</td>
-                        <td class="py-2 text-center w-10"><button onclick="eliminarLinea('${item.id_producto_sku}')" class="text-gray-300 hover:text-red-500 transition"><i class="fa-solid fa-times"></i></button></td>
-                    </tr>`;
+                return `<tr class="border-b border-gray-100 hover:bg-gray-50 transition"><td class="py-2 pl-2"><p class="text-xs font-bold text-[#143B62] line-clamp-1">${item.nombre}</p><p class="text-[9px] text-gray-400">${item.id_producto_sku}</p></td><td class="py-2 text-center w-24"><input type="number" value="${item.cantidad_recibida}" min="1" onchange="actualizarLinea('${item.id_producto_sku}', 'cantidad_recibida', this.value)" class="w-16 border border-gray-300 rounded px-1 py-1 text-center text-sm font-bold focus:border-[#E67E22] outline-none"></td><td class="py-2 text-right w-28"><div class="flex items-center justify-end text-sm"><span class="text-gray-400 mr-1">$</span><input type="number" step="0.01" value="${item.costo_unitario_usd}" onchange="actualizarLinea('${item.id_producto_sku}', 'costo_unitario_usd', this.value)" class="w-20 border border-gray-300 rounded px-1 py-1 text-right font-bold text-green-700 focus:border-[#E67E22] outline-none"></div></td><td class="py-2 text-right font-black text-gray-800 w-24">US$ ${subT.toFixed(2)}</td><td class="py-2 text-center w-10"><button onclick="eliminarLinea('${item.id_producto_sku}')" class="text-gray-300 hover:text-red-500 transition"><i class="fa-solid fa-times"></i></button></td></tr>`;
             }).join('');
-
-            document.getElementById('total-compra-usd').innerText = `US$ ${totalC.toFixed(2)}`;
-            document.getElementById('total-compra-bs').innerText = `Bs. ${(totalC * tasaBCV).toFixed(2)}`;
+            document.getElementById('total-compra-usd').innerText = `US$ ${totalC.toFixed(2)}`; document.getElementById('total-compra-bs').innerText = `Bs. ${(totalC * tasaBCV).toFixed(2)}`;
         }
 
-        function limpiarTodo() {
-            document.getElementById('prov-rif').value = ''; document.getElementById('prov-nombre').value = ''; document.getElementById('prov-factura-num').value = '';
-            listaRecepcion = []; actualizarTablaRecepcion();
-        }
+        function limpiarTodo() { document.getElementById('prov-rif').value = ''; document.getElementById('prov-nombre').value = ''; document.getElementById('prov-factura-num').value = ''; listaRecepcion = []; actualizarTablaRecepcion(); }
 
-        // --- PROCESAR EN SUPABASE ---
+        // --- PROCESAR COMPRA ---
         async function procesarCompra() {
             if(listaRecepcion.length === 0) return alert("Debe agregar productos a la recepción.");
-            const numFactura = document.getElementById('prov-factura-num').value.trim();
-            const provNombre = document.getElementById('prov-nombre').value.trim();
-            const provDoc = document.getElementById('prov-tipo').value + document.getElementById('prov-rif').value.trim();
-            
+            const numFactura = document.getElementById('prov-factura-num').value.trim(); const provNombre = document.getElementById('prov-nombre').value.trim(); const provDoc = document.getElementById('prov-tipo').value + document.getElementById('prov-rif').value.trim();
             if(!numFactura || !provNombre || document.getElementById('prov-rif').value.trim() === '') return alert("Complete los datos obligatorios del proveedor y el N° de Factura.");
-            
-            const totalUSD = parseFloat(document.getElementById('total-compra-usd').innerText.replace('US$ ', ''));
-            const totalBS = parseFloat(document.getElementById('total-compra-bs').innerText.replace('Bs. ', ''));
-
+            const totalUSD = parseFloat(document.getElementById('total-compra-usd').innerText.replace('US$ ', '')); const totalBS = parseFloat(document.getElementById('total-compra-bs').innerText.replace('Bs. ', ''));
             const btn = document.querySelector('button[onclick="procesarCompra()"]');
             btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-xl"></i> Procesando...`; btn.disabled = true;
 
@@ -296,13 +326,8 @@
                 const resDetalles = await fetch(`${SUPABASE_URL}/rest/v1/detalles_factura`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' }, body: JSON.stringify(bodyDetalles) });
                 if(!resDetalles.ok) throw new Error("Error guardando renglones");
 
-                alert(`¡Compra registrada con éxito!\nEl stock ha sido actualizado.`);
-                limpiarTodo();
-            } catch (error) {
-                alert("Ocurrió un error al procesar la compra.");
-            } finally {
-                btn.innerHTML = `<i class="fa-solid fa-check-double text-xl"></i> Registrar Compra y Sumar Stock`; btn.disabled = false;
-            }
+                alert(`¡Compra registrada con éxito!\nEl stock ha sido actualizado.`); limpiarTodo();
+            } catch (error) { alert("Ocurrió un error al procesar la compra."); } finally { btn.innerHTML = `<i class="fa-solid fa-check-double text-xl"></i> Registrar Compra y Sumar Stock`; btn.disabled = false; }
         }
     </script>
 </body>
