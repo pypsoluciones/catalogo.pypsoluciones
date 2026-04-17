@@ -14,8 +14,17 @@
         .ticket-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
         .btn-press:active { transform: scale(0.95); transition: transform 0.1s; }
         #reader video { border-radius: 10px; width: 100% !important; }
-        .seccion-contenido { transition: max-height 0.3s ease-out, opacity 0.2s; overflow: hidden; }
-        .seccion-cerrada { max-height: 0 !important; opacity: 0; pointer-events: none; }
+        
+        /* CORRECCIÓN: El acordeón solo funciona en pantallas pequeñas (móviles) */
+        @media (max-width: 1023px) {
+            .seccion-contenido { transition: max-height 0.3s ease-out, opacity 0.2s; overflow: hidden; max-height: 2000px; }
+            .seccion-cerrada { max-height: 0 !important; opacity: 0; pointer-events: none; padding-top: 0 !important; padding-bottom: 0 !important; border: none !important; }
+        }
+        @media (min-width: 1024px) {
+            /* En PC (lg), forzamos a que siempre se vea sin importar las clases del acordeón */
+            .seccion-contenido { max-height: none !important; opacity: 1 !important; display: flex !important; }
+            #cont-cli { display: block !important; }
+        }
     </style>
     <script>if (localStorage.getItem('pyp_sesion_activa') !== 'true') window.location.href = 'login.html';</script>
 </head>
@@ -66,7 +75,7 @@
                 <i id="ico-cli" class="fa-solid fa-chevron-down"></i>
             </button>
 
-            <div id="cont-cli" class="seccion-contenido lg:block bg-gray-50 border-b p-3 space-y-2 seccion-cerrada lg:seccion-contenido">
+            <div id="cont-cli" class="seccion-contenido seccion-cerrada bg-gray-50 border-b p-3 space-y-2">
                 <div class="flex justify-between items-center">
                     <span class="text-[10px] font-bold text-gray-500 uppercase">Facturación / Cotización</span>
                     <div class="flex gap-1">
@@ -92,7 +101,7 @@
                 <i id="ico-car" class="fa-solid fa-chevron-down"></i>
             </button>
 
-            <div id="cont-car" class="seccion-contenido lg:flex flex-col lg:flex-1 bg-white seccion-cerrada lg:seccion-contenido">
+            <div id="cont-car" class="seccion-contenido seccion-cerrada flex-col lg:flex-1 bg-white">
                 <div class="flex-1 overflow-y-auto p-2 ticket-scroll min-h-[150px]" id="pos-ticket-items"></div>
 
                 <div class="bg-gray-100 p-4 border-t shadow-inner">
@@ -153,9 +162,8 @@
         let inventario = []; let fuse; let ticket = []; let tasaBCV = 1; let clientes = []; let fuseCli; let html5QrCode;
 
         window.onload = async () => {
-            // Cargar Nombre de Usuario desde localStorage
             const nombreUsr = localStorage.getItem('pyp_usuario_nombre');
-            if(nombreUsr) document.getElementById('nombre-cajero').innerText = nombreUsr.split(' ')[0]; // Solo primer nombre
+            if(nombreUsr) document.getElementById('nombre-cajero').innerText = nombreUsr.split(' ')[0];
 
             const rT = await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?select=tasa&order=fecha_actualizacion.desc&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }); const dT = await rT.json(); if(dT.length) { tasaBCV = dT[0].tasa; document.getElementById('tasa-actual').innerText = `Bs. ${tasaBCV.toFixed(2)}`; }
             const rP = await fetch(`${SUPABASE_URL}/rest/v1/vista_catalogo_web?select=*&limit=1000`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }); inventario = await rP.json(); fuse = new Fuse(inventario, { keys: ['nombre', 'id_producto_sku'], threshold: 0.3 });
@@ -163,9 +171,14 @@
             pintarCategorias(); pintarGrilla(inventario); actualizarTicket();
         };
 
-        function toggleAcordeon(id, idIco) { if(window.innerWidth >= 1024) return; const c = document.getElementById(id); const i = document.getElementById(idIco); if(c.classList.contains('seccion-cerrada')) { c.classList.remove('seccion-cerrada'); i.className = "fa-solid fa-chevron-up"; } else { c.classList.add('seccion-cerrada'); i.className = "fa-solid fa-chevron-down"; } }
+        function toggleAcordeon(id, idIco) {
+            if(window.innerWidth >= 1024) return;
+            const c = document.getElementById(id); const i = document.getElementById(idIco);
+            if(c.classList.contains('seccion-cerrada')) { c.classList.remove('seccion-cerrada'); i.className = "fa-solid fa-chevron-up"; } 
+            else { c.classList.add('seccion-cerrada'); i.className = "fa-solid fa-chevron-down"; }
+        }
 
-        function abrirScanner() { document.getElementById('modal-scanner').classList.remove('hidden'); html5QrCode = new Html5Qrcode("reader"); html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (t) => { cerrarScanner(); const p = inventario.find(x => x.id_producto_sku === t); if(p) { agregarAlTicket(encodeURIComponent(JSON.stringify(p))); if(window.innerWidth < 1024) toggleAcordeon('cont-car', 'ico-car'); } else alert("Código no encontrado"); }, () => {}); }
+        function abrirScanner() { document.getElementById('modal-scanner').classList.remove('hidden'); html5QrCode = new Html5Qrcode("reader"); html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (t) => { cerrarScanner(); const p = inventario.find(x => x.id_producto_sku === t); if(p) { agregarAlTicket(encodeURIComponent(JSON.stringify(p))); if(window.innerWidth < 1024) { document.getElementById('cont-car').classList.remove('seccion-cerrada'); document.getElementById('ico-car').className="fa-solid fa-chevron-up"; } } else alert("Código no encontrado"); }, () => {}); }
         function cerrarScanner() { if(html5QrCode) html5QrCode.stop().then(()=>html5QrCode.clear()); document.getElementById('modal-scanner').classList.add('hidden'); }
 
         function pintarCategorias() { const cats = [...new Set(inventario.map(p => p.categoria_producto).filter(c => c))].sort(); document.getElementById('pos-categorias').innerHTML = `<button onclick="filtrarCat('Todas')" class="px-4 py-1 rounded-full text-[10px] font-bold bg-gray-200">Todas</button>` + cats.map(c => `<button onclick="filtrarCat('${c}')" class="px-4 py-1 rounded-full text-[10px] font-bold bg-gray-200 whitespace-nowrap">${c}</button>`).join(''); }
@@ -185,17 +198,10 @@
             `).join(''); 
         }
 
-        // LÓGICA DE AGREGAR Y MOSTRAR TOAST
         function agregarAlTicket(str) { 
-            const p = JSON.parse(decodeURIComponent(str)); 
-            const idx = ticket.findIndex(i => i.id_producto_sku === p.id_producto_sku); 
-            if(idx !== -1) ticket[idx].cantidad++; else { p.cantidad = 1; ticket.unshift(p); } 
-            actualizarTicket(); 
-            
-            // Mostrar Toast
-            const t = document.getElementById('toast-add');
-            t.classList.remove('opacity-0');
-            setTimeout(() => t.classList.add('opacity-0'), 1000);
+            const p = JSON.parse(decodeURIComponent(str)); const idx = ticket.findIndex(i => i.id_producto_sku === p.id_producto_sku); 
+            if(idx !== -1) ticket[idx].cantidad++; else { p.cantidad = 1; ticket.unshift(p); } actualizarTicket(); 
+            const t = document.getElementById('toast-add'); t.classList.remove('opacity-0'); setTimeout(() => t.classList.add('opacity-0'), 1000);
         }
 
         function cambiarCant(sku, d) { const i = ticket.findIndex(x => x.id_producto_sku === sku); if(i !== -1) { ticket[i].cantidad += d; if(ticket[i].cantidad <= 0) ticket.splice(i, 1); actualizarTicket(); } }
@@ -212,7 +218,6 @@
             document.getElementById('pos-subtotal').innerText = `$${sB.toFixed(2)}`; document.getElementById('pos-descuento').innerText = `-$${desc.toFixed(2)}`; document.getElementById('pos-iva').innerText = `$${mI.toFixed(2)}`; document.getElementById('pos-total-usd').innerText = `$${gran.toFixed(2)}`; document.getElementById('pos-total-bs').innerText = `Bs. ${(gran * tasaBCV).toFixed(2)}`;
         }
 
-        // --- CLIENTES ---
         function abrirModalDirectorio() { document.getElementById('modal-directorio').classList.remove('hidden'); document.getElementById('tabla-modal-dir').innerHTML = clientes.map(c => `<tr onclick="seleccionarCli('${encodeURIComponent(JSON.stringify(c))}')" class="hover:bg-gray-50 cursor-pointer"><td class="p-3 text-[10px] font-bold text-gray-400">${c.documento_identidad}</td><td class="p-3 text-xs font-bold">${c.nombre_razon_social}</td><td class="p-3 text-right"><i class="fa-solid fa-chevron-right text-gray-300"></i></td></tr>`).join(''); }
         function cerrarModalDirectorio() { document.getElementById('modal-directorio').classList.add('hidden'); }
         function filtrarModalDirectorio() { const t = document.getElementById('buscador-modal').value; document.getElementById('tabla-modal-dir').innerHTML = (t ? fuseCli.search(t).map(r => r.item) : clientes).map(c => `<tr onclick="seleccionarCli('${encodeURIComponent(JSON.stringify(c))}')" class="hover:bg-gray-50 cursor-pointer"><td class="p-3 text-[10px] font-bold text-gray-400">${c.documento_identidad}</td><td class="p-3 text-xs font-bold">${c.nombre_razon_social}</td><td class="p-3 text-right"><i class="fa-solid fa-chevron-right text-gray-300"></i></td></tr>`).join(''); }
@@ -221,7 +226,6 @@
         function limpiarCliente() { document.getElementById('pos-cedula').value=''; document.getElementById('pos-nombre').value=''; document.getElementById('pos-telefono').value=''; document.getElementById('pos-correo').value=''; document.getElementById('pos-direccion').value=''; }
         function limpiarTodoTicket() { ticket = []; limpiarCliente(); actualizarTicket(); }
 
-        // --- TRANSACCIONES ---
         async function procesarTransaccion(tipo) {
             if(!ticket.length) return alert("Carrito vacío");
             const doc = document.getElementById('pos-cedula').value ? document.getElementById('pos-tipo-doc').value + document.getElementById('pos-cedula').value : 'Consumidor Final';
@@ -248,7 +252,6 @@
                 <div style="text-align:center; border-bottom: 1px dashed #000; padding-bottom: 10px; margin-bottom: 10px;">
                     <h2 style="font-size: 16px; font-weight: bold; margin:0;">P&P SOLUCIONES</h2>
                     <p style="margin:2px 0;">J-XXXXXXXX-X</p>
-                    <p style="margin:2px 0;">Calle 9 C.C. Vecinal, Caracas</p>
                     <p style="margin:2px 0;">WhatsApp: +58 414-0285806</p>
                 </div>
                 <div style="text-align:center; border-bottom: 1px dashed #000; padding-bottom: 10px; margin-bottom: 10px;">
@@ -269,8 +272,7 @@
                     <p style="margin:2px 0;">Descuento: -$${factura.descuento_usd.toFixed(2)}</p>
                     <h3 style="margin:5px 0; font-size: 14px;">TOTAL USD: $${factura.total_usd.toFixed(2)}</h3>
                     <h3 style="margin:0; font-size: 12px;">TOTAL Bs: ${factura.total_bs.toFixed(2)}</h3>
-                </div>
-                <div style="text-align:center; margin-top: 15px;"><p style="margin:0;">*** ${tipo === 'Presupuesto' ? 'Precios sujetos a cambio.' : '¡Gracias por su compra!'} ***</p></div>`;
+                </div>`;
             document.getElementById('ticket-imprimir').innerHTML = html; document.getElementById('modal-ticket').classList.remove('hidden');
         }
         function cerrarTicket() { document.getElementById('modal-ticket').classList.add('hidden'); limpiarTodoTicket(); }
