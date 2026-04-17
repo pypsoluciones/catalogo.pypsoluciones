@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin | Notas de Entrega (Cuentas por Cobrar)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
+    </style>
+    <script>if (localStorage.getItem('pyp_sesion_activa') !== 'true') window.location.href = 'login.html';</script>
+</head>
+<body class="bg-[#f0f2f5] font-sans flex h-screen overflow-hidden text-gray-800">
+
+    <aside class="w-64 bg-[#143B62] text-white flex flex-col hidden md:flex shrink-0 shadow-xl z-20">
+        <div class="p-6 border-b border-white/10 flex items-center gap-3">
+            <i class="fa-solid fa-layer-group text-[#E67E22] text-3xl"></i>
+            <h2 class="font-bold text-xl tracking-wide">P&P Admin</h2>
+        </div>
+        <nav class="flex-1 p-4 space-y-1 overflow-y-auto custom-scroll text-sm">
+            <a href="admin_dashboard.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-chart-pie w-5"></i> Dashboard</a>
+            <a href="admin_ventas.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-cash-register w-5"></i> Ventas (POS)</a>
+            <a href="#" class="flex items-center gap-3 bg-[#E67E22] text-white px-4 py-2.5 rounded-lg font-bold shadow-md"><i class="fa-solid fa-truck-fast w-5"></i> Despachos</a>
+            <a href="admin_presupuestos.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-file-invoice w-5"></i> Cotizaciones</a>
+            <a href="admin_compras.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-truck-ramp-box w-5"></i> Compras</a>
+            <a href="admin_productos.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-boxes-stacked w-5"></i> Inventario</a>
+            <a href="admin_contactos.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-address-book w-5"></i> Directorio</a>
+            <a href="admin_taller.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-screwdriver-wrench w-5"></i> Taller</a>
+            <a href="admin_bancos.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-building-columns w-5"></i> Bancos / Cajas</a>
+            <a href="admin_usuarios.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-users-gear w-5"></i> Usuarios y Roles</a>
+            <a href="admin_publicidad.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-image w-5"></i> Publicidad Web</a>
+        </nav>
+    </aside>
+
+    <main class="flex-1 flex flex-col h-screen overflow-hidden bg-gray-50">
+        <header class="bg-white shadow-sm px-6 py-4 flex justify-between items-center z-10 shrink-0">
+            <div>
+                <h1 class="text-xl font-bold text-[#143B62] flex items-center gap-2"><i class="fa-solid fa-truck-fast"></i> Notas de Entrega (Despachos)</h1>
+                <p class="text-xs text-gray-500 font-bold mt-1">Control de mercancía entregada pendiente por facturar/cobrar.</p>
+            </div>
+            <button onclick="cargarDespachos()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-bold text-sm shadow-sm transition flex items-center gap-2">
+                <i class="fa-solid fa-rotate-right"></i> Refrescar
+            </button>
+        </header>
+
+        <div class="flex-1 overflow-auto p-4 md:p-6 custom-scroll">
+            <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                <table class="w-full text-left text-sm border-collapse">
+                    <thead class="bg-[#143B62] text-white text-[10px] uppercase font-black">
+                        <tr>
+                            <th class="p-4 rounded-tl-xl"># Nota</th>
+                            <th class="p-4">Fecha de Entrega</th>
+                            <th class="p-4">Cliente</th>
+                            <th class="p-4 text-right">Deuda Pendiente</th>
+                            <th class="p-4 text-center">Estatus</th>
+                            <th class="p-4 text-center rounded-tr-xl">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-despachos" class="divide-y divide-gray-100">
+                        <tr><td colspan="6" class="p-10 text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin text-xl"></i> Buscando despachos...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const SUPABASE_URL = 'https://icvfmdvvochzaktugqvj.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImljdmZtZHZ2b2NoemFrdHVncXZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyNDEzMzEsImV4cCI6MjA5MTgxNzMzMX0.gO3D39piT6KGbMMOzrPGWXUp5-g_nOBAgJ-nwPv8IcQ';
+
+        window.onload = cargarDespachos;
+
+        async function cargarDespachos() {
+            try {
+                // Buscamos transacciones tipo 'Nota de Entrega'
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/facturas?tipo_transaccion=eq.Nota%20de%20Entrega&order=fecha_emision.desc`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } });
+                const data = await res.json();
+                
+                const tbody = document.getElementById('tabla-despachos');
+                if(!data.length) { tbody.innerHTML = `<tr><td colspan="6" class="p-10 text-center text-gray-400 font-bold"><i class="fa-solid fa-box-open text-4xl mb-3 block opacity-50"></i> No hay notas de entrega registradas.</td></tr>`; return; }
+
+                tbody.innerHTML = data.map(c => {
+                    // Si está 'Por Facturar' (rojo), si está 'Completada' (verde)
+                    let badge = '<span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-[9px] font-black border border-green-200">FACTURADO Y COBRADO</span>';
+                    let btn = `<span class="text-gray-300 font-bold text-xs"><i class="fa-solid fa-lock"></i> Cerrado</span>`;
+                    
+                    if(c.estatus === 'Por Facturar') {
+                        badge = '<span class="bg-red-50 text-red-600 px-3 py-1 rounded-full text-[9px] font-black border border-red-200 animate-pulse">POR FACTURAR</span>';
+                        btn = `<button onclick="facturarDespacho('${c.id_factura}')" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded shadow text-xs font-bold transition flex justify-center items-center gap-1 mx-auto w-full max-w-[120px]"><i class="fa-solid fa-file-invoice-dollar"></i> Facturar Ahora</button>`;
+                    }
+                    
+                    return `
+                    <tr class="hover:bg-gray-50 transition">
+                        <td class="p-4 font-mono font-bold text-blue-600">NE-00${c.correlativo}</td>
+                        <td class="p-4 text-gray-500 font-semibold text-xs">${new Date(c.fecha_emision).toLocaleDateString()}</td>
+                        <td class="p-4"><p class="font-bold text-[#143B62]">${c.cliente_nombre}</p><p class="text-[9px] text-gray-400">${c.cliente_documento}</p></td>
+                        <td class="p-4 text-right font-black text-gray-800 text-lg">$${Number(c.total_usd).toFixed(2)}</td>
+                        <td class="p-4 text-center">${badge}</td>
+                        <td class="p-4 text-center">${btn}</td>
+                    </tr>`;
+                }).join('');
+            } catch(e) { alert("Error cargando los despachos."); }
+        }
+
+        async function facturarDespacho(id) {
+            if(!confirm("¿El cliente ya pagó y deseas convertir esta Nota de Entrega en una FACTURA DEFINITIVA?")) return;
+
+            try {
+                // Actualizamos el estatus a 'Completada' para que la contabilidad la cierre.
+                // Mantenemos el tipo "Nota de Entrega" por temas de auditoría, o podríamos cambiarlo a 'Venta'.
+                // Dejémoslo en Nota de Entrega pero con estatus Completada.
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/facturas?id_factura=eq.${id}`, {
+                    method: 'PATCH',
+                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        estatus: 'Completada',
+                        fecha_emision: new Date().toISOString() // Actualizamos la fecha a la del pago real
+                    })
+                });
+
+                if(res.ok) {
+                    alert("¡Éxito! El despacho ha sido facturado y cerrado en la contabilidad.");
+                    cargarDespachos();
+                }
+            } catch(e) { alert("Error al procesar el pago del despacho."); }
+        }
+    </script>
+</body>
+</html>
