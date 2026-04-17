@@ -14,7 +14,6 @@
         .ticket-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
         .btn-press:active { transform: scale(0.95); transition: transform 0.1s; }
         #reader video { border-radius: 10px; width: 100% !important; }
-        /* Animación suave para acordeones */
         .seccion-contenido { transition: max-height 0.3s ease-out, opacity 0.2s; overflow: hidden; }
         .seccion-cerrada { max-height: 0 !important; opacity: 0; pointer-events: none; }
     </style>
@@ -119,14 +118,29 @@
                             <i class="fa-solid fa-check-double"></i> VENDER
                         </button>
                     </div>
-                    
-                    <a href="https://pypsoluciones.vercel.app" target="_blank" class="block w-full text-center text-[10px] text-blue-500 font-bold mt-2 hover:underline">
-                        <i class="fa-solid fa-external-link mr-1"></i> Ir a la página web pública
-                    </a>
                 </div>
             </div>
         </section>
     </main>
+
+    <div id="modal-ticket" class="fixed inset-0 bg-black/80 z-[150] hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="bg-[#143B62] text-white p-3 flex justify-between items-center shrink-0">
+                <h3 class="font-bold text-sm"><i class="fa-solid fa-receipt mr-2"></i> Documento Generado</h3>
+                <button onclick="cerrarTicket()" class="text-gray-300 hover:text-white text-lg"><i class="fa-solid fa-times"></i></button>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto p-6 bg-gray-100 flex justify-center custom-scroll">
+                <div id="ticket-imprimir" class="bg-white p-5 w-full text-black font-mono text-[11px] leading-snug shadow-xl">
+                    </div>
+            </div>
+            
+            <div class="p-3 bg-white border-t flex gap-2 shrink-0">
+                <button onclick="cerrarTicket()" class="flex-1 bg-gray-200 text-gray-700 py-3 rounded font-bold btn-press">Nueva Venta</button>
+                <button onclick="imprimirTicket()" class="flex-1 bg-[#E67E22] text-white py-3 rounded font-bold btn-press"><i class="fa-solid fa-print"></i> Imprimir</button>
+            </div>
+        </div>
+    </div>
 
     <div id="modal-scanner" class="fixed inset-0 bg-black/80 z-[100] hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-xl w-full max-w-sm overflow-hidden flex flex-col">
@@ -142,8 +156,6 @@
             <div class="flex-1 overflow-y-auto"><table class="w-full text-left text-sm"><tbody id="tabla-modal-dir" class="divide-y"></tbody></table></div>
         </div>
     </div>
-
-    <div id="modal-alerta" class="fixed inset-0 bg-black/60 z-[150] hidden flex items-center justify-center p-4"><div class="bg-white rounded-2xl p-6 w-full max-w-xs text-center shadow-2xl" id="modal-alerta-content"><i id="alerta-icono" class="fa-solid fa-circle-check text-5xl text-green-500 mb-4"></i><h3 id="alerta-titulo" class="text-xl font-bold mb-2"></h3><p id="alerta-mensaje" class="text-sm text-gray-500 mb-6"></p><button onclick="cerrarAlerta()" class="w-full bg-[#143B62] text-white py-3 rounded-xl font-bold">Entendido</button></div></div>
 
     <script>
         const SUPABASE_URL = 'https://icvfmdvvochzaktugqvj.supabase.co'; const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImljdmZtZHZ2b2NoemFrdHVncXZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyNDEzMzEsImV4cCI6MjA5MTgxNzMzMX0.gO3D39piT6KGbMMOzrPGWXUp5-g_nOBAgJ-nwPv8IcQ';
@@ -172,10 +184,30 @@
         function pintarCategorias() { const cats = [...new Set(inventario.map(p => p.categoria_producto).filter(c => c))].sort(); document.getElementById('pos-categorias').innerHTML = `<button onclick="filtrarCat('Todas')" class="px-4 py-1 rounded-full text-[10px] font-bold bg-gray-200">Todas</button>` + cats.map(c => `<button onclick="filtrarCat('${c}')" class="px-4 py-1 rounded-full text-[10px] font-bold bg-gray-200 whitespace-nowrap">${c}</button>`).join(''); }
         function filtrarCat(c) { pintarGrilla(c === 'Todas' ? inventario : inventario.filter(p => p.categoria_producto === c)); }
         function buscarProductoPOS() { const t = document.getElementById('pos-buscador').value; pintarGrilla(t ? fuse.search(t).map(r => r.item) : inventario); }
-        function pintarGrilla(arr) { document.getElementById('pos-contenedor-productos').innerHTML = arr.map(p => `<div onclick="agregarAlTicket('${encodeURIComponent(JSON.stringify(p))}')" class="bg-white border rounded-xl p-2 cursor-pointer btn-press flex flex-col h-36 shadow-sm"><div class="h-20 w-full flex justify-center"><img src="${p.imagen_principal}" class="max-h-full object-contain"></div><h4 class="text-[9px] font-bold line-clamp-2 mt-1">${p.nombre}</h4><div class="mt-auto flex justify-between"><span class="text-[8px] text-gray-400 font-mono">${p.id_producto_sku}</span><span class="text-xs font-black text-[#143B62]">$${(Number(p.precio_detal_usd)||0).toFixed(2)}</span></div></div>`).join(''); }
+        
+        // LA MAGIA: EL BOTÓN DE "AGREGAR" SEPARADO
+        function pintarGrilla(arr) { 
+            document.getElementById('pos-contenedor-productos').innerHTML = arr.map(p => `
+                <div class="bg-white border border-gray-200 rounded-xl p-2 flex flex-col h-36 shadow-sm">
+                    <div class="h-20 w-full flex justify-center"><img src="${p.imagen_principal}" class="max-h-full object-contain"></div>
+                    <h4 class="text-[9px] font-bold text-gray-700 line-clamp-2 mt-1 leading-tight">${p.nombre}</h4>
+                    <div class="mt-auto flex justify-between items-end">
+                        <div>
+                            <p class="text-[8px] text-gray-400 font-mono">${p.id_producto_sku}</p>
+                            <p class="text-xs font-black text-[#143B62]">$${(Number(p.precio_detal_usd)||0).toFixed(2)}</p>
+                        </div>
+                        <button onclick="agregarAlTicket('${encodeURIComponent(JSON.stringify(p))}')" class="bg-[#E67E22] text-white w-7 h-7 rounded-lg flex items-center justify-center hover:bg-orange-600 transition btn-press shadow-sm" title="Agregar al Ticket">
+                            <i class="fa-solid fa-plus"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join(''); 
+        }
+
         function agregarAlTicket(s) { const p = JSON.parse(decodeURIComponent(s)); const i = ticket.findIndex(x => x.id_producto_sku === p.id_producto_sku); if(i !== -1) ticket[i].cantidad++; else { p.cantidad = 1; ticket.unshift(p); } actualizarTicket(); }
         function cambiarCant(sku, d) { const i = ticket.findIndex(x => x.id_producto_sku === sku); if(i !== -1) { ticket[i].cantidad += d; if(ticket[i].cantidad <= 0) ticket.splice(i, 1); actualizarTicket(); } }
         function calcularP(p, c) { let u = Number(p.precio_detal_usd)||0; if(p.requerido_precio_3 && c >= p.requerido_precio_3) u = Number(p.precio_tier3_usd); else if(p.requerido_precio_2 && c >= p.requerido_precio_2) u = Number(p.precio_tier2_usd); else if(p.requerido_precio_1 && c >= p.requerido_precio_1) u = Number(p.precio_tier1_usd); return u; }
+        
         function actualizarTicket() {
             const cont = document.getElementById('pos-ticket-items'); if(!ticket.length) { cont.innerHTML = `<div class="h-full flex flex-col items-center justify-center text-gray-300 opacity-50"><i class="fa-solid fa-shopping-basket text-4xl mb-2"></i><p class="text-xs font-bold">Vacío</p></div>`; document.getElementById('pos-subtotal').innerText="$0.00"; document.getElementById('pos-total-usd').innerText="$0.00"; document.getElementById('pos-total-bs').innerText="Bs. 0.00"; return; }
             let sB = 0, tD = 0; const iva = parseFloat(document.getElementById('pos-tipo-iva').value);
@@ -196,7 +228,7 @@
         function limpiarCliente() { document.getElementById('pos-cedula').value=''; document.getElementById('pos-nombre').value=''; document.getElementById('pos-telefono').value=''; document.getElementById('pos-correo').value=''; document.getElementById('pos-direccion').value=''; }
         function limpiarTodoTicket() { ticket = []; limpiarCliente(); actualizarTicket(); }
 
-        // --- TRANSACCIONES ---
+        // --- TRANSACCIONES Y TICKET VISUAL ---
         async function procesarTransaccion(tipo) {
             if(!ticket.length) return alert("Carrito vacío");
             const doc = document.getElementById('pos-cedula').value ? document.getElementById('pos-tipo-doc').value + document.getElementById('pos-cedula').value : 'Consumidor Final';
@@ -210,16 +242,79 @@
                 }
                 const est = tipo === 'Presupuesto' ? 'Pendiente' : 'Completada';
                 const bF = { tipo_transaccion: tipo, cliente_documento: doc, cliente_nombre: nom, subtotal_usd: parseFloat(document.getElementById('pos-subtotal').innerText.replace('$','')), descuento_usd: parseFloat(document.getElementById('pos-descuento').innerText.replace('-$','')), total_usd: parseFloat(document.getElementById('pos-total-usd').innerText.replace('$','')), total_bs: parseFloat(document.getElementById('pos-total-bs').innerText.replace('Bs. ','')), tasa_bcv_aplicada: tasaBCV, metodos_pago: document.getElementById('pos-metodo-pago').value, estatus: est };
+                
                 const rF = await fetch(`${SUPABASE_URL}/rest/v1/facturas`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, body: JSON.stringify(bF) }); const fac = await rF.json();
+                
                 const bD = ticket.map(i => { const pF = calcularP(i, i.cantidad); return { factura_id: fac[0].id_factura, producto_sku: i.id_producto_sku, producto_nombre: i.nombre, cantidad: i.cantidad, precio_unitario_usd: pF, subtotal_usd: (pF*i.cantidad) }; });
                 await fetch(`${SUPABASE_URL}/rest/v1/detalles_factura`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' }, body: JSON.stringify(bD) });
                 
-                document.getElementById('alerta-titulo').innerText = tipo === 'Presupuesto' ? "¡Cotización Guardada!" : "¡Venta Exitosa!";
-                document.getElementById('alerta-mensaje').innerText = `Documento #00${fac[0].correlativo} registrado.`;
-                document.getElementById('modal-alerta').classList.remove('hidden'); limpiarTodoTicket();
+                // EN LUGAR DE LA ALERTA BÁSICA, MOSTRAMOS EL TICKET DE IMPRESIÓN
+                generarTicketVisual(fac[0], ticket, tipo);
+
             } catch(e) { alert("Error"); } finally { btns.forEach(b => b.disabled = false); }
         }
-        function cerrarAlerta() { document.getElementById('modal-alerta').classList.add('hidden'); }
+
+        // LA NUEVA FUNCION DEL RECIBO VISUAL
+        function generarTicketVisual(factura, items, tipo) {
+            let html = `
+                <div style="text-align:center; border-bottom: 1px dashed #000; padding-bottom: 10px; margin-bottom: 10px;">
+                    <h2 style="font-size: 16px; font-weight: bold; margin:0;">P&P SOLUCIONES</h2>
+                    <p style="margin:2px 0;">J-XXXXXXXX-X</p>
+                    <p style="margin:2px 0;">Calle 9 C.C. Vecinal, Caracas</p>
+                    <p style="margin:2px 0;">WhatsApp: +58 414-0285806</p>
+                </div>
+                <div style="text-align:center; border-bottom: 1px dashed #000; padding-bottom: 10px; margin-bottom: 10px;">
+                    <h3 style="font-size: 14px; font-weight: bold; margin:0;">${tipo === 'Presupuesto' ? 'COTIZACIÓN' : 'FACTURA DE VENTA'}</h3>
+                    <p style="margin:2px 0; font-weight: bold;">Nº 00${factura.correlativo}</p>
+                    <p style="margin:2px 0;">Fecha: ${new Date().toLocaleDateString('es-ES')} ${new Date().toLocaleTimeString('es-ES')}</p>
+                </div>
+                <div style="border-bottom: 1px dashed #000; padding-bottom: 10px; margin-bottom: 10px;">
+                    <p style="margin:2px 0;"><strong>Cliente:</strong> ${factura.cliente_nombre}</p>
+                    <p style="margin:2px 0;"><strong>CI/RIF:</strong> ${factura.cliente_documento}</p>
+                </div>
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px;">
+                    <tr style="border-bottom: 1px solid #000;"><th style="text-align:left; padding-bottom:2px;">Cant</th><th style="text-align:left; padding-bottom:2px;">Desc</th><th style="text-align:right; padding-bottom:2px;">Total</th></tr>
+            `;
+
+            items.forEach(item => {
+                const precioF = calcularP(item, item.cantidad);
+                html += `<tr>
+                    <td style="padding: 2px 0; vertical-align: top;">${item.cantidad}</td>
+                    <td style="padding: 2px 5px 2px 0; vertical-align: top;">${item.nombre}</td>
+                    <td style="padding: 2px 0; text-align: right; vertical-align: top;">$${(precioF * item.cantidad).toFixed(2)}</td>
+                </tr>`;
+            });
+
+            html += `
+                </table>
+                <div style="border-top: 1px dashed #000; padding-top: 10px; text-align: right;">
+                    <p style="margin:2px 0;">Subtotal: $${factura.subtotal_usd.toFixed(2)}</p>
+                    <p style="margin:2px 0;">Descuento: -$${factura.descuento_usd.toFixed(2)}</p>
+                    <h3 style="margin:5px 0; font-size: 14px;">TOTAL USD: $${factura.total_usd.toFixed(2)}</h3>
+                    <h3 style="margin:0; font-size: 12px;">TOTAL Bs: ${factura.total_bs.toFixed(2)}</h3>
+                </div>
+                <div style="text-align:center; margin-top: 15px;">
+                    <p style="margin:0;">*** ${tipo === 'Presupuesto' ? 'Precios sujetos a cambio.' : '¡Gracias por su compra!'} ***</p>
+                </div>
+            `;
+            
+            document.getElementById('ticket-imprimir').innerHTML = html;
+            document.getElementById('modal-ticket').classList.remove('hidden');
+        }
+
+        function cerrarTicket() {
+            document.getElementById('modal-ticket').classList.add('hidden');
+            limpiarTodoTicket(); // Ahora sí, vaciamos el carrito DESPUÉS de ver el ticket
+        }
+
+        function imprimirTicket() {
+            const contenido = document.getElementById('ticket-imprimir').innerHTML;
+            const ventana = window.open('', '', 'width=400,height=600');
+            ventana.document.write(`<html><head><title>Ticket de Impresión</title><style>body{font-family: monospace; font-size: 12px; margin: 0; padding: 10px; color: #000;}</style></head><body>${contenido}</body></html>`);
+            ventana.document.close();
+            // Le damos un respiro pequeño para que cargue los estilos
+            setTimeout(() => { ventana.print(); }, 200);
+        }
     </script>
 </body>
 </html>
