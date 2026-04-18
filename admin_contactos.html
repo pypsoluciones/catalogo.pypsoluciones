@@ -215,4 +215,30 @@
                 
                 return `
                 <tr class="hover:bg-gray-50 transition border-b border-gray-100">
-                    <td class="p
+                    <td class="p-4 font-bold text-blue-600 text-xs">${doc}</td>
+                    <td class="p-4 font-bold text-gray-800 text-sm">${nom}</td>
+                    <td class="p-4 text-xs text-gray-600 font-bold">
+                        <div class="flex items-center gap-2 mb-1"><i class="fa-solid fa-phone text-gray-400"></i> <span class="tracking-wide">${cel}</span></div>
+                        ${extra ? `<div class="flex items-center gap-2 text-blue-500"><i class="${extra.includes('@') ? 'fa-solid fa-envelope' : 'fa-solid fa-id-badge'} text-gray-400"></i> ${extra}</div>` : ''}
+                    </td>
+                    <td class="p-4 text-[10px] text-gray-500 max-w-[250px] leading-tight font-semibold">${dir}</td>
+                    <td class="p-4 text-center">
+                        <button onclick="alert('EDICIÓN EN DESARROLLO')" class="bg-white border border-gray-200 hover:border-[#143B62] text-[#143B62] px-3 py-2 rounded shadow-sm transition"><i class="fa-solid fa-pen-to-square"></i></button>
+                    </td>
+                </tr>
+                `;
+            }).join('');
+        }
+
+        function aplicarFiltros() {
+            const texto = document.getElementById('buscador-contactos').value.toLowerCase();
+            const filtrados = dataActual.filter(c => {
+                const doc = (c.documento_identidad || c.rif || '').toLowerCase();
+                const nom = (c.nombre_razon_social || c.razon_social || '').toLowerCase();
+                return nom.includes(texto) || doc.includes(texto);
+            });
+            pintarTabla(filtrados);
+        }
+    </script>
+</body>
+</html>
