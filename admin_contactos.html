@@ -136,7 +136,7 @@
             return tel;
         }
 
-        async function cargarDatosDesdeBD(tipo) {
+       async function cargarDatosDesdeBD(tipo) {
             pestanaActual = tipo;
             const tbody = document.getElementById('tabla-contactos');
             tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin text-xl mb-2 block"></i> CARGANDO ${tipo.toUpperCase()}...</td></tr>`;
@@ -149,10 +149,22 @@
                 const res = await fetch(`${SUPABASE_URL}/rest/v1/${nombreTabla}?select=*`, { 
                     headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } 
                 });
-                dataActual = await res.json();
+                
+                const respuestaSupabase = await res.json();
+
+                // Si Supabase devuelve un error (ej. tabla no existe, columna mal escrita), lo mostramos en pantalla
+                if (!res.ok) {
+                    console.error("Error detallado de Supabase:", respuestaSupabase);
+                    tbody.innerHTML = `<tr><td colspan="5" class="p-5 text-center text-red-600 font-black uppercase"><i class="fa-solid fa-triangle-exclamation mr-2"></i> ERROR SUPABASE: ${respuestaSupabase.message || 'Error desconocido'}</td></tr>`;
+                    dataActual = [];
+                    return; // Detenemos la función aquí
+                }
+
+                dataActual = respuestaSupabase;
                 aplicarFiltros();
             } catch(e) {
-                tbody.innerHTML = `<tr><td colspan="5" class="p-5 text-center text-red-500 font-bold">ERROR CARGANDO.</td></tr>`;
+                console.error("Error de Red o Javascript:", e);
+                tbody.innerHTML = `<tr><td colspan="5" class="p-5 text-center text-red-500 font-bold">ERROR DE CONEXIÓN. Revisa la consola (F12).</td></tr>`;
                 dataActual = [];
             }
         }
