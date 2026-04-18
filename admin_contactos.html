@@ -116,6 +116,26 @@
             }
         }
 
+        // --- FORMATEADOR INTELIGENTE DE NÚMEROS TELEFÓNICOS ---
+        function formatearTelefono(tel) {
+            if (!tel || tel === 'N/A' || tel.trim() === '') return 'N/A';
+            
+            // Eliminar todo lo que no sea dígito
+            let numStr = tel.replace(/\D/g, '');
+            
+            // Formato internacional VE: 584140285806 -> +58 414-0285806
+            if (numStr.length === 12 && numStr.startsWith('58')) {
+                return `+${numStr.substring(0, 2)} ${numStr.substring(2, 5)}-${numStr.substring(5)}`;
+            }
+            // Formato local VE: 04140285806 -> 0414-0285806
+            if (numStr.length === 11 && numStr.startsWith('0')) {
+                return `${numStr.substring(0, 4)}-${numStr.substring(4)}`;
+            }
+            
+            // Si tiene otro formato, lo devolvemos limpio
+            return tel;
+        }
+
         async function cargarDatosDesdeBD(tipo) {
             pestanaActual = tipo;
             const tbody = document.getElementById('tabla-contactos');
@@ -123,7 +143,6 @@
 
             const nombreTabla = tipo === 'Clientes' ? 'clientes' : 'proveedores';
             
-            // Actualizar encabezado dinámico
             document.getElementById('col-contacto-dinamica').innerText = tipo === 'Clientes' ? 'CONTACTO' : 'VENDEDOR ASIGNADO';
 
             try {
@@ -163,24 +182,22 @@
             }
             
             tbody.innerHTML = arr.map(c => {
-                // MAPEADO DINÁMICO SEGÚN TABLA
                 let doc, nom, cel, tlf2, dir, extra;
 
                 if(pestanaActual === 'Clientes') {
                     doc = c.documento_identidad || '-';
                     nom = c.nombre_razon_social || '-';
-                    cel = c.celular_01 || c.telefono || 'N/A';
-                    tlf2 = c.celular_02 || '';
+                    cel = formatearTelefono(c.celular_01 || c.telefono || 'N/A');
+                    tlf2 = formatearTelefono(c.celular_02 || '');
                     dir = c.direccion_fiscal || 'SIN DIRECCIÓN';
-                    extra = c.correo || '';
+                    extra = (c.correo || '').toLowerCase(); // Correo siempre en minúscula visualmente
                 } else {
                     doc = c.rif || '-';
                     nom = c.razon_social || '-';
-                    cel = c.telefono_01 || 'N/A';
-                    tlf2 = c.telefono_02 || '';
+                    cel = formatearTelefono(c.telefono_01 || 'N/A');
+                    tlf2 = formatearTelefono(c.telefono_02 || '');
                     dir = c.direccion_fiscal || 'SIN DIRECCIÓN';
-                    // Para proveedores mostramos el vendedor asignado
-                    extra = c.vendedor_asignado ? `VND: ${c.vendedor_asignado}` : (c.correo || '');
+                    extra = c.vendedor_asignado ? `VND: ${c.vendedor_asignado}` : (c.correo || '').toLowerCase();
                 }
                 
                 return `
@@ -188,8 +205,8 @@
                     <td class="p-4 font-bold text-blue-600 text-xs">${doc}</td>
                     <td class="p-4 font-bold text-gray-800 text-sm">${nom}</td>
                     <td class="p-4 text-xs text-gray-600 font-bold">
-                        <div class="flex items-center gap-2 mb-1"><i class="fa-solid fa-phone text-gray-400"></i> ${cel}</div>
-                        ${extra ? `<div class="flex items-center gap-2 text-blue-500"><i class="fa-solid fa-id-badge text-gray-400"></i> ${extra}</div>` : ''}
+                        <div class="flex items-center gap-2 mb-1"><i class="fa-solid fa-phone text-gray-400"></i> <span class="tracking-wide">${cel}</span></div>
+                        ${extra ? `<div class="flex items-center gap-2 text-blue-500"><i class="${extra.includes('@') ? 'fa-solid fa-envelope' : 'fa-solid fa-id-badge'} text-gray-400"></i> ${extra}</div>` : ''}
                     </td>
                     <td class="p-4 text-[10px] text-gray-500 max-w-[250px] leading-tight font-semibold">${dir}</td>
                     <td class="p-4 text-center">
