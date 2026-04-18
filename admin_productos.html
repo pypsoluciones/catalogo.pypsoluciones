@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin | Inventario</title>
+    <title>P&P Admin | Inventario</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; }
-        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
         .custom-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
         .btn-press:active { transform: scale(0.97); }
         .fade-in { animation: fadeIn 0.2s ease-in-out; }
@@ -24,8 +24,9 @@
         .param-label { font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
         .param-value { font-size: 13px; color: #1e293b; font-weight: 500; }
         
-        /* Estilos para el switch de vistas */
+        /* Estilos Vistas y Truncado */
         .btn-vista.active { background-color: #e2e8f0; color: #143B62; border-color: #cbd5e1; }
+        .text-truncate-25 { max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     </style>
     <script>if (localStorage.getItem('pyp_sesion_activa') !== 'true') window.location.href = 'login.html';</script>
 </head>
@@ -84,23 +85,20 @@
         </header>
 
         <div class="flex-1 overflow-auto p-4 md:p-6 custom-scroll">
-            
             <div class="flex flex-col md:flex-row gap-3 mb-6 items-center">
                 <div class="relative flex-1 w-full">
                     <i class="fa-solid fa-search absolute left-3 top-2.5 text-gray-400 text-sm"></i>
-                    <input type="text" id="buscador-inv" oninput="filtrarInventario()" placeholder="Buscar por SKU, Nombre o Código de Barras..." class="uppercase-input w-full border border-gray-300 rounded-md pl-9 pr-4 py-2 text-[13px] font-medium focus:outline-none focus:border-[#143B62] focus:ring-1 focus:ring-[#143B62] bg-white shadow-sm transition">
+                    <input type="text" id="buscador-inv" oninput="filtrarInventario()" placeholder="Buscar por SKU, Nombre o Barras..." class="uppercase-input w-full border border-gray-300 rounded-md pl-9 pr-4 py-2 text-[13px] font-medium focus:outline-none focus:border-[#143B62] focus:ring-1 focus:ring-[#143B62] bg-white shadow-sm transition">
                 </div>
-                
                 <div class="flex gap-2 w-full md:w-auto justify-end">
                     <div class="flex bg-white rounded-md border border-gray-300 shadow-sm p-0.5">
-                        <button id="btn-vista-tabla" onclick="cambiarVista('tabla')" class="btn-vista active px-3 py-1.5 rounded text-gray-500 hover:text-[#143B62] transition text-sm" title="Vista de Lista (Excel)">
+                        <button id="btn-vista-tabla" onclick="cambiarVista('tabla')" class="btn-vista active px-3 py-1.5 rounded text-gray-500 hover:text-[#143B62] transition text-sm" title="Vista Excel">
                             <i class="fa-solid fa-list"></i>
                         </button>
-                        <button id="btn-vista-grid" onclick="cambiarVista('grid')" class="btn-vista px-3 py-1.5 rounded text-gray-500 hover:text-[#143B62] transition text-sm" title="Vista de Tarjetas">
+                        <button id="btn-vista-grid" onclick="cambiarVista('grid')" class="btn-vista px-3 py-1.5 rounded text-gray-500 hover:text-[#143B62] transition text-sm" title="Vista Tarjetas">
                             <i class="fa-solid fa-border-all"></i>
                         </button>
                     </div>
-
                     <button onclick="abrirModalProducto()" class="bg-[#25D366] hover:bg-[#1ebd5c] text-white px-5 py-2 rounded-md font-semibold text-[13px] shadow-sm transition flex items-center justify-center gap-2 btn-press whitespace-nowrap">
                         <i class="fa-solid fa-plus"></i> NUEVO PRODUCTO
                     </button>
@@ -108,17 +106,15 @@
             </div>
 
             <div id="contenedor-inventario" class="w-full">
-                <div class="p-10 text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin text-2xl mb-3 block"></i> Cargando inventario...</div>
+                <div class="p-10 text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin text-2xl mb-3 block"></i> Sincronizando datos...</div>
             </div>
-
         </div>
     </main>
 
     <div id="modal-producto" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4 fade-in">
         <div class="bg-white rounded-lg shadow-2xl w-full max-w-5xl max-h-[95vh] flex flex-col overflow-hidden border border-gray-200">
-            
             <div class="bg-[#143B62] text-white px-5 py-3.5 flex justify-between items-center shrink-0">
-                <h3 class="font-medium text-sm tracking-wide flex items-center" id="modal-titulo"><i class="fa-solid fa-box-open mr-2 text-[#E67E22]"></i> CREAR PRODUCTO</h3>
+                <h3 class="font-medium text-sm tracking-wide flex items-center" id="modal-titulo"><i class="fa-solid fa-box-open mr-2 text-[#E67E22]"></i> NUEVO REGISTRO</h3>
                 <button onclick="cerrarModalProducto()" class="text-gray-300 hover:text-white text-lg transition"><i class="fa-solid fa-times"></i></button>
             </div>
             
@@ -131,97 +127,97 @@
                         <div class="bg-white p-4 rounded border border-gray-200 shadow-sm">
                             <h4 class="text-[11px] font-semibold text-[#E67E22] uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Identificación Principal</h4>
                             <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-3">
-                                <div>
-                                    <label class="block param-label mb-1">SKU / Código Interno *</label>
-                                    <input type="text" id="prod-sku" required class="uppercase-input w-full border border-gray-300 rounded px-2.5 py-1.5 text-[13px] font-medium focus:border-[#143B62] outline-none" oninput="this.value = this.value.toUpperCase()">
-                                </div>
-                                <div>
-                                    <label class="block param-label mb-1">Código de Barras</label>
-                                    <input type="text" id="prod-barras" class="uppercase-input w-full border border-gray-300 rounded px-2.5 py-1.5 text-[13px] font-medium focus:border-[#143B62] outline-none" oninput="this.value = this.value.toUpperCase()">
-                                </div>
-                                <div>
-                                    <label class="block param-label mb-1">Estado Operativo *</label>
-                                    <select id="prod-estado" required class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-[13px] font-medium text-[#143B62] focus:border-[#143B62] outline-none bg-blue-50/50"></select>
-                                </div>
+                                <div><label class="block param-label mb-1">SKU / Código Interno *</label><input type="text" id="prod-sku" required class="uppercase-input w-full border border-gray-300 rounded px-2.5 py-1.5 text-[13px] font-medium focus:border-[#143B62] outline-none" oninput="this.value = this.value.toUpperCase()"></div>
+                                <div><label class="block param-label mb-1">Código de Barras</label><input type="text" id="prod-barras" class="uppercase-input w-full border border-gray-300 rounded px-2.5 py-1.5 text-[13px] font-medium focus:border-[#143B62] outline-none" oninput="this.value = this.value.toUpperCase()"></div>
+                                <div><label class="block param-label mb-1">Estado Operativo *</label><select id="prod-estado" required class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-[13px] font-medium text-[#143B62] bg-blue-50/50 outline-none"></select></div>
                             </div>
-                            <div>
-                                <label class="block param-label mb-1">Nombre del Producto *</label>
-                                <input type="text" id="prod-nombre" required class="uppercase-input w-full border border-gray-300 rounded px-2.5 py-1.5 text-[13px] font-medium focus:border-[#143B62] outline-none" oninput="this.value = this.value.toUpperCase()">
-                            </div>
+                            <div><label class="block param-label mb-1">Nombre del Producto *</label><input type="text" id="prod-nombre" required class="uppercase-input w-full border border-gray-300 rounded px-2.5 py-1.5 text-[13px] font-medium focus:border-[#143B62] outline-none" oninput="this.value = this.value.toUpperCase()"></div>
                         </div>
 
                         <div class="bg-white p-4 rounded border border-gray-200 shadow-sm">
                             <h4 class="text-[11px] font-semibold text-[#E67E22] uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Clasificación Maestra</h4>
-                            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                                <div><label class="block param-label mb-1">Categoría Principal *</label><select id="prod-categoria" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-[12px] font-medium focus:border-[#143B62] outline-none"></select></div>
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
+                                <div><label class="block param-label mb-1">Categoría *</label><select id="prod-categoria" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-[12px] font-medium focus:border-[#143B62] outline-none"></select></div>
                                 <div><label class="block param-label mb-1">Marca *</label><select id="prod-marca" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-[12px] font-medium focus:border-[#143B62] outline-none"></select></div>
-                                <div><label class="block param-label mb-1">Tipo de Producto *</label><select id="prod-tipo" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-[12px] font-medium focus:border-[#143B62] outline-none"></select></div>
-                                <div><label class="block param-label mb-1">Condición Física *</label><select id="prod-condicion" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-[12px] font-medium focus:border-[#143B62] outline-none"></select></div>
-                                <div><label class="block param-label mb-1">Categoría de Venta</label><select id="prod-cat-venta" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[12px] font-medium focus:border-[#143B62] outline-none"><option value="">N/A</option></select></div>
-                                <div><label class="block param-label mb-1">Unidad Medida *</label><select id="prod-unidad" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-[12px] font-medium focus:border-[#143B62] outline-none"></select></div>
-                                <div><label class="block param-label mb-1">Color</label><select id="prod-color" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[12px] font-medium focus:border-[#143B62] outline-none"><option value="">N/A</option></select></div>
-                                <div><label class="block param-label mb-1">Talla</label><select id="prod-talla" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[12px] font-medium focus:border-[#143B62] outline-none"><option value="">N/A</option></select></div>
+                                <div><label class="block param-label mb-1">Tipo *</label><select id="prod-tipo" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-[12px] font-medium focus:border-[#143B62] outline-none"></select></div>
+                                <div><label class="block param-label mb-1">Condición *</label><select id="prod-condicion" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-[12px] font-medium focus:border-[#143B62] outline-none"></select></div>
+                            </div>
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                <div><label class="block param-label mb-1">Cat. Venta</label><select id="prod-cat-venta" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[12px] font-medium outline-none"></select></div>
+                                <div><label class="block param-label mb-1">Unidad *</label><select id="prod-unidad" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-[12px] font-medium outline-none"></select></div>
+                                <div><label class="block param-label mb-1">Color</label><select id="prod-color" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[12px] font-medium outline-none"></select></div>
+                                <div><label class="block param-label mb-1">Talla</label><select id="prod-talla" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[12px] font-medium outline-none"></select></div>
                             </div>
                         </div>
 
                         <div class="bg-white p-4 rounded border border-gray-200 shadow-sm">
-                            <h4 class="text-[11px] font-semibold text-[#E67E22] uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Multimedia y Web</h4>
-                            <div class="mb-3">
-                                <label class="block param-label mb-1">URL de Imagen Principal</label>
-                                <input type="url" id="prod-imagen" placeholder="Ej: https://..." class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-[12px] focus:border-[#143B62] outline-none text-blue-600">
-                            </div>
-                            <div>
-                                <label class="block param-label mb-1">Descripción Detallada (Permite minúsculas)</label>
-                                <textarea id="prod-descripcion" rows="2" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-[13px] focus:border-[#143B62] outline-none"></textarea>
-                            </div>
+                            <h4 class="text-[11px] font-semibold text-[#E67E22] uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Multimedia</h4>
+                            <div class="mb-3"><label class="block param-label mb-1">URL Imagen</label><input type="url" id="prod-imagen" placeholder="Ej: https://..." class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-[12px] text-blue-600 outline-none"></div>
+                            <div><label class="block param-label mb-1">Descripción</label><textarea id="prod-descripcion" rows="2" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-[13px] outline-none"></textarea></div>
                         </div>
                     </div>
 
                     <div class="space-y-4">
                         <div class="bg-white p-4 rounded border border-gray-200 shadow-sm border-t-2 border-t-emerald-500">
-                            <h4 class="text-[11px] font-semibold text-emerald-600 uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Inventario y Finanzas</h4>
-                            
+                            <h4 class="text-[11px] font-semibold text-emerald-600 uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Inventario Físico</h4>
                             <div class="mb-4">
-                                <label class="block param-label mb-1 text-center">Stock Físico Actual</label>
+                                <label class="block param-label mb-1 text-center">Stock Actual</label>
                                 <input type="number" id="prod-stock" value="0" class="w-full border border-gray-300 rounded px-3 py-2 text-xl font-semibold text-center focus:border-emerald-500 outline-none bg-gray-50">
                             </div>
-                            
-                            <div class="mb-4 flex items-center justify-between bg-gray-50 p-2.5 rounded border border-gray-200">
-                                <label class="param-label cursor-pointer" for="prod-negativo">¿Permitir Venta sin Stock?</label>
-                                <div class="relative inline-block w-9 align-middle select-none transition duration-200 ease-in">
+                            <div class="flex items-center justify-between bg-gray-50 p-2.5 rounded border border-gray-200 mb-4">
+                                <label class="param-label cursor-pointer" for="prod-negativo">¿Venta en Negativo?</label>
+                                <div class="relative inline-block w-9 align-middle select-none transition">
                                     <input type="checkbox" id="prod-negativo" class="toggle-checkbox absolute block w-4 h-4 rounded-full bg-white border-4 appearance-none cursor-pointer mt-0.5 ml-0.5"/>
                                     <label for="prod-negativo" class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 cursor-pointer"></label>
                                 </div>
                             </div>
-                            
-                            <div class="mb-4">
-                                <label class="block param-label mb-1">Precio Detal USD *</label>
-                                <input type="number" id="prod-precio" step="0.01" required placeholder="0.00" class="w-full border border-gray-300 rounded px-3 py-2.5 text-2xl font-bold text-[#143B62] text-center focus:border-[#143B62] outline-none shadow-inner">
-                            </div>
-                            
-                            <div>
-                                <label class="block param-label mb-1">Tipo de Impuesto (IVA) *</label>
-                                <select id="prod-iva" required class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-[12px] font-medium bg-gray-50 focus:border-[#143B62] outline-none"></select>
-                            </div>
+                            <div><label class="block param-label mb-1">Impuesto (IVA) *</label><select id="prod-iva" required class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-[12px] font-medium bg-gray-50 outline-none"></select></div>
                         </div>
 
-                        <div class="bg-white p-4 rounded border border-gray-200 shadow-sm border-t-2 border-t-blue-400">
-                            <h4 class="text-[11px] font-semibold text-blue-600 uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Escalas al Mayor</h4>
-                            <div class="grid grid-cols-2 gap-3 mb-2">
-                                <label class="param-label text-center">Req. (Unds)</label>
-                                <label class="param-label text-center">Precio USD</label>
+                        <div class="bg-white p-4 rounded border border-gray-200 shadow-sm border-t-2 border-t-blue-500">
+                            <h4 class="text-[11px] font-semibold text-blue-600 uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Estructura de Precios</h4>
+                            
+                            <div class="mb-4 flex items-center justify-between bg-blue-50 p-2.5 rounded border border-blue-100">
+                                <label class="param-label text-[#143B62] cursor-pointer" for="prod-fijo-bs">¿Fijar Precio en Bs?</label>
+                                <div class="relative inline-block w-9 align-middle select-none transition">
+                                    <input type="checkbox" id="prod-fijo-bs" onchange="toggleInputsPrecio()" class="toggle-checkbox absolute block w-4 h-4 rounded-full bg-white border-4 appearance-none cursor-pointer mt-0.5 ml-0.5"/>
+                                    <label for="prod-fijo-bs" class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 cursor-pointer"></label>
+                                </div>
                             </div>
-                            <div class="grid grid-cols-2 gap-3 mb-2">
-                                <input type="number" id="prod-req1" placeholder="Ej: 6" class="border border-gray-300 rounded px-2 py-1.5 text-[13px] text-center font-medium">
-                                <input type="number" id="prod-tier1" step="0.01" placeholder="0.00" class="border border-gray-300 rounded px-2 py-1.5 text-[13px] text-center font-semibold text-[#E67E22]">
+                            
+                            <div id="section-bs" class="hidden">
+                                <label class="block param-label mb-1 text-center">Precio Fijo (Bs)</label>
+                                <input type="number" id="prod-precio-bs" step="0.01" class="w-full border border-gray-300 rounded px-3 py-3 text-2xl font-bold text-emerald-600 text-center bg-emerald-50 outline-none">
                             </div>
-                            <div class="grid grid-cols-2 gap-3 mb-2">
-                                <input type="number" id="prod-req2" placeholder="Ej: 12" class="border border-gray-300 rounded px-2 py-1.5 text-[13px] text-center font-medium">
-                                <input type="number" id="prod-tier2" step="0.01" placeholder="0.00" class="border border-gray-300 rounded px-2 py-1.5 text-[13px] text-center font-semibold text-[#E67E22]">
-                            </div>
-                            <div class="grid grid-cols-2 gap-3">
-                                <input type="number" id="prod-req3" placeholder="Ej: 24" class="border border-gray-300 rounded px-2 py-1.5 text-[13px] text-center font-medium">
-                                <input type="number" id="prod-tier3" step="0.01" placeholder="0.00" class="border border-gray-300 rounded px-2 py-1.5 text-[13px] text-center font-semibold text-[#E67E22]">
+
+                            <div id="section-usd" class="space-y-3">
+                                <div><label class="block param-label mb-1">Costo Actual (USD)</label><input type="number" id="prod-costo" step="0.01" oninput="calcularPreciosPorMargen()" class="w-full border border-gray-300 rounded px-3 py-1.5 text-center font-bold bg-gray-50 outline-none focus:border-blue-400"></div>
+                                
+                                <div class="pt-2 border-t border-gray-100">
+                                    <label class="block param-label mb-1">Precio General (USD)</label>
+                                    <div class="flex gap-2">
+                                        <input type="number" id="prod-margen-gen" placeholder="%" oninput="calcularPreciosPorMargen()" class="w-16 border border-gray-300 rounded px-2 py-2 text-center text-[12px] font-semibold bg-blue-50 text-blue-700 outline-none" title="Margen de Ganancia %">
+                                        <input type="number" id="prod-precio-gen" step="0.01" class="flex-1 border border-gray-300 rounded px-3 py-2 text-lg font-bold text-[#143B62] text-center outline-none focus:border-[#143B62]">
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <div class="grid grid-cols-3 gap-2 mb-1">
+                                        <label class="param-label text-[9px] text-center">P1 (%)</label>
+                                        <label class="param-label text-[9px] text-center">P2 (%)</label>
+                                        <label class="param-label text-[9px] text-center">P3 (%)</label>
+                                    </div>
+                                    <div class="grid grid-cols-3 gap-2 mb-2">
+                                        <input type="number" id="prod-m1" oninput="calcularPreciosPorMargen()" class="w-full border border-gray-300 rounded px-1 py-1.5 text-center text-[12px] font-semibold bg-blue-50 text-blue-700 outline-none">
+                                        <input type="number" id="prod-m2" oninput="calcularPreciosPorMargen()" class="w-full border border-gray-300 rounded px-1 py-1.5 text-center text-[12px] font-semibold bg-blue-50 text-blue-700 outline-none">
+                                        <input type="number" id="prod-m3" oninput="calcularPreciosPorMargen()" class="w-full border border-gray-300 rounded px-1 py-1.5 text-center text-[12px] font-semibold bg-blue-50 text-blue-700 outline-none">
+                                    </div>
+                                    <div class="grid grid-cols-3 gap-2">
+                                        <input type="text" id="prod-p1" readonly class="w-full border-none bg-gray-100 rounded py-1.5 text-[12px] text-center font-bold text-gray-600 outline-none">
+                                        <input type="text" id="prod-p2" readonly class="w-full border-none bg-gray-100 rounded py-1.5 text-[12px] text-center font-bold text-gray-600 outline-none">
+                                        <input type="text" id="prod-p3" readonly class="w-full border-none bg-gray-100 rounded py-1.5 text-[12px] text-center font-bold text-gray-600 outline-none">
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -229,12 +225,11 @@
             </form>
 
             <div class="bg-gray-50 border-t border-gray-200 px-5 py-3 flex gap-3 justify-end shrink-0">
-                <button type="button" onclick="cerrarModalProducto()" class="px-6 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded text-[13px] shadow-sm hover:bg-gray-50 transition btn-press">Cancelar</button>
-                <button type="submit" form="form-producto" id="btn-guardar-prod" class="px-6 py-2 bg-[#143B62] text-white font-medium rounded text-[13px] shadow-sm hover:bg-[#0f2d4a] transition btn-press flex items-center gap-2">
+                <button type="button" onclick="cerrarModalProducto()" class="px-6 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-md text-[13px] shadow-sm hover:bg-gray-100 transition btn-press">Cancelar</button>
+                <button type="submit" form="form-producto" id="btn-guardar-prod" class="px-6 py-2 bg-[#143B62] text-white font-medium rounded-md text-[13px] shadow-sm hover:bg-[#0f2d4a] transition btn-press flex items-center gap-2">
                     <i class="fa-solid fa-save"></i> Guardar Registro
                 </button>
             </div>
-
         </div>
     </div>
 
@@ -242,18 +237,17 @@
         const SUPABASE_URL = 'https://icvfmdvvochzaktugqvj.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImljdmZtZHZ2b2NoemFrdHVncXZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyNDEzMzEsImV4cCI6MjA5MTgxNzMzMX0.gO3D39piT6KGbMMOzrPGWXUp5-g_nOBAgJ-nwPv8IcQ';
         
-        let inventario = [];
-        let parametrosData = [];
-        let imagenGlobalDefecto = 'https://via.placeholder.com/300/f8fafc/94a3b8?text=SIN+IMAGEN';
-        
-        // Cargar preferencia de vista del usuario (por defecto 'tabla')
+        let dbInventario = [];
+        let dbPrecios = [];
+        let dataMaestra = [];
         let vistaActual = localStorage.getItem('pyp_vista_inventario') || 'tabla';
+        let imagenGlobalDefecto = 'https://via.placeholder.com/300/f8fafc/94a3b8?text=SIN+IMAGEN';
 
         window.onload = async () => {
             const nombre = localStorage.getItem('pyp_usuario_nombre');
             if(nombre) document.getElementById('nombre-usuario').innerText = nombre.split(' ')[0];
-            actualizarBotonesVista();
-            await cargarDatosMaestrosEInventario();
+            actualizarUIBotonesVista();
+            await cargarTodo();
         };
 
         function cerrarSesion() {
@@ -263,40 +257,19 @@
             }
         }
 
-        // --- SISTEMA DE DOBLE VISTA ---
-        function cambiarVista(vista) {
-            vistaActual = vista;
-            localStorage.setItem('pyp_vista_inventario', vista);
-            actualizarBotonesVista();
-            filtrarInventario(); // Re-renderizar con la nueva vista
-        }
-
-        function actualizarBotonesVista() {
-            const btnTabla = document.getElementById('btn-vista-tabla');
-            const btnGrid = document.getElementById('btn-vista-grid');
-            
-            if(vistaActual === 'tabla') {
-                btnTabla.classList.add('active');
-                btnGrid.classList.remove('active');
-            } else {
-                btnGrid.classList.add('active');
-                btnTabla.classList.remove('active');
-            }
-        }
-
-        async function cargarDatosMaestrosEInventario() {
+        async function cargarTodo() {
             try {
-                const [resInv, resParam] = await Promise.all([
+                const [resInv, resPre, resPar] = await Promise.all([
                     fetch(`${SUPABASE_URL}/rest/v1/productos?select=*&order=id_producto_sku.asc`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }),
+                    fetch(`${SUPABASE_URL}/rest/v1/precios?select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }),
                     fetch(`${SUPABASE_URL}/rest/v1/parametros_inventario?select=*&estatus=eq.ACTIVO`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } })
                 ]);
                 
-                inventario = await resInv.json();
-                parametrosData = await resParam.json();
-                
-                if(!Array.isArray(inventario)) throw new Error("Error de conexión");
+                dbInventario = await resInv.json();
+                dbPrecios = await resPre.json();
+                dataMaestra = await resPar.json();
 
-                const paramImg = parametrosData.find(p => p.grupo === 'IMAGEN_DEFECTO');
+                const paramImg = dataMaestra.find(p => p.grupo === 'IMAGEN_DEFECTO');
                 if (paramImg && paramImg.valor.trim() !== '') imagenGlobalDefecto = paramImg.valor;
 
                 llenarSelect('prod-estado', 'ESTADO_PRODUCTO', false); 
@@ -311,48 +284,78 @@
                 llenarSelect('prod-color', 'COLOR', true);
 
                 filtrarInventario();
-            } catch(e) {
-                document.getElementById('contenedor-inventario').innerHTML = `<div class="p-5 text-center text-red-500 font-semibold uppercase">Error cargando base de datos. Revisa la consola.</div>`;
+            } catch(e) { 
+                document.getElementById('contenedor-inventario').innerHTML = `<div class="p-5 text-center text-red-500 font-bold uppercase">Error cargando Base de Datos.</div>`;
             }
         }
 
-        function llenarSelect(idSelect, grupo, permiteVacio) {
-            const select = document.getElementById(idSelect);
-            const opciones = parametrosData.filter(p => p.grupo === grupo).sort((a,b) => a.valor.localeCompare(b.valor));
-            let html = permiteVacio ? '<option value="">N/A</option>' : '';
-            if(opciones.length === 0 && !permiteVacio) html = '<option value="">(REQUIERE CONFIG)</option>';
-            html += opciones.map(o => `<option value="${o.valor}">${o.valor}</option>`).join('');
-            select.innerHTML = html;
+        function llenarSelect(id, grupo, permiteVacio) {
+            const s = document.getElementById(id);
+            const ops = dataMaestra.filter(p => p.grupo === grupo).sort((a,b) => a.valor.localeCompare(b.valor));
+            let h = permiteVacio ? '<option value="">N/A</option>' : '';
+            if(opciones.length === 0 && !permiteVacio) h = '<option value="">(SIN CONFIG)</option>';
+            h += ops.map(o => `<option value="${o.valor}">${o.valor}</option>`).join('');
+            s.innerHTML = h;
         }
 
-        // --- RENDERIZADO DE VISTA TABLA (EXCEL) ---
-        function pintarTablaExpandible(arr) {
-            const contenedor = document.getElementById('contenedor-inventario');
-            if(!arr.length) {
-                contenedor.innerHTML = `<div class="bg-white rounded-lg border border-gray-200 p-10 text-center text-gray-500 font-medium">No se encontraron productos.</div>`;
-                return;
-            }
+        // --- LÓGICA FINANCIERA INTELIGENTE ---
+        function toggleInputsPrecio() {
+            const esBs = document.getElementById('prod-fijo-bs').checked;
+            document.getElementById('section-bs').classList.toggle('hidden', !esBs);
+            document.getElementById('section-usd').classList.toggle('hidden', esBs);
+            // Requerir el input correspondiente
+            document.getElementById('prod-precio-bs').required = esBs;
+            document.getElementById('prod-precio-gen').required = !esBs;
+        }
+
+        function calcularPreciosPorMargen() {
+            const costo = parseFloat(document.getElementById('prod-costo').value) || 0;
+            const mGen = parseFloat(document.getElementById('prod-margen-gen').value) || 0;
+            const m1 = parseFloat(document.getElementById('prod-m1').value) || 0;
+            const m2 = parseFloat(document.getElementById('prod-m2').value) || 0;
+            const m3 = parseFloat(document.getElementById('prod-m3').value) || 0;
+
+            if (mGen > 0) document.getElementById('prod-precio-gen').value = (costo * (1 + mGen/100)).toFixed(2);
+            if (m1 > 0) document.getElementById('prod-p1').value = `$${(costo * (1 + m1/100)).toFixed(2)}`; else document.getElementById('prod-p1').value = '';
+            if (m2 > 0) document.getElementById('prod-p2').value = `$${(costo * (1 + m2/100)).toFixed(2)}`; else document.getElementById('prod-p2').value = '';
+            if (m3 > 0) document.getElementById('prod-p3').value = `$${(costo * (1 + m3/100)).toFixed(2)}`; else document.getElementById('prod-p3').value = '';
+        }
+
+        // --- MANEJO DE VISTAS (TABLA VS GRID) ---
+        function cambiarVista(v) {
+            vistaActual = v;
+            localStorage.setItem('pyp_vista_inventario', v);
+            actualizarUIBotonesVista();
+            filtrarInventario();
+        }
+
+        function actualizarUIBotonesVista() {
+            document.getElementById('btn-vista-tabla').classList.toggle('active', vistaActual === 'tabla');
+            document.getElementById('btn-vista-grid').classList.toggle('active', vistaActual === 'grid');
+        }
+
+        function filtrarInventario() {
+            const q = document.getElementById('buscador-inv').value.toLowerCase();
+            const data = dbInventario.filter(p => p.nombre.toLowerCase().includes(q) || p.id_producto_sku.toLowerCase().includes(q) || (p.codigo_barras && p.codigo_barras.toLowerCase().includes(q)));
             
-            let html = `
-            <div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
-                <table class="w-full text-left text-sm border-collapse">
-                    <thead class="bg-[#143B62] text-white text-[10px] uppercase font-semibold tracking-wider sticky top-0 z-10">
-                        <tr>
-                            <th class="p-3 text-center w-16">Img</th>
-                            <th class="p-3">SKU / Producto</th>
-                            <th class="p-3">Categoría</th>
-                            <th class="p-3 text-center">Stock</th>
-                            <th class="p-3 text-right">Precio Detal</th>
-                            <th class="p-3 text-center w-24">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100">
-            `;
+            const fusionada = data.map(p => {
+                const pre = dbPrecios.find(pr => pr.id_producto_sku === p.id_producto_sku) || {};
+                return { ...p, ...pre };
+            });
 
-            html += arr.map(p => {
+            if(vistaActual === 'tabla') pintarTabla(fusionada);
+            else pintarGrid(fusionada);
+        }
+
+        function pintarTabla(arr) {
+            const c = document.getElementById('contenedor-inventario');
+            if(!arr.length) { c.innerHTML = `<div class="bg-white rounded-lg border p-10 text-center text-gray-500 font-medium">No se encontraron productos.</div>`; return; }
+            
+            let h = `<div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden"><table class="w-full text-left text-sm border-collapse"><thead class="bg-[#143B62] text-white text-[10px] uppercase font-semibold tracking-wider sticky top-0 z-10"><tr><th class="p-3 text-center w-14">Img</th><th class="p-3">SKU / Producto</th><th class="p-3">Categoría</th><th class="p-3 text-center">Stock</th><th class="p-3 text-right">Precio Gral.</th><th class="p-3 text-center w-24">Acciones</th></tr></thead><tbody class="divide-y divide-gray-100">`;
+            
+            h += arr.map(p => {
                 const prodStr = encodeURIComponent(JSON.stringify(p));
                 const imgAUsar = (p.imagen_principal && p.imagen_principal.trim() !== '') ? p.imagen_principal : imagenGlobalDefecto;
-                const pDetal = Number(p.precio_detal_usd) || 0;
                 
                 let bgStock = 'text-gray-600 bg-gray-100';
                 if(p.stock_actual > 10) bgStock = 'text-emerald-700 bg-emerald-100';
@@ -360,277 +363,211 @@
                 else bgStock = 'text-red-600 bg-red-100';
 
                 return `
-                <tr class="hover:bg-gray-50 transition cursor-pointer" onclick="toggleFilaTabla('${p.id_producto_sku}')">
-                    <td class="p-2 text-center">
-                        <img src="${imgAUsar}" onerror="this.onerror=null; this.src='${imagenGlobalDefecto}';" class="w-8 h-8 object-contain mx-auto border border-gray-200 rounded bg-white">
-                    </td>
-                    <td class="p-3">
-                        <div class="font-semibold text-[#143B62] text-[13px]">${p.nombre}</div>
-                        <div class="text-[11px] text-gray-500 font-mono mt-0.5">${p.id_producto_sku}</div>
-                    </td>
+                <tr class="hover:bg-gray-50 transition cursor-pointer" onclick="toggleDetalle('${p.id_producto_sku}')">
+                    <td class="p-2 text-center"><img src="${imgAUsar}" onerror="this.onerror=null; this.src='${imagenGlobalDefecto}';" class="w-8 h-8 object-contain mx-auto border border-gray-200 rounded bg-white"></td>
+                    <td class="p-3"><div class="font-semibold text-[#143B62] text-[13px] text-truncate-25" title="${p.nombre}">${p.nombre}</div><div class="text-[11px] text-gray-500 font-mono mt-0.5">${p.id_producto_sku}</div></td>
                     <td class="p-3 text-[11px] font-medium text-gray-600 uppercase tracking-wide">${p.categoria_del_producto || '-'}</td>
-                    <td class="p-3 text-center">
-                        <span class="inline-block px-2 py-0.5 rounded ${bgStock} font-semibold text-[12px] min-w-[30px]">${p.stock_actual}</span>
-                    </td>
-                    <td class="p-3 text-right font-bold text-gray-800">$${pDetal.toFixed(2)}</td>
+                    <td class="p-3 text-center"><span class="inline-block px-2 py-0.5 rounded ${bgStock} font-semibold text-[12px] min-w-[30px]">${p.stock_actual}</span></td>
+                    <td class="p-3 text-right font-bold text-gray-800">${p.es_precio_fijo_bs ? `Bs ${p.precio_fijo_bs}` : `$${(Number(p.precio_general_usd)||0).toFixed(2)}`}</td>
                     <td class="p-3 text-center" onclick="event.stopPropagation()">
-                        <button onclick="abrirModalProducto('${prodStr}')" class="text-blue-500 hover:text-blue-700 hover:bg-blue-50 p-1.5 rounded transition" title="Editar"><i class="fa-solid fa-pen-to-square"></i></button>
-                        <button onclick="toggleFilaTabla('${p.id_producto_sku}')" class="text-gray-400 hover:text-gray-700 p-1.5 rounded transition"><i id="icon-tbl-${p.id_producto_sku}" class="fa-solid fa-chevron-down"></i></button>
+                        <button onclick="abrirModalProducto('${prodStr}')" class="text-blue-500 hover:text-blue-700 hover:bg-blue-50 p-1.5 rounded transition"><i class="fa-solid fa-pen-to-square"></i></button>
+                        <button onclick="toggleDetalle('${p.id_producto_sku}')" class="text-gray-400 hover:text-gray-700 p-1.5 rounded transition"><i id="icon-tbl-${p.id_producto_sku}" class="fa-solid fa-chevron-down"></i></button>
                     </td>
                 </tr>
                 <tr id="detalle-tbl-${p.id_producto_sku}" class="hidden bg-[#f8fafc] border-b-2 border-gray-200">
                     <td colspan="6" class="p-4">
                         <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-y-3 gap-x-4">
+                            <div><span class="block param-label">Costo Actual</span><span class="param-value text-emerald-600">$${p.costo_actual||'0.00'}</span></div>
+                            <div><span class="block param-label">P1 / P2 / P3 (USD)</span><span class="param-value text-[11px] font-bold text-gray-600">$${p.precio_1_usd||0} / $${p.precio_2_usd||0} / $${p.precio_3_usd||0}</span></div>
                             <div><span class="block param-label">Marca</span><span class="param-value">${p.marca || '-'}</span></div>
                             <div><span class="block param-label">Código Barras</span><span class="param-value font-mono text-[11px]">${p.codigo_barras || '-'}</span></div>
-                            <div><span class="block param-label">Condición</span><span class="param-value">${p.condicion_producto || '-'}</span></div>
-                            <div><span class="block param-label">Tipo Producto</span><span class="param-value">${p.tipo_producto || '-'}</span></div>
-                            <div><span class="block param-label">Unidad / Color</span><span class="param-value">${p.unidad_medida || '-'} / ${p.color || '-'}</span></div>
-                            <div><span class="block param-label">Permite Negativo</span><span class="param-value ${p.permitir_negativo ? 'text-red-500 font-bold':'text-gray-500'}">${p.permitir_negativo ? 'SÍ' : 'NO'}</span></div>
+                            <div><span class="block param-label">Condición / Tipo</span><span class="param-value">${p.condicion_producto||'-'} / ${p.tipo_producto||'-'}</span></div>
+                            <div><span class="block param-label">Venta Negativo</span><span class="param-value ${p.permitir_negativo ? 'text-red-500 font-bold':'text-gray-500'}">${p.permitir_negativo ? 'SÍ' : 'NO'}</span></div>
                         </div>
-                        ${p.descripcion ? `<div class="mt-3 pt-3 border-t border-gray-200"><span class="block param-label mb-1">Descripción</span><p class="text-[12px] text-gray-600 italic leading-snug">${p.descripcion}</p></div>` : ''}
                     </td>
                 </tr>
                 `;
             }).join('');
-
-            html += `</tbody></table></div>`;
-            contenedor.innerHTML = html;
+            c.innerHTML = h + `</tbody></table></div>`;
         }
 
-        function toggleFilaTabla(id) {
-            const fila = document.getElementById(`detalle-tbl-${id}`);
-            const icon = document.getElementById(`icon-tbl-${id}`);
-            fila.classList.toggle('hidden');
-            if(fila.classList.contains('hidden')) {
-                icon.classList.replace('fa-chevron-up', 'fa-chevron-down');
-            } else {
-                icon.classList.replace('fa-chevron-down', 'fa-chevron-up');
-            }
-        }
-
-        // --- RENDERIZADO DE VISTA GRID (TARJETAS) ---
-        function pintarGridTarjetas(arr) {
-            const contenedor = document.getElementById('contenedor-inventario');
-            if(!arr.length) {
-                contenedor.innerHTML = `<div class="bg-white rounded-lg border border-gray-200 p-10 text-center text-gray-500 font-medium">No se encontraron productos.</div>`;
-                return;
-            }
+        function pintarGrid(arr) {
+            const c = document.getElementById('contenedor-inventario');
+            if(!arr.length) { c.innerHTML = `<div class="bg-white rounded-lg border p-10 text-center text-gray-500 font-medium">No se encontraron productos.</div>`; return; }
             
-            let html = `<div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">`;
-
-            html += arr.map(p => {
+            let h = `<div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">`;
+            h += arr.map(p => {
                 const prodStr = encodeURIComponent(JSON.stringify(p));
                 const imgAUsar = (p.imagen_principal && p.imagen_principal.trim() !== '') ? p.imagen_principal : imagenGlobalDefecto;
-                const pDetal = Number(p.precio_detal_usd) || 0;
                 
-                let bgStock = 'bg-gray-100 text-gray-600';
-                if(p.stock_actual > 10) bgStock = 'bg-emerald-100 text-emerald-700';
-                else if(p.stock_actual > 0) bgStock = 'bg-yellow-100 text-yellow-700';
-                else bgStock = 'bg-red-100 text-red-600';
+                let bgStock = 'text-gray-600 bg-gray-100';
+                if(p.stock_actual > 10) bgStock = 'text-emerald-700 bg-emerald-100';
+                else if(p.stock_actual > 0) bgStock = 'text-yellow-700 bg-yellow-100';
+                else bgStock = 'text-red-600 bg-red-100';
 
                 return `
                 <div class="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition duration-200 flex flex-col overflow-hidden">
                     <div class="p-4 flex gap-4">
-                        <div class="w-20 h-20 shrink-0 bg-gray-50 rounded border border-gray-100 flex items-center justify-center overflow-hidden">
-                            <img src="${imgAUsar}" onerror="this.onerror=null; this.src='${imagenGlobalDefecto}';" class="max-w-full max-h-full object-contain">
-                        </div>
+                        <div class="w-20 h-20 shrink-0 bg-gray-50 rounded border border-gray-100 flex items-center justify-center overflow-hidden"><img src="${imgAUsar}" onerror="this.onerror=null; this.src='${imagenGlobalDefecto}';" class="max-w-full max-h-full object-contain"></div>
                         <div class="flex-1 min-w-0 flex flex-col justify-center">
                             <div class="text-[10px] font-bold text-[#E67E22] uppercase tracking-wider mb-0.5 truncate">${p.categoria_del_producto || 'Sin Categoría'}</div>
                             <h3 class="font-semibold text-gray-800 text-[14px] leading-tight truncate mb-1" title="${p.nombre}">${p.nombre}</h3>
                             <div class="text-[11px] font-mono text-gray-500 font-medium">${p.id_producto_sku}</div>
                         </div>
                     </div>
-                    
                     <div class="px-4 pb-4 flex items-end justify-between border-b border-gray-50">
-                        <div>
-                            <div class="param-label mb-0.5">Precio Detal</div>
-                            <div class="text-lg font-bold text-[#143B62]">$${pDetal.toFixed(2)}</div>
-                        </div>
-                        <div class="text-right">
-                            <div class="param-label mb-0.5">Stock</div>
-                            <div class="inline-block px-2.5 py-0.5 rounded ${bgStock} font-bold text-[13px] min-w-[40px] text-center">${p.stock_actual}</div>
-                        </div>
+                        <div><div class="param-label mb-0.5">Precio Gral.</div><div class="text-lg font-bold text-[#143B62]">${p.es_precio_fijo_bs ? `Bs ${p.precio_fijo_bs}` : `$${(Number(p.precio_general_usd)||0).toFixed(2)}`}</div></div>
+                        <div class="text-right"><div class="param-label mb-0.5">Stock</div><div class="inline-block px-2.5 py-0.5 rounded ${bgStock} font-bold text-[13px] min-w-[40px] text-center">${p.stock_actual}</div></div>
                     </div>
-
-                    <button onclick="toggleFilaGrid('${p.id_producto_sku}')" class="w-full py-2 bg-gray-50 hover:bg-gray-100 text-[11px] font-semibold text-gray-500 uppercase tracking-widest transition flex justify-center items-center gap-2">
-                        Ver Especificaciones <i id="icon-grid-${p.id_producto_sku}" class="fa-solid fa-chevron-down text-[10px]"></i>
-                    </button>
-
-                    <div id="detalle-grid-${p.id_producto_sku}" class="hidden flex-col bg-slate-50 border-t border-gray-200">
+                    <button onclick="toggleDetalle('${p.id_producto_sku}')" class="w-full py-2 bg-gray-50 hover:bg-gray-100 text-[11px] font-semibold text-gray-500 uppercase tracking-widest transition flex justify-center items-center gap-2">Ver Detalles <i id="icon-tbl-${p.id_producto_sku}" class="fa-solid fa-chevron-down text-[10px]"></i></button>
+                    <div id="detalle-tbl-${p.id_producto_sku}" class="hidden flex-col bg-slate-50 border-t border-gray-200">
                         <div class="p-4 grid grid-cols-2 gap-y-3 gap-x-4">
+                            <div><span class="block param-label">Costo Actual</span><span class="param-value text-emerald-600">$${p.costo_actual||'0.00'}</span></div>
+                            <div><span class="block param-label">P1/P2/P3</span><span class="param-value text-[11px] font-bold text-gray-600">$${p.precio_1_usd||0} / $${p.precio_2_usd||0} / $${p.precio_3_usd||0}</span></div>
                             <div><span class="block param-label">Marca</span><span class="param-value">${p.marca || '-'}</span></div>
-                            <div><span class="block param-label">Código Barras</span><span class="param-value font-mono">${p.codigo_barras || '-'}</span></div>
-                            <div><span class="block param-label">Condición</span><span class="param-value">${p.condicion_producto || '-'}</span></div>
-                            <div><span class="block param-label">Tipo Producto</span><span class="param-value">${p.tipo_producto || '-'}</span></div>
-                            <div><span class="block param-label">Unidad / Color</span><span class="param-value">${p.unidad_medida || '-'} / ${p.color || '-'}</span></div>
-                            <div><span class="block param-label">Permite Negativo</span><span class="param-value ${p.permitir_negativo ? 'text-red-500 font-bold':'text-gray-500'}">${p.permitir_negativo ? 'SÍ' : 'NO'}</span></div>
+                            <div><span class="block param-label">Código Barras</span><span class="param-value font-mono text-[11px]">${p.codigo_barras || '-'}</span></div>
                         </div>
-                        ${p.descripcion ? `<div class="px-4 pb-3"><span class="block param-label mb-1">Descripción</span><p class="text-[11px] text-gray-600 italic leading-snug">${p.descripcion}</p></div>` : ''}
                         <div class="p-3 bg-white border-t border-gray-200 flex justify-end">
-                            <button onclick="abrirModalProducto('${prodStr}')" class="px-4 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded text-[11px] font-semibold uppercase tracking-wider transition shadow-sm btn-press">
-                                <i class="fa-solid fa-pen-to-square mr-1"></i> Editar Registro
-                            </button>
+                            <button onclick="abrirModalProducto('${prodStr}')" class="px-4 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-md text-[11px] font-semibold uppercase tracking-wider transition shadow-sm btn-press"><i class="fa-solid fa-pen-to-square mr-1"></i> Editar Registro</button>
                         </div>
                     </div>
-                </div>
-                `;
+                </div>`;
             }).join('');
-
-            html += `</div>`;
-            contenedor.innerHTML = html;
+            c.innerHTML = h + `</div>`;
         }
 
-        function toggleFilaGrid(id) {
-            const div = document.getElementById(`detalle-grid-${id}`);
-            const icon = document.getElementById(`icon-grid-${id}`);
-            div.classList.toggle('hidden');
-            if(div.classList.contains('hidden')) {
-                icon.classList.replace('fa-chevron-up', 'fa-chevron-down');
-                div.classList.remove('flex');
-            } else {
-                icon.classList.replace('fa-chevron-down', 'fa-chevron-up');
-                div.classList.add('flex');
-            }
+        function toggleDetalle(id) {
+            const el = document.getElementById(`detalle-tbl-${id}`);
+            const icon = document.getElementById(`icon-tbl-${id}`);
+            el.classList.toggle('hidden');
+            if(el.classList.contains('hidden')) { icon.classList.replace('fa-chevron-up', 'fa-chevron-down'); } 
+            else { icon.classList.replace('fa-chevron-down', 'fa-chevron-up'); el.classList.add('flex'); }
         }
 
-        // --- RENDERIZADO CENTRAL ---
-        function filtrarInventario() {
-            const texto = document.getElementById('buscador-inv').value.toLowerCase();
-            const filtrados = inventario.filter(p => 
-                (p.nombre && p.nombre.toLowerCase().includes(texto)) || 
-                (p.id_producto_sku && p.id_producto_sku.toLowerCase().includes(texto)) ||
-                (p.codigo_barras && p.codigo_barras.toLowerCase().includes(texto))
-            );
-            
-            if(vistaActual === 'tabla') {
-                pintarTablaExpandible(filtrados);
-            } else {
-                pintarGridTarjetas(filtrados);
-            }
-        }
-
-        // --- LÓGICA DEL MODAL ---
+        // --- LÓGICA DEL MODAL DE EDICIÓN ---
         function abrirModalProducto(prodStr = null) {
-            const form = document.getElementById('form-producto');
-            form.reset();
+            const f = document.getElementById('form-producto');
+            f.reset();
+            document.getElementById('prod-fijo-bs').checked = false;
+            
+            // Limpiar campos visuales de %
+            document.getElementById('prod-margen-gen').value = '';
+            document.getElementById('prod-m1').value = '';
+            document.getElementById('prod-m2').value = '';
+            document.getElementById('prod-m3').value = '';
+
+            toggleInputsPrecio();
 
             if (prodStr) {
                 const p = JSON.parse(decodeURIComponent(prodStr));
                 document.getElementById('modal-titulo').innerHTML = `<i class="fa-solid fa-pen-to-square mr-2 text-blue-400"></i> EDITAR REGISTRO`;
                 document.getElementById('modo-edicion').value = "true";
                 
-                const skuInput = document.getElementById('prod-sku');
-                skuInput.value = p.id_producto_sku;
-                skuInput.readOnly = true;
-                skuInput.classList.add('bg-gray-100', 'text-gray-500', 'cursor-not-allowed');
+                document.getElementById('prod-sku').value = p.id_producto_sku;
+                document.getElementById('prod-sku').readOnly = true;
+                document.getElementById('prod-sku').classList.add('bg-gray-100', 'text-gray-500', 'cursor-not-allowed');
 
                 document.getElementById('prod-barras').value = p.codigo_barras || '';
                 document.getElementById('prod-nombre').value = p.nombre || '';
                 document.getElementById('prod-imagen').value = p.imagen_principal || '';
                 document.getElementById('prod-descripcion').value = p.descripcion || '';
+                document.getElementById('prod-estado').value = p.estado_producto || '';
+                document.getElementById('prod-categoria').value = p.categoria_del_producto || '';
+                document.getElementById('prod-marca').value = p.marca || '';
+                document.getElementById('prod-tipo').value = p.tipo_producto || '';
+                document.getElementById('prod-condicion').value = p.condicion_producto || '';
+                document.getElementById('prod-unidad').value = p.unidad_medida || '';
+                document.getElementById('prod-iva').value = p.tipo_impuesto || '';
+                document.getElementById('prod-talla').value = p.talla || '';
+                document.getElementById('prod-color').value = p.color || '';
+                document.getElementById('prod-cat-venta').value = p.categoria_venta || '';
+                
                 document.getElementById('prod-stock').value = p.stock_actual || 0;
                 document.getElementById('prod-negativo').checked = p.permitir_negativo === true;
-                document.getElementById('prod-precio').value = p.precio_detal_usd || '';
                 
-                document.getElementById('prod-req1').value = p.requerido_precio_1 || '';
-                document.getElementById('prod-tier1').value = p.precio_tier1_usd || '';
-                document.getElementById('prod-req2').value = p.requerido_precio_2 || '';
-                document.getElementById('prod-tier2').value = p.precio_tier2_usd || '';
-                document.getElementById('prod-req3').value = p.requerido_precio_3 || '';
-                document.getElementById('prod-tier3').value = p.precio_tier3_usd || '';
-
-                if(p.categoria_del_producto) document.getElementById('prod-categoria').value = p.categoria_del_producto;
-                if(p.marca) document.getElementById('prod-marca').value = p.marca;
-                if(p.tipo_producto) document.getElementById('prod-tipo').value = p.tipo_producto;
-                if(p.estado_producto) document.getElementById('prod-estado').value = p.estado_producto;
-                if(p.condicion_producto) document.getElementById('prod-condicion').value = p.condicion_producto;
-                if(p.categoria_venta) document.getElementById('prod-cat-venta').value = p.categoria_venta;
-                if(p.unidad_medida) document.getElementById('prod-unidad').value = p.unidad_medida;
-                if(p.tipo_impuesto) document.getElementById('prod-iva').value = p.tipo_impuesto;
-                if(p.talla) document.getElementById('prod-talla').value = p.talla;
-                if(p.color) document.getElementById('prod-color').value = p.color;
-
+                // Carga de tabla de Precios
+                document.getElementById('prod-fijo-bs').checked = p.es_precio_fijo_bs || false;
+                document.getElementById('prod-precio-bs').value = p.precio_fijo_bs || '';
+                document.getElementById('prod-costo').value = p.costo_actual || '';
+                document.getElementById('prod-precio-gen').value = p.precio_general_usd || '';
+                
+                if(p.precio_1_usd > 0) document.getElementById('prod-p1').value = `$${p.precio_1_usd}`;
+                if(p.precio_2_usd > 0) document.getElementById('prod-p2').value = `$${p.precio_2_usd}`;
+                if(p.precio_3_usd > 0) document.getElementById('prod-p3').value = `$${p.precio_3_usd}`;
+                
+                toggleInputsPrecio();
             } else {
                 document.getElementById('modal-titulo').innerHTML = `<i class="fa-solid fa-box-open mr-2 text-[#E67E22]"></i> NUEVO REGISTRO`;
                 document.getElementById('modo-edicion').value = "false";
-                
-                const skuInput = document.getElementById('prod-sku');
-                skuInput.readOnly = false;
-                skuInput.classList.remove('bg-gray-100', 'text-gray-500', 'cursor-not-allowed');
+                document.getElementById('prod-sku').readOnly = false;
+                document.getElementById('prod-sku').classList.remove('bg-gray-100', 'text-gray-500', 'cursor-not-allowed');
             }
 
             document.getElementById('modal-producto').classList.remove('hidden');
         }
 
-        function cerrarModalProducto() {
-            document.getElementById('modal-producto').classList.add('hidden');
-        }
+        function cerrarModalProducto() { document.getElementById('modal-producto').classList.add('hidden'); }
 
         async function guardarProducto(e) {
             e.preventDefault();
             const btn = document.getElementById('btn-guardar-prod');
-            const modoEdicion = document.getElementById('modo-edicion').value === "true";
-            
+            const isEdit = document.getElementById('modo-edicion').value === "true";
             btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Guardando...`;
             btn.disabled = true;
 
             const sku = document.getElementById('prod-sku').value.trim().toUpperCase();
+            const esBs = document.getElementById('prod-fijo-bs').checked;
             
-            const data = {
+            const dataProd = {
                 id_producto_sku: sku,
-                codigo_barras: document.getElementById('prod-barras').value.trim().toUpperCase() || null,
-                nombre: document.getElementById('prod-nombre').value.trim().toUpperCase(),
-                
+                nombre: document.getElementById('prod-nombre').value.toUpperCase(),
+                codigo_barras: document.getElementById('prod-barras').value.toUpperCase() || null,
+                imagen_principal: document.getElementById('prod-imagen').value || null,
+                descripcion: document.getElementById('prod-descripcion').value || null,
                 estado_producto: document.getElementById('prod-estado').value || null,
-                tipo_producto: document.getElementById('prod-tipo').value || null,
                 categoria_del_producto: document.getElementById('prod-categoria').value || null,
                 marca: document.getElementById('prod-marca').value || null,
+                tipo_producto: document.getElementById('prod-tipo').value || null,
                 condicion_producto: document.getElementById('prod-condicion').value || null,
-                categoria_venta: document.getElementById('prod-cat-venta').value || null,
                 unidad_medida: document.getElementById('prod-unidad').value || null,
                 tipo_impuesto: document.getElementById('prod-iva').value || null,
                 talla: document.getElementById('prod-talla').value || null,
                 color: document.getElementById('prod-color').value || null,
-                
-                imagen_principal: document.getElementById('prod-imagen').value.trim() || null,
-                descripcion: document.getElementById('prod-descripcion').value.trim() || null,
-                
+                categoria_venta: document.getElementById('prod-cat-venta').value || null,
                 stock_actual: parseInt(document.getElementById('prod-stock').value) || 0,
-                permitir_negativo: document.getElementById('prod-negativo').checked,
-                precio_detal_usd: parseFloat(document.getElementById('prod-precio').value) || 0,
-                
-                requerido_precio_1: parseInt(document.getElementById('prod-req1').value) || null,
-                precio_tier1_usd: parseFloat(document.getElementById('prod-tier1').value) || null,
-                requerido_precio_2: parseInt(document.getElementById('prod-req2').value) || null,
-                precio_tier2_usd: parseFloat(document.getElementById('prod-tier2').value) || null,
-                requerido_precio_3: parseInt(document.getElementById('prod-req3').value) || null,
-                precio_tier3_usd: parseFloat(document.getElementById('prod-tier3').value) || null
+                permitir_negativo: document.getElementById('prod-negativo').checked
+            };
+
+            const p1 = document.getElementById('prod-p1').value.replace('$','');
+            const p2 = document.getElementById('prod-p2').value.replace('$','');
+            const p3 = document.getElementById('prod-p3').value.replace('$','');
+
+            const dataPre = {
+                id_producto_sku: sku,
+                es_precio_fijo_bs: esBs,
+                precio_fijo_bs: esBs ? (parseFloat(document.getElementById('prod-precio-bs').value) || 0) : 0,
+                costo_actual: parseFloat(document.getElementById('prod-costo').value) || 0,
+                precio_general_usd: esBs ? 0 : (parseFloat(document.getElementById('prod-precio-gen').value) || 0),
+                precio_1_usd: esBs ? 0 : (parseFloat(p1) || 0),
+                precio_2_usd: esBs ? 0 : (parseFloat(p2) || 0),
+                precio_3_usd: esBs ? 0 : (parseFloat(p3) || 0)
             };
 
             try {
-                let res;
-                if (modoEdicion) {
-                    res = await fetch(`${SUPABASE_URL}/rest/v1/productos?id_producto_sku=eq.${sku}`, {
-                        method: 'PATCH',
-                        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' },
-                        body: JSON.stringify(data)
-                    });
-                } else {
-                    res = await fetch(`${SUPABASE_URL}/rest/v1/productos`, {
-                        method: 'POST',
-                        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' },
-                        body: JSON.stringify(data)
-                    });
-                }
+                const method = isEdit ? 'PATCH' : 'POST';
+                const urlProd = isEdit ? `${SUPABASE_URL}/rest/v1/productos?id_producto_sku=eq.${sku}` : `${SUPABASE_URL}/rest/v1/productos`;
+                const urlPre = isEdit ? `${SUPABASE_URL}/rest/v1/precios?id_producto_sku=eq.${sku}` : `${SUPABASE_URL}/rest/v1/precios`;
 
-                if (!res.ok) throw new Error("Error DB");
+                // Guardado atómico
+                await Promise.all([
+                    fetch(urlProd, { method, headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' }, body: JSON.stringify(dataProd) }),
+                    fetch(urlPre, { method, headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' }, body: JSON.stringify(dataPre) })
+                ]);
 
                 cerrarModalProducto();
-                await cargarDatosMaestrosEInventario(); 
-                
-            } catch (error) {
-                alert("ERROR AL GUARDAR. Verifica que el SKU no esté repetido.");
+                await cargarTodo();
+            } catch(e) { 
+                alert("Error al guardar. Verifica que el SKU no esté duplicado."); 
             } finally {
                 btn.innerHTML = `<i class="fa-solid fa-save"></i> Guardar Registro`;
                 btn.disabled = false;
