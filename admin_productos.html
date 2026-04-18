@@ -217,7 +217,7 @@
         
         let inventario = [];
         let parametrosData = [];
-        let imagenGlobalDefecto = 'https://placehold.co/150x150/eeeeee/999999?text=Sin+Imagen';
+        let imagenGlobalDefecto = 'https://via.placeholder.com/150/eeeeee/999999?text=SIN+IMAGEN'; // Fallback a prueba de balas
 
         window.onload = async () => {
             const nombre = localStorage.getItem('pyp_usuario_nombre');
@@ -234,7 +234,7 @@
 
         async function cargarDatosMaestrosEInventario() {
             try {
-                // CORRECCIÓN 404: Apuntamos a 'productos' directamente en lugar de la vista
+                // CORRECCIÓN 404: Apuntamos directo a la tabla física
                 const [resInv, resParam] = await Promise.all([
                     fetch(`${SUPABASE_URL}/rest/v1/productos?select=*&order=id_producto_sku.asc`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }),
                     fetch(`${SUPABASE_URL}/rest/v1/parametros_inventario?select=*&estatus=eq.ACTIVO`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } })
@@ -291,7 +291,7 @@
                 return `
                 <tr class="hover:bg-gray-50 transition border-b border-gray-100">
                     <td class="p-2 text-center w-16">
-                        <img src="${imgAUsar}" onerror="this.onerror=null; this.src='${imagenGlobalDefecto}';" class="w-10 h-10 object-contain mx-auto border border-gray-200 rounded bg-white shadow-sm">
+                        <img src="${imgAUsar}" onerror="this.onerror=null; this.src='https://via.placeholder.com/150/eeeeee/999999?text=SIN+IMAGEN';" class="w-10 h-10 object-contain mx-auto border border-gray-200 rounded bg-white shadow-sm">
                     </td>
                     <td class="p-3">
                         <p class="font-bold text-[#143B62] line-clamp-1 text-xs">${p.nombre}</p>
