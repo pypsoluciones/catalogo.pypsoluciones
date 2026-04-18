@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin | Parámetros del Sistema</title>
+    <title>Admin | Parámetros de Productos</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -16,7 +16,7 @@
 </head>
 <body class="bg-[#f0f2f5] font-sans flex h-screen overflow-hidden text-gray-800">
 
-   <aside class="w-64 bg-[#143B62] text-white flex flex-col hidden md:flex shrink-0 shadow-xl z-20">
+    <aside class="w-64 bg-[#143B62] text-white flex flex-col hidden md:flex shrink-0 shadow-xl z-20">
         <div class="p-6 border-b border-white/10 flex items-center gap-3">
             <i class="fa-solid fa-layer-group text-[#E67E22] text-3xl"></i>
             <h2 class="font-bold text-xl tracking-wide">P&P Admin</h2>
@@ -33,7 +33,7 @@
                 </button>
                 <div id="submenu-inv" class="pl-10 space-y-1 mt-1">
                     <a href="admin_productos.html" class="block py-2 text-gray-400 hover:text-white font-semibold text-xs transition">PRODUCTOS</a>
-                    <a href="admin_parametros.html" class="block py-2 text-white font-bold text-xs border-l-2 border-[#E67E22] pl-3">PARÁMETROS</a>
+                    <a href="admin_parametros_productos.html" class="block py-2 text-white font-bold text-xs border-l-2 border-[#E67E22] pl-3">PARÁMETROS</a>
                 </div>
             </div>
 
@@ -50,7 +50,7 @@
     <main class="flex-1 flex flex-col h-screen overflow-hidden bg-gray-50">
         <header class="bg-white shadow-sm px-6 py-4 flex justify-between items-center z-10 shrink-0">
             <div>
-                <h1 class="text-xl font-bold text-[#143B62] flex items-center gap-2"><i class="fa-solid fa-cogs"></i> Datos Maestros (Parámetros)</h1>
+                <h1 class="text-xl font-bold text-[#143B62] flex items-center gap-2"><i class="fa-solid fa-cogs"></i> Parámetros de Productos</h1>
             </div>
             
             <div class="flex items-center gap-3">
@@ -72,13 +72,13 @@
                             <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Grupo *</label>
                             <select id="param-grupo" required class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:border-[#E67E22] outline-none font-bold bg-gray-50">
                                 <option value="MARCA">MARCA</option>
-                                <option value="CATEGORIA">CATEGORÍA DE PRODUCTO</option>
+                                <option value="CATEGORIA">CATEGORÍA DEL PRODUCTO</option>
                                 <option value="CATEGORIA_VENTA">CATEGORÍA DE VENTA</option>
                                 <option value="UNIDAD_MEDIDA">UNIDAD DE MEDIDA</option>
                                 <option value="TIPO_IMPUESTO">TIPO DE IMPUESTO</option>
                                 <option value="TALLA">TALLA</option>
                                 <option value="COLOR">COLOR</option>
-                                <option value="TIPO_CONTRIBUYENTE">TIPO DE CONTRIBUYENTE</option>
+                                <option value="ESTATUS_PRODUCTO">ESTATUS OPERATIVO / CONDICIÓN</option>
                             </select>
                         </div>
                         <div>
@@ -104,6 +104,7 @@
                                 <option value="TIPO_IMPUESTO">TIPOS DE IMPUESTO</option>
                                 <option value="TALLA">TALLAS</option>
                                 <option value="COLOR">COLORES</option>
+                                <option value="ESTATUS_PRODUCTO">ESTATUS / CONDICIÓN</option>
                             </select>
                         </div>
                     </div>
@@ -137,7 +138,7 @@
 
         window.onload = async () => {
             const nombre = localStorage.getItem('pyp_usuario_nombre');
-            if(nombre) document.getElementById('nombre-usuario').innerText = nombre.split(' ')[0];
+            if(nombre) document.getElementById('nombre-usuario').innerText = nombre.split(' ')[0].toUpperCase();
             await cargarParametros();
         };
 
@@ -193,7 +194,6 @@
             e.preventDefault();
             const btn = document.getElementById('btn-guardar');
             const grupo = document.getElementById('param-grupo').value;
-            // DOBLE SEGURIDAD: Transformamos a mayúsculas aquí antes de enviar
             const valor = document.getElementById('param-valor').value.trim().toUpperCase();
 
             btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>`;
@@ -211,7 +211,6 @@
                 document.getElementById('param-valor').value = '';
                 await cargarParametros();
                 
-                // Mostrar el grupo que acabamos de agregar
                 document.getElementById('filtro-grupo').value = grupo;
                 filtrarTabla();
 
