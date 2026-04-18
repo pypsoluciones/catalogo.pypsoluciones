@@ -20,17 +20,13 @@
             <i class="fa-solid fa-layer-group text-[#E67E22] text-3xl"></i>
             <h2 class="font-bold text-xl tracking-wide">P&P Admin</h2>
         </div>
+        
         <nav class="flex-1 p-4 space-y-1 overflow-y-auto custom-scroll text-sm">
             <a href="admin_dashboard.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-chart-pie w-5"></i> Dashboard</a>
             <a href="admin_ventas.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-cash-register w-5"></i> Ventas (POS)</a>
-            <a href="admin_notas.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-truck-fast w-5"></i> Despachos</a>
-            <a href="admin_presupuestos.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-file-invoice w-5"></i> Cotizaciones</a>
-            <a href="admin_rma.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-rotate-left w-5"></i> RMA / Garantías</a>
             <a href="admin_compras.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-truck-ramp-box w-5"></i> Compras</a>
             <a href="admin_productos.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-boxes-stacked w-5"></i> Inventario</a>
-            <a href="admin_taller.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-screwdriver-wrench w-5"></i> Taller</a>
             <a href="admin_contactos.html" class="flex items-center gap-3 bg-[#E67E22] text-white px-4 py-2.5 rounded-lg font-bold shadow-md"><i class="fa-solid fa-address-book w-5"></i> Directorio</a>
-            <a href="admin_parametros.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-cogs w-5"></i> Parámetros</a>
         </nav>
         
         <div class="p-4 border-t border-white/10 shrink-0 bg-[#0f2d4a]">
@@ -116,12 +112,18 @@
             }
         }
 
-        // --- FORMATEADOR INTELIGENTE DE NÚMEROS TELEFÓNICOS ---
+        // --- FORMATEADOR DE TELÉFONOS (BLINDADO CONTRA NÚMEROS MATEMÁTICOS) ---
         function formatearTelefono(tel) {
-            if (!tel || tel === 'N/A' || tel.trim() === '') return 'N/A';
+            // Si viene vacío o nulo
+            if (tel === null || tel === undefined || tel === '') return 'N/A';
+            
+            // CONVERTIMOS a texto a juro (String) antes de hacerle .trim()
+            let telStr = String(tel).trim();
+            
+            if (telStr === '' || telStr.toUpperCase() === 'N/A') return 'N/A';
             
             // Eliminar todo lo que no sea dígito
-            let numStr = tel.replace(/\D/g, '');
+            let numStr = telStr.replace(/\D/g, '');
             
             // Formato internacional VE: 584140285806 -> +58 414-0285806
             if (numStr.length === 12 && numStr.startsWith('58')) {
@@ -132,11 +134,11 @@
                 return `${numStr.substring(0, 4)}-${numStr.substring(4)}`;
             }
             
-            // Si tiene otro formato, lo devolvemos limpio
-            return tel;
+            // Si tiene otro formato, lo devolvemos limpio y en texto
+            return telStr;
         }
 
-       async function cargarDatosDesdeBD(tipo) {
+        async function cargarDatosDesdeBD(tipo) {
             pestanaActual = tipo;
             const tbody = document.getElementById('tabla-contactos');
             tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin text-xl mb-2 block"></i> CARGANDO ${tipo.toUpperCase()}...</td></tr>`;
@@ -150,21 +152,20 @@
                     headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } 
                 });
                 
-                const respuestaSupabase = await res.json();
-
-                // Si Supabase devuelve un error (ej. tabla no existe, columna mal escrita), lo mostramos en pantalla
+                const respuestaJson = await res.json();
+                
                 if (!res.ok) {
-                    console.error("Error detallado de Supabase:", respuestaSupabase);
-                    tbody.innerHTML = `<tr><td colspan="5" class="p-5 text-center text-red-600 font-black uppercase"><i class="fa-solid fa-triangle-exclamation mr-2"></i> ERROR SUPABASE: ${respuestaSupabase.message || 'Error desconocido'}</td></tr>`;
+                    console.error("Error BD:", respuestaJson);
+                    tbody.innerHTML = `<tr><td colspan="5" class="p-5 text-center text-red-500 font-bold uppercase">ERROR BD: ${respuestaJson.message || 'Tabla no encontrada'}</td></tr>`;
                     dataActual = [];
-                    return; // Detenemos la función aquí
+                    return;
                 }
 
-                dataActual = respuestaSupabase;
+                dataActual = respuestaJson;
                 aplicarFiltros();
             } catch(e) {
-                console.error("Error de Red o Javascript:", e);
-                tbody.innerHTML = `<tr><td colspan="5" class="p-5 text-center text-red-500 font-bold">ERROR DE CONEXIÓN. Revisa la consola (F12).</td></tr>`;
+                console.error("Error de Red:", e);
+                tbody.innerHTML = `<tr><td colspan="5" class="p-5 text-center text-red-500 font-bold">ERROR DE RED O JAVASCRIPT.</td></tr>`;
                 dataActual = [];
             }
         }
@@ -199,45 +200,19 @@
                 if(pestanaActual === 'Clientes') {
                     doc = c.documento_identidad || '-';
                     nom = c.nombre_razon_social || '-';
-                    cel = formatearTelefono(c.celular_01 || c.telefono || 'N/A');
-                    tlf2 = formatearTelefono(c.celular_02 || '');
+                    cel = formatearTelefono(c.celular_01 || c.telefono);
+                    tlf2 = formatearTelefono(c.celular_02);
                     dir = c.direccion_fiscal || 'SIN DIRECCIÓN';
-                    extra = (c.correo || '').toLowerCase(); // Correo siempre en minúscula visualmente
+                    extra = (c.correo || '').toLowerCase();
                 } else {
                     doc = c.rif || '-';
                     nom = c.razon_social || '-';
-                    cel = formatearTelefono(c.telefono_01 || 'N/A');
-                    tlf2 = formatearTelefono(c.telefono_02 || '');
+                    cel = formatearTelefono(c.telefono_01);
+                    tlf2 = formatearTelefono(c.telefono_02);
                     dir = c.direccion_fiscal || 'SIN DIRECCIÓN';
                     extra = c.vendedor_asignado ? `VND: ${c.vendedor_asignado}` : (c.correo || '').toLowerCase();
                 }
                 
                 return `
                 <tr class="hover:bg-gray-50 transition border-b border-gray-100">
-                    <td class="p-4 font-bold text-blue-600 text-xs">${doc}</td>
-                    <td class="p-4 font-bold text-gray-800 text-sm">${nom}</td>
-                    <td class="p-4 text-xs text-gray-600 font-bold">
-                        <div class="flex items-center gap-2 mb-1"><i class="fa-solid fa-phone text-gray-400"></i> <span class="tracking-wide">${cel}</span></div>
-                        ${extra ? `<div class="flex items-center gap-2 text-blue-500"><i class="${extra.includes('@') ? 'fa-solid fa-envelope' : 'fa-solid fa-id-badge'} text-gray-400"></i> ${extra}</div>` : ''}
-                    </td>
-                    <td class="p-4 text-[10px] text-gray-500 max-w-[250px] leading-tight font-semibold">${dir}</td>
-                    <td class="p-4 text-center">
-                        <button onclick="alert('EDICIÓN EN DESARROLLO')" class="bg-white border border-gray-200 hover:border-[#143B62] text-[#143B62] px-3 py-2 rounded shadow-sm transition"><i class="fa-solid fa-pen-to-square"></i></button>
-                    </td>
-                </tr>
-                `;
-            }).join('');
-        }
-
-        function aplicarFiltros() {
-            const texto = document.getElementById('buscador-contactos').value.toLowerCase();
-            const filtrados = dataActual.filter(c => {
-                const doc = (c.documento_identidad || c.rif || '').toLowerCase();
-                const nom = (c.nombre_razon_social || c.razon_social || '').toLowerCase();
-                return nom.includes(texto) || doc.includes(texto);
-            });
-            pintarTabla(filtrados);
-        }
-    </script>
-</body>
-</html>
+                    <td class="p
