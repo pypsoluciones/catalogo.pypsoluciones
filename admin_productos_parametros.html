@@ -186,7 +186,7 @@
 
         async function cargarParametros() {
             try {
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/parametros_inventario?select=*&order=grupo.asc,valor.asc`, { 
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/parametros_inventario?select=*`, { 
                     headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } 
                 });
                 parametros = await res.json();
@@ -217,10 +217,27 @@
             `).join('');
         }
 
+        // --- MOTOR DE ORDENAMIENTO ALFABÉTICO ESTRICTO ---
         function filtrarTabla() {
             const grupo = document.getElementById('param-grupo').value;
-            if(grupo === 'TODOS') pintarTabla(parametros);
-            else pintarTabla(parametros.filter(p => p.grupo === grupo));
+            let dataMostrar = [];
+
+            if (grupo === 'TODOS') {
+                // Si es TODOS, ordenamos primero por Grupo (A-Z) y luego por Valor (A-Z)
+                dataMostrar = [...parametros].sort((a, b) => {
+                    if (a.grupo === b.grupo) {
+                        return a.valor.localeCompare(b.valor);
+                    }
+                    return a.grupo.localeCompare(b.grupo);
+                });
+            } else {
+                // Si es un grupo específico, filtramos y ordenamos estrictamente por Valor (A-Z)
+                dataMostrar = parametros
+                    .filter(p => p.grupo === grupo)
+                    .sort((a, b) => a.valor.localeCompare(b.valor));
+            }
+            
+            pintarTabla(dataMostrar);
         }
 
         async function guardarParametro(e) {
