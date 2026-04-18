@@ -52,6 +52,7 @@
             <div>
                 <h1 class="text-xl font-bold text-[#143B62] flex items-center gap-2"><i class="fa-solid fa-cogs"></i> Parámetros de Productos</h1>
             </div>
+            
             <div class="flex items-center gap-3">
                 <div class="bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100 flex items-center gap-2 text-xs font-bold text-[#143B62]">
                     <i class="fa-solid fa-user-tie"></i> <span id="nombre-usuario">Admin</span>
@@ -64,12 +65,14 @@
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
                 
                 <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 lg:col-span-1 h-fit">
-                    <h3 class="font-bold text-[#143B62] mb-4 border-b pb-2"><i class="fa-solid fa-plus-circle mr-2"></i> Nuevo Parámetro</h3>
+                    <h3 class="font-bold text-[#143B62] mb-4 border-b pb-2"><i class="fa-solid fa-sliders mr-2"></i> Gestión de Parámetros</h3>
                     
                     <form id="form-parametro" onsubmit="guardarParametro(event)" class="space-y-4">
                         <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Grupo *</label>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Seleccionar Grupo *</label>
                             <select id="param-grupo" required onchange="ajustarInputValor()" class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:border-[#E67E22] outline-none font-bold bg-gray-50">
+                                <option value="TODOS">-- 👁️ MOSTRAR TODOS LOS GRUPOS --</option>
+                                <option disabled>-----------------------------------</option>
                                 <option value="MARCA">MARCA</option>
                                 <option value="CATEGORIA">CATEGORÍA DEL PRODUCTO</option>
                                 <option value="CATEGORIA_VENTA">CATEGORÍA DE VENTA</option>
@@ -83,45 +86,27 @@
                                 <option value="IMAGEN_DEFECTO">IMAGEN POR DEFECTO (URL)</option>
                             </select>
                         </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Valor *</label>
-                            <input type="text" id="param-valor" required placeholder="Ej: HP, NUEVO, FÍSICO" class="uppercase-input w-full border border-gray-300 rounded px-3 py-2 text-sm focus:border-[#E67E22] outline-none font-bold" oninput="if(document.getElementById('param-grupo').value !== 'IMAGEN_DEFECTO') this.value = this.value.toUpperCase()">
+                        
+                        <div id="bloque-valor" class="hidden">
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nuevo Valor *</label>
+                            <input type="text" id="param-valor" placeholder="Ej: HP, NUEVO, FÍSICO" class="uppercase-input w-full border border-gray-300 rounded px-3 py-2 text-sm focus:border-[#E67E22] outline-none font-bold" oninput="if(document.getElementById('param-grupo').value !== 'IMAGEN_DEFECTO') this.value = this.value.toUpperCase()">
                         </div>
-                        <button type="submit" id="btn-guardar" class="w-full bg-[#143B62] hover:bg-[#0f2d4a] text-white font-bold py-2.5 rounded shadow-sm transition btn-press mt-2">
+                        
+                        <button type="submit" id="btn-guardar" class="hidden w-full bg-[#143B62] hover:bg-[#0f2d4a] text-white font-bold py-2.5 rounded shadow-sm transition btn-press mt-2">
                             Guardar Parámetro
                         </button>
                     </form>
                 </div>
 
                 <div class="bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col lg:col-span-2 h-full">
-                    <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                        <div class="relative w-full max-w-md">
-                            <i class="fa-solid fa-filter absolute left-3 top-2.5 text-gray-400"></i>
-                            <select id="filtro-grupo" onchange="filtrarTabla()" class="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2 text-sm focus:outline-none focus:border-[#E67E22] font-bold bg-white">
-                                <option value="TODOS">Mostrar Todos los Grupos (Ordenado)</option>
-                                <option value="MARCA">MARCA</option>
-                                <option value="CATEGORIA">CATEGORÍA DEL PRODUCTO</option>
-                                <option value="CATEGORIA_VENTA">CATEGORÍA DE VENTA</option>
-                                <option value="TIPO_PRODUCTO">TIPO DE PRODUCTO</option>
-                                <option value="ESTADO_PRODUCTO">ESTADO DEL PRODUCTO</option>
-                                <option value="CONDICION_PRODUCTO">CONDICIÓN DEL PRODUCTO</option>
-                                <option value="UNIDAD_MEDIDA">UNIDAD DE MEDIDA</option>
-                                <option value="TIPO_IMPUESTO">TIPO DE IMPUESTO</option>
-                                <option value="TALLA">TALLA</option>
-                                <option value="COLOR">COLOR</option>
-                                <option value="IMAGEN_DEFECTO">IMAGEN POR DEFECTO</option>
-                            </select>
-                        </div>
-                    </div>
-
                     <div class="flex-1 overflow-y-auto custom-scroll p-0">
                         <table class="w-full text-left text-sm border-collapse">
                             <thead class="bg-[#143B62] text-white text-[10px] uppercase font-black sticky top-0 z-10">
                                 <tr>
-                                    <th class="p-3">Grupo</th>
-                                    <th class="p-3">Valor Registrado</th>
-                                    <th class="p-3 text-center">Estatus</th>
-                                    <th class="p-3 text-center">Acción</th>
+                                    <th class="p-4">Grupo</th>
+                                    <th class="p-4">Valor Registrado</th>
+                                    <th class="p-4 text-center">Estatus</th>
+                                    <th class="p-4 text-center">Acción</th>
                                 </tr>
                             </thead>
                             <tbody id="tabla-parametros" class="divide-y divide-gray-100">
@@ -145,8 +130,9 @@
             const nombre = localStorage.getItem('pyp_usuario_nombre');
             if(nombre) document.getElementById('nombre-usuario').innerText = nombre.split(' ')[0].toUpperCase();
             
-            // Sincronizar el filtro derecho con la opción por defecto de la izquierda al iniciar
-            document.getElementById('filtro-grupo').value = document.getElementById('param-grupo').value;
+            // Forzar inicio en "TODOS"
+            document.getElementById('param-grupo').value = 'TODOS';
+            ajustarInputValor();
             
             await cargarParametros();
         };
@@ -158,30 +144,41 @@
             }
         }
 
-        // Lógica UX: Cuando cambias el grupo a la izquierda, la tabla de la derecha se filtra automáticamente
+        // --- MAGIA UX: Un solo menú controla todo ---
         function ajustarInputValor() {
             const grupo = document.getElementById('param-grupo').value;
             const inputVal = document.getElementById('param-valor');
+            const bloqueValor = document.getElementById('bloque-valor');
+            const btnGuardar = document.getElementById('btn-guardar');
             
-            // Filtro Automático en la tabla
-            document.getElementById('filtro-grupo').value = grupo;
+            // 1. Filtrar tabla inmediatamente
             filtrarTabla();
 
-            if(grupo === 'IMAGEN_DEFECTO') {
-                inputVal.classList.remove('uppercase-input');
-                inputVal.placeholder = "Ej: https://tudominio.com/logo.png";
-                inputVal.type = "url";
+            // 2. Mostrar/Ocultar formulario de creación
+            if (grupo === 'TODOS') {
+                bloqueValor.classList.add('hidden');
+                btnGuardar.classList.add('hidden');
+                inputVal.removeAttribute('required');
             } else {
-                inputVal.classList.add('uppercase-input');
-                inputVal.placeholder = "Ej: HP, NUEVO, PAQUETE";
-                inputVal.type = "text";
-                inputVal.value = inputVal.value.toUpperCase();
+                bloqueValor.classList.remove('hidden');
+                btnGuardar.classList.remove('hidden');
+                inputVal.setAttribute('required', 'true');
+
+                if(grupo === 'IMAGEN_DEFECTO') {
+                    inputVal.classList.remove('uppercase-input');
+                    inputVal.placeholder = "Ej: https://tudominio.com/logo.png";
+                    inputVal.type = "url";
+                } else {
+                    inputVal.classList.add('uppercase-input');
+                    inputVal.placeholder = "Ej: HP, NUEVO, PAQUETE";
+                    inputVal.type = "text";
+                    inputVal.value = inputVal.value.toUpperCase();
+                }
             }
         }
 
         async function cargarParametros() {
             try {
-                // Al cargar de la DB, ya viene ordenado por Grupo de la A a la Z, agrupándolos naturalmente
                 const res = await fetch(`${SUPABASE_URL}/rest/v1/parametros_inventario?select=*&order=grupo.asc,valor.asc`, { 
                     headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } 
                 });
@@ -201,12 +198,12 @@
             
             tbody.innerHTML = arr.map(p => `
                 <tr class="hover:bg-gray-50 transition border-b border-gray-100">
-                    <td class="p-3 font-bold text-gray-500 text-xs">${p.grupo}</td>
-                    <td class="p-3 font-black text-[#143B62] text-sm break-all">${p.valor}</td>
-                    <td class="p-3 text-center">
+                    <td class="p-4 font-bold text-gray-500 text-xs">${p.grupo}</td>
+                    <td class="p-4 font-black text-[#143B62] text-sm break-all">${p.valor}</td>
+                    <td class="p-4 text-center">
                         <span class="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-1 rounded">${p.estatus}</span>
                     </td>
-                    <td class="p-3 text-center">
+                    <td class="p-4 text-center">
                         <button onclick="eliminarParametro('${p.id}')" class="text-red-400 hover:text-red-600 transition" title="Eliminar"><i class="fa-solid fa-trash-can"></i></button>
                     </td>
                 </tr>
@@ -214,9 +211,9 @@
         }
 
         function filtrarTabla() {
-            const filtro = document.getElementById('filtro-grupo').value;
-            if(filtro === 'TODOS') pintarTabla(parametros);
-            else pintarTabla(parametros.filter(p => p.grupo === filtro));
+            const grupo = document.getElementById('param-grupo').value;
+            if(grupo === 'TODOS') pintarTabla(parametros);
+            else pintarTabla(parametros.filter(p => p.grupo === grupo));
         }
 
         async function guardarParametro(e) {
@@ -242,9 +239,6 @@
                 document.getElementById('param-valor').value = '';
                 await cargarParametros();
                 
-                document.getElementById('filtro-grupo').value = grupo;
-                filtrarTabla();
-
             } catch(e) {
                 alert("Error: Es posible que este valor ya exista en ese grupo.");
             } finally {
