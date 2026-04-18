@@ -18,7 +18,7 @@
 </head>
 <body class="bg-[#f0f2f5] font-sans flex h-screen overflow-hidden text-gray-800">
 
-   <aside class="w-64 bg-[#143B62] text-white flex flex-col hidden md:flex shrink-0 shadow-xl z-20">
+    <aside class="w-64 bg-[#143B62] text-white flex flex-col hidden md:flex shrink-0 shadow-xl z-20">
         <div class="p-6 border-b border-white/10 flex items-center gap-3">
             <i class="fa-solid fa-layer-group text-[#E67E22] text-3xl"></i>
             <h2 class="font-bold text-xl tracking-wide">P&P Admin</h2>
@@ -35,7 +35,7 @@
                 </button>
                 <div id="submenu-inv" class="pl-10 space-y-1 mt-1">
                     <a href="admin_productos.html" class="block py-2 text-white font-bold text-xs border-l-2 border-[#E67E22] pl-3">PRODUCTOS</a>
-                    <a href="admin_parametros.html" class="block py-2 text-gray-400 hover:text-white font-semibold text-xs transition">PARÁMETROS</a>
+                    <a href="admin_parametros_productos.html" class="block py-2 text-gray-400 hover:text-white font-semibold text-xs transition">PARÁMETROS</a>
                 </div>
             </div>
 
@@ -261,7 +261,6 @@
 
         async function cargarDatosMaestrosEInventario() {
             try {
-                // Descargamos Inventario y Parámetros al mismo tiempo
                 const [resInv, resParam] = await Promise.all([
                     fetch(`${SUPABASE_URL}/rest/v1/vista_catalogo_web?select=*&limit=1000`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }),
                     fetch(`${SUPABASE_URL}/rest/v1/parametros_inventario?select=*&estatus=eq.ACTIVO`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } })
@@ -272,12 +271,11 @@
                 
                 if(!Array.isArray(inventario)) throw new Error("Error de conexión a la vista");
 
-                // Poblamos todos los selects dinámicos con la data maestra
                 llenarSelect('prod-categoria', 'CATEGORIA', false);
                 llenarSelect('prod-marca', 'MARCA', false);
                 llenarSelect('prod-estatus', 'ESTATUS_PRODUCTO', false); 
-                llenarSelect('prod-condicion', 'ESTATUS_PRODUCTO', false); // Por ahora usamos los estatus ("Nuevo", "Usado") para la condición
-                llenarSelect('prod-cat-venta', 'CATEGORIA_VENTA', true); // true = Permite valor vacío (N/A)
+                llenarSelect('prod-condicion', 'ESTATUS_PRODUCTO', false); 
+                llenarSelect('prod-cat-venta', 'CATEGORIA_VENTA', true); 
                 llenarSelect('prod-unidad', 'UNIDAD_MEDIDA', false);
                 llenarSelect('prod-iva', 'TIPO_IMPUESTO', false);
                 llenarSelect('prod-talla', 'TALLA', true);
@@ -310,10 +308,11 @@
             
             tbody.innerHTML = arr.map(p => {
                 const prodStr = encodeURIComponent(JSON.stringify(p));
+                // AQUÍ ESTÁ EL ESCUDO ONERROR PARA LAS IMÁGENES ROTAS O VACÍAS
                 return `
                 <tr class="hover:bg-gray-50 transition border-b border-gray-100">
                     <td class="p-2 text-center w-16">
-                        <img src="${p.imagen_principal || 'https://via.placeholder.com/150?text=P%26P'}" class="w-10 h-10 object-contain mx-auto border rounded bg-white shadow-sm">
+                        <img src="${p.imagen_principal || 'https://via.placeholder.com/150?text=P%26P'}" onerror="this.onerror=null; this.src='https://via.placeholder.com/150?text=P%26P';" class="w-10 h-10 object-contain mx-auto border rounded bg-white shadow-sm">
                     </td>
                     <td class="p-3">
                         <p class="font-bold text-[#143B62] line-clamp-1 text-xs">${p.nombre}</p>
@@ -348,12 +347,10 @@
             form.reset();
 
             if (prodStr) {
-                // MODO EDICIÓN
                 const p = JSON.parse(decodeURIComponent(prodStr));
                 document.getElementById('modal-titulo').innerHTML = `<i class="fa-solid fa-pen-to-square mr-2"></i> Editar Producto`;
                 document.getElementById('modo-edicion').value = "true";
                 
-                // Setear campos de texto libre
                 const skuInput = document.getElementById('prod-sku');
                 skuInput.value = p.id_producto_sku;
                 skuInput.readOnly = true;
@@ -365,7 +362,6 @@
                 document.getElementById('prod-stock').value = p.stock_actual || 0;
                 document.getElementById('prod-precio').value = p.precio_detal_usd || '';
                 
-                // Escalas de precios
                 document.getElementById('prod-req1').value = p.requerido_precio_1 || '';
                 document.getElementById('prod-tier1').value = p.precio_tier1_usd || '';
                 document.getElementById('prod-req2').value = p.requerido_precio_2 || '';
@@ -373,7 +369,6 @@
                 document.getElementById('prod-req3').value = p.requerido_precio_3 || '';
                 document.getElementById('prod-tier3').value = p.precio_tier3_usd || '';
 
-                // Setear selects maestros
                 if(p.categoria_del_producto) document.getElementById('prod-categoria').value = p.categoria_del_producto;
                 if(p.marca) document.getElementById('prod-marca').value = p.marca;
                 if(p.estatus_producto) document.getElementById('prod-estatus').value = p.estatus_producto;
@@ -385,7 +380,6 @@
                 if(p.color) document.getElementById('prod-color').value = p.color;
 
             } else {
-                // MODO CREACIÓN
                 document.getElementById('modal-titulo').innerHTML = `<i class="fa-solid fa-box-open mr-2"></i> Nuevo Producto`;
                 document.getElementById('modo-edicion').value = "false";
                 
