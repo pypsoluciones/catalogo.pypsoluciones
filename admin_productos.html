@@ -25,6 +25,10 @@
         
         .btn-vista.active { background-color: #e2e8f0; color: #143B62; border-color: #cbd5e1; }
         .text-truncate-25 { max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        
+        /* Animación suave para el panel de filtros */
+        .filter-panel { transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out; overflow: hidden; max-height: 0; opacity: 0; }
+        .filter-panel.open { max-height: 200px; opacity: 1; overflow: visible; }
     </style>
     <script>if (localStorage.getItem('pyp_sesion_activa') !== 'true') window.location.href = 'login.html';</script>
 </head>
@@ -72,12 +76,19 @@
             </div>
         </header>
 
-        <div class="flex-1 overflow-auto p-4 md:p-6 custom-scroll">
-            <div class="flex flex-col md:flex-row gap-3 mb-6 items-center">
-                <div class="relative flex-1 w-full">
-                    <i class="fa-solid fa-search absolute left-3 top-2.5 text-gray-400 text-sm"></i>
-                    <input type="text" id="buscador-inv" oninput="filtrarInventario()" placeholder="Buscar por SKU o Nombre..." class="uppercase-input w-full border border-gray-300 rounded-md pl-9 pr-4 py-2 text-[13px] font-medium focus:outline-none focus:border-[#143B62] focus:ring-1 focus:ring-[#143B62] bg-white shadow-sm transition">
+        <div class="flex-1 overflow-auto p-4 md:p-6 custom-scroll flex flex-col">
+            
+            <div class="flex flex-col md:flex-row gap-3 mb-3 items-center shrink-0">
+                <div class="flex-1 flex gap-2 w-full">
+                    <div class="relative flex-1">
+                        <i class="fa-solid fa-search absolute left-3 top-2.5 text-gray-400 text-sm"></i>
+                        <input type="text" id="buscador-inv" oninput="filtrarInventario()" placeholder="Buscar por SKU, Nombre o Barras..." class="uppercase-input w-full border border-gray-300 rounded-md pl-9 pr-4 py-2 text-[13px] font-medium focus:outline-none focus:border-[#143B62] focus:ring-1 focus:ring-[#143B62] bg-white shadow-sm transition">
+                    </div>
+                    <button onclick="toggleFiltrosPanel()" class="bg-white border border-gray-300 text-gray-600 px-4 py-2 rounded-md hover:bg-gray-50 hover:text-[#143B62] transition shadow-sm text-[13px] font-medium flex items-center gap-2 btn-press" title="Filtros Avanzados">
+                        <i class="fa-solid fa-filter"></i> <span class="hidden sm:inline">Filtros</span>
+                    </button>
                 </div>
+                
                 <div class="flex gap-2 w-full md:w-auto justify-end">
                     <div class="flex bg-white rounded-md border border-gray-300 shadow-sm p-0.5">
                         <button id="btn-vista-tabla" onclick="cambiarVista('tabla')" class="btn-vista active px-3 py-1.5 rounded text-gray-500 hover:text-[#143B62] transition text-sm" title="Vista Excel"><i class="fa-solid fa-list"></i></button>
@@ -89,7 +100,41 @@
                 </div>
             </div>
 
-            <div id="contenedor-inventario" class="w-full">
+            <div id="panel-filtros" class="filter-panel shrink-0 bg-white border border-gray-200 rounded-md shadow-sm px-4 pt-4 pb-2 mb-4">
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-3">
+                    <div>
+                        <label class="param-label block mb-1">Categoría</label>
+                        <select id="filtro-categoria" onchange="filtrarInventario()" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[11px] font-semibold text-gray-700 bg-gray-50 outline-none focus:border-[#143B62]"><option value="TODAS">TODAS</option></select>
+                    </div>
+                    <div>
+                        <label class="param-label block mb-1">Marca</label>
+                        <select id="filtro-marca" onchange="filtrarInventario()" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[11px] font-semibold text-gray-700 bg-gray-50 outline-none focus:border-[#143B62]"><option value="TODAS">TODAS</option></select>
+                    </div>
+                    <div>
+                        <label class="param-label block mb-1">Estado</label>
+                        <select id="filtro-estado" onchange="filtrarInventario()" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[11px] font-semibold text-gray-700 bg-gray-50 outline-none focus:border-[#143B62]"><option value="TODAS">TODOS</option></select>
+                    </div>
+                    <div>
+                        <label class="param-label block mb-1">Condición</label>
+                        <select id="filtro-condicion" onchange="filtrarInventario()" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[11px] font-semibold text-gray-700 bg-gray-50 outline-none focus:border-[#143B62]"><option value="TODAS">TODAS</option></select>
+                    </div>
+                    <div>
+                        <label class="param-label block mb-1">Nivel de Stock</label>
+                        <select id="filtro-stock" onchange="filtrarInventario()" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[11px] font-semibold text-gray-700 bg-gray-50 outline-none focus:border-[#143B62]">
+                            <option value="TODOS">MOSTRAR TODOS</option>
+                            <option value="CON_STOCK">EN EXISTENCIA (> 0)</option>
+                            <option value="SIN_STOCK">AGOTADOS (0 o menos)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex justify-end border-t border-gray-100 pt-2">
+                    <button onclick="limpiarFiltros()" class="text-[10px] font-bold text-red-500 hover:text-red-700 uppercase tracking-wider transition px-2 py-1 rounded hover:bg-red-50">
+                        <i class="fa-solid fa-eraser mr-1"></i> Limpiar Filtros
+                    </button>
+                </div>
+            </div>
+
+            <div id="contenedor-inventario" class="w-full flex-1">
                 <div class="p-10 text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin text-2xl mb-3 block"></i> Sincronizando datos...</div>
             </div>
         </div>
@@ -267,6 +312,7 @@
                     imagenGlobalDefecto = paramImg.valor;
                 }
 
+                // Llenar Modal
                 llenarSelect('prod-estado', 'ESTADO_PRODUCTO', false); 
                 llenarSelect('prod-condicion', 'CONDICION_PRODUCTO', false);
                 llenarSelect('prod-tipo', 'TIPO_PRODUCTO', false); 
@@ -277,6 +323,12 @@
                 llenarSelect('prod-iva', 'TIPO_IMPUESTO', false);
                 llenarSelect('prod-talla', 'TALLA', true);
                 llenarSelect('prod-color', 'COLOR', true);
+
+                // Llenar Filtros Avanzados
+                llenarSelectFiltros('filtro-categoria', 'CATEGORIA');
+                llenarSelectFiltros('filtro-marca', 'MARCA');
+                llenarSelectFiltros('filtro-estado', 'ESTADO_PRODUCTO');
+                llenarSelectFiltros('filtro-condicion', 'CONDICION_PRODUCTO');
 
                 filtrarInventario();
             } catch(e) { 
@@ -290,20 +342,35 @@
             const s = document.getElementById(id);
             const ops = dataMaestra.filter(p => p.grupo === grupo).sort((a,b) => a.valor.localeCompare(b.valor));
             let h = '';
-            
-            if (permiteVacio) {
-                h += '<option value="">N/A</option>';
-            }
-            if (ops.length === 0 && !permiteVacio) {
-                h += '<option value="">(SIN CONFIG)</option>';
-            }
-            
-            for(let i=0; i<ops.length; i++) {
-                h += `<option value="${ops[i].valor}">${ops[i].valor}</option>`;
-            }
+            if (permiteVacio) h += '<option value="">N/A</option>';
+            if (ops.length === 0 && !permiteVacio) h += '<option value="">(SIN CONFIG)</option>';
+            for(let i=0; i<ops.length; i++) h += `<option value="${ops[i].valor}">${ops[i].valor}</option>`;
             s.innerHTML = h;
         }
 
+        function llenarSelectFiltros(id, grupo) {
+            const s = document.getElementById(id);
+            const ops = dataMaestra.filter(p => p.grupo === grupo).sort((a,b) => a.valor.localeCompare(b.valor));
+            let h = '<option value="TODAS">TODAS</option>';
+            for(let i=0; i<ops.length; i++) h += `<option value="${ops[i].valor}">${ops[i].valor}</option>`;
+            s.innerHTML = h;
+        }
+
+        function toggleFiltrosPanel() {
+            document.getElementById('panel-filtros').classList.toggle('open');
+        }
+
+        function limpiarFiltros() {
+            document.getElementById('buscador-inv').value = '';
+            document.getElementById('filtro-categoria').value = 'TODAS';
+            document.getElementById('filtro-marca').value = 'TODAS';
+            document.getElementById('filtro-estado').value = 'TODAS';
+            document.getElementById('filtro-condicion').value = 'TODAS';
+            document.getElementById('filtro-stock').value = 'TODOS';
+            filtrarInventario();
+        }
+
+        // --- LÓGICA FINANCIERA ---
         function toggleInputsPrecio() {
             const esBs = document.getElementById('prod-fijo-bs').checked;
             const seccionBs = document.getElementById('section-bs');
@@ -325,26 +392,13 @@
             const m2 = parseFloat(document.getElementById('prod-m2').value) || 0;
             const m3 = parseFloat(document.getElementById('prod-m3').value) || 0;
 
-            if (mGen > 0) {
-                document.getElementById('prod-precio-gen').value = (costo * (1 + mGen/100)).toFixed(2);
-            }
-            if (m1 > 0) {
-                document.getElementById('prod-p1').value = `$${(costo * (1 + m1/100)).toFixed(2)}`;
-            } else {
-                document.getElementById('prod-p1').value = '';
-            }
-            if (m2 > 0) {
-                document.getElementById('prod-p2').value = `$${(costo * (1 + m2/100)).toFixed(2)}`;
-            } else {
-                document.getElementById('prod-p2').value = '';
-            }
-            if (m3 > 0) {
-                document.getElementById('prod-p3').value = `$${(costo * (1 + m3/100)).toFixed(2)}`;
-            } else {
-                document.getElementById('prod-p3').value = '';
-            }
+            if (mGen > 0) document.getElementById('prod-precio-gen').value = (costo * (1 + mGen/100)).toFixed(2);
+            if (m1 > 0) document.getElementById('prod-p1').value = `$${(costo * (1 + m1/100)).toFixed(2)}`; else document.getElementById('prod-p1').value = '';
+            if (m2 > 0) document.getElementById('prod-p2').value = `$${(costo * (1 + m2/100)).toFixed(2)}`; else document.getElementById('prod-p2').value = '';
+            if (m3 > 0) document.getElementById('prod-p3').value = `$${(costo * (1 + m3/100)).toFixed(2)}`; else document.getElementById('prod-p3').value = '';
         }
 
+        // --- MANEJO DE VISTAS Y FILTROS ---
         function cambiarVista(v) {
             vistaActual = v;
             localStorage.setItem('pyp_vista_inventario', v);
@@ -353,35 +407,52 @@
         }
 
         function actualizarUIBotonesVista() {
-            const btnTabla = document.getElementById('btn-vista-tabla');
-            const btnGrid = document.getElementById('btn-vista-grid');
-            
-            if(vistaActual === 'tabla') {
-                btnTabla.classList.add('active');
-                btnGrid.classList.remove('active');
-            } else {
-                btnGrid.classList.add('active');
-                btnTabla.classList.remove('active');
-            }
+            document.getElementById('btn-vista-tabla').classList.toggle('active', vistaActual === 'tabla');
+            document.getElementById('btn-vista-grid').classList.toggle('active', vistaActual === 'grid');
         }
 
         function filtrarInventario() {
             const q = document.getElementById('buscador-inv').value.toLowerCase();
-            const data = dbInventario.filter(p => {
-                const nom = p.nombre ? p.nombre.toLowerCase() : '';
-                const sku = p.id_producto_sku ? p.id_producto_sku.toLowerCase() : '';
-                return nom.includes(q) || sku.includes(q);
-            });
-            
-            const fusionada = data.map(p => {
+            const fCat = document.getElementById('filtro-categoria').value;
+            const fMar = document.getElementById('filtro-marca').value;
+            const fEst = document.getElementById('filtro-estado').value;
+            const fCon = document.getElementById('filtro-condicion').value;
+            const fStock = document.getElementById('filtro-stock').value;
+
+            // Fusionar arrays (Join manual)
+            const fusionada = dbInventario.map(p => {
                 const pre = dbPrecios.find(pr => pr.id_producto_sku === p.id_producto_sku) || {};
                 return { ...p, ...pre };
             });
 
+            // Aplicar Filtros Avanzados (Blindados contra Nulls)
+            const dataFiltrada = fusionada.filter(p => {
+                const nom = p.nombre ? String(p.nombre).toLowerCase() : '';
+                const sku = p.id_producto_sku ? String(p.id_producto_sku).toLowerCase() : '';
+                const bar = p.codigo_barras ? String(p.codigo_barras).toLowerCase() : '';
+                const cat = p.categoria_del_producto || '';
+                const mar = p.marca || '';
+                const est = p.estado_producto || '';
+                const con = p.condicion_producto || '';
+                const stx = parseInt(p.stock_actual) || 0;
+
+                const matchText = nom.includes(q) || sku.includes(q) || bar.includes(q);
+                const matchCat = fCat === 'TODAS' || cat === fCat;
+                const matchMar = fMar === 'TODAS' || mar === fMar;
+                const matchEst = fEst === 'TODAS' || est === fEst;
+                const matchCon = fCon === 'TODAS' || con === fCon;
+                
+                let matchStock = true;
+                if(fStock === 'CON_STOCK') matchStock = stx > 0;
+                if(fStock === 'SIN_STOCK') matchStock = stx <= 0;
+
+                return matchText && matchCat && matchMar && matchEst && matchCon && matchStock;
+            });
+
             if(vistaActual === 'tabla') {
-                pintarTabla(fusionada);
+                pintarTabla(dataFiltrada);
             } else {
-                pintarGrid(fusionada);
+                pintarGrid(dataFiltrada);
             }
         }
 
@@ -389,7 +460,7 @@
         function pintarTabla(arr) {
             const c = document.getElementById('contenedor-inventario');
             if(arr.length === 0) { 
-                c.innerHTML = `<div class="bg-white rounded border p-10 text-center text-gray-500 font-medium">No se encontraron productos.</div>`; 
+                c.innerHTML = `<div class="bg-white rounded border p-10 text-center text-gray-500 font-medium">No se encontraron productos con estos filtros.</div>`; 
                 return; 
             }
             
@@ -429,7 +500,6 @@
                 const imgAUsar = p.imagen_principal || imagenGlobalDefecto;
                 const precioMostrar = p.es_precio_fijo_bs ? `Bs ${p.precio_fijo_bs}` : `$${(Number(p.precio_general_usd)||0).toFixed(2)}`;
 
-                // Formateo de las escalas requeridas
                 const p1Texto = p.precio_1_usd > 0 ? `≥${p.requerido_precio_1 || 0}: $${p.precio_1_usd}` : '-';
                 const p2Texto = p.precio_2_usd > 0 ? `≥${p.requerido_precio_2 || 0}: $${p.precio_2_usd}` : '-';
                 const p3Texto = p.precio_3_usd > 0 ? `≥${p.requerido_precio_3 || 0}: $${p.precio_3_usd}` : '-';
@@ -468,7 +538,7 @@
         function pintarGrid(arr) {
             const c = document.getElementById('contenedor-inventario');
             if(arr.length === 0) { 
-                c.innerHTML = `<div class="bg-white rounded border p-10 text-center text-gray-500 font-medium">No se encontraron productos.</div>`; 
+                c.innerHTML = `<div class="bg-white rounded border p-10 text-center text-gray-500 font-medium">No se encontraron productos con estos filtros.</div>`; 
                 return; 
             }
             
@@ -528,7 +598,7 @@
                     <div id="dt-tbl-${p.id_producto_sku}" class="hidden flex-col bg-slate-50 border-t border-gray-200 mt-2">
                         <div class="p-3 grid grid-cols-1 gap-2">
                             <div class="flex justify-between border-b pb-1"><span class="param-label">Costo</span><span class="param-value text-emerald-600 font-bold">$${p.costo_actual||'0.00'}</span></div>
-                            <div class="flex justify-between border-b pb-1"><span class="param-label">Escalas</span><span class="param-value text-[10px] text-blue-600 font-bold">${p1Texto} | ${p2Texto} | ${p3Texto}</span></div>
+                            <div class="flex flex-col border-b pb-1"><span class="param-label mb-0.5">Escalas (Unds ➔ Precio USD)</span><span class="param-value text-[10px] text-blue-600 font-bold">${p1Texto} | ${p2Texto} | ${p3Texto}</span></div>
                             <div class="flex justify-between border-b pb-1"><span class="param-label">Barras</span><span class="param-value font-mono text-[11px]">${p.codigo_barras||'-'}</span></div>
                         </div>
                         <div class="p-2 bg-white border-t flex justify-end">
