@@ -27,10 +27,19 @@
             <a href="admin_dashboard.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-chart-pie w-5"></i> Dashboard</a>
             <a href="admin_ventas.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-cash-register w-5"></i> Ventas (POS)</a>
             <a href="admin_compras.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-truck-ramp-box w-5"></i> Compras</a>
-            <a href="admin_productos.html" class="flex items-center gap-3 bg-[#E67E22] text-white px-4 py-2.5 rounded-lg font-bold shadow-md"><i class="fa-solid fa-boxes-stacked w-5"></i> Inventario</a>
+            
+            <div class="space-y-1">
+                <button onclick="document.getElementById('submenu-inv').classList.toggle('hidden')" class="w-full flex items-center justify-between bg-[#E67E22] text-white px-4 py-2.5 rounded-lg font-bold shadow-md btn-press">
+                    <div class="flex items-center gap-3"><i class="fa-solid fa-boxes-stacked w-5"></i> Inventario</div>
+                    <i class="fa-solid fa-chevron-down text-xs"></i>
+                </button>
+                <div id="submenu-inv" class="pl-10 space-y-1 mt-1">
+                    <a href="admin_productos.html" class="block py-2 text-white font-bold text-xs border-l-2 border-[#E67E22] pl-3">PRODUCTOS</a>
+                    <a href="admin_parametros.html" class="block py-2 text-gray-400 hover:text-white font-semibold text-xs transition">PARÁMETROS</a>
+                </div>
+            </div>
+
             <a href="admin_contactos.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-address-book w-5"></i> Directorio</a>
-            <div class="border-t border-white/10 my-2 pt-2"></div>
-            <a href="admin_parametros.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-cogs w-5"></i> Parámetros</a>
         </nav>
         
         <div class="p-4 border-t border-white/10 shrink-0 bg-[#0f2d4a]">
@@ -48,7 +57,7 @@
             
             <div class="flex items-center gap-3">
                 <div class="bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100 flex items-center gap-2 text-xs font-bold text-[#143B62]">
-                    <i class="fa-solid fa-user-tie"></i> <span id="nombre-usuario">Usuario</span>
+                    <i class="fa-solid fa-user-tie"></i> <span id="nombre-usuario">Admin</span>
                 </div>
                 <button onclick="cerrarSesion()" class="md:hidden text-red-500 hover:text-red-700 text-xl transition btn-press"><i class="fa-solid fa-power-off"></i></button>
             </div>
@@ -73,7 +82,7 @@
                             <tr>
                                 <th class="p-3 text-center">IMAGEN</th>
                                 <th class="p-3">PRODUCTO / SKU</th>
-                                <th class="p-3">CATEGORÍA</th>
+                                <th class="p-3">CATEGORÍA DEL PRODUCTO</th>
                                 <th class="p-3 text-right">PRECIO DETAL</th>
                                 <th class="p-3 text-center">STOCK</th>
                                 <th class="p-3 text-center">ACCIONES</th>
@@ -112,8 +121,8 @@
                                     <input type="text" id="prod-sku" required class="uppercase-input w-full border border-gray-300 rounded px-3 py-2 text-sm font-mono font-bold focus:border-[#143B62] outline-none" oninput="this.value = this.value.toUpperCase()">
                                 </div>
                                 <div>
-                                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Estatus del Producto *</label>
-                                    <select id="prod-estado" required class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:border-[#143B62] outline-none font-bold text-[#143B62]"></select>
+                                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Estatus Operativo *</label>
+                                    <select id="prod-estatus" required class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:border-[#143B62] outline-none font-bold text-[#143B62]"></select>
                                 </div>
                             </div>
                             
@@ -128,7 +137,7 @@
                             
                             <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-3">
                                 <div>
-                                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Categoría Principal *</label>
+                                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Categoría del Producto *</label>
                                     <select id="prod-categoria" required class="w-full border border-gray-300 rounded px-2 py-2 text-xs focus:border-[#143B62] outline-none font-semibold"></select>
                                 </div>
                                 <div>
@@ -136,19 +145,19 @@
                                     <select id="prod-marca" required class="w-full border border-gray-300 rounded px-2 py-2 text-xs focus:border-[#143B62] outline-none font-semibold"></select>
                                 </div>
                                 <div>
-                                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Tipo Producto *</label>
-                                    <select id="prod-tipo" required class="w-full border border-gray-300 rounded px-2 py-2 text-xs focus:border-[#143B62] outline-none font-semibold"></select>
+                                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Condición Física *</label>
+                                    <select id="prod-condicion" required class="w-full border border-gray-300 rounded px-2 py-2 text-xs focus:border-[#143B62] outline-none font-semibold"></select>
                                 </div>
                                 <div>
                                     <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Categoría de Venta</label>
                                     <select id="prod-cat-venta" class="w-full border border-gray-300 rounded px-2 py-2 text-xs focus:border-[#143B62] outline-none font-semibold"><option value="">NINGUNA</option></select>
                                 </div>
                                 <div>
-                                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Color (Opcional)</label>
+                                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Color</label>
                                     <select id="prod-color" class="w-full border border-gray-300 rounded px-2 py-2 text-xs focus:border-[#143B62] outline-none font-semibold"><option value="">N/A</option></select>
                                 </div>
                                 <div>
-                                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Talla (Opcional)</label>
+                                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Talla</label>
                                     <select id="prod-talla" class="w-full border border-gray-300 rounded px-2 py-2 text-xs focus:border-[#143B62] outline-none font-semibold"><option value="">N/A</option></select>
                                 </div>
                             </div>
@@ -161,7 +170,7 @@
                                 <input type="url" id="prod-imagen" placeholder="https://link-de-tu-imagen.com/foto.jpg" class="w-full border border-gray-300 rounded px-3 py-2 text-xs focus:border-[#143B62] outline-none text-blue-600">
                             </div>
                             <div>
-                                <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Descripción para la Web (Puede usar minúsculas)</label>
+                                <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Descripción para la Web (Mantiene minúsculas)</label>
                                 <textarea id="prod-descripcion" rows="3" class="w-full border border-gray-300 rounded px-3 py-2 text-xs focus:border-[#143B62] outline-none"></textarea>
                             </div>
                         </div>
@@ -202,16 +211,16 @@
                             </div>
 
                             <div class="grid grid-cols-2 gap-2 mb-2">
-                                <input type="number" id="prod-req1" placeholder="Ej: 6" class="border rounded px-2 py-1.5 text-xs text-center font-bold">
-                                <input type="number" id="prod-tier1" step="0.01" placeholder="$ 0.00" class="border rounded px-2 py-1.5 text-xs text-center font-bold text-[#E67E22]">
+                                <input type="number" id="prod-req1" placeholder="Ej: 6" class="border border-gray-300 rounded px-2 py-1.5 text-xs text-center font-bold">
+                                <input type="number" id="prod-tier1" step="0.01" placeholder="$ 0.00" class="border border-gray-300 rounded px-2 py-1.5 text-xs text-center font-bold text-[#E67E22]">
                             </div>
                             <div class="grid grid-cols-2 gap-2 mb-2">
-                                <input type="number" id="prod-req2" placeholder="Ej: 12" class="border rounded px-2 py-1.5 text-xs text-center font-bold">
-                                <input type="number" id="prod-tier2" step="0.01" placeholder="$ 0.00" class="border rounded px-2 py-1.5 text-xs text-center font-bold text-[#E67E22]">
+                                <input type="number" id="prod-req2" placeholder="Ej: 12" class="border border-gray-300 rounded px-2 py-1.5 text-xs text-center font-bold">
+                                <input type="number" id="prod-tier2" step="0.01" placeholder="$ 0.00" class="border border-gray-300 rounded px-2 py-1.5 text-xs text-center font-bold text-[#E67E22]">
                             </div>
                             <div class="grid grid-cols-2 gap-2">
-                                <input type="number" id="prod-req3" placeholder="Ej: 24" class="border rounded px-2 py-1.5 text-xs text-center font-bold">
-                                <input type="number" id="prod-tier3" step="0.01" placeholder="$ 0.00" class="border rounded px-2 py-1.5 text-xs text-center font-bold text-[#E67E22]">
+                                <input type="number" id="prod-req3" placeholder="Ej: 24" class="border border-gray-300 rounded px-2 py-1.5 text-xs text-center font-bold">
+                                <input type="number" id="prod-tier3" step="0.01" placeholder="$ 0.00" class="border border-gray-300 rounded px-2 py-1.5 text-xs text-center font-bold text-[#E67E22]">
                             </div>
                         </div>
                     </div>
@@ -219,7 +228,7 @@
             </form>
 
             <div class="bg-white border-t p-4 flex gap-3 shrink-0">
-                <button type="button" onclick="cerrarModalProducto()" class="flex-1 py-3 bg-gray-200 text-gray-700 font-bold rounded-lg btn-press uppercase tracking-wider text-sm">Cancelar</button>
+                <button type="button" onclick="cerrarModalProducto()" class="flex-1 py-3 bg-gray-200 text-gray-700 font-bold rounded-lg btn-press uppercase tracking-wider text-sm shadow-sm transition hover:bg-gray-300">Cancelar</button>
                 <button type="submit" form="form-producto" id="btn-guardar-prod" class="flex-1 py-3 bg-[#143B62] hover:bg-[#0f2d4a] text-white font-bold rounded-lg shadow-md btn-press flex justify-center items-center gap-2 uppercase tracking-wider text-sm transition">
                     <i class="fa-solid fa-save"></i> Guardar Producto
                 </button>
@@ -233,7 +242,7 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImljdmZtZHZ2b2NoemFrdHVncXZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyNDEzMzEsImV4cCI6MjA5MTgxNzMzMX0.gO3D39piT6KGbMMOzrPGWXUp5-g_nOBAgJ-nwPv8IcQ';
         
         let inventario = [];
-        let parametrosData = []; // Aquí guardaremos la Data Maestra
+        let parametrosData = [];
 
         window.onload = async () => {
             const nombre = localStorage.getItem('pyp_usuario_nombre');
@@ -250,10 +259,9 @@
             }
         }
 
-        // --- CARGA DOBLE (INVENTARIO Y PARÁMETROS) ---
         async function cargarDatosMaestrosEInventario() {
             try {
-                // Usamos Promise.all para descargar ambas cosas al mismo tiempo (más rápido)
+                // Descargamos Inventario y Parámetros al mismo tiempo
                 const [resInv, resParam] = await Promise.all([
                     fetch(`${SUPABASE_URL}/rest/v1/vista_catalogo_web?select=*&limit=1000`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }),
                     fetch(`${SUPABASE_URL}/rest/v1/parametros_inventario?select=*&estatus=eq.ACTIVO`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } })
@@ -262,27 +270,26 @@
                 inventario = await resInv.json();
                 parametrosData = await resParam.json();
                 
-                if(!Array.isArray(inventario)) throw new Error("Error en inventario");
+                if(!Array.isArray(inventario)) throw new Error("Error de conexión a la vista");
 
-                // Llenar los desplegables con la Data Maestra
+                // Poblamos todos los selects dinámicos con la data maestra
                 llenarSelect('prod-categoria', 'CATEGORIA', false);
                 llenarSelect('prod-marca', 'MARCA', false);
-                llenarSelect('prod-tipo', 'TIPO_PRODUCTO', false);
+                llenarSelect('prod-estatus', 'ESTATUS_PRODUCTO', false); 
+                llenarSelect('prod-condicion', 'ESTATUS_PRODUCTO', false); // Por ahora usamos los estatus ("Nuevo", "Usado") para la condición
                 llenarSelect('prod-cat-venta', 'CATEGORIA_VENTA', true); // true = Permite valor vacío (N/A)
                 llenarSelect('prod-unidad', 'UNIDAD_MEDIDA', false);
                 llenarSelect('prod-iva', 'TIPO_IMPUESTO', false);
                 llenarSelect('prod-talla', 'TALLA', true);
                 llenarSelect('prod-color', 'COLOR', true);
-                llenarSelect('prod-estado', 'ESTATUS_PRODUCTO', false);
 
                 pintarTabla(inventario);
             } catch(e) {
                 console.error(e);
-                document.getElementById('tabla-productos').innerHTML = `<tr><td colspan="6" class="p-5 text-center text-red-500 font-bold uppercase">Error cargando base de datos.</td></tr>`;
+                document.getElementById('tabla-productos').innerHTML = `<tr><td colspan="6" class="p-5 text-center text-red-500 font-bold uppercase">Error cargando inventario. Revisa la base de datos.</td></tr>`;
             }
         }
 
-        // --- FUNCIÓN PARA LLENAR LOS SELECTS ---
         function llenarSelect(idSelect, grupo, permiteVacio) {
             const select = document.getElementById(idSelect);
             const opciones = parametrosData.filter(p => p.grupo === grupo).sort((a,b) => a.valor.localeCompare(b.valor));
@@ -306,21 +313,21 @@
                 return `
                 <tr class="hover:bg-gray-50 transition border-b border-gray-100">
                     <td class="p-2 text-center w-16">
-                        <img src="${p.imagen_principal || 'https://via.placeholder.com/150?text=P%26P'}" class="w-10 h-10 object-contain mx-auto border rounded bg-white">
+                        <img src="${p.imagen_principal || 'https://via.placeholder.com/150?text=P%26P'}" class="w-10 h-10 object-contain mx-auto border rounded bg-white shadow-sm">
                     </td>
                     <td class="p-3">
                         <p class="font-bold text-[#143B62] line-clamp-1 text-xs">${p.nombre}</p>
                         <p class="text-[10px] text-gray-500 font-mono font-bold mt-0.5">${p.id_producto_sku}</p>
                     </td>
-                    <td class="p-3 text-[10px] text-gray-600 font-bold tracking-wide">${p.categoria_producto || '-'}</td>
+                    <td class="p-3 text-[10px] text-gray-600 font-bold tracking-wide">${p.categoria_del_producto || '-'}</td>
                     <td class="p-3 text-right font-black text-gray-800">$${(Number(p.precio_detal_usd)||0).toFixed(2)}</td>
                     <td class="p-3 text-center">
-                        <span class="${p.stock_actual > 5 ? 'text-green-600 bg-green-100' : 'text-red-600 bg-red-100'} font-bold px-2 py-1 rounded text-xs">
+                        <span class="${p.stock_actual > 5 ? 'text-green-600 bg-green-100' : 'text-red-600 bg-red-100'} font-bold px-2 py-1 rounded text-xs shadow-sm border border-gray-100">
                             ${p.stock_actual}
                         </span>
                     </td>
                     <td class="p-3 text-center">
-                        <button onclick="abrirModalProducto('${prodStr}')" class="bg-white border border-gray-200 hover:border-[#143B62] text-[#143B62] px-3 py-2 rounded shadow-sm transition" title="Editar"><i class="fa-solid fa-edit"></i></button>
+                        <button onclick="abrirModalProducto('${prodStr}')" class="bg-white border border-gray-200 hover:border-[#143B62] hover:bg-gray-50 text-[#143B62] px-3 py-2 rounded shadow-sm transition" title="Editar Producto"><i class="fa-solid fa-edit"></i></button>
                     </td>
                 </tr>
                 `;
@@ -336,7 +343,6 @@
             pintarTabla(filtrados);
         }
 
-        // --- ABRIR MODAL CON LA DATA LLENA ---
         function abrirModalProducto(prodStr = null) {
             const form = document.getElementById('form-producto');
             form.reset();
@@ -347,35 +353,36 @@
                 document.getElementById('modal-titulo').innerHTML = `<i class="fa-solid fa-pen-to-square mr-2"></i> Editar Producto`;
                 document.getElementById('modo-edicion').value = "true";
                 
+                // Setear campos de texto libre
                 const skuInput = document.getElementById('prod-sku');
                 skuInput.value = p.id_producto_sku;
                 skuInput.readOnly = true;
                 skuInput.classList.add('bg-gray-200', 'text-gray-500', 'cursor-not-allowed');
 
                 document.getElementById('prod-nombre').value = p.nombre || '';
-                
-                // Setear los selects con el valor de la BD (si existe en los parámetros)
-                if(p.categoria_producto) document.getElementById('prod-categoria').value = p.categoria_producto;
-                if(p.marca) document.getElementById('prod-marca').value = p.marca;
-                if(p.tipo_producto) document.getElementById('prod-tipo').value = p.tipo_producto;
-                if(p.categoria_venta) document.getElementById('prod-cat-venta').value = p.categoria_venta;
-                if(p.unidad_medida) document.getElementById('prod-unidad').value = p.unidad_medida;
-                if(p.tipo_impuesto) document.getElementById('prod-iva').value = p.tipo_impuesto;
-                if(p.talla) document.getElementById('prod-talla').value = p.talla;
-                if(p.color) document.getElementById('prod-color').value = p.color;
-                if(p.estado_producto) document.getElementById('prod-estado').value = p.estado_producto;
-
                 document.getElementById('prod-imagen').value = p.imagen_principal || '';
                 document.getElementById('prod-descripcion').value = p.descripcion || '';
                 document.getElementById('prod-stock').value = p.stock_actual || 0;
                 document.getElementById('prod-precio').value = p.precio_detal_usd || '';
-
+                
+                // Escalas de precios
                 document.getElementById('prod-req1').value = p.requerido_precio_1 || '';
                 document.getElementById('prod-tier1').value = p.precio_tier1_usd || '';
                 document.getElementById('prod-req2').value = p.requerido_precio_2 || '';
                 document.getElementById('prod-tier2').value = p.precio_tier2_usd || '';
                 document.getElementById('prod-req3').value = p.requerido_precio_3 || '';
                 document.getElementById('prod-tier3').value = p.precio_tier3_usd || '';
+
+                // Setear selects maestros
+                if(p.categoria_del_producto) document.getElementById('prod-categoria').value = p.categoria_del_producto;
+                if(p.marca) document.getElementById('prod-marca').value = p.marca;
+                if(p.estatus_producto) document.getElementById('prod-estatus').value = p.estatus_producto;
+                if(p.condicion_producto) document.getElementById('prod-condicion').value = p.condicion_producto;
+                if(p.categoria_venta) document.getElementById('prod-cat-venta').value = p.categoria_venta;
+                if(p.unidad_medida) document.getElementById('prod-unidad').value = p.unidad_medida;
+                if(p.tipo_impuesto) document.getElementById('prod-iva').value = p.tipo_impuesto;
+                if(p.talla) document.getElementById('prod-talla').value = p.talla;
+                if(p.color) document.getElementById('prod-color').value = p.color;
 
             } else {
                 // MODO CREACIÓN
@@ -402,24 +409,23 @@
             btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> PROCESANDO...`;
             btn.disabled = true;
 
-            // Recolectar datos y asegurar mayúsculas
             const sku = document.getElementById('prod-sku').value.trim().toUpperCase();
             
             const data = {
                 id_producto_sku: sku,
                 nombre: document.getElementById('prod-nombre').value.trim().toUpperCase(),
-                categoria_producto: document.getElementById('prod-categoria').value || null,
+                categoria_del_producto: document.getElementById('prod-categoria').value || null,
                 marca: document.getElementById('prod-marca').value || null,
-                tipo_producto: document.getElementById('prod-tipo').value || null,
+                estatus_producto: document.getElementById('prod-estatus').value || null,
+                condicion_producto: document.getElementById('prod-condicion').value || null,
                 categoria_venta: document.getElementById('prod-cat-venta').value || null,
                 unidad_medida: document.getElementById('prod-unidad').value || null,
                 tipo_impuesto: document.getElementById('prod-iva').value || null,
                 talla: document.getElementById('prod-talla').value || null,
                 color: document.getElementById('prod-color').value || null,
-                estado_producto: document.getElementById('prod-estado').value || null,
                 
                 imagen_principal: document.getElementById('prod-imagen').value.trim() || null,
-                descripcion: document.getElementById('prod-descripcion').value.trim() || null, // Descripción libre
+                descripcion: document.getElementById('prod-descripcion').value.trim() || null,
                 
                 stock_actual: parseInt(document.getElementById('prod-stock').value) || 0,
                 precio_detal_usd: parseFloat(document.getElementById('prod-precio').value) || 0,
@@ -448,7 +454,7 @@
                     });
                 }
 
-                if (!res.ok) throw new Error("Error Supabase");
+                if (!res.ok) throw new Error("Error guardando en Supabase");
 
                 cerrarModalProducto();
                 await cargarDatosMaestrosEInventario(); 
