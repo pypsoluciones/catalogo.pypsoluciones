@@ -6,205 +6,217 @@
     <title>Admin | Inventario</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+        body { font-family: 'Inter', sans-serif; }
+        .custom-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
         .custom-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
-        .btn-press:active { transform: scale(0.95); }
-        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        .btn-press:active { transform: scale(0.97); }
+        .fade-in { animation: fadeIn 0.2s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .uppercase-input { text-transform: uppercase; }
         .toggle-checkbox:checked { right: 0; border-color: #25D366; }
         .toggle-checkbox:checked + .toggle-label { background-color: #25D366; }
+        
+        /* CLASES CORPORATIVAS DE ALTA DENSIDAD */
+        .sidebar-link { font-weight: 500; padding: 8px 14px; font-size: 13px; letter-spacing: 0.01em; }
+        .sidebar-icon { font-size: 14px; width: 22px; text-align: center; }
+        .param-label { font-size: 9px; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+        .param-value { font-size: 12px; color: #1e293b; font-weight: 500; }
     </style>
     <script>if (localStorage.getItem('pyp_sesion_activa') !== 'true') window.location.href = 'login.html';</script>
 </head>
-<body class="bg-[#f0f2f5] font-sans flex h-screen overflow-hidden text-gray-800">
+<body class="bg-[#f4f6f8] flex h-screen overflow-hidden text-gray-800">
 
-    <aside class="w-64 bg-[#143B62] text-white flex flex-col hidden md:flex shrink-0 shadow-xl z-20">
-        <div class="p-6 border-b border-white/10 flex items-center gap-3">
-            <i class="fa-solid fa-layer-group text-[#E67E22] text-3xl"></i>
-            <h2 class="font-bold text-xl tracking-wide">P&P Admin</h2>
+    <aside class="w-56 bg-[#143B62] text-white flex flex-col hidden md:flex shrink-0 shadow-xl z-20 transition-all">
+        <div class="p-5 border-b border-white/10 flex items-center gap-3">
+            <i class="fa-solid fa-layer-group text-[#E67E22] text-2xl"></i>
+            <h2 class="font-semibold text-lg tracking-wide">P&P Admin</h2>
         </div>
-        <nav class="flex-1 p-4 space-y-1 overflow-y-auto custom-scroll text-sm">
-            <a href="admin_dashboard.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-chart-pie w-5"></i> Dashboard</a>
-            <a href="admin_ventas.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-cash-register w-5"></i> Ventas (POS)</a>
-            <a href="admin_compras.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-truck-ramp-box w-5"></i> Compras</a>
+        <nav class="flex-1 p-3 space-y-0.5 overflow-y-auto custom-scroll">
+            <a href="admin_dashboard.html" class="flex items-center text-gray-300 hover:bg-white/10 rounded-md transition sidebar-link">
+                <i class="fa-solid fa-chart-pie sidebar-icon"></i> Dashboard
+            </a>
+            <a href="admin_ventas.html" class="flex items-center text-gray-300 hover:bg-white/10 rounded-md transition sidebar-link">
+                <i class="fa-solid fa-cash-register sidebar-icon"></i> Ventas (POS)
+            </a>
+            <a href="admin_compras.html" class="flex items-center text-gray-300 hover:bg-white/10 rounded-md transition sidebar-link">
+                <i class="fa-solid fa-truck-ramp-box sidebar-icon"></i> Compras
+            </a>
             
-            <div class="space-y-1">
-                <button type="button" onclick="document.getElementById('submenu-inv').classList.toggle('hidden')" class="w-full flex items-center justify-between bg-[#E67E22] text-white px-4 py-2.5 rounded-lg font-bold shadow-md transition btn-press">
-                    <div class="flex items-center gap-3"><i class="fa-solid fa-boxes-stacked w-5"></i> Inventario</div>
-                    <i class="fa-solid fa-chevron-down text-xs"></i>
+            <div class="space-y-0.5 pt-1">
+                <button type="button" onclick="document.getElementById('submenu-inv').classList.toggle('hidden')" class="w-full flex items-center justify-between bg-[#E67E22] text-white rounded-md shadow-sm transition btn-press sidebar-link">
+                    <div class="flex items-center"><i class="fa-solid fa-boxes-stacked sidebar-icon"></i> Inventario</div>
+                    <i class="fa-solid fa-chevron-down text-[10px]"></i>
                 </button>
-                <div id="submenu-inv" class="pl-10 space-y-1 mt-1">
-                    <a href="admin_productos.html" class="block py-2 text-white font-bold text-xs border-l-2 border-[#E67E22] pl-3">PRODUCTOS</a>
-                    <a href="admin_productos_parametros.html" class="block py-2 text-gray-400 hover:text-white font-semibold text-xs transition">PARÁMETROS</a>
+                <div id="submenu-inv" class="pl-9 space-y-0.5 mt-0.5">
+                    <a href="admin_productos.html" class="block py-1.5 text-white font-semibold text-xs border-l-2 border-[#E67E22] pl-3">PRODUCTOS</a>
+                    <a href="admin_productos_parametros.html" class="block py-1.5 text-gray-400 hover:text-white font-medium text-xs pl-3 transition">PARÁMETROS</a>
                 </div>
             </div>
 
-            <a href="admin_contactos.html" class="flex items-center gap-3 text-gray-300 hover:bg-white/10 px-4 py-2.5 rounded-lg font-semibold transition"><i class="fa-solid fa-address-book w-5"></i> Directorio</a>
+            <a href="admin_contactos.html" class="flex items-center text-gray-300 hover:bg-white/10 rounded-md transition sidebar-link mt-1">
+                <i class="fa-solid fa-address-book sidebar-icon"></i> Directorio
+            </a>
         </nav>
         
-        <div class="p-4 border-t border-white/10 shrink-0 bg-[#0f2d4a]">
-            <button onclick="cerrarSesion()" class="w-full flex items-center justify-center gap-2 bg-red-500/20 text-red-300 hover:bg-red-500 hover:text-white py-2.5 rounded-lg font-bold transition text-sm shadow-sm btn-press">
+        <div class="p-3 border-t border-white/10 shrink-0 bg-[#0f2d4a]">
+            <button onclick="cerrarSesion()" class="w-full flex items-center justify-center gap-2 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white py-2 rounded-md font-medium transition text-xs shadow-sm btn-press">
                 <i class="fa-solid fa-power-off"></i> Cerrar Sesión
             </button>
         </div>
     </aside>
 
-    <main class="flex-1 flex flex-col h-screen overflow-hidden bg-gray-50">
-        <header class="bg-white shadow-sm px-6 py-4 flex justify-between items-center z-10 shrink-0">
+    <main class="flex-1 flex flex-col h-screen overflow-hidden bg-[#f4f6f8]">
+        <header class="bg-white shadow-sm px-6 py-3 flex justify-between items-center z-10 shrink-0 border-b border-gray-200">
             <div>
-                <h1 class="text-xl font-bold text-[#143B62] flex items-center gap-2"><i class="fa-solid fa-boxes-stacked"></i> Gestión de Inventario</h1>
+                <h1 class="text-lg font-semibold text-[#143B62] flex items-center gap-2"><i class="fa-solid fa-boxes-stacked text-[#E67E22]"></i> Gestión de Inventario</h1>
             </div>
             <div class="flex items-center gap-3">
-                <div class="bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100 flex items-center gap-2 text-xs font-bold text-[#143B62]">
-                    <i class="fa-solid fa-user-tie"></i> <span id="nombre-usuario">Admin</span>
+                <div class="bg-gray-50 px-3 py-1.5 rounded-md border border-gray-200 flex items-center gap-2 text-[11px] font-semibold text-gray-600 tracking-wide uppercase">
+                    <i class="fa-solid fa-user-tie text-[#143B62]"></i> <span id="nombre-usuario">Admin</span>
                 </div>
-                <button onclick="cerrarSesion()" class="md:hidden text-red-500 hover:text-red-700 text-xl transition btn-press"><i class="fa-solid fa-power-off"></i></button>
+                <button onclick="cerrarSesion()" class="md:hidden text-red-500 hover:text-red-700 text-lg transition btn-press"><i class="fa-solid fa-power-off"></i></button>
             </div>
         </header>
 
         <div class="flex-1 overflow-auto p-4 md:p-6 custom-scroll">
-            <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col h-full">
-                <div class="p-4 border-b border-gray-100 flex gap-3 bg-gray-50">
-                    <div class="relative flex-1">
-                        <i class="fa-solid fa-search absolute left-3 top-2.5 text-gray-400"></i>
-                        <input type="text" id="buscador-inv" oninput="filtrarInventario()" placeholder="BUSCAR POR SKU O NOMBRE..." class="uppercase-input w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2 text-sm focus:outline-none focus:border-[#E67E22] bg-white font-bold">
-                    </div>
-                    <button onclick="abrirModalProducto()" class="bg-[#25D366] hover:bg-[#1ebd5c] text-white px-4 py-2 rounded-lg font-bold text-sm shadow-sm transition flex items-center gap-2 btn-press">
-                        <i class="fa-solid fa-plus"></i> <span class="hidden sm:inline">NUEVO PRODUCTO</span>
-                    </button>
+            
+            <div class="flex flex-col md:flex-row gap-3 mb-6">
+                <div class="relative flex-1">
+                    <i class="fa-solid fa-search absolute left-3 top-2.5 text-gray-400 text-sm"></i>
+                    <input type="text" id="buscador-inv" oninput="filtrarInventario()" placeholder="Buscar por SKU, Nombre o Código de Barras..." class="uppercase-input w-full border border-gray-300 rounded-md pl-9 pr-4 py-2 text-[13px] font-medium focus:outline-none focus:border-[#143B62] focus:ring-1 focus:ring-[#143B62] bg-white shadow-sm transition">
                 </div>
-
-                <div class="flex-1 overflow-y-auto custom-scroll">
-                    <table class="w-full text-left text-sm border-collapse">
-                        <thead class="bg-[#143B62] text-white text-[10px] uppercase font-black sticky top-0 z-10">
-                            <tr>
-                                <th class="p-3 text-center">IMAGEN</th>
-                                <th class="p-3">PRODUCTO / SKU</th>
-                                <th class="p-3">CATEGORÍA DEL PRODUCTO</th>
-                                <th class="p-3 text-right">PRECIO DETAL</th>
-                                <th class="p-3 text-center">STOCK</th>
-                                <th class="p-3 text-center">ACCIONES</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tabla-productos" class="divide-y divide-gray-100">
-                            <tr><td colspan="6" class="p-10 text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin text-xl mb-2 block"></i> Cargando inventario...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
+                <button onclick="abrirModalProducto()" class="bg-[#25D366] hover:bg-[#1ebd5c] text-white px-5 py-2 rounded-md font-semibold text-[13px] shadow-sm transition flex items-center justify-center gap-2 btn-press whitespace-nowrap">
+                    <i class="fa-solid fa-plus"></i> NUEVO PRODUCTO
+                </button>
             </div>
+
+            <div id="grid-productos" class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+                <div class="col-span-full p-10 text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin text-2xl mb-3 block"></i> Cargando inventario...</div>
+            </div>
+
         </div>
     </main>
 
-    <div id="modal-producto" class="fixed inset-0 bg-black/70 z-[100] hidden flex items-center justify-center p-4 fade-in">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-5xl max-h-[95vh] flex flex-col overflow-hidden">
-            <div class="bg-[#143B62] text-white p-4 flex justify-between items-center shrink-0">
-                <h3 class="font-bold text-lg" id="modal-titulo"><i class="fa-solid fa-box-open mr-2"></i> Crear Producto</h3>
-                <button onclick="cerrarModalProducto()" class="text-gray-300 hover:text-white text-xl"><i class="fa-solid fa-times"></i></button>
+    <div id="modal-producto" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4 fade-in">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-5xl max-h-[95vh] flex flex-col overflow-hidden border border-gray-200">
+            
+            <div class="bg-[#143B62] text-white px-5 py-3.5 flex justify-between items-center shrink-0">
+                <h3 class="font-medium text-sm tracking-wide flex items-center" id="modal-titulo"><i class="fa-solid fa-box-open mr-2 text-[#E67E22]"></i> CREAR PRODUCTO</h3>
+                <button onclick="cerrarModalProducto()" class="text-gray-300 hover:text-white text-lg transition"><i class="fa-solid fa-times"></i></button>
             </div>
             
-            <form id="form-producto" onsubmit="guardarProducto(event)" class="flex-1 overflow-y-auto custom-scroll p-6 bg-gray-50">
+            <form id="form-producto" onsubmit="guardarProducto(event)" class="flex-1 overflow-y-auto custom-scroll p-5 bg-[#f8fafc]">
                 <input type="hidden" id="modo-edicion" value="false">
                 
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                    
                     <div class="lg:col-span-2 space-y-4">
-                        <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-                            <h4 class="text-xs font-bold text-[#E67E22] uppercase border-b pb-2 mb-3">Identificación del Producto</h4>
+                        <div class="bg-white p-4 rounded border border-gray-200 shadow-sm">
+                            <h4 class="text-[11px] font-semibold text-[#E67E22] uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Identificación Principal</h4>
                             <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-3">
                                 <div>
-                                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">SKU / Código Interno *</label>
-                                    <input type="text" id="prod-sku" required class="uppercase-input w-full border border-gray-300 rounded px-3 py-2 text-sm font-mono font-bold focus:border-[#143B62] outline-none" oninput="this.value = this.value.toUpperCase()">
+                                    <label class="block param-label mb-1">SKU / Código Interno *</label>
+                                    <input type="text" id="prod-sku" required class="uppercase-input w-full border border-gray-300 rounded px-2.5 py-1.5 text-[13px] font-medium focus:border-[#143B62] outline-none" oninput="this.value = this.value.toUpperCase()">
                                 </div>
                                 <div>
-                                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Código de Barras</label>
-                                    <input type="text" id="prod-barras" placeholder="Ej: 759123456" class="uppercase-input w-full border border-gray-300 rounded px-3 py-2 text-sm font-mono font-bold focus:border-[#143B62] outline-none" oninput="this.value = this.value.toUpperCase()">
+                                    <label class="block param-label mb-1">Código de Barras</label>
+                                    <input type="text" id="prod-barras" class="uppercase-input w-full border border-gray-300 rounded px-2.5 py-1.5 text-[13px] font-medium focus:border-[#143B62] outline-none" oninput="this.value = this.value.toUpperCase()">
                                 </div>
                                 <div>
-                                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Estado del Producto *</label>
-                                    <select id="prod-estado" required class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:border-[#143B62] outline-none font-bold text-[#143B62]"></select>
+                                    <label class="block param-label mb-1">Estado Operativo *</label>
+                                    <select id="prod-estado" required class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-[13px] font-medium text-[#143B62] focus:border-[#143B62] outline-none bg-blue-50/50"></select>
                                 </div>
-                            </div>
-                            <div class="mb-3">
-                                <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Nombre del Producto *</label>
-                                <input type="text" id="prod-nombre" required class="uppercase-input w-full border border-gray-300 rounded px-3 py-2 text-sm font-bold focus:border-[#143B62] outline-none" oninput="this.value = this.value.toUpperCase()">
-                            </div>
-                        </div>
-
-                        <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-                            <h4 class="text-xs font-bold text-[#E67E22] uppercase border-b pb-2 mb-3">Clasificación (Data Maestra)</h4>
-                            <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-3">
-                                <div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Categoría del Producto *</label><select id="prod-categoria" required class="w-full border border-gray-300 rounded px-2 py-2 text-xs focus:border-[#143B62] outline-none font-semibold"></select></div>
-                                <div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Marca *</label><select id="prod-marca" required class="w-full border border-gray-300 rounded px-2 py-2 text-xs focus:border-[#143B62] outline-none font-semibold"></select></div>
-                                <div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Tipo de Producto *</label><select id="prod-tipo" required class="w-full border border-gray-300 rounded px-2 py-2 text-xs focus:border-[#143B62] outline-none font-semibold"></select></div>
-                                <div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Condición del Producto *</label><select id="prod-condicion" required class="w-full border border-gray-300 rounded px-2 py-2 text-xs focus:border-[#143B62] outline-none font-semibold"></select></div>
-                                <div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Categoría de Venta</label><select id="prod-cat-venta" class="w-full border border-gray-300 rounded px-2 py-2 text-xs focus:border-[#143B62] outline-none font-semibold"><option value="">NINGUNA</option></select></div>
-                                <div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Color</label><select id="prod-color" class="w-full border border-gray-300 rounded px-2 py-2 text-xs focus:border-[#143B62] outline-none font-semibold"><option value="">N/A</option></select></div>
-                                <div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Talla</label><select id="prod-talla" class="w-full border border-gray-300 rounded px-2 py-2 text-xs focus:border-[#143B62] outline-none font-semibold"><option value="">N/A</option></select></div>
-                            </div>
-                        </div>
-
-                        <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-                            <h4 class="text-xs font-bold text-[#E67E22] uppercase border-b pb-2 mb-3">Multimedia y Descripción</h4>
-                            <div class="mb-3">
-                                <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">URL de Imagen Principal</label>
-                                <input type="url" id="prod-imagen" placeholder="https://link-de-tu-imagen.com/foto.jpg" class="w-full border border-gray-300 rounded px-3 py-2 text-xs focus:border-[#143B62] outline-none text-blue-600">
                             </div>
                             <div>
-                                <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Descripción para la Web</label>
-                                <textarea id="prod-descripcion" rows="3" class="w-full border border-gray-300 rounded px-3 py-2 text-xs focus:border-[#143B62] outline-none"></textarea>
+                                <label class="block param-label mb-1">Nombre del Producto *</label>
+                                <input type="text" id="prod-nombre" required class="uppercase-input w-full border border-gray-300 rounded px-2.5 py-1.5 text-[13px] font-medium focus:border-[#143B62] outline-none" oninput="this.value = this.value.toUpperCase()">
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-4 rounded border border-gray-200 shadow-sm">
+                            <h4 class="text-[11px] font-semibold text-[#E67E22] uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Clasificación Maestra</h4>
+                            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                <div><label class="block param-label mb-1">Categoría Principal *</label><select id="prod-categoria" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-[12px] font-medium focus:border-[#143B62] outline-none"></select></div>
+                                <div><label class="block param-label mb-1">Marca *</label><select id="prod-marca" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-[12px] font-medium focus:border-[#143B62] outline-none"></select></div>
+                                <div><label class="block param-label mb-1">Tipo de Producto *</label><select id="prod-tipo" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-[12px] font-medium focus:border-[#143B62] outline-none"></select></div>
+                                <div><label class="block param-label mb-1">Condición Física *</label><select id="prod-condicion" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-[12px] font-medium focus:border-[#143B62] outline-none"></select></div>
+                                <div><label class="block param-label mb-1">Categoría de Venta</label><select id="prod-cat-venta" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[12px] font-medium focus:border-[#143B62] outline-none"><option value="">N/A</option></select></div>
+                                <div><label class="block param-label mb-1">Unidad Medida *</label><select id="prod-unidad" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-[12px] font-medium focus:border-[#143B62] outline-none"></select></div>
+                                <div><label class="block param-label mb-1">Color</label><select id="prod-color" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[12px] font-medium focus:border-[#143B62] outline-none"><option value="">N/A</option></select></div>
+                                <div><label class="block param-label mb-1">Talla</label><select id="prod-talla" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[12px] font-medium focus:border-[#143B62] outline-none"><option value="">N/A</option></select></div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-4 rounded border border-gray-200 shadow-sm">
+                            <h4 class="text-[11px] font-semibold text-[#E67E22] uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Multimedia y Web</h4>
+                            <div class="mb-3">
+                                <label class="block param-label mb-1">URL de Imagen Principal</label>
+                                <input type="url" id="prod-imagen" placeholder="Ej: https://..." class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-[12px] focus:border-[#143B62] outline-none text-blue-600">
+                            </div>
+                            <div>
+                                <label class="block param-label mb-1">Descripción Detallada (Permite minúsculas)</label>
+                                <textarea id="prod-descripcion" rows="2" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-[13px] focus:border-[#143B62] outline-none"></textarea>
                             </div>
                         </div>
                     </div>
 
                     <div class="space-y-4">
-                        <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 border-l-4 border-l-green-500">
-                            <h4 class="text-xs font-bold text-green-600 uppercase border-b pb-2 mb-3">Inventario y Precios</h4>
-                            <div class="grid grid-cols-2 gap-4 mb-4">
-                                <div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Stock Actual</label><input type="number" id="prod-stock" value="0" class="w-full border border-gray-300 rounded px-3 py-2 text-lg font-black text-center focus:border-green-500 outline-none"></div>
-                                <div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Unidad Medida *</label><select id="prod-unidad" required class="w-full border border-gray-300 rounded px-2 py-2.5 text-xs font-bold text-center focus:border-[#143B62] outline-none"></select></div>
+                        <div class="bg-white p-4 rounded border border-gray-200 shadow-sm border-t-2 border-t-emerald-500">
+                            <h4 class="text-[11px] font-semibold text-emerald-600 uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Inventario y Finanzas</h4>
+                            
+                            <div class="mb-4">
+                                <label class="block param-label mb-1 text-center">Stock Físico Actual</label>
+                                <input type="number" id="prod-stock" value="0" class="w-full border border-gray-300 rounded px-3 py-2 text-xl font-semibold text-center focus:border-emerald-500 outline-none bg-gray-50">
                             </div>
-                            <div class="mb-4 flex items-center justify-between bg-gray-50 p-2 rounded border border-gray-200">
-                                <label class="text-[10px] font-bold text-gray-700 uppercase">Permitir Venta en Negativo</label>
-                                <div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
-                                    <input type="checkbox" name="toggle" id="prod-negativo" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer"/>
+                            
+                            <div class="mb-4 flex items-center justify-between bg-gray-50 p-2.5 rounded border border-gray-200">
+                                <label class="param-label cursor-pointer" for="prod-negativo">¿Permitir Venta sin Stock?</label>
+                                <div class="relative inline-block w-9 align-middle select-none transition duration-200 ease-in">
+                                    <input type="checkbox" id="prod-negativo" class="toggle-checkbox absolute block w-4 h-4 rounded-full bg-white border-4 appearance-none cursor-pointer mt-0.5 ml-0.5"/>
                                     <label for="prod-negativo" class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 cursor-pointer"></label>
                                 </div>
                             </div>
+                            
                             <div class="mb-4">
-                                <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Precio Detal USD *</label>
-                                <input type="number" id="prod-precio" step="0.01" required placeholder="0.00" class="w-full border border-gray-300 rounded px-3 py-3 text-2xl font-black text-blue-600 text-center focus:border-blue-500 outline-none shadow-inner">
+                                <label class="block param-label mb-1">Precio Detal USD *</label>
+                                <input type="number" id="prod-precio" step="0.01" required placeholder="0.00" class="w-full border border-gray-300 rounded px-3 py-2.5 text-2xl font-bold text-[#143B62] text-center focus:border-[#143B62] outline-none shadow-inner">
                             </div>
-                            <div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Impuesto (IVA) *</label><select id="prod-iva" required class="w-full border border-gray-300 rounded px-3 py-2 text-sm font-bold bg-gray-50 focus:border-[#143B62] outline-none"></select></div>
+                            
+                            <div>
+                                <label class="block param-label mb-1">Tipo de Impuesto (IVA) *</label>
+                                <select id="prod-iva" required class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-[12px] font-medium bg-gray-50 focus:border-[#143B62] outline-none"></select>
+                            </div>
                         </div>
 
-                        <div class="bg-blue-50 p-4 rounded-lg shadow-sm border border-blue-200">
-                            <h4 class="text-xs font-bold text-[#143B62] uppercase border-b border-blue-200 pb-2 mb-3">Escalas al Mayor (Opcional)</h4>
-                            <div class="grid grid-cols-2 gap-2 mb-2 items-center">
-                                <label class="text-[10px] font-bold text-gray-600">Requerido (Unds)</label>
-                                <label class="text-[10px] font-bold text-gray-600">Precio USD</label>
+                        <div class="bg-white p-4 rounded border border-gray-200 shadow-sm border-t-2 border-t-blue-400">
+                            <h4 class="text-[11px] font-semibold text-blue-600 uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Escalas al Mayor</h4>
+                            <div class="grid grid-cols-2 gap-3 mb-2">
+                                <label class="param-label text-center">Req. (Unds)</label>
+                                <label class="param-label text-center">Precio USD</label>
                             </div>
-                            <div class="grid grid-cols-2 gap-2 mb-2">
-                                <input type="number" id="prod-req1" placeholder="Ej: 6" class="border border-gray-300 rounded px-2 py-1.5 text-xs text-center font-bold">
-                                <input type="number" id="prod-tier1" step="0.01" placeholder="$ 0.00" class="border border-gray-300 rounded px-2 py-1.5 text-xs text-center font-bold text-[#E67E22]">
+                            <div class="grid grid-cols-2 gap-3 mb-2">
+                                <input type="number" id="prod-req1" placeholder="Ej: 6" class="border border-gray-300 rounded px-2 py-1.5 text-[13px] text-center font-medium">
+                                <input type="number" id="prod-tier1" step="0.01" placeholder="0.00" class="border border-gray-300 rounded px-2 py-1.5 text-[13px] text-center font-semibold text-[#E67E22]">
                             </div>
-                            <div class="grid grid-cols-2 gap-2 mb-2">
-                                <input type="number" id="prod-req2" placeholder="Ej: 12" class="border border-gray-300 rounded px-2 py-1.5 text-xs text-center font-bold">
-                                <input type="number" id="prod-tier2" step="0.01" placeholder="$ 0.00" class="border border-gray-300 rounded px-2 py-1.5 text-xs text-center font-bold text-[#E67E22]">
+                            <div class="grid grid-cols-2 gap-3 mb-2">
+                                <input type="number" id="prod-req2" placeholder="Ej: 12" class="border border-gray-300 rounded px-2 py-1.5 text-[13px] text-center font-medium">
+                                <input type="number" id="prod-tier2" step="0.01" placeholder="0.00" class="border border-gray-300 rounded px-2 py-1.5 text-[13px] text-center font-semibold text-[#E67E22]">
                             </div>
-                            <div class="grid grid-cols-2 gap-2">
-                                <input type="number" id="prod-req3" placeholder="Ej: 24" class="border border-gray-300 rounded px-2 py-1.5 text-xs text-center font-bold">
-                                <input type="number" id="prod-tier3" step="0.01" placeholder="$ 0.00" class="border border-gray-300 rounded px-2 py-1.5 text-xs text-center font-bold text-[#E67E22]">
+                            <div class="grid grid-cols-2 gap-3">
+                                <input type="number" id="prod-req3" placeholder="Ej: 24" class="border border-gray-300 rounded px-2 py-1.5 text-[13px] text-center font-medium">
+                                <input type="number" id="prod-tier3" step="0.01" placeholder="0.00" class="border border-gray-300 rounded px-2 py-1.5 text-[13px] text-center font-semibold text-[#E67E22]">
                             </div>
                         </div>
                     </div>
                 </div>
             </form>
 
-            <div class="bg-white border-t p-4 flex gap-3 shrink-0">
-                <button type="button" onclick="cerrarModalProducto()" class="flex-1 py-3 bg-gray-200 text-gray-700 font-bold rounded-lg btn-press uppercase tracking-wider text-sm shadow-sm transition hover:bg-gray-300">Cancelar</button>
-                <button type="submit" form="form-producto" id="btn-guardar-prod" class="flex-1 py-3 bg-[#143B62] hover:bg-[#0f2d4a] text-white font-bold rounded-lg shadow-md btn-press flex justify-center items-center gap-2 uppercase tracking-wider text-sm transition">
-                    <i class="fa-solid fa-save"></i> Guardar Producto
+            <div class="bg-gray-50 border-t border-gray-200 px-5 py-3 flex gap-3 justify-end shrink-0">
+                <button type="button" onclick="cerrarModalProducto()" class="px-6 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded text-[13px] shadow-sm hover:bg-gray-50 transition btn-press">Cancelar</button>
+                <button type="submit" form="form-producto" id="btn-guardar-prod" class="px-6 py-2 bg-[#143B62] text-white font-medium rounded text-[13px] shadow-sm hover:bg-[#0f2d4a] transition btn-press flex items-center gap-2">
+                    <i class="fa-solid fa-save"></i> Guardar Registro
                 </button>
             </div>
 
@@ -217,11 +229,11 @@
         
         let inventario = [];
         let parametrosData = [];
-        let imagenGlobalDefecto = 'https://via.placeholder.com/150/eeeeee/999999?text=SIN+IMAGEN'; // Fallback a prueba de balas
+        let imagenGlobalDefecto = 'https://via.placeholder.com/300/f8fafc/94a3b8?text=SIN+IMAGEN';
 
         window.onload = async () => {
             const nombre = localStorage.getItem('pyp_usuario_nombre');
-            if(nombre) document.getElementById('nombre-usuario').innerText = nombre.split(' ')[0].toUpperCase();
+            if(nombre) document.getElementById('nombre-usuario').innerText = nombre.split(' ')[0];
             await cargarDatosMaestrosEInventario();
         };
 
@@ -234,7 +246,6 @@
 
         async function cargarDatosMaestrosEInventario() {
             try {
-                // CORRECCIÓN 404: Apuntamos directo a la tabla física
                 const [resInv, resParam] = await Promise.all([
                     fetch(`${SUPABASE_URL}/rest/v1/productos?select=*&order=id_producto_sku.asc`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }),
                     fetch(`${SUPABASE_URL}/rest/v1/parametros_inventario?select=*&estatus=eq.ACTIVO`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } })
@@ -243,12 +254,10 @@
                 inventario = await resInv.json();
                 parametrosData = await resParam.json();
                 
-                if(!Array.isArray(inventario)) throw new Error("Error de conexión a la tabla de productos");
+                if(!Array.isArray(inventario)) throw new Error("Error de conexión");
 
                 const paramImg = parametrosData.find(p => p.grupo === 'IMAGEN_DEFECTO');
-                if (paramImg && paramImg.valor.trim() !== '') {
-                    imagenGlobalDefecto = paramImg.valor;
-                }
+                if (paramImg && paramImg.valor.trim() !== '') imagenGlobalDefecto = paramImg.valor;
 
                 llenarSelect('prod-estado', 'ESTADO_PRODUCTO', false); 
                 llenarSelect('prod-condicion', 'CONDICION_PRODUCTO', false);
@@ -261,55 +270,102 @@
                 llenarSelect('prod-talla', 'TALLA', true);
                 llenarSelect('prod-color', 'COLOR', true);
 
-                pintarTabla(inventario);
+                pintarGrid(inventario);
             } catch(e) {
-                console.error(e);
-                document.getElementById('tabla-productos').innerHTML = `<tr><td colspan="6" class="p-5 text-center text-red-500 font-bold uppercase">ERROR CARGANDO INVENTARIO. REVISA LA BASE DE DATOS.</td></tr>`;
+                document.getElementById('grid-productos').innerHTML = `<div class="col-span-full p-5 text-center text-red-500 font-semibold uppercase">Error cargando base de datos. Revisa la consola.</div>`;
             }
         }
 
         function llenarSelect(idSelect, grupo, permiteVacio) {
             const select = document.getElementById(idSelect);
             const opciones = parametrosData.filter(p => p.grupo === grupo).sort((a,b) => a.valor.localeCompare(b.valor));
-            let html = permiteVacio ? '<option value="">N/A (NO APLICA)</option>' : '';
-            if(opciones.length === 0 && !permiteVacio) html = '<option value="">(REQUIERE CREAR PARÁMETRO)</option>';
+            let html = permiteVacio ? '<option value="">N/A</option>' : '';
+            if(opciones.length === 0 && !permiteVacio) html = '<option value="">(REQUIERE CONFIG)</option>';
             html += opciones.map(o => `<option value="${o.valor}">${o.valor}</option>`).join('');
             select.innerHTML = html;
         }
 
-        function pintarTabla(arr) {
-            const tbody = document.getElementById('tabla-productos');
+        // --- LÓGICA DE TARJETAS EXPANDIBLES ---
+        function pintarGrid(arr) {
+            const grid = document.getElementById('grid-productos');
             if(!arr.length) {
-                tbody.innerHTML = `<tr><td colspan="6" class="p-10 text-center text-gray-500 font-bold uppercase">No se encontraron productos.</td></tr>`;
+                grid.innerHTML = `<div class="col-span-full p-10 text-center text-gray-500 font-medium">No se encontraron productos.</div>`;
                 return;
             }
             
-            tbody.innerHTML = arr.map(p => {
+            grid.innerHTML = arr.map(p => {
                 const prodStr = encodeURIComponent(JSON.stringify(p));
                 const imgAUsar = (p.imagen_principal && p.imagen_principal.trim() !== '') ? p.imagen_principal : imagenGlobalDefecto;
+                const pDetal = Number(p.precio_detal_usd) || 0;
+                
+                // Color de stock
+                let bgStock = 'bg-gray-100 text-gray-600';
+                if(p.stock_actual > 10) bgStock = 'bg-emerald-100 text-emerald-700';
+                else if(p.stock_actual > 0) bgStock = 'bg-yellow-100 text-yellow-700';
+                else bgStock = 'bg-red-100 text-red-600';
 
                 return `
-                <tr class="hover:bg-gray-50 transition border-b border-gray-100">
-                    <td class="p-2 text-center w-16">
-                        <img src="${imgAUsar}" onerror="this.onerror=null; this.src='https://via.placeholder.com/150/eeeeee/999999?text=SIN+IMAGEN';" class="w-10 h-10 object-contain mx-auto border border-gray-200 rounded bg-white shadow-sm">
-                    </td>
-                    <td class="p-3">
-                        <p class="font-bold text-[#143B62] line-clamp-1 text-xs">${p.nombre}</p>
-                        <p class="text-[10px] text-gray-500 font-mono font-bold mt-0.5">${p.id_producto_sku}</p>
-                    </td>
-                    <td class="p-3 text-[10px] text-gray-600 font-bold tracking-wide">${p.categoria_del_producto || '-'}</td>
-                    <td class="p-3 text-right font-black text-gray-800">$${(Number(p.precio_detal_usd)||0).toFixed(2)}</td>
-                    <td class="p-3 text-center">
-                        <span class="${p.stock_actual > 5 ? 'text-green-600 bg-green-100' : 'text-red-600 bg-red-100'} font-bold px-2 py-1 rounded text-xs shadow-sm border border-gray-100">
-                            ${p.stock_actual}
-                        </span>
-                    </td>
-                    <td class="p-3 text-center">
-                        <button onclick="abrirModalProducto('${prodStr}')" class="bg-white border border-gray-200 hover:border-[#143B62] hover:bg-gray-50 text-[#143B62] px-3 py-2 rounded shadow-sm transition" title="Editar Producto"><i class="fa-solid fa-edit"></i></button>
-                    </td>
-                </tr>
+                <div class="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition duration-200 flex flex-col overflow-hidden">
+                    
+                    <div class="p-4 flex gap-4">
+                        <div class="w-20 h-20 shrink-0 bg-gray-50 rounded border border-gray-100 flex items-center justify-center overflow-hidden">
+                            <img src="${imgAUsar}" onerror="this.onerror=null; this.src='${imagenGlobalDefecto}';" class="max-w-full max-h-full object-contain">
+                        </div>
+                        <div class="flex-1 min-w-0 flex flex-col justify-center">
+                            <div class="text-[10px] font-bold text-[#E67E22] uppercase tracking-wider mb-0.5 truncate">${p.categoria_del_producto || 'Sin Categoría'}</div>
+                            <h3 class="font-semibold text-gray-800 text-[14px] leading-tight truncate mb-1" title="${p.nombre}">${p.nombre}</h3>
+                            <div class="text-[11px] font-mono text-gray-500 font-medium">${p.id_producto_sku}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="px-4 pb-4 flex items-end justify-between border-b border-gray-50">
+                        <div>
+                            <div class="param-label mb-0.5">Precio Detal</div>
+                            <div class="text-lg font-bold text-[#143B62]">$${pDetal.toFixed(2)}</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="param-label mb-0.5">Stock</div>
+                            <div class="inline-block px-2.5 py-0.5 rounded ${bgStock} font-bold text-[13px] min-w-[40px] text-center">${p.stock_actual}</div>
+                        </div>
+                    </div>
+
+                    <button onclick="toggleDetalles('${p.id_producto_sku}')" class="w-full py-2 bg-gray-50 hover:bg-gray-100 text-[11px] font-semibold text-gray-500 uppercase tracking-widest transition flex justify-center items-center gap-2">
+                        Ver Especificaciones <i id="icon-${p.id_producto_sku}" class="fa-solid fa-chevron-down text-[10px]"></i>
+                    </button>
+
+                    <div id="detalles-${p.id_producto_sku}" class="hidden flex-col bg-slate-50 border-t border-gray-200">
+                        <div class="p-4 grid grid-cols-2 gap-y-3 gap-x-4">
+                            <div><span class="block param-label">Marca</span><span class="param-value">${p.marca || '-'}</span></div>
+                            <div><span class="block param-label">Código Barras</span><span class="param-value font-mono">${p.codigo_barras || '-'}</span></div>
+                            <div><span class="block param-label">Condición</span><span class="param-value">${p.condicion_producto || '-'}</span></div>
+                            <div><span class="block param-label">Tipo Producto</span><span class="param-value">${p.tipo_producto || '-'}</span></div>
+                            <div><span class="block param-label">Unidad / Color</span><span class="param-value">${p.unidad_medida || '-'} / ${p.color || '-'}</span></div>
+                            <div><span class="block param-label">Permite Negativo</span><span class="param-value ${p.permitir_negativo ? 'text-red-500 font-bold':'text-gray-500'}">${p.permitir_negativo ? 'SÍ' : 'NO'}</span></div>
+                        </div>
+                        ${p.descripcion ? `<div class="px-4 pb-3"><span class="block param-label mb-1">Descripción Web</span><p class="text-[11px] text-gray-600 italic leading-snug">${p.descripcion}</p></div>` : ''}
+                        <div class="p-3 bg-white border-t border-gray-200 flex justify-end">
+                            <button onclick="abrirModalProducto('${prodStr}')" class="px-4 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded text-[11px] font-semibold uppercase tracking-wider transition shadow-sm btn-press">
+                                <i class="fa-solid fa-pen-to-square mr-1"></i> Editar Registro
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
                 `;
             }).join('');
+        }
+
+        function toggleDetalles(id) {
+            const div = document.getElementById(`detalles-${id}`);
+            const icon = document.getElementById(`icon-${id}`);
+            div.classList.toggle('hidden');
+            if(div.classList.contains('hidden')) {
+                icon.classList.replace('fa-chevron-up', 'fa-chevron-down');
+                div.classList.remove('flex');
+            } else {
+                icon.classList.replace('fa-chevron-down', 'fa-chevron-up');
+                div.classList.add('flex');
+            }
         }
 
         function filtrarInventario() {
@@ -319,22 +375,23 @@
                 (p.id_producto_sku && p.id_producto_sku.toLowerCase().includes(texto)) ||
                 (p.codigo_barras && p.codigo_barras.toLowerCase().includes(texto))
             );
-            pintarTabla(filtrados);
+            pintarGrid(filtrados);
         }
 
+        // --- LÓGICA DEL MODAL ---
         function abrirModalProducto(prodStr = null) {
             const form = document.getElementById('form-producto');
             form.reset();
 
             if (prodStr) {
                 const p = JSON.parse(decodeURIComponent(prodStr));
-                document.getElementById('modal-titulo').innerHTML = `<i class="fa-solid fa-pen-to-square mr-2"></i> Editar Producto`;
+                document.getElementById('modal-titulo').innerHTML = `<i class="fa-solid fa-pen-to-square mr-2 text-blue-400"></i> EDITAR REGISTRO`;
                 document.getElementById('modo-edicion').value = "true";
                 
                 const skuInput = document.getElementById('prod-sku');
                 skuInput.value = p.id_producto_sku;
                 skuInput.readOnly = true;
-                skuInput.classList.add('bg-gray-200', 'text-gray-500', 'cursor-not-allowed');
+                skuInput.classList.add('bg-gray-100', 'text-gray-500', 'cursor-not-allowed');
 
                 document.getElementById('prod-barras').value = p.codigo_barras || '';
                 document.getElementById('prod-nombre').value = p.nombre || '';
@@ -363,12 +420,12 @@
                 if(p.color) document.getElementById('prod-color').value = p.color;
 
             } else {
-                document.getElementById('modal-titulo').innerHTML = `<i class="fa-solid fa-box-open mr-2"></i> Nuevo Producto`;
+                document.getElementById('modal-titulo').innerHTML = `<i class="fa-solid fa-box-open mr-2 text-[#E67E22]"></i> NUEVO REGISTRO`;
                 document.getElementById('modo-edicion').value = "false";
                 
                 const skuInput = document.getElementById('prod-sku');
                 skuInput.readOnly = false;
-                skuInput.classList.remove('bg-gray-200', 'text-gray-500', 'cursor-not-allowed');
+                skuInput.classList.remove('bg-gray-100', 'text-gray-500', 'cursor-not-allowed');
             }
 
             document.getElementById('modal-producto').classList.remove('hidden');
@@ -383,7 +440,7 @@
             const btn = document.getElementById('btn-guardar-prod');
             const modoEdicion = document.getElementById('modo-edicion').value === "true";
             
-            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> PROCESANDO...`;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Guardando...`;
             btn.disabled = true;
 
             const sku = document.getElementById('prod-sku').value.trim().toUpperCase();
@@ -435,15 +492,15 @@
                     });
                 }
 
-                if (!res.ok) throw new Error("Error guardando en Supabase");
+                if (!res.ok) throw new Error("Error DB");
 
                 cerrarModalProducto();
                 await cargarDatosMaestrosEInventario(); 
                 
             } catch (error) {
-                alert("ERROR AL GUARDAR. Verifica que el SKU no esté repetido o falten datos obligatorios.");
+                alert("ERROR AL GUARDAR. Verifica que el SKU no esté repetido.");
             } finally {
-                btn.innerHTML = `<i class="fa-solid fa-save"></i> Guardar Producto`;
+                btn.innerHTML = `<i class="fa-solid fa-save"></i> Guardar Registro`;
                 btn.disabled = false;
             }
         }
