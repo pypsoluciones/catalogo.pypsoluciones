@@ -33,7 +33,7 @@
                 </button>
                 <div id="submenu-inv" class="pl-10 space-y-1 mt-1">
                     <a href="admin_productos.html" class="block py-2 text-gray-400 hover:text-white font-semibold text-xs transition">PRODUCTOS</a>
-                    <a href="admin_parametros_productos.html" class="block py-2 text-white font-bold text-xs border-l-2 border-[#E67E22] pl-3">PARÁMETROS</a>
+                    <a href="admin_productos_parametros.html" class="block py-2 text-white font-bold text-xs border-l-2 border-[#E67E22] pl-3">PARÁMETROS</a>
                 </div>
             </div>
 
@@ -52,7 +52,6 @@
             <div>
                 <h1 class="text-xl font-bold text-[#143B62] flex items-center gap-2"><i class="fa-solid fa-cogs"></i> Parámetros de Productos</h1>
             </div>
-            
             <div class="flex items-center gap-3">
                 <div class="bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100 flex items-center gap-2 text-xs font-bold text-[#143B62]">
                     <i class="fa-solid fa-user-tie"></i> <span id="nombre-usuario">Admin</span>
@@ -99,7 +98,7 @@
                         <div class="relative w-full max-w-md">
                             <i class="fa-solid fa-filter absolute left-3 top-2.5 text-gray-400"></i>
                             <select id="filtro-grupo" onchange="filtrarTabla()" class="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2 text-sm focus:outline-none focus:border-[#E67E22] font-bold bg-white">
-                                <option value="TODOS">Mostrar Todos los Grupos</option>
+                                <option value="TODOS">Mostrar Todos los Grupos (Ordenado)</option>
                                 <option value="MARCA">MARCA</option>
                                 <option value="CATEGORIA">CATEGORÍA DEL PRODUCTO</option>
                                 <option value="CATEGORIA_VENTA">CATEGORÍA DE VENTA</option>
@@ -145,20 +144,29 @@
         window.onload = async () => {
             const nombre = localStorage.getItem('pyp_usuario_nombre');
             if(nombre) document.getElementById('nombre-usuario').innerText = nombre.split(' ')[0].toUpperCase();
+            
+            // Sincronizar el filtro derecho con la opción por defecto de la izquierda al iniciar
+            document.getElementById('filtro-grupo').value = document.getElementById('param-grupo').value;
+            
             await cargarParametros();
         };
 
         function cerrarSesion() {
             if(confirm("¿Estás seguro que deseas cerrar sesión?")) {
                 localStorage.removeItem('pyp_sesion_activa');
-                localStorage.removeItem('pyp_usuario_rol');
                 window.location.href = 'login.html';
             }
         }
 
+        // Lógica UX: Cuando cambias el grupo a la izquierda, la tabla de la derecha se filtra automáticamente
         function ajustarInputValor() {
             const grupo = document.getElementById('param-grupo').value;
             const inputVal = document.getElementById('param-valor');
+            
+            // Filtro Automático en la tabla
+            document.getElementById('filtro-grupo').value = grupo;
+            filtrarTabla();
+
             if(grupo === 'IMAGEN_DEFECTO') {
                 inputVal.classList.remove('uppercase-input');
                 inputVal.placeholder = "Ej: https://tudominio.com/logo.png";
@@ -173,6 +181,7 @@
 
         async function cargarParametros() {
             try {
+                // Al cargar de la DB, ya viene ordenado por Grupo de la A a la Z, agrupándolos naturalmente
                 const res = await fetch(`${SUPABASE_URL}/rest/v1/parametros_inventario?select=*&order=grupo.asc,valor.asc`, { 
                     headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } 
                 });
@@ -186,7 +195,7 @@
         function pintarTabla(arr) {
             const tbody = document.getElementById('tabla-parametros');
             if(!arr.length) {
-                tbody.innerHTML = `<tr><td colspan="4" class="p-10 text-center text-gray-500 font-bold">No se encontraron registros.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="4" class="p-10 text-center text-gray-500 font-bold">No se encontraron registros para este grupo.</td></tr>`;
                 return;
             }
             
