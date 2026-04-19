@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
     <style>
         body { font-family: 'Inter', sans-serif; }
         .custom-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
@@ -70,7 +71,6 @@
     </aside>
 
     <main class="flex-1 flex flex-col h-screen overflow-hidden bg-[#f4f6f8] w-full">
-        
         <header class="bg-white shadow-sm px-4 md:px-6 py-3 flex justify-between items-center z-10 shrink-0 border-b border-gray-200">
             <div class="flex items-center gap-3">
                 <button onclick="toggleMobileMenu()" class="md:hidden text-gray-600 hover:text-[#143B62] text-xl transition btn-press px-2"><i class="fa-solid fa-bars"></i></button>
@@ -166,8 +166,23 @@
                         <div class="bg-white p-4 rounded border border-gray-200 shadow-sm">
                             <h4 class="text-[11px] font-semibold text-[#E67E22] uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Identificación Principal</h4>
                             <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-3">
-                                <div><label class="block param-label mb-1">SKU / Código Interno *</label><input type="text" id="prod-sku" required class="uppercase-input w-full border border-gray-300 rounded px-2.5 py-1.5 text-[13px] font-medium focus:border-[#143B62] outline-none" oninput="this.value = this.value.toUpperCase()"></div>
-                                <div><label class="block param-label mb-1">Cód. Barras</label><input type="text" id="prod-barras" class="uppercase-input w-full border border-gray-300 rounded px-2.5 py-1.5 text-[13px] font-medium focus:border-[#143B62] outline-none" oninput="this.value = this.value.toUpperCase()"></div>
+                                <div>
+                                    <label class="block param-label mb-1">SKU / Código Interno *</label>
+                                    <input type="text" id="prod-sku" required class="uppercase-input w-full border border-gray-300 rounded px-2.5 py-1.5 text-[13px] font-medium focus:border-[#143B62] outline-none" oninput="this.value = this.value.toUpperCase()">
+                                </div>
+                                <div>
+                                    <label class="block param-label mb-1">Cód. Barras</label>
+                                    <div class="relative">
+                                        <input type="text" id="prod-barras" class="uppercase-input w-full border border-gray-300 rounded px-2.5 py-1.5 text-[13px] font-medium focus:border-[#143B62] outline-none pr-9" oninput="this.value = this.value.toUpperCase()">
+                                        <button type="button" onclick="toggleEscanerCamara()" class="absolute right-2 top-1.5 text-[#143B62] hover:text-[#E67E22] transition" title="Escanear con Cámara">
+                                            <i class="fa-solid fa-barcode text-lg"></i>
+                                        </button>
+                                    </div>
+                                    <div id="reader-container" class="hidden mt-2 border border-gray-300 rounded overflow-hidden shadow-sm">
+                                        <div id="reader" class="w-full"></div>
+                                        <button type="button" onclick="cerrarEscaner()" class="w-full py-1.5 bg-red-50 text-red-600 text-[10px] font-bold uppercase tracking-wider border-t border-gray-300 hover:bg-red-100 transition">Cerrar Cámara</button>
+                                    </div>
+                                </div>
                                 <div><label class="block param-label mb-1">Estado Operativo *</label><select id="prod-estado" required class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-[13px] font-medium text-[#143B62] bg-blue-50/50 outline-none"></select></div>
                             </div>
                             <div><label class="block param-label mb-1">Nombre del Producto *</label><input type="text" id="prod-nombre" required class="uppercase-input w-full border border-gray-300 rounded px-2.5 py-1.5 text-[13px] font-medium focus:border-[#143B62] outline-none" oninput="this.value = this.value.toUpperCase()"></div>
@@ -234,9 +249,9 @@
                                 
                                 <div class="pt-2 border-t border-gray-100">
                                     <label class="block param-label mb-1">Precio General (USD)</label>
-                                    <div class="flex gap-2">
-                                        <input type="number" id="prod-margen-gen" placeholder="%" oninput="calcularPreciosPorMargen()" class="w-16 border border-gray-300 rounded px-2 py-2 text-center text-[12px] font-semibold bg-blue-50 text-blue-700 outline-none" title="Margen de Ganancia %">
-                                        <input type="number" id="prod-precio-gen" step="0.01" class="flex-1 border border-gray-300 rounded px-3 py-2 text-lg font-bold text-[#143B62] text-center outline-none focus:border-[#143B62]">
+                                    <div class="flex gap-2 w-full">
+                                        <input type="number" id="prod-margen-gen" placeholder="%" oninput="calcularPreciosPorMargen()" class="w-16 shrink-0 border border-gray-300 rounded px-2 py-2 text-center text-[12px] font-semibold bg-blue-50 text-blue-700 outline-none" title="Margen de Ganancia %">
+                                        <input type="number" id="prod-precio-gen" step="0.01" class="flex-1 min-w-0 border border-gray-300 rounded px-3 py-2 text-lg font-bold text-[#143B62] text-center outline-none focus:border-[#143B62]">
                                     </div>
                                 </div>
 
@@ -286,6 +301,9 @@
         let dataMaestra = [];
         let vistaActual = localStorage.getItem('pyp_vista_inventario') || 'tabla';
         let imagenGlobalDefecto = 'https://via.placeholder.com/300/f8fafc/94a3b8?text=SIN+IMAGEN';
+        
+        // Variable Global para el escáner de cámara
+        let html5QrCode = null;
 
         window.onload = async () => {
             const nombre = localStorage.getItem('pyp_usuario_nombre');
@@ -294,7 +312,6 @@
             await cargarTodo();
         };
 
-        // --- FUNCIONALIDAD DE MENÚ MÓVIL ---
         function toggleMobileMenu() {
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('mobile-overlay');
@@ -302,7 +319,6 @@
             overlay.classList.toggle('hidden');
         }
 
-        // --- CERRAR MODAL CON ESCAPE ---
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
                 const modal = document.getElementById('modal-producto');
@@ -529,6 +545,7 @@
             c.innerHTML = htmlStr;
         }
 
+        // --- GRID CON LA DESCRIPCIÓN INYECTADA ---
         function pintarGrid(arr) {
             const c = document.getElementById('contenedor-inventario');
             if(arr.length === 0) { 
@@ -595,6 +612,8 @@
                             <div class="flex flex-col border-b pb-1"><span class="param-label mb-0.5">Escalas (Unds ➔ Precio USD)</span><span class="param-value text-[10px] text-blue-600 font-bold">${p1Texto} | ${p2Texto} | ${p3Texto}</span></div>
                             <div class="flex justify-between border-b pb-1"><span class="param-label">Barras</span><span class="param-value font-mono text-[11px]">${p.codigo_barras||'-'}</span></div>
                         </div>
+                        ${p.descripcion ? `<div class="p-3 pt-0 border-b pb-2"><span class="block param-label mb-0.5">Descripción</span><p class="text-[11px] text-gray-600 italic">${p.descripcion}</p></div>` : ''}
+                        
                         <div class="p-2 bg-white border-t flex justify-end">
                             <button onclick="abrirModalProducto('${prodStr}')" class="px-3 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded text-[11px] font-semibold uppercase"><i class="fa-solid fa-pen-to-square mr-1"></i> Editar</button>
                         </div>
@@ -622,10 +641,47 @@
             }
         }
 
+        // --- CÓDIGO DEL ESCÁNER DE CÁMARA ---
+        function toggleEscanerCamara() {
+            const container = document.getElementById('reader-container');
+            if(container.classList.contains('hidden')) {
+                container.classList.remove('hidden');
+                html5QrCode = new Html5Qrcode("reader");
+                const config = { fps: 10, qrbox: { width: 250, height: 100 } };
+                
+                // Pide permisos e inicia la cámara trasera
+                html5QrCode.start({ facingMode: "environment" }, config, 
+                    (decodedText) => {
+                        document.getElementById('prod-barras').value = decodedText;
+                        cerrarEscaner(); // Apaga cámara si fue exitoso
+                    },
+                    (errorMessage) => { /* Ignorar errores de frame mientras busca el código */ }
+                ).catch(err => {
+                    alert("Error al acceder a la cámara. Revisa los permisos de tu navegador o celular.");
+                    cerrarEscaner();
+                });
+            } else {
+                cerrarEscaner();
+            }
+        }
+
+        function cerrarEscaner() {
+            if(html5QrCode) {
+                html5QrCode.stop().then(() => {
+                    html5QrCode.clear();
+                    html5QrCode = null;
+                }).catch(err => console.error("Error deteniendo cámara.", err));
+            }
+            document.getElementById('reader-container').classList.add('hidden');
+        }
+
         // --- MODAL Y GUARDADO ---
         function abrirModalProducto(prodStr = null) {
             const f = document.getElementById('form-producto');
             f.reset();
+            
+            // Apagar escáner por seguridad si estaba encendido
+            cerrarEscaner();
             
             document.getElementById('prod-fijo-bs').checked = false;
             document.getElementById('prod-margen-gen').value = '';
@@ -688,6 +744,7 @@
         }
 
         function cerrarModalProducto() { 
+            cerrarEscaner(); // Apagar cámara si cierran el modal
             document.getElementById('modal-producto').classList.add('hidden'); 
         }
 
