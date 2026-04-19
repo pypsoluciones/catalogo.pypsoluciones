@@ -20,31 +20,38 @@
         /* MODO PRIVACIDAD BANCARIA */
         .dato-sensible { transition: filter 0.3s ease; }
         .modo-privado .dato-sensible { filter: blur(6px); user-select: none; pointer-events: none; }
+        
+        /* MARCA DE AGUA CORPORATIVA */
+        #watermark-bg {
+            background-size: 50%;
+            background-position: center;
+            background-repeat: no-repeat;
+            opacity: 0.04; /* Súper sutil para no cansar la vista */
+            pointer-events: none;
+            z-index: 0;
+        }
     </style>
     <script>if (localStorage.getItem('pyp_sesion_activa') !== 'true') window.location.href = 'login.html';</script>
 </head>
 <body class="bg-[#f4f6f8] flex h-screen overflow-hidden text-gray-800 relative modo-privado" id="body-dashboard">
 
+    <div id="watermark-bg" class="absolute inset-0"></div>
+
     <div id="mobile-overlay" onclick="toggleMobileMenu()" class="fixed inset-0 bg-gray-900/60 z-40 hidden backdrop-blur-sm md:hidden transition-opacity"></div>
 
     <aside id="sidebar" class="w-64 md:w-56 bg-[#143B62] text-white flex flex-col fixed inset-y-0 left-0 z-50 transform -translate-x-full md:translate-x-0 md:relative transition-transform duration-300 shadow-2xl md:shadow-xl">
-        <div class="p-5 border-b border-white/10 flex items-center justify-between gap-3 shrink-0">
+        <div class="p-5 border-b border-white/10 flex items-center justify-between gap-3 shrink-0 relative z-10">
             <div class="flex items-center gap-3">
-                <i class="fa-solid fa-layer-group text-[#E67E22] text-2xl"></i>
-                <h2 class="font-semibold text-lg tracking-wide">P&P Admin</h2>
+                <img id="app-logo-sidebar" src="" class="h-8 hidden object-contain">
+                <i id="app-icon-sidebar" class="fa-solid fa-layer-group text-[#E67E22] text-2xl"></i>
+                <h2 id="app-title-sidebar" class="font-semibold text-lg tracking-wide">P&P Admin</h2>
             </div>
             <button onclick="toggleMobileMenu()" class="md:hidden text-gray-300 hover:text-white text-xl"><i class="fa-solid fa-times"></i></button>
         </div>
-        <nav class="flex-1 p-3 space-y-1 overflow-y-auto custom-scroll">
-            <a href="admin_dashboard.html" class="flex items-center bg-[#E67E22] text-white rounded-md shadow-sm transition btn-press sidebar-link">
-                <i class="fa-solid fa-chart-pie sidebar-icon"></i> Dashboard
-            </a>
-            <a href="admin_ventas.html" class="flex items-center text-gray-300 hover:bg-white/10 rounded-md transition sidebar-link">
-                <i class="fa-solid fa-cash-register sidebar-icon"></i> Ventas (POS)
-            </a>
-            <a href="admin_compras.html" class="flex items-center text-gray-300 hover:bg-white/10 rounded-md transition sidebar-link">
-                <i class="fa-solid fa-truck-ramp-box sidebar-icon"></i> Compras
-            </a>
+        <nav class="flex-1 p-3 space-y-1 overflow-y-auto custom-scroll relative z-10">
+            <a href="admin_dashboard.html" class="flex items-center bg-[#E67E22] text-white rounded-md shadow-sm transition btn-press sidebar-link"><i class="fa-solid fa-chart-pie sidebar-icon"></i> Dashboard</a>
+            <a href="admin_ventas.html" class="flex items-center text-gray-300 hover:bg-white/10 rounded-md transition sidebar-link"><i class="fa-solid fa-cash-register sidebar-icon"></i> Ventas (POS)</a>
+            <a href="admin_compras.html" class="flex items-center text-gray-300 hover:bg-white/10 rounded-md transition sidebar-link"><i class="fa-solid fa-truck-ramp-box sidebar-icon"></i> Compras</a>
             <div class="space-y-1 pt-1">
                 <button type="button" onclick="document.getElementById('submenu-inv').classList.toggle('hidden')" class="w-full flex items-center justify-between text-gray-300 hover:bg-white/10 rounded-md transition btn-press sidebar-link">
                     <div class="flex items-center"><i class="fa-solid fa-boxes-stacked sidebar-icon"></i> Inventario</div>
@@ -55,62 +62,58 @@
                     <a href="admin_productos_parametros.html" class="block py-1.5 text-gray-400 hover:text-white font-medium text-xs pl-3 transition">PARÁMETROS</a>
                 </div>
             </div>
-            <a href="admin_contactos.html" class="flex items-center text-gray-300 hover:bg-white/10 rounded-md transition sidebar-link mt-1">
-                <i class="fa-solid fa-address-book sidebar-icon"></i> Directorio
-            </a>
+            <a href="admin_contactos.html" class="flex items-center text-gray-300 hover:bg-white/10 rounded-md transition sidebar-link mt-1"><i class="fa-solid fa-address-book sidebar-icon"></i> Directorio</a>
         </nav>
-        <div class="p-3 border-t border-white/10 shrink-0 bg-[#0f2d4a]">
+        <div class="p-3 border-t border-white/10 shrink-0 bg-[#0f2d4a] relative z-10">
             <button onclick="cerrarSesion()" class="w-full flex items-center justify-center gap-2 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white py-2 rounded-md font-medium transition text-xs shadow-sm btn-press">
                 <i class="fa-solid fa-power-off"></i> Cerrar Sesión
             </button>
         </div>
     </aside>
 
-    <main class="flex-1 flex flex-col h-screen overflow-hidden bg-[#f4f6f8] w-full">
-        <header class="bg-white shadow-sm px-4 md:px-6 py-3 flex justify-between items-center z-10 shrink-0 border-b border-gray-200">
+    <main class="flex-1 flex flex-col h-screen overflow-hidden w-full relative z-10">
+        <header class="bg-white/90 backdrop-blur shadow-sm px-4 md:px-6 py-3 flex justify-between items-center z-10 shrink-0 border-b border-gray-200">
             <div class="flex items-center gap-3">
-                <button onclick="toggleMobileMenu()" class="md:hidden text-gray-600 hover:text-[#143B62] text-xl transition btn-press px-2">
-                    <i class="fa-solid fa-bars"></i>
-                </button>
+                <button onclick="toggleMobileMenu()" class="md:hidden text-gray-600 hover:text-[#143B62] text-xl transition btn-press px-2"><i class="fa-solid fa-bars"></i></button>
                 <h1 class="text-base md:text-lg font-semibold text-[#143B62] flex items-center gap-2 truncate">
-                    <i class="fa-solid fa-chart-pie text-[#143B62] hidden sm:inline-block"></i> Resumen Gerencial
+                    <img id="app-logo-header" src="" class="h-6 hidden object-contain">
+                    <i id="app-icon-header" class="fa-solid fa-chart-pie text-[#143B62] hidden sm:inline-block"></i> <span id="app-title-header">Resumen Gerencial</span>
                 </h1>
             </div>
             <div class="flex items-center gap-2 md:gap-4">
                 <button onclick="togglePrivacidad()" id="btn-privacidad" class="text-gray-400 hover:text-[#143B62] transition text-lg btn-press" title="Ocultar/Mostrar Valores">
                     <i class="fa-solid fa-eye-slash"></i>
                 </button>
-                
                 <div class="bg-gray-50 px-2 md:px-3 py-1.5 rounded-md border border-gray-200 flex items-center gap-2 text-[10px] md:text-[11px] font-semibold text-gray-600 tracking-wide uppercase">
                     <i class="fa-solid fa-user-tie text-[#143B62]"></i> <span id="nombre-usuario" class="hidden sm:inline-block">Admin</span>
                 </div>
             </div>
         </header>
 
-        <div class="flex-1 overflow-auto p-4 md:p-6 custom-scroll fade-in">
+        <div class="flex-1 overflow-auto p-4 md:p-6 custom-scroll fade-in pb-24 md:pb-6">
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                <div class="bg-white rounded-lg border border-gray-200 p-5 shadow-sm flex items-center gap-4">
+                <div class="bg-white/80 backdrop-blur rounded-lg border border-gray-200 p-5 shadow-sm flex items-center gap-4">
                     <div class="w-12 h-12 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center text-xl shrink-0"><i class="fa-solid fa-cash-register"></i></div>
                     <div>
                         <p class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-0.5">Ventas Hoy</p>
                         <h3 class="text-2xl font-bold text-[#143B62] dato-sensible">$0.00</h3>
                     </div>
                 </div>
-                <div class="bg-white rounded-lg border border-gray-200 p-5 shadow-sm flex items-center gap-4">
+                <div class="bg-white/80 backdrop-blur rounded-lg border border-gray-200 p-5 shadow-sm flex items-center gap-4">
                     <div class="w-12 h-12 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center text-xl shrink-0"><i class="fa-solid fa-boxes-stacked"></i></div>
                     <div>
                         <p class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-0.5">Prod. Activos</p>
                         <h3 class="text-2xl font-bold text-[#143B62]" id="indicador-productos">0</h3>
                     </div>
                 </div>
-                <div class="bg-white rounded-lg border border-gray-200 p-5 shadow-sm flex items-center gap-4">
+                <div class="bg-white/80 backdrop-blur rounded-lg border border-gray-200 p-5 shadow-sm flex items-center gap-4">
                     <div class="w-12 h-12 rounded-full bg-orange-50 text-orange-500 flex items-center justify-center text-xl shrink-0"><i class="fa-solid fa-screwdriver-wrench"></i></div>
                     <div>
                         <p class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-0.5">Equipos Taller</p>
                         <h3 class="text-2xl font-bold text-[#143B62]">0</h3>
                     </div>
                 </div>
-                <div class="bg-white rounded-lg border border-gray-200 p-5 shadow-sm flex items-center gap-4">
+                <div class="bg-white/80 backdrop-blur rounded-lg border border-gray-200 p-5 shadow-sm flex items-center gap-4">
                     <div class="w-12 h-12 rounded-full bg-purple-50 text-purple-500 flex items-center justify-center text-xl shrink-0"><i class="fa-solid fa-users"></i></div>
                     <div>
                         <p class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-0.5">Clientes</p>
@@ -119,13 +122,28 @@
                 </div>
             </div>
 
-            <div class="bg-white rounded-lg border border-gray-200 p-10 shadow-sm flex flex-col items-center justify-center text-center h-64">
-                <i class="fa-solid fa-chart-line text-6xl text-gray-200 mb-4"></i>
-                <h2 class="text-xl font-bold text-[#143B62] mb-2">Bienvenido al Sistema</h2>
-                <p class="text-sm text-gray-500 font-medium max-w-md">Selecciona un módulo en el menú lateral para comenzar a operar. Modo Privacidad Activado por defecto.</p>
+            <div class="bg-white/80 backdrop-blur rounded-lg border border-gray-200 p-10 shadow-sm flex flex-col items-center justify-center text-center h-64">
+                <i class="fa-solid fa-shield-halved text-6xl text-gray-300 mb-4"></i>
+                <h2 class="text-xl font-bold text-[#143B62] mb-2">Modo Privacidad Activo</h2>
+                <p class="text-sm text-gray-500 font-medium max-w-md">Para proteger tus datos financieros frente a clientes o empleados, los montos están ocultos por defecto. Toca el ícono del "Ojo" en la barra superior para revelarlos.</p>
             </div>
         </div>
     </main>
+
+    <nav class="md:hidden fixed bottom-0 w-full bg-white border-t border-gray-200 flex justify-around items-center pb-2 pt-2 px-1 z-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+        <a href="admin_dashboard.html" class="flex flex-col items-center p-2 text-[#E67E22] w-1/4">
+            <i class="fa-solid fa-chart-pie text-lg mb-1"></i><span class="text-[9px] font-bold">Inicio</span>
+        </a>
+        <a href="admin_ventas.html" class="flex flex-col items-center p-2 text-gray-400 hover:text-[#143B62] transition w-1/4">
+            <i class="fa-solid fa-cash-register text-lg mb-1"></i><span class="text-[9px] font-semibold">Vender</span>
+        </a>
+        <a href="admin_productos.html" class="flex flex-col items-center p-2 text-gray-400 hover:text-[#143B62] transition w-1/4">
+            <i class="fa-solid fa-boxes-stacked text-lg mb-1"></i><span class="text-[9px] font-semibold">Inventario</span>
+        </a>
+        <button onclick="toggleMobileMenu()" class="flex flex-col items-center p-2 text-gray-400 hover:text-[#143B62] transition w-1/4 btn-press">
+            <i class="fa-solid fa-bars text-lg mb-1"></i><span class="text-[9px] font-semibold">Menú</span>
+        </button>
+    </nav>
 
     <script>
         const SUPABASE_URL = 'https://icvfmdvvochzaktugqvj.supabase.co';
@@ -135,13 +153,35 @@
             const nombre = localStorage.getItem('pyp_usuario_nombre');
             if (nombre) document.getElementById('nombre-usuario').innerText = nombre.split(' ')[0];
             
-            // Revisa si el usuario había desactivado la privacidad en una sesión anterior (opcional)
-            if(localStorage.getItem('pyp_privacidad') === 'false') {
-                togglePrivacidad(); 
-            }
+            cargarBranding();
+
+            if(localStorage.getItem('pyp_privacidad') === 'false') { togglePrivacidad(); }
             
             cargarIndicadores();
         };
+
+        function cargarBranding() {
+            // Aplicar Logo
+            const logo = localStorage.getItem('pyp_logo_url');
+            if(logo) {
+                document.getElementById('app-logo-sidebar').src = logo;
+                document.getElementById('app-logo-sidebar').classList.remove('hidden');
+                document.getElementById('app-icon-sidebar').classList.add('hidden');
+                document.getElementById('app-title-sidebar').classList.add('hidden');
+
+                // En móvil ponemos el logo en el header principal
+                document.getElementById('app-logo-header').src = logo;
+                document.getElementById('app-logo-header').classList.remove('hidden');
+                document.getElementById('app-icon-header').classList.add('hidden');
+                document.getElementById('app-title-header').classList.add('hidden', 'sm:inline-block');
+            }
+
+            // Aplicar Fondo (Watermark)
+            const fondo = localStorage.getItem('pyp_fondo_url');
+            if(fondo) {
+                document.getElementById('watermark-bg').style.backgroundImage = `url('${fondo}')`;
+            }
+        }
 
         function toggleMobileMenu() {
             document.getElementById('sidebar').classList.toggle('-translate-x-full');
@@ -174,6 +214,7 @@
 
         async function cargarIndicadores() {
             try {
+                // Hacemos el llamado a Supabase sin bloquear la UI
                 const [resProd, resCli] = await Promise.all([
                     fetch(`${SUPABASE_URL}/rest/v1/productos?select=id_producto_sku&estado_producto=eq.ACTIVO`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }),
                     fetch(`${SUPABASE_URL}/rest/v1/clientes?select=id`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } })
@@ -182,7 +223,7 @@
                 const dataCli = await resCli.json();
                 if(Array.isArray(dataProd)) document.getElementById('indicador-productos').innerText = dataProd.length;
                 if(Array.isArray(dataCli)) document.getElementById('indicador-clientes').innerText = dataCli.length;
-            } catch(e) { console.error(e); }
+            } catch(e) { console.error("Error cargando indicadores", e); }
         }
     </script>
 </body>
