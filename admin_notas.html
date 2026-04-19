@@ -82,7 +82,7 @@
         async function cargarDespachos() {
             try {
                 // Buscamos transacciones tipo 'Nota de Entrega'
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/facturas?tipo_transaccion=eq.Nota%20de%20Entrega&order=fecha_emision.desc`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } });
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/facturas?tipo_transaccion=eq.Nota%20de%20Entrega&order=fecha_emision.desc`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${localStorage.getItem('pyp_token_seguro')}`;
                 const data = await res.json();
                 
                 const tbody = document.getElementById('tabla-despachos');
@@ -120,7 +120,7 @@
                 // Dejémoslo en Nota de Entrega pero con estatus Completada.
                 const res = await fetch(`${SUPABASE_URL}/rest/v1/facturas?id_factura=eq.${id}`, {
                     method: 'PATCH',
-                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' },
+                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${localStorage.getItem('pyp_token_seguro')}`, 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         estatus: 'Completada',
                         fecha_emision: new Date().toISOString() // Actualizamos la fecha a la del pago real
