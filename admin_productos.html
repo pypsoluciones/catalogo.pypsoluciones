@@ -21,13 +21,11 @@
         .sidebar-link { font-weight: 500; padding: 8px 14px; font-size: 13px; letter-spacing: 0.01em; }
         .sidebar-icon { font-size: 14px; width: 22px; text-align: center; }
         .param-label { font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
-        .param-value { font-size: 13px; color: #1e293b; font-weight: 500; }
         .btn-vista.active { background-color: #e2e8f0; color: #143B62; border-color: #cbd5e1; }
         .text-truncate-25 { max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .filter-panel { transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out; overflow: hidden; max-height: 0; opacity: 0; }
         .filter-panel.open { max-height: 200px; opacity: 1; overflow: visible; }
         
-        /* Loading Overlay for Uploads */
         #upload-overlay { background-color: rgba(255,255,255,0.8); backdrop-filter: blur(2px); }
     </style>
     <script>if (localStorage.getItem('pyp_sesion_activa') !== 'true') window.location.href = 'login.html';</script>
@@ -39,17 +37,19 @@
     <aside id="sidebar" class="w-64 md:w-56 bg-[#143B62] text-white flex flex-col fixed inset-y-0 left-0 z-50 transform -translate-x-full md:translate-x-0 md:relative transition-transform duration-300 shadow-2xl md:shadow-xl">
         <div class="p-5 border-b border-white/10 flex items-center justify-between gap-3 shrink-0">
             <div class="flex items-center gap-3">
-                <i class="fa-solid fa-layer-group text-[#E67E22] text-2xl"></i>
-                <h2 class="font-semibold text-lg tracking-wide">P&P Admin</h2>
+                <img id="app-logo-sidebar" src="" class="h-8 hidden object-contain">
+                <i id="app-icon-sidebar" class="fa-solid fa-layer-group text-[#E67E22] text-2xl"></i>
+                <h2 id="app-title-sidebar" class="font-semibold text-lg tracking-wide">P&P Admin</h2>
             </div>
             <button onclick="toggleMobileMenu()" class="md:hidden text-gray-300 hover:text-white text-xl"><i class="fa-solid fa-times"></i></button>
         </div>
         <nav class="flex-1 p-3 space-y-1 overflow-y-auto custom-scroll">
             <a href="admin_dashboard.html" class="flex items-center text-gray-300 hover:bg-white/10 rounded-md transition sidebar-link"><i class="fa-solid fa-chart-pie sidebar-icon"></i> Dashboard</a>
+            <a href="admin_configuracion.html" class="flex items-center text-gray-300 hover:bg-white/10 rounded-md transition sidebar-link mb-2"><i class="fa-solid fa-gear sidebar-icon"></i> Configuración</a>
             <a href="admin_ventas.html" class="flex items-center text-gray-300 hover:bg-white/10 rounded-md transition sidebar-link"><i class="fa-solid fa-cash-register sidebar-icon"></i> Ventas (POS)</a>
             <a href="admin_compras.html" class="flex items-center text-gray-300 hover:bg-white/10 rounded-md transition sidebar-link"><i class="fa-solid fa-truck-ramp-box sidebar-icon"></i> Compras</a>
             <div class="space-y-1 pt-1">
-                <button type="button" onclick="document.getElementById('submenu-inv').classList.toggle('hidden')" class="w-full flex items-center justify-between bg-[#E67E22] text-white rounded-md shadow-sm transition btn-press sidebar-link">
+                <button type="button" class="w-full flex items-center justify-between bg-[#E67E22] text-white rounded-md shadow-sm transition btn-press sidebar-link">
                     <div class="flex items-center"><i class="fa-solid fa-boxes-stacked sidebar-icon"></i> Inventario</div>
                     <i class="fa-solid fa-chevron-down text-[10px]"></i>
                 </button>
@@ -61,9 +61,7 @@
             <a href="admin_contactos.html" class="flex items-center text-gray-300 hover:bg-white/10 rounded-md transition sidebar-link mt-1"><i class="fa-solid fa-address-book sidebar-icon"></i> Directorio</a>
         </nav>
         <div class="p-3 border-t border-white/10 shrink-0 bg-[#0f2d4a]">
-            <button onclick="cerrarSesion()" class="w-full flex items-center justify-center gap-2 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white py-2 rounded-md font-medium transition text-xs shadow-sm btn-press">
-                <i class="fa-solid fa-power-off"></i> Cerrar Sesión
-            </button>
+            <button onclick="cerrarSesion()" class="w-full flex items-center justify-center gap-2 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white py-2 rounded-md font-medium transition text-xs shadow-sm btn-press"><i class="fa-solid fa-power-off"></i> Cerrar Sesión</button>
         </div>
     </aside>
 
@@ -79,11 +77,10 @@
                 <div class="bg-gray-50 px-2 md:px-3 py-1.5 rounded-md border border-gray-200 flex items-center gap-2 text-[10px] md:text-[11px] font-semibold text-gray-600 tracking-wide uppercase">
                     <i class="fa-solid fa-user-tie text-[#143B62]"></i> <span id="nombre-usuario" class="hidden sm:inline-block">Admin</span>
                 </div>
-                <button onclick="cerrarSesion()" class="hidden md:inline-block text-red-500 hover:text-red-700 text-lg transition btn-press"><i class="fa-solid fa-power-off"></i></button>
             </div>
         </header>
 
-        <div class="flex-1 overflow-auto p-4 md:p-6 custom-scroll flex flex-col">
+        <div class="flex-1 overflow-auto p-4 md:p-6 custom-scroll pb-24 md:pb-6 flex flex-col">
             <div class="flex flex-col md:flex-row gap-3 mb-3 items-center shrink-0">
                 <div class="flex-1 flex gap-2 w-full">
                     <div class="relative flex-1">
@@ -131,12 +128,19 @@
         </div>
     </main>
 
+    <nav class="md:hidden fixed bottom-0 w-full bg-white border-t border-gray-200 flex justify-around items-center pb-2 pt-2 px-1 z-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+        <a href="admin_dashboard.html" class="flex flex-col items-center p-2 text-gray-400 hover:text-[#143B62] transition w-1/4"><i class="fa-solid fa-chart-pie text-lg mb-1"></i><span class="text-[9px] font-semibold">Inicio</span></a>
+        <a href="admin_ventas.html" class="flex flex-col items-center p-2 text-gray-400 hover:text-[#143B62] transition w-1/4"><i class="fa-solid fa-cash-register text-lg mb-1"></i><span class="text-[9px] font-semibold">Vender</span></a>
+        <a href="admin_productos.html" class="flex flex-col items-center p-2 text-[#E67E22] transition w-1/4"><i class="fa-solid fa-boxes-stacked text-lg mb-1"></i><span class="text-[9px] font-bold">Inventario</span></a>
+        <button onclick="toggleMobileMenu()" class="flex flex-col items-center p-2 text-gray-400 hover:text-[#143B62] transition w-1/4 btn-press"><i class="fa-solid fa-bars text-lg mb-1"></i><span class="text-[9px] font-semibold">Menú</span></button>
+    </nav>
+
     <div id="modal-producto" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4 fade-in">
         <div class="bg-white rounded-lg shadow-2xl w-full max-w-5xl max-h-[95vh] flex flex-col overflow-hidden border border-gray-200 relative">
             
             <div id="upload-overlay" class="absolute inset-0 z-[110] hidden flex-col items-center justify-center">
-                <i class="fa-solid fa-cloud-arrow-up fa-bounce text-4xl text-[#143B62] mb-3"></i>
-                <p class="font-bold text-[#143B62] tracking-wider text-sm" id="upload-text">Subiendo Imagen...</p>
+                <i class="fa-solid fa-compress fa-beat text-4xl text-[#E67E22] mb-3"></i>
+                <p class="font-bold text-[#143B62] tracking-wider text-sm" id="upload-text">Comprimiendo y Subiendo...</p>
             </div>
 
             <div class="bg-[#143B62] text-white px-5 py-3.5 flex justify-between items-center shrink-0">
@@ -185,44 +189,43 @@
                             </div>
                         </div>
 
-                        <div class="bg-white p-4 rounded border border-gray-200 shadow-sm">
-                            <h4 class="text-[11px] font-semibold text-[#E67E22] uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Multimedia Local & Web</h4>
+                        <div class="bg-white p-4 rounded border border-gray-200 shadow-sm border-t-2 border-t-purple-500">
+                            <h4 class="text-[11px] font-semibold text-purple-600 uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Multimedia y Descripción</h4>
                             
-                            <div class="mb-3">
-                                <label class="block param-label mb-1">Imagen Principal</label>
-                                <div class="flex gap-2">
-                                    <input type="url" id="prod-imagen" placeholder="Pega URL o usa el botón ➔" class="flex-1 border border-gray-300 rounded px-2.5 py-1.5 text-[12px] text-blue-600 outline-none">
-                                    <input type="file" id="file-img1" accept="image/*" capture="environment" class="hidden" onchange="subirImagen(event, 'prod-imagen')">
-                                    <button type="button" onclick="document.getElementById('file-img1').click()" class="px-3 bg-gray-100 border border-gray-300 rounded hover:bg-gray-200 transition text-[#143B62] btn-press" title="Subir / Tomar Foto">
-                                        <i class="fa-solid fa-camera"></i>
-                                    </button>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                                <div>
+                                    <label class="block param-label mb-1">Imagen Principal</label>
+                                    <div class="flex gap-2">
+                                        <input type="url" id="prod-imagen" placeholder="URL o Subir Foto ➔" class="flex-1 border border-gray-300 rounded px-2.5 py-1.5 text-[12px] text-blue-600 outline-none bg-gray-50">
+                                        <input type="file" id="file-img1" accept="image/*" capture="environment" class="hidden" onchange="subirImagenComprimida(event, 'prod-imagen')">
+                                        <button type="button" onclick="document.getElementById('file-img1').click()" class="px-3 bg-gray-200 border border-gray-300 rounded hover:bg-gray-300 transition text-[#143B62] btn-press" title="Subir / Tomar Foto"><i class="fa-solid fa-camera"></i></button>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block param-label mb-1 text-gray-400">Imagen Secundaria 2</label>
+                                    <div class="flex gap-2">
+                                        <input type="url" id="prod-imagen2" placeholder="Opcional" class="flex-1 border border-gray-300 rounded px-2.5 py-1.5 text-[12px] text-blue-600 outline-none">
+                                        <input type="file" id="file-img2" accept="image/*" capture="environment" class="hidden" onchange="subirImagenComprimida(event, 'prod-imagen2')">
+                                        <button type="button" onclick="document.getElementById('file-img2').click()" class="px-3 bg-gray-100 border border-gray-300 rounded hover:bg-gray-200 transition text-[#143B62] btn-press"><i class="fa-solid fa-camera"></i></button>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block param-label mb-1 text-gray-400">Imagen Secundaria 3</label>
+                                    <div class="flex gap-2">
+                                        <input type="url" id="prod-imagen3" placeholder="Opcional" class="flex-1 border border-gray-300 rounded px-2.5 py-1.5 text-[12px] text-blue-600 outline-none">
+                                        <input type="file" id="file-img3" accept="image/*" capture="environment" class="hidden" onchange="subirImagenComprimida(event, 'prod-imagen3')">
+                                        <button type="button" onclick="document.getElementById('file-img3').click()" class="px-3 bg-gray-100 border border-gray-300 rounded hover:bg-gray-200 transition text-[#143B62] btn-press"><i class="fa-solid fa-camera"></i></button>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block param-label mb-1 text-gray-400">Video Promo (YouTube/Vimeo)</label>
+                                    <input type="url" id="prod-video" placeholder="Pega el link del video aquí" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-[12px] text-red-600 outline-none">
                                 </div>
                             </div>
-                            
-                            <details id="details-multimedia" class="mb-3 group">
-                                <summary class="text-[10px] font-bold text-[#143B62] cursor-pointer hover:text-[#E67E22] transition select-none outline-none flex items-center gap-1"><i class="fa-solid fa-plus-circle"></i> AÑADIR MÁS FOTOS O VIDEO</summary>
-                                <div class="pt-3 space-y-2 fade-in">
-                                    <div>
-                                        <label class="block param-label mb-1 text-gray-400">Imagen 2</label>
-                                        <div class="flex gap-2">
-                                            <input type="url" id="prod-imagen2" placeholder="Opcional" class="flex-1 border border-gray-300 rounded px-2.5 py-1.5 text-[12px] text-blue-600 outline-none">
-                                            <input type="file" id="file-img2" accept="image/*" capture="environment" class="hidden" onchange="subirImagen(event, 'prod-imagen2')">
-                                            <button type="button" onclick="document.getElementById('file-img2').click()" class="px-3 bg-gray-100 border border-gray-300 rounded hover:bg-gray-200 transition text-[#143B62] btn-press"><i class="fa-solid fa-camera"></i></button>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label class="block param-label mb-1 text-gray-400">Imagen 3</label>
-                                        <div class="flex gap-2">
-                                            <input type="url" id="prod-imagen3" placeholder="Opcional" class="flex-1 border border-gray-300 rounded px-2.5 py-1.5 text-[12px] text-blue-600 outline-none">
-                                            <input type="file" id="file-img3" accept="image/*" capture="environment" class="hidden" onchange="subirImagen(event, 'prod-imagen3')">
-                                            <button type="button" onclick="document.getElementById('file-img3').click()" class="px-3 bg-gray-100 border border-gray-300 rounded hover:bg-gray-200 transition text-[#143B62] btn-press"><i class="fa-solid fa-camera"></i></button>
-                                        </div>
-                                    </div>
-                                    <div><label class="block param-label mb-1 text-gray-400">URL Video (YouTube / Vimeo)</label><input type="url" id="prod-video" placeholder="Opcional" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-[12px] text-red-600 outline-none"></div>
-                                </div>
-                            </details>
-
-                            <div><label class="block param-label mb-1">Descripción Web</label><textarea id="prod-descripcion" rows="2" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-[13px] outline-none"></textarea></div>
+                            <div>
+                                <label class="block param-label mb-1">Descripción para la Web</label>
+                                <textarea id="prod-descripcion" rows="2" placeholder="Escribe detalles atractivos sobre el producto..." class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-[13px] outline-none focus:border-[#143B62]"></textarea>
+                            </div>
                         </div>
                     </div>
 
@@ -321,9 +324,20 @@
         window.onload = async () => {
             const nombre = localStorage.getItem('pyp_usuario_nombre');
             if(nombre) { document.getElementById('nombre-usuario').innerText = nombre.split(' ')[0]; }
+            cargarBrandingSidebar();
             actualizarUIBotonesVista();
             await cargarTodo();
         };
+
+        function cargarBrandingSidebar() {
+            const logo = localStorage.getItem('pyp_logo_url');
+            if(logo) {
+                document.getElementById('app-logo-sidebar').src = logo;
+                document.getElementById('app-logo-sidebar').classList.remove('hidden');
+                document.getElementById('app-icon-sidebar').classList.add('hidden');
+                document.getElementById('app-title-sidebar').classList.add('hidden');
+            }
+        }
 
         function toggleMobileMenu() {
             document.getElementById('sidebar').classList.toggle('-translate-x-full');
@@ -346,54 +360,78 @@
             }
         }
 
-        // --- SISTEMA DE SUBIDA DE IMÁGENES A SUPABASE STORAGE ---
-        async function subirImagen(event, inputIdTarget) {
-            const file = event.target.files[0];
-            if (!file) return;
+        // ==========================================
+        // MOTOR DE COMPRESIÓN DE IMÁGENES HTML5
+        // (Convierte 5MB a ~100KB antes de subir)
+        // ==========================================
+        async function comprimirImagen(file, maxWidth = 1000, maxHeight = 1000, quality = 0.7) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = event => {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.onload = () => {
+                        let width = img.width;
+                        let height = img.height;
 
-            // Validación de tamaño (Max 2MB)
-            if (file.size > 2 * 1024 * 1024) {
-                alert("La imagen es muy pesada. El tamaño máximo es 2MB.");
-                return;
-            }
+                        if (width > height) {
+                            if (width > maxWidth) { height *= maxWidth / width; width = maxWidth; }
+                        } else {
+                            if (height > maxHeight) { width *= maxHeight / height; height = maxHeight; }
+                        }
+
+                        const canvas = document.createElement('canvas');
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        canvas.toBlob(blob => {
+                            resolve(new File([blob], file.name.replace(/\.[^/.]+$/, ".jpg"), { type: 'image/jpeg' }));
+                        }, 'image/jpeg', quality);
+                    };
+                    img.onerror = error => reject(error);
+                };
+                reader.onerror = error => reject(error);
+            });
+        }
+
+        async function subirImagenComprimida(event, inputIdTarget) {
+            const fileOriginal = event.target.files[0];
+            if (!fileOriginal) return;
 
             const overlay = document.getElementById('upload-overlay');
             overlay.classList.remove('hidden');
             overlay.classList.add('flex');
 
             try {
-                // Generar nombre único para no sobreescribir fotos viejas
-                const fileExt = file.name.split('.').pop();
-                const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
-                const filePath = `${fileName}`; // Se subirá directo a la raíz del bucket 'inventario'
+                // 1. Comprimir la imagen mágicamente en el navegador
+                const fileComprimido = await comprimirImagen(fileOriginal, 800, 800, 0.75);
+                
+                // 2. Subir a Supabase (Ahora pesa KB en vez de MB)
+                const fileName = `prod_${Date.now()}_${Math.random().toString(36).substring(7)}.jpg`;
 
-                const res = await fetch(`${SUPABASE_URL}/storage/v1/object/inventario/${filePath}`, {
+                const res = await fetch(`${SUPABASE_URL}/storage/v1/object/inventario/${fileName}`, {
                     method: 'POST',
-                    headers: {
-                        'apikey': SUPABASE_KEY,
-                        'Authorization': `Bearer ${SUPABASE_KEY}`,
-                        'Content-Type': file.type
-                    },
-                    body: file
+                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'image/jpeg' },
+                    body: fileComprimido
                 });
 
                 if (!res.ok) {
                     const err = await res.json();
-                    throw new Error(err.message || "Error al subir a Supabase");
+                    throw new Error(err.message || "Error al subir");
                 }
 
-                // Si subió bien, construimos la URL Pública
-                const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/inventario/${filePath}`;
-                
-                // Pegar la URL en la cajita correspondiente
+                // 3. Pegar la URL
+                const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/inventario/${fileName}`;
                 document.getElementById(inputIdTarget).value = publicUrl;
                 
             } catch (error) {
-                alert("Error al subir la imagen: \n" + error.message + "\n\n¿Creaste el Bucket 'inventario' en Supabase y lo pusiste Público?");
+                alert("Error al procesar/subir imagen: " + error.message);
             } finally {
                 overlay.classList.add('hidden');
                 overlay.classList.remove('flex');
-                // Limpiar el input file para que permita subir la misma foto si hubo error
                 event.target.value = ''; 
             }
         }
@@ -408,7 +446,7 @@
                 dbPrecios = await resPre.json();
                 dataMaestra = await resPar.json();
 
-                if(!Array.isArray(dbInventario)) throw new Error("Error en conexión con la base de datos.");
+                if(!Array.isArray(dbInventario)) throw new Error("Error en conexión.");
 
                 const paramImg = dataMaestra.find(p => p.grupo === 'IMAGEN_DEFECTO');
                 if (paramImg && paramImg.valor.trim() !== '') { imagenGlobalDefecto = paramImg.valor; }
@@ -580,6 +618,21 @@
                 const p2Texto = p.precio_2_usd > 0 ? `≥${p.requerido_precio_2 || 0}: $${p.precio_2_usd}` : '-';
                 const p3Texto = p.precio_3_usd > 0 ? `≥${p.requerido_precio_3 || 0}: $${p.precio_3_usd}` : '-';
 
+                // ========================================================
+                // INYECTAR LA GALERÍA MULTIMEDIA SI EL PRODUCTO TIENE
+                // ========================================================
+                let galeriaHTML = '';
+                if(p.imagen_2 || p.imagen_3 || p.video_url) {
+                    galeriaHTML = `<div class="mt-3 pt-3 border-t border-gray-200">
+                        <span class="block param-label mb-1.5">Galería Multimedia del Producto</span>
+                        <div class="flex gap-2">
+                            ${p.imagen_2 ? `<a href="${p.imagen_2}" target="_blank" title="Ver Imagen 2"><img src="${p.imagen_2}" class="w-12 h-12 object-cover rounded border border-gray-300 hover:opacity-80 transition shadow-sm"></a>` : ''}
+                            ${p.imagen_3 ? `<a href="${p.imagen_3}" target="_blank" title="Ver Imagen 3"><img src="${p.imagen_3}" class="w-12 h-12 object-cover rounded border border-gray-300 hover:opacity-80 transition shadow-sm"></a>` : ''}
+                            ${p.video_url ? `<a href="${p.video_url}" target="_blank" title="Ver Video Promo" class="w-12 h-12 flex items-center justify-center bg-red-50 text-red-600 border border-red-200 rounded hover:bg-red-100 transition shadow-sm"><i class="fa-brands fa-youtube text-2xl"></i></a>` : ''}
+                        </div>
+                    </div>`;
+                }
+
                 htmlStr += `
                 <tr class="hover:bg-gray-50 transition cursor-pointer" onclick="toggleDetalleTbl('${p.id_producto_sku}')">
                     <td class="p-2 text-center w-12"><img src="${imgAUsar}" onerror="this.src='${imagenGlobalDefecto}'" class="w-8 h-8 object-contain mx-auto border rounded bg-white"></td>
@@ -602,7 +655,8 @@
                             <div><span class="block param-label">Código Barras</span><span class="param-value font-mono text-[11px]">${p.codigo_barras||'-'}</span></div>
                             <div><span class="block param-label">Venta Negativo</span><span class="param-value ${p.permitir_negativo ? 'text-red-500 font-bold':'text-gray-500'}">${p.permitir_negativo ? 'SÍ' : 'NO'}</span></div>
                         </div>
-                        ${p.descripcion ? `<div class="mt-2 pt-2 border-t border-gray-200"><span class="block param-label mb-0.5">Descripción</span><p class="text-[11px] text-gray-600 italic">${p.descripcion}</p></div>` : ''}
+                        ${p.descripcion ? `<div class="mt-3 pt-3 border-t border-gray-200"><span class="block param-label mb-0.5">Descripción</span><p class="text-[11px] text-gray-600 italic">${p.descripcion}</p></div>` : ''}
+                        ${galeriaHTML}
                     </td>
                 </tr>`;
             }
@@ -640,6 +694,21 @@
                 const p2Texto = p.precio_2_usd > 0 ? `≥${p.requerido_precio_2 || 0}: $${p.precio_2_usd}` : '-';
                 const p3Texto = p.precio_3_usd > 0 ? `≥${p.requerido_precio_3 || 0}: $${p.precio_3_usd}` : '-';
 
+                // ========================================================
+                // INYECTAR LA GALERÍA MULTIMEDIA SI EL PRODUCTO TIENE (VISTA GRID)
+                // ========================================================
+                let galeriaHTML = '';
+                if(p.imagen_2 || p.imagen_3 || p.video_url) {
+                    galeriaHTML = `<div class="p-3 pt-0 border-b border-gray-200">
+                        <span class="block param-label mb-1.5">Galería Multimedia</span>
+                        <div class="flex gap-2">
+                            ${p.imagen_2 ? `<a href="${p.imagen_2}" target="_blank"><img src="${p.imagen_2}" class="w-10 h-10 object-cover rounded border border-gray-300 shadow-sm hover:opacity-80"></a>` : ''}
+                            ${p.imagen_3 ? `<a href="${p.imagen_3}" target="_blank"><img src="${p.imagen_3}" class="w-10 h-10 object-cover rounded border border-gray-300 shadow-sm hover:opacity-80"></a>` : ''}
+                            ${p.video_url ? `<a href="${p.video_url}" target="_blank" class="w-10 h-10 flex items-center justify-center bg-red-50 text-red-600 rounded border border-red-200 shadow-sm hover:bg-red-100"><i class="fa-brands fa-youtube text-lg"></i></a>` : ''}
+                        </div>
+                    </div>`;
+                }
+
                 htmlStr += `
                 <div class="bg-white rounded border border-gray-200 shadow-sm p-4 flex flex-col gap-3">
                     <div class="flex gap-4">
@@ -673,8 +742,8 @@
                             <div class="flex flex-col border-b pb-1"><span class="param-label mb-0.5">Escalas (Unds ➔ Precio USD)</span><span class="param-value text-[10px] text-blue-600 font-bold">${p1Texto} | ${p2Texto} | ${p3Texto}</span></div>
                             <div class="flex justify-between border-b pb-1"><span class="param-label">Barras</span><span class="param-value font-mono text-[11px]">${p.codigo_barras||'-'}</span></div>
                         </div>
-                        ${p.descripcion ? `<div class="p-3 pt-0 border-b pb-2"><span class="block param-label mb-0.5">Descripción</span><p class="text-[11px] text-gray-600 italic">${p.descripcion}</p></div>` : ''}
-                        
+                        ${p.descripcion ? `<div class="p-3 pt-0 border-b border-gray-200 mb-2"><span class="block param-label mb-0.5">Descripción</span><p class="text-[11px] text-gray-600 italic">${p.descripcion}</p></div>` : ''}
+                        ${galeriaHTML}
                         <div class="p-2 bg-white border-t flex justify-end">
                             <button onclick="abrirModalProducto('${prodStr}')" class="px-3 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded text-[11px] font-semibold uppercase"><i class="fa-solid fa-pen-to-square mr-1"></i> Editar</button>
                         </div>
@@ -739,7 +808,6 @@
             f.reset();
             cerrarEscaner();
             
-            document.getElementById('details-multimedia').removeAttribute('open');
             document.getElementById('prod-fijo-bs').checked = false;
             document.getElementById('prod-margen-gen').value = '';
             document.getElementById('prod-m1').value = '';
