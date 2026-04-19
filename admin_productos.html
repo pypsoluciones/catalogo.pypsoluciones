@@ -26,6 +26,9 @@
         .text-truncate-25 { max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .filter-panel { transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out; overflow: hidden; max-height: 0; opacity: 0; }
         .filter-panel.open { max-height: 200px; opacity: 1; overflow: visible; }
+        
+        /* Loading Overlay for Uploads */
+        #upload-overlay { background-color: rgba(255,255,255,0.8); backdrop-filter: blur(2px); }
     </style>
     <script>if (localStorage.getItem('pyp_sesion_activa') !== 'true') window.location.href = 'login.html';</script>
 </head>
@@ -129,7 +132,13 @@
     </main>
 
     <div id="modal-producto" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4 fade-in">
-        <div class="bg-white rounded-lg shadow-2xl w-full max-w-5xl max-h-[95vh] flex flex-col overflow-hidden border border-gray-200">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-5xl max-h-[95vh] flex flex-col overflow-hidden border border-gray-200 relative">
+            
+            <div id="upload-overlay" class="absolute inset-0 z-[110] hidden flex-col items-center justify-center">
+                <i class="fa-solid fa-cloud-arrow-up fa-bounce text-4xl text-[#143B62] mb-3"></i>
+                <p class="font-bold text-[#143B62] tracking-wider text-sm" id="upload-text">Subiendo Imagen...</p>
+            </div>
+
             <div class="bg-[#143B62] text-white px-5 py-3.5 flex justify-between items-center shrink-0">
                 <h3 class="font-medium text-sm tracking-wide flex items-center" id="modal-titulo"><i class="fa-solid fa-box-open mr-2 text-[#E67E22]"></i> NUEVO REGISTRO</h3>
                 <button onclick="cerrarModalProducto()" class="text-gray-300 hover:text-white text-lg transition"><i class="fa-solid fa-times"></i></button>
@@ -177,14 +186,38 @@
                         </div>
 
                         <div class="bg-white p-4 rounded border border-gray-200 shadow-sm">
-                            <h4 class="text-[11px] font-semibold text-[#E67E22] uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Multimedia</h4>
-                            <div class="mb-3"><label class="block param-label mb-1">URL Imagen Principal</label><input type="url" id="prod-imagen" placeholder="Ej: https://..." class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-[12px] text-blue-600 outline-none"></div>
+                            <h4 class="text-[11px] font-semibold text-[#E67E22] uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Multimedia Local & Web</h4>
+                            
+                            <div class="mb-3">
+                                <label class="block param-label mb-1">Imagen Principal</label>
+                                <div class="flex gap-2">
+                                    <input type="url" id="prod-imagen" placeholder="Pega URL o usa el botón ➔" class="flex-1 border border-gray-300 rounded px-2.5 py-1.5 text-[12px] text-blue-600 outline-none">
+                                    <input type="file" id="file-img1" accept="image/*" capture="environment" class="hidden" onchange="subirImagen(event, 'prod-imagen')">
+                                    <button type="button" onclick="document.getElementById('file-img1').click()" class="px-3 bg-gray-100 border border-gray-300 rounded hover:bg-gray-200 transition text-[#143B62] btn-press" title="Subir / Tomar Foto">
+                                        <i class="fa-solid fa-camera"></i>
+                                    </button>
+                                </div>
+                            </div>
                             
                             <details id="details-multimedia" class="mb-3 group">
                                 <summary class="text-[10px] font-bold text-[#143B62] cursor-pointer hover:text-[#E67E22] transition select-none outline-none flex items-center gap-1"><i class="fa-solid fa-plus-circle"></i> AÑADIR MÁS FOTOS O VIDEO</summary>
                                 <div class="pt-3 space-y-2 fade-in">
-                                    <div><label class="block param-label mb-1 text-gray-400">URL Imagen 2</label><input type="url" id="prod-imagen2" placeholder="Opcional" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-[12px] text-blue-600 outline-none"></div>
-                                    <div><label class="block param-label mb-1 text-gray-400">URL Imagen 3</label><input type="url" id="prod-imagen3" placeholder="Opcional" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-[12px] text-blue-600 outline-none"></div>
+                                    <div>
+                                        <label class="block param-label mb-1 text-gray-400">Imagen 2</label>
+                                        <div class="flex gap-2">
+                                            <input type="url" id="prod-imagen2" placeholder="Opcional" class="flex-1 border border-gray-300 rounded px-2.5 py-1.5 text-[12px] text-blue-600 outline-none">
+                                            <input type="file" id="file-img2" accept="image/*" capture="environment" class="hidden" onchange="subirImagen(event, 'prod-imagen2')">
+                                            <button type="button" onclick="document.getElementById('file-img2').click()" class="px-3 bg-gray-100 border border-gray-300 rounded hover:bg-gray-200 transition text-[#143B62] btn-press"><i class="fa-solid fa-camera"></i></button>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block param-label mb-1 text-gray-400">Imagen 3</label>
+                                        <div class="flex gap-2">
+                                            <input type="url" id="prod-imagen3" placeholder="Opcional" class="flex-1 border border-gray-300 rounded px-2.5 py-1.5 text-[12px] text-blue-600 outline-none">
+                                            <input type="file" id="file-img3" accept="image/*" capture="environment" class="hidden" onchange="subirImagen(event, 'prod-imagen3')">
+                                            <button type="button" onclick="document.getElementById('file-img3').click()" class="px-3 bg-gray-100 border border-gray-300 rounded hover:bg-gray-200 transition text-[#143B62] btn-press"><i class="fa-solid fa-camera"></i></button>
+                                        </div>
+                                    </div>
                                     <div><label class="block param-label mb-1 text-gray-400">URL Video (YouTube / Vimeo)</label><input type="url" id="prod-video" placeholder="Opcional" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-[12px] text-red-600 outline-none"></div>
                                 </div>
                             </details>
@@ -293,16 +326,16 @@
         };
 
         function toggleMobileMenu() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('mobile-overlay');
-            sidebar.classList.toggle('-translate-x-full');
-            overlay.classList.toggle('hidden');
+            document.getElementById('sidebar').classList.toggle('-translate-x-full');
+            document.getElementById('mobile-overlay').classList.toggle('hidden');
         }
 
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
                 const modal = document.getElementById('modal-producto');
-                if (!modal.classList.contains('hidden')) { cerrarModalProducto(); }
+                if (!modal.classList.contains('hidden') && document.getElementById('upload-overlay').classList.contains('hidden')) { 
+                    cerrarModalProducto(); 
+                }
             }
         });
 
@@ -310,6 +343,58 @@
             if(confirm("¿Estás seguro que deseas cerrar sesión?")) {
                 localStorage.removeItem('pyp_sesion_activa');
                 window.location.href = 'login.html';
+            }
+        }
+
+        // --- SISTEMA DE SUBIDA DE IMÁGENES A SUPABASE STORAGE ---
+        async function subirImagen(event, inputIdTarget) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Validación de tamaño (Max 2MB)
+            if (file.size > 2 * 1024 * 1024) {
+                alert("La imagen es muy pesada. El tamaño máximo es 2MB.");
+                return;
+            }
+
+            const overlay = document.getElementById('upload-overlay');
+            overlay.classList.remove('hidden');
+            overlay.classList.add('flex');
+
+            try {
+                // Generar nombre único para no sobreescribir fotos viejas
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+                const filePath = `${fileName}`; // Se subirá directo a la raíz del bucket 'inventario'
+
+                const res = await fetch(`${SUPABASE_URL}/storage/v1/object/inventario/${filePath}`, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_KEY}`,
+                        'Content-Type': file.type
+                    },
+                    body: file
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.message || "Error al subir a Supabase");
+                }
+
+                // Si subió bien, construimos la URL Pública
+                const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/inventario/${filePath}`;
+                
+                // Pegar la URL en la cajita correspondiente
+                document.getElementById(inputIdTarget).value = publicUrl;
+                
+            } catch (error) {
+                alert("Error al subir la imagen: \n" + error.message + "\n\n¿Creaste el Bucket 'inventario' en Supabase y lo pusiste Público?");
+            } finally {
+                overlay.classList.add('hidden');
+                overlay.classList.remove('flex');
+                // Limpiar el input file para que permita subir la misma foto si hubo error
+                event.target.value = ''; 
             }
         }
 
@@ -617,7 +702,6 @@
             }
         }
 
-        // --- CÓDIGO DEL ESCÁNER DE CÁMARA ---
         function toggleEscanerCamara() {
             const container = document.getElementById('reader-container');
             if(container.classList.contains('hidden')) {
@@ -650,7 +734,6 @@
             document.getElementById('reader-container').classList.add('hidden');
         }
 
-        // --- MODAL Y GUARDADO BLINDADO CON UPSERT ---
         function abrirModalProducto(prodStr = null) {
             const f = document.getElementById('form-producto');
             f.reset();
@@ -775,7 +858,6 @@
                 precio_3_usd: esBs ? 0 : (parseFloat(p3Val) || 0)
             };
 
-            // UPSERT: Usamos POST y le decimos a Supabase que si el SKU ya existe, lo sobreescriba
             const urlProd = `${SUPABASE_URL}/rest/v1/productos?on_conflict=id_producto_sku`;
             const urlPre = `${SUPABASE_URL}/rest/v1/precios?on_conflict=id_producto_sku`;
             
