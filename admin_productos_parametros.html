@@ -13,31 +13,33 @@
         .custom-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
         .btn-press:active { transform: scale(0.97); }
         .uppercase-input { text-transform: uppercase; }
-        
-        /* CLASES CORPORATIVAS */
         .sidebar-link { font-weight: 500; padding: 8px 14px; font-size: 13px; letter-spacing: 0.01em; }
         .sidebar-icon { font-size: 14px; width: 22px; text-align: center; }
+        
+        /* Caja de Ayuda Dinámica */
+        .help-box { background-color: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; padding: 10px 14px; border-radius: 6px; font-size: 11px; margin-top: 8px; display: flex; gap: 8px; line-height: 1.5; }
+        .help-box i { margin-top: 2px; font-size: 14px; }
     </style>
     <script>if (localStorage.getItem('pyp_sesion_activa') !== 'true') window.location.href = 'login.html';</script>
 </head>
-<body class="bg-[#f4f6f8] flex h-screen overflow-hidden text-gray-800">
+<body class="bg-[#f4f6f8] flex h-screen overflow-hidden text-gray-800 relative">
 
-    <aside class="w-56 bg-[#143B62] text-white flex flex-col hidden md:flex shrink-0 shadow-xl z-20">
-        <div class="p-5 border-b border-white/10 flex items-center gap-3">
-            <i class="fa-solid fa-layer-group text-[#E67E22] text-2xl"></i>
-            <h2 class="font-semibold text-lg tracking-wide">P&P Admin</h2>
+    <div id="mobile-overlay" onclick="toggleMobileMenu()" class="fixed inset-0 bg-gray-900/60 z-40 hidden backdrop-blur-sm md:hidden transition-opacity"></div>
+
+    <aside id="sidebar" class="w-64 md:w-56 bg-[#143B62] text-white flex flex-col fixed inset-y-0 left-0 z-50 transform -translate-x-full md:translate-x-0 md:relative transition-transform duration-300 shadow-2xl md:shadow-xl">
+        <div class="p-5 border-b border-white/10 flex items-center justify-between gap-3 shrink-0">
+            <div class="flex items-center gap-3">
+                <img id="app-logo-sidebar" src="" class="h-8 hidden object-contain">
+                <i id="app-icon-sidebar" class="fa-solid fa-layer-group text-[#E67E22] text-2xl"></i>
+                <h2 id="app-title-sidebar" class="font-semibold text-lg tracking-wide">P&P Admin</h2>
+            </div>
+            <button onclick="toggleMobileMenu()" class="md:hidden text-gray-300 hover:text-white text-xl"><i class="fa-solid fa-times"></i></button>
         </div>
         <nav class="flex-1 p-3 space-y-1 overflow-y-auto custom-scroll">
-            <a href="admin_dashboard.html" class="flex items-center text-gray-300 hover:bg-white/10 rounded-md transition sidebar-link">
-                <i class="fa-solid fa-chart-pie sidebar-icon"></i> Dashboard
-            </a>
-            <a href="admin_ventas.html" class="flex items-center text-gray-300 hover:bg-white/10 rounded-md transition sidebar-link">
-                <i class="fa-solid fa-cash-register sidebar-icon"></i> Ventas (POS)
-            </a>
-            <a href="admin_compras.html" class="flex items-center text-gray-300 hover:bg-white/10 rounded-md transition sidebar-link">
-                <i class="fa-solid fa-truck-ramp-box sidebar-icon"></i> Compras
-            </a>
-            
+            <a href="admin_dashboard.html" class="flex items-center text-gray-300 hover:bg-white/10 rounded-md transition sidebar-link"><i class="fa-solid fa-chart-pie sidebar-icon"></i> Dashboard</a>
+            <a href="admin_configuracion.html" class="flex items-center text-gray-300 hover:bg-white/10 rounded-md transition sidebar-link mb-2"><i class="fa-solid fa-gear sidebar-icon"></i> Configuración</a>
+            <a href="admin_ventas.html" class="flex items-center text-gray-300 hover:bg-white/10 rounded-md transition sidebar-link"><i class="fa-solid fa-cash-register sidebar-icon"></i> Ventas (POS)</a>
+            <a href="admin_compras.html" class="flex items-center text-gray-300 hover:bg-white/10 rounded-md transition sidebar-link"><i class="fa-solid fa-truck-ramp-box sidebar-icon"></i> Compras</a>
             <div class="space-y-1 pt-1">
                 <button type="button" onclick="document.getElementById('submenu-inv').classList.toggle('hidden')" class="w-full flex items-center justify-between bg-[#E67E22] text-white rounded-md shadow-sm transition btn-press sidebar-link">
                     <div class="flex items-center"><i class="fa-solid fa-boxes-stacked sidebar-icon"></i> Inventario</div>
@@ -48,37 +50,29 @@
                     <a href="admin_productos_parametros.html" class="block py-1.5 text-white font-semibold text-xs border-l-2 border-[#E67E22] pl-3">PARÁMETROS</a>
                 </div>
             </div>
-
-            <a href="admin_contactos.html" class="flex items-center text-gray-300 hover:bg-white/10 rounded-md transition sidebar-link mt-1">
-                <i class="fa-solid fa-address-book sidebar-icon"></i> Directorio
-            </a>
+            <a href="admin_contactos.html" class="flex items-center text-gray-300 hover:bg-white/10 rounded-md transition sidebar-link mt-1"><i class="fa-solid fa-address-book sidebar-icon"></i> Directorio</a>
         </nav>
-        
         <div class="p-3 border-t border-white/10 shrink-0 bg-[#0f2d4a]">
-            <button onclick="cerrarSesion()" class="w-full flex items-center justify-center gap-2 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white py-2 rounded-md font-medium transition text-xs shadow-sm btn-press">
-                <i class="fa-solid fa-power-off"></i> Cerrar Sesión
-            </button>
+            <button onclick="cerrarSesion()" class="w-full flex items-center justify-center gap-2 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white py-2 rounded-md font-medium transition text-xs shadow-sm btn-press"><i class="fa-solid fa-power-off"></i> Cerrar Sesión</button>
         </div>
     </aside>
 
-    <main class="flex-1 flex flex-col h-screen overflow-hidden bg-[#f4f6f8]">
-        <header class="bg-white shadow-sm px-6 py-3 flex justify-between items-center z-10 shrink-0 border-b border-gray-200">
-            <div>
-                <h1 class="text-lg font-semibold text-[#143B62] flex items-center gap-2"><i class="fa-solid fa-cogs text-[#E67E22]"></i> Parámetros Maestros</h1>
-            </div>
+    <main class="flex-1 flex flex-col h-screen overflow-hidden bg-[#f4f6f8] w-full">
+        <header class="bg-white shadow-sm px-4 md:px-6 py-3 flex justify-between items-center z-10 shrink-0 border-b border-gray-200">
             <div class="flex items-center gap-3">
-                <div class="bg-gray-50 px-3 py-1.5 rounded-md border border-gray-200 flex items-center gap-2 text-[11px] font-semibold text-gray-600 tracking-wide uppercase">
-                    <i class="fa-solid fa-user-tie text-[#143B62]"></i> <span id="nombre-usuario">Admin</span>
-                </div>
-                <button onclick="cerrarSesion()" class="md:hidden text-red-500 hover:text-red-700 text-lg transition btn-press"><i class="fa-solid fa-power-off"></i></button>
+                <button onclick="toggleMobileMenu()" class="md:hidden text-gray-600 hover:text-[#143B62] text-xl transition btn-press px-2"><i class="fa-solid fa-bars"></i></button>
+                <h1 class="text-base md:text-lg font-semibold text-[#143B62] flex items-center gap-2 truncate"><i class="fa-solid fa-tags text-[#E67E22] hidden sm:inline-block"></i> Parámetros de Inventario</h1>
+            </div>
+            <div class="flex items-center gap-2 md:gap-3">
+                <div class="bg-gray-50 px-2 md:px-3 py-1.5 rounded-md border border-gray-200 flex items-center gap-2 text-[10px] md:text-[11px] font-semibold text-gray-600 tracking-wide uppercase"><i class="fa-solid fa-user-tie text-[#143B62]"></i> <span id="nombre-usuario" class="hidden sm:inline-block">Admin</span></div>
             </div>
         </header>
 
-        <div class="flex-1 overflow-auto p-4 md:p-6 custom-scroll">
+        <div class="flex-1 overflow-auto p-4 md:p-6 custom-scroll pb-24 md:pb-6">
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
                 
                 <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 lg:col-span-1 h-fit">
-                    <h3 class="font-semibold text-[#143B62] text-sm mb-4 border-b border-gray-100 pb-2 tracking-wide"><i class="fa-solid fa-sliders mr-2"></i> Gestión de Parámetros</h3>
+                    <h3 class="font-semibold text-[#143B62] text-sm mb-4 border-b border-gray-100 pb-2 tracking-wide"><i class="fa-solid fa-layer-group mr-2"></i> Gestión de Etiquetas</h3>
                     
                     <form id="form-parametro" onsubmit="guardarParametro(event)" class="space-y-4">
                         <div>
@@ -86,12 +80,11 @@
                             <select id="param-grupo" required onchange="ajustarInputValor()" class="w-full border border-gray-300 rounded-md px-3 py-2 text-[13px] focus:border-[#E67E22] outline-none font-semibold bg-gray-50">
                                 <option value="TODOS">-- 👁️ MOSTRAR TODOS LOS GRUPOS --</option>
                                 <option disabled>-----------------------------------</option>
-                                <option value="CATEGORIA_VENTA">CATEGORÍA DE VENTA</option>
                                 <option value="CATEGORIA">CATEGORÍA DEL PRODUCTO</option>
+                                <option value="CATEGORIA_VENTA">CATEGORÍA DE VENTA</option>
                                 <option value="COLOR">COLOR</option>
                                 <option value="CONDICION_PRODUCTO">CONDICIÓN DEL PRODUCTO</option>
                                 <option value="ESTADO_PRODUCTO">ESTADO DEL PRODUCTO</option>
-                                <option value="IMAGEN_DEFECTO">IMAGEN POR DEFECTO (URL)</option>
                                 <option value="MARCA">MARCA</option>
                                 <option value="TALLA">TALLA</option>
                                 <option value="TIPO_IMPUESTO">TIPO DE IMPUESTO</option>
@@ -100,13 +93,18 @@
                             </select>
                         </div>
                         
-                        <div id="bloque-valor" class="hidden">
+                        <div id="caja-ayuda" class="help-box hidden">
+                            <i class="fa-solid fa-lightbulb"></i>
+                            <div><strong class="block mb-0.5" id="ayuda-titulo">Ayuda</strong><span id="ayuda-texto">Selecciona un grupo para ver sugerencias.</span></div>
+                        </div>
+
+                        <div id="bloque-valor" class="hidden mt-4">
                             <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1 tracking-wider">Nuevo Valor *</label>
-                            <input type="text" id="param-valor" placeholder="Ej: HP, NUEVO, FÍSICO" class="uppercase-input w-full border border-gray-300 rounded-md px-3 py-2 text-[13px] focus:border-[#E67E22] outline-none font-semibold" oninput="if(document.getElementById('param-grupo').value !== 'IMAGEN_DEFECTO') this.value = this.value.toUpperCase()">
+                            <input type="text" id="param-valor" class="uppercase-input w-full border border-gray-300 rounded-md px-3 py-2 text-[13px] focus:border-[#E67E22] outline-none font-semibold" oninput="this.value = this.value.toUpperCase()">
                         </div>
                         
                         <button type="submit" id="btn-guardar" class="hidden w-full bg-[#143B62] hover:bg-[#0f2d4a] text-white font-medium py-2 rounded-md shadow-sm transition btn-press mt-2 text-[13px]">
-                            Guardar Parámetro
+                            Guardar Etiqueta
                         </button>
                     </form>
                 </div>
@@ -133,19 +131,56 @@
         </div>
     </main>
 
+    <nav class="md:hidden fixed bottom-0 w-full bg-white border-t border-gray-200 flex justify-around items-center pb-2 pt-2 px-1 z-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+        <a href="admin_dashboard.html" class="flex flex-col items-center p-2 text-gray-400 hover:text-[#143B62] transition w-1/4"><i class="fa-solid fa-chart-pie text-lg mb-1"></i><span class="text-[9px] font-semibold">Inicio</span></a>
+        <a href="admin_ventas.html" class="flex flex-col items-center p-2 text-gray-400 hover:text-[#143B62] transition w-1/4"><i class="fa-solid fa-cash-register text-lg mb-1"></i><span class="text-[9px] font-semibold">Vender</span></a>
+        <a href="admin_productos.html" class="flex flex-col items-center p-2 text-[#E67E22] transition w-1/4"><i class="fa-solid fa-boxes-stacked text-lg mb-1"></i><span class="text-[9px] font-bold">Inventario</span></a>
+        <button onclick="toggleMobileMenu()" class="flex flex-col items-center p-2 text-gray-400 hover:text-[#143B62] transition w-1/4 btn-press"><i class="fa-solid fa-bars text-lg mb-1"></i><span class="text-[9px] font-semibold">Menú</span></button>
+    </nav>
+
     <script>
         const SUPABASE_URL = 'https://icvfmdvvochzaktugqvj.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImljdmZtZHZ2b2NoemFrdHVncXZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyNDEzMzEsImV4cCI6MjA5MTgxNzMzMX0.gO3D39piT6KGbMMOzrPGWXUp5-g_nOBAgJ-nwPv8IcQ';
         
         let parametros = [];
 
+        // DICCIONARIO DE AYUDA (Cero Soporte)
+        const descripcionesAyuda = {
+            'CATEGORIA': { titulo: 'Clasificación Principal', texto: 'Agrupa el producto por su familia. Ej: PAPELERÍA, TECNOLOGÍA, FERRETERÍA, VÍVERES.' },
+            'MARCA': { titulo: 'Fabricante', texto: 'La marca comercial del producto. Ej: HP, SAMSUNG, SHARPIE, GENÉRICA.' },
+            'ESTADO_PRODUCTO': { titulo: 'Control de Venta', texto: 'Define si se puede facturar. Obligatorio: ACTIVO (para vender) o INACTIVO (para ocultar).' },
+            'CONDICION_PRODUCTO': { titulo: 'Estado Físico', texto: 'Ej: NUEVO, USADO, REACONDICIONADO.' },
+            'CATEGORIA_VENTA': { titulo: 'Estrategia de Venta', texto: 'Ej: DETAL, MAYOR, COMBO PROMO.' },
+            'TIPO_PRODUCTO': { titulo: 'Naturaleza', texto: 'Ej: FÍSICO (requiere stock), SERVICIO (sin stock), DIGITAL.' },
+            'UNIDAD_MEDIDA': { titulo: 'Medición', texto: 'Cómo se cuenta. Ej: UNIDAD, CAJA, PAQUETE, KG, LITRO.' },
+            'TIPO_IMPUESTO': { titulo: 'Regla Fiscal', texto: 'Ej: EXENTO, GENERAL (16%), REDUCIDO (8%).' },
+            'TALLA': { titulo: 'Dimensiones', texto: 'Si aplica. Ej: S, M, L, XL, 42, 44.' },
+            'COLOR': { titulo: 'Variante Visual', texto: 'Si aplica. Ej: ROJO, AZUL, MULTICOLOR.' }
+        };
+
         window.onload = async () => {
             const nombre = localStorage.getItem('pyp_usuario_nombre');
             if(nombre) document.getElementById('nombre-usuario').innerText = nombre.split(' ')[0];
+            cargarBrandingSidebar();
             document.getElementById('param-grupo').value = 'TODOS';
             ajustarInputValor();
             await cargarParametros();
         };
+
+        function cargarBrandingSidebar() {
+            const logo = localStorage.getItem('pyp_logo_url');
+            if(logo) {
+                document.getElementById('app-logo-sidebar').src = logo;
+                document.getElementById('app-logo-sidebar').classList.remove('hidden');
+                document.getElementById('app-icon-sidebar').classList.add('hidden');
+                document.getElementById('app-title-sidebar').classList.add('hidden');
+            }
+        }
+
+        function toggleMobileMenu() {
+            document.getElementById('sidebar').classList.toggle('-translate-x-full');
+            document.getElementById('mobile-overlay').classList.toggle('hidden');
+        }
 
         function cerrarSesion() {
             if(confirm("¿Estás seguro que deseas cerrar sesión?")) {
@@ -159,82 +194,64 @@
             const inputVal = document.getElementById('param-valor');
             const bloqueValor = document.getElementById('bloque-valor');
             const btnGuardar = document.getElementById('btn-guardar');
+            const cajaAyuda = document.getElementById('caja-ayuda');
             
             filtrarTabla();
 
             if (grupo === 'TODOS') {
                 bloqueValor.classList.add('hidden');
                 btnGuardar.classList.add('hidden');
+                cajaAyuda.classList.add('hidden');
                 inputVal.removeAttribute('required');
             } else {
                 bloqueValor.classList.remove('hidden');
                 btnGuardar.classList.remove('hidden');
                 inputVal.setAttribute('required', 'true');
+                inputVal.placeholder = "Escribe el nuevo valor aquí...";
 
-                if(grupo === 'IMAGEN_DEFECTO') {
-                    inputVal.classList.remove('uppercase-input');
-                    inputVal.placeholder = "Ej: https://tudominio.com/logo.png";
-                    inputVal.type = "url";
+                // Activar Caja de Ayuda Dinámica
+                if(descripcionesAyuda[grupo]) {
+                    document.getElementById('ayuda-titulo').innerText = descripcionesAyuda[grupo].titulo;
+                    document.getElementById('ayuda-texto').innerText = descripcionesAyuda[grupo].texto;
+                    cajaAyuda.classList.remove('hidden');
                 } else {
-                    inputVal.classList.add('uppercase-input');
-                    inputVal.placeholder = "Ej: HP, NUEVO, PAQUETE";
-                    inputVal.type = "text";
-                    inputVal.value = inputVal.value.toUpperCase();
+                    cajaAyuda.classList.add('hidden');
                 }
             }
         }
 
         async function cargarParametros() {
             try {
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/parametros_inventario?select=*`, { 
-                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } 
-                });
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/parametros_inventario?select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } });
                 parametros = await res.json();
                 filtrarTabla();
-            } catch(e) {
-                document.getElementById('tabla-parametros').innerHTML = `<tr><td colspan="4" class="p-5 text-center text-red-500 font-bold">Error cargando parámetros.</td></tr>`;
-            }
+            } catch(e) { document.getElementById('tabla-parametros').innerHTML = `<tr><td colspan="4" class="p-5 text-center text-red-500 font-bold">Error cargando parámetros.</td></tr>`; }
         }
 
         function pintarTabla(arr) {
             const tbody = document.getElementById('tabla-parametros');
-            if(!arr.length) {
-                tbody.innerHTML = `<tr><td colspan="4" class="p-10 text-center text-gray-500 font-medium">No se encontraron registros para este grupo.</td></tr>`;
-                return;
-            }
-            
+            if(!arr.length) { tbody.innerHTML = `<tr><td colspan="4" class="p-10 text-center text-gray-500 font-medium">No se encontraron registros.</td></tr>`; return; }
             tbody.innerHTML = arr.map(p => `
                 <tr class="hover:bg-gray-50 transition">
                     <td class="p-3 font-semibold text-gray-500 text-[11px]">${p.grupo}</td>
                     <td class="p-3 font-bold text-[#143B62] text-[13px] break-all">${p.valor}</td>
-                    <td class="p-3 text-center">
-                        <span class="bg-emerald-50 text-emerald-600 border border-emerald-200 text-[10px] font-bold px-2 py-0.5 rounded">${p.estatus}</span>
-                    </td>
-                    <td class="p-3 text-center">
-                        <button onclick="eliminarParametro('${p.id}')" class="text-red-400 hover:text-red-600 hover:bg-red-50 p-1.5 rounded transition" title="Eliminar"><i class="fa-solid fa-trash-can"></i></button>
-                    </td>
+                    <td class="p-3 text-center"><span class="bg-emerald-50 text-emerald-600 border border-emerald-200 text-[10px] font-bold px-2 py-0.5 rounded">${p.estatus}</span></td>
+                    <td class="p-3 text-center"><button onclick="eliminarParametro('${p.id}')" class="text-red-400 hover:text-red-600 hover:bg-red-50 p-1.5 rounded transition"><i class="fa-solid fa-trash-can"></i></button></td>
                 </tr>
             `).join('');
         }
 
-        // --- MOTOR DE ORDENAMIENTO ALFABÉTICO ESTRICTO ---
         function filtrarTabla() {
             const grupo = document.getElementById('param-grupo').value;
             let dataMostrar = [];
-
             if (grupo === 'TODOS') {
                 dataMostrar = [...parametros].sort((a, b) => {
-                    if (a.grupo === b.grupo) {
-                        return a.valor.localeCompare(b.valor);
-                    }
+                    if (a.grupo === b.grupo) return a.valor.localeCompare(b.valor);
                     return a.grupo.localeCompare(b.grupo);
                 });
             } else {
-                dataMostrar = parametros
-                    .filter(p => p.grupo === grupo)
-                    .sort((a, b) => a.valor.localeCompare(b.valor));
+                dataMostrar = parametros.filter(p => p.grupo === grupo).sort((a, b) => a.valor.localeCompare(b.valor));
             }
-            
             pintarTabla(dataMostrar);
         }
 
@@ -242,40 +259,27 @@
             e.preventDefault();
             const btn = document.getElementById('btn-guardar');
             const grupo = document.getElementById('param-grupo').value;
-            let valor = document.getElementById('param-valor').value.trim();
-            
-            if(grupo !== 'IMAGEN_DEFECTO') valor = valor.toUpperCase();
+            let valor = document.getElementById('param-valor').value.trim().toUpperCase();
 
             btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>`;
             btn.disabled = true;
 
             try {
                 const res = await fetch(`${SUPABASE_URL}/rest/v1/parametros_inventario`, {
-                    method: 'POST',
-                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
-                    body: JSON.stringify({ grupo: grupo, valor: valor })
+                    method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ grupo: grupo, valor: valor })
                 });
-
                 if (!res.ok) throw new Error("Posible duplicado");
                 
                 document.getElementById('param-valor').value = '';
                 await cargarParametros();
-                
-            } catch(e) {
-                alert("Error: Es posible que este valor ya exista en ese grupo.");
-            } finally {
-                btn.innerHTML = `Guardar Parámetro`;
-                btn.disabled = false;
-            }
+            } catch(e) { alert("Error: Verifica que el valor no exista en ese grupo."); } 
+            finally { btn.innerHTML = `Guardar Etiqueta`; btn.disabled = false; }
         }
 
         async function eliminarParametro(id) {
             if(!confirm("¿Seguro que deseas eliminar este parámetro?")) return;
             try {
-                await fetch(`${SUPABASE_URL}/rest/v1/parametros_inventario?id=eq.${id}`, {
-                    method: 'DELETE',
-                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
-                });
+                await fetch(`${SUPABASE_URL}/rest/v1/parametros_inventario?id=eq.${id}`, { method: 'DELETE', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } });
                 await cargarParametros();
             } catch(e) { alert("Error al eliminar."); }
         }
