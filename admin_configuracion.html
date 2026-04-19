@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="widtFh=device-width, initial-scale=1.0">
     <title>P&P Admin | Configuración</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -206,7 +206,7 @@
 
         async function cargarDatosConfiguracion() {
             try {
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } });
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${localStorage.getItem('pyp_token_seguro')}`;
                 if(!res.ok) return;
                 const config = await res.json();
                 
@@ -258,7 +258,7 @@
             try {
                 const fileExt = file.name.split('.').pop().toLowerCase();
                 const fileName = `sistema_${Date.now()}.${fileExt}`;
-                const res = await fetch(`${SUPABASE_URL}/storage/v1/object/inventario/${fileName}`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': file.type }, body: file });
+                const res = await fetch(`${SUPABASE_URL}/storage/v1/object/inventario/${fileName}`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${localStorage.getItem('pyp_token_seguro')}`, 'Content-Type': file.type }, body: file });
                 if (!res.ok) throw new Error("Error al subir a Supabase");
                 
                 const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/inventario/${fileName}`;
@@ -275,7 +275,7 @@
             const logoPc = document.getElementById('val-logo-pc').value.trim();
             const logoMovil = document.getElementById('val-logo-movil').value.trim();
             const fondo = document.getElementById('val-fondo').value.trim();
-            const headers = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' };
+            const headers = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${localStorage.getItem('pyp_token_seguro')}`, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' };
             try {
                 await Promise.all([
                     fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?on_conflict=parametro`, { method: 'POST', headers, body: JSON.stringify({ parametro: 'LOGO_PC_URL', valor: logoPc }) }),
