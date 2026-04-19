@@ -18,9 +18,8 @@
         .sidebar-icon { font-size: 14px; width: 22px; text-align: center; }
         .param-label { font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
         
-        /* Estilo para las notas de ayuda integradas (Zero-Support) */
-        .help-note { font-size: 10px; color: #64748b; margin-top: 4px; line-height: 1.4; display: flex; gap: 4px; }
-        .help-note i { margin-top: 2px; color: #3b82f6; }
+        .help-note { font-size: 11px; color: #475569; margin-top: 6px; line-height: 1.5; display: flex; gap: 6px; background-color: #f8fafc; padding: 8px; border-radius: 6px; border: 1px solid #e2e8f0; }
+        .help-note i { margin-top: 3px; color: #3b82f6; font-size: 14px; }
 
         #upload-overlay { background-color: rgba(255,255,255,0.8); backdrop-filter: blur(2px); }
     </style>
@@ -46,9 +45,7 @@
         </div>
         <nav class="flex-1 p-3 space-y-1 overflow-y-auto custom-scroll">
             <a href="admin_dashboard.html" class="flex items-center text-gray-300 hover:bg-white/10 rounded-md transition sidebar-link"><i class="fa-solid fa-chart-pie sidebar-icon"></i> Dashboard</a>
-            
             <a href="admin_configuracion.html" class="flex items-center bg-[#E67E22] text-white rounded-md shadow-sm transition btn-press sidebar-link mb-2"><i class="fa-solid fa-gear sidebar-icon"></i> Configuración</a>
-
             <a href="admin_ventas.html" class="flex items-center text-gray-300 hover:bg-white/10 rounded-md transition sidebar-link"><i class="fa-solid fa-cash-register sidebar-icon"></i> Ventas (POS)</a>
             <a href="admin_compras.html" class="flex items-center text-gray-300 hover:bg-white/10 rounded-md transition sidebar-link"><i class="fa-solid fa-truck-ramp-box sidebar-icon"></i> Compras</a>
             <div class="space-y-1 pt-1">
@@ -82,7 +79,7 @@
         </header>
 
         <div class="flex-1 overflow-auto p-4 md:p-6 custom-scroll pb-24 md:pb-6 fade-in">
-            <div class="max-w-4xl mx-auto space-y-6">
+            <div class="max-w-5xl mx-auto space-y-6">
                 
                 <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
                     <div class="bg-[#143B62] px-5 py-3 border-b border-white/10 flex justify-between items-center">
@@ -91,11 +88,20 @@
                     <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
                         
                         <div class="space-y-2">
-                            <label class="block param-label text-gray-700">Logo de la Empresa</label>
+                            <label class="block param-label text-gray-800 text-sm">Logo de la Empresa</label>
                             
-                            <div class="help-note mb-2">
+                            <div class="help-note mb-3">
                                 <i class="fa-solid fa-circle-info"></i>
-                                <span><b>Recomendación:</b> Formato PNG transparente. Ideal para fondos oscuros. Dimensión sugerida: 500x150px. Peso máximo 2MB.</span>
+                                <div>
+                                    <p class="font-bold text-gray-700 mb-1">Especificaciones Técnicas:</p>
+                                    <ul class="list-disc pl-4 space-y-0.5">
+                                        <li><b>Formato:</b> PNG (Fondo transparente obligatorio).</li>
+                                        <li><b>Orientación:</b> Rectangular (Horizontal).</li>
+                                        <li><b>Tamaño Ideal:</b> 500x150 píxeles.</li>
+                                        <li><b>Peso Máximo:</b> 2 MB.</li>
+                                        <li><b>Nota:</b> Se usará sobre fondos oscuros (Menú azul). Usa letras blancas o claras.</li>
+                                    </ul>
+                                </div>
                             </div>
 
                             <div class="flex items-center justify-center w-full h-32 bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg overflow-hidden relative">
@@ -114,11 +120,20 @@
                         </div>
 
                         <div class="space-y-2">
-                            <label class="block param-label text-gray-700">Fondo / Marca de Agua</label>
+                            <label class="block param-label text-gray-800 text-sm">Fondo / Marca de Agua</label>
                             
-                            <div class="help-note mb-2">
+                            <div class="help-note mb-3">
                                 <i class="fa-solid fa-circle-info"></i>
-                                <span><b>Recomendación:</b> Formato JPG/PNG. Colores pálidos o escala de grises. Se mostrará en el centro del Dashboard con gran transparencia. Peso máx 2MB.</span>
+                                <div>
+                                    <p class="font-bold text-gray-700 mb-1">Especificaciones Técnicas:</p>
+                                    <ul class="list-disc pl-4 space-y-0.5">
+                                        <li><b>Formato:</b> JPG, PNG o WebP.</li>
+                                        <li><b>Orientación:</b> Cuadrada o Rectangular.</li>
+                                        <li><b>Tamaño Ideal:</b> 1000x1000 píxeles.</li>
+                                        <li><b>Peso Máximo:</b> 2 MB.</li>
+                                        <li><b>Nota:</b> Sugerimos logos en escala de grises. El sistema lo mostrará hiper-transparente (4% de opacidad) en el centro del Dashboard.</li>
+                                    </ul>
+                                </div>
                             </div>
 
                             <div class="flex items-center justify-center w-full h-32 bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg overflow-hidden relative">
@@ -191,7 +206,7 @@
         async function cargarDatosConfiguracion() {
             try {
                 const res = await fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } });
-                if(!res.ok) return; // Si la tabla no existe o hay error, sale silenciosamente
+                if(!res.ok) return;
                 
                 const config = await res.json();
                 
@@ -215,10 +230,9 @@
                 }
                 
                 cargarBrandingSidebar();
-            } catch(e) { console.error("Error cargando configuración inicial.", e); }
+            } catch(e) { console.error("Error cargando configuración."); }
         }
 
-        // --- SISTEMA DE SUBIDA CON DETECCIÓN DE ERRORES MEJORADA ---
         async function subirImagen(event, inputId, previewId) {
             const file = event.target.files[0];
             if (!file) return;
@@ -238,16 +252,11 @@
                 
                 const res = await fetch(`${SUPABASE_URL}/storage/v1/object/inventario/${fileName}`, {
                     method: 'POST', 
-                    headers: { 
-                        'apikey': SUPABASE_KEY, 
-                        'Authorization': `Bearer ${SUPABASE_KEY}`, 
-                        'Content-Type': file.type 
-                    }, 
+                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': file.type }, 
                     body: file
                 });
 
                 if (!res.ok) {
-                    // Captura el error exacto del servidor de Supabase
                     const errText = await res.text();
                     throw new Error(`Detalle técnico: ${res.status} - ${errText}`);
                 }
@@ -260,7 +269,7 @@
                 document.getElementById(previewId.replace('preview-', 'placeholder-')).classList.add('hidden');
                 
             } catch (error) {
-                alert("ERROR AL SUBIR LA IMAGEN.\n\n" + error.message + "\n\nAsegúrate de haber ejecutado el script SQL en Supabase para otorgar permisos.");
+                alert("ERROR AL SUBIR LA IMAGEN.\n\n" + error.message);
             } finally {
                 overlay.classList.add('hidden'); overlay.classList.remove('flex');
                 event.target.value = ''; 
@@ -279,14 +288,14 @@
 
             try {
                 await Promise.all([
-                    fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?on_conflict=parametro`, { method: 'POST', headers, body: JSON.stringify({ parametro: 'LOGO_URL', valor: logo }) }),
+                    fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?on_conflict=parametro`, { method: 'POST', headers, body: JSON.stringify({ parametro: 'LOGO_URL', body: JSON.stringify({ parametro: 'LOGO_URL', valor: logo }) }),
                     fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?on_conflict=parametro`, { method: 'POST', headers, body: JSON.stringify({ parametro: 'FONDO_URL', valor: fondo }) })
                 ]);
                 
                 await cargarDatosConfiguracion();
                 alert("Branding actualizado correctamente. Los cambios se verán en todo el sistema.");
             } catch(e) {
-                alert("Error al guardar la configuración en la base de datos.");
+                alert("Error al guardar la configuración.");
             } finally {
                 btn.innerHTML = `<i class="fa-solid fa-save"></i> Aplicar Cambios`;
                 btn.disabled = false;
