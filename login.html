@@ -156,46 +156,53 @@
         }
 
         async function procesarLogin(e) {
-            e.preventDefault();
-            const user = document.getElementById('login-user').value.trim().toLowerCase();
-            const pass = document.getElementById('login-pass').value.trim();
-            const btn = document.getElementById('btn-submit');
-            const msgError = document.getElementById('msg-error');
+    e.preventDefault();
+    // En Supabase el login es por correo. Si el usuario escribe "admin", le agregamos el dominio internamente.
+    let user = document.getElementById('login-user').value.trim().toLowerCase();
+    if (!user.includes('@')) {
+        user = user + '@pypsoluciones.com'; // Ajusta este dominio ficticio a tu gusto
+    }
+    
+    const pass = document.getElementById('login-pass').value.trim();
+    const btn = document.getElementById('btn-submit');
+    const msgError = document.getElementById('msg-error');
 
-            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-xl"></i> Verificando...`;
-            btn.disabled = true; msgError.classList.add('hidden');
+    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-xl"></i> Verificando...`;
+    btn.disabled = true; msgError.classList.add('hidden');
 
-            try {
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?usuario_login=eq.${user}&clave=eq.${pass}`, {
-                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
-                });
-                
-                const data = await res.json();
+    try {
+        // 1. LLAMADA AL MOTOR DE AUTENTICACIÓN REAL DE SUPABASE
+        const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+            method: 'POST',
+            headers: { 
+                'apikey': SUPABASE_KEY, 
+                'Content-Type': 'application/json' 
+            },
+            body: JSON.stringify({ email: user, password: pass })
+        });
+        
+        const data = await res.json();
 
-                if (data.length > 0) {
-                    const usuarioEncontrado = data[0];
-                    
-                    if(usuarioEncontrado.estatus !== 'Activo') {
-                        return mostrarError("Usuario Inactivo o Suspendido.");
-                    }
-
-                    localStorage.setItem('pyp_sesion_activa', 'true');
-                    localStorage.setItem('pyp_usuario_rol', usuarioEncontrado.rol);
-                    localStorage.setItem('pyp_usuario_nombre', usuarioEncontrado.nombre_completo);
-                    
-                    btn.innerHTML = `<i class="fa-solid fa-check text-xl"></i> ¡Bienvenido!`;
-                    btn.classList.replace('bg-[#143B62]', 'bg-green-500');
-                    btn.classList.replace('shadow-[#143B62]/30', 'shadow-green-500/30');
-                    
-                    setTimeout(() => { window.location.href = 'admin_dashboard.html'; }, 500);
-
-                } else {
-                    mostrarError("Credenciales incorrectas.");
-                }
-            } catch (error) {
-                mostrarError("Error conectando al servidor.");
-            }
+        // Si hay error (contraseña mal, usuario no existe)
+        if (data.error) {
+            mostrarError(data.error_description || "Credenciales incorrectas.");
+            return;
         }
-    </script>
-</body>
-</html>
+
+        // 2. GUARDAMOS EL TOKEN CIFRADO (JWT) REAL EN EL NAVEGADOR
+        localStorage.setItem('pyp_token_seguro', data.access_token);
+        
+        // (Opcional por ahora) Guardar datos visuales
+        localStorage.setItem('pyp_usuario_rol', 'Admin'); 
+        localStorage.setItem('pyp_usuario_nombre', 'Administrador');
+        
+        btn.innerHTML = `<i class="fa-solid fa-check text-xl"></i> ¡Bienvenido!`;
+        btn.classList.replace('bg-[#143B62]', 'bg-green-500');
+        btn.classList.replace('shadow-[#143B62]/30', 'shadow-green-500/30');
+        
+        setTimeout(() => { window.location.href = 'admin_dashboard.html'; }, 500);
+
+    } catch (error) {
+        mostrarError("Error conectando al servidor.");
+    }
+}
