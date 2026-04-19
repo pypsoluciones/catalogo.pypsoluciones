@@ -17,8 +17,11 @@
         .sidebar-link { font-weight: 500; padding: 8px 14px; font-size: 13px; letter-spacing: 0.01em; }
         .sidebar-icon { font-size: 14px; width: 22px; text-align: center; }
         .param-label { font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+        
+        /* Estilo para las notas de ayuda */
         .help-note { font-size: 11px; color: #475569; margin-top: 6px; line-height: 1.5; display: flex; gap: 6px; background-color: #f8fafc; padding: 8px; border-radius: 6px; border: 1px solid #e2e8f0; }
         .help-note i { margin-top: 3px; color: #3b82f6; font-size: 14px; }
+
         #upload-overlay { background-color: rgba(255,255,255,0.8); backdrop-filter: blur(2px); }
     </style>
     <script>if (localStorage.getItem('pyp_sesion_activa') !== 'true') window.location.href = 'login.html';</script>
@@ -92,7 +95,12 @@
                         
                         <div class="space-y-2">
                             <label class="block param-label text-gray-800 text-sm">Logo Principal (Para PC)</label>
-                            <div class="help-note mb-2"><i class="fa-solid fa-circle-info"></i><span>Aparece en la barra lateral oscura. Ideal horizontal y letras blancas. Formato PNG.</span></div>
+                            
+                            <div class="help-note mb-2">
+                                <i class="fa-solid fa-circle-info"></i>
+                                <span>Aparece en la barra lateral oscura. Ideal horizontal (ej: 250x60px), fondo transparente y letras blancas. Formato PNG.</span>
+                            </div>
+                            
                             <div class="flex items-center justify-center w-full h-24 bg-gray-800 border-2 border-dashed border-gray-600 rounded-lg overflow-hidden relative">
                                 <img id="preview-logo-pc" src="" class="max-w-full max-h-full object-contain hidden z-10 p-2">
                                 <div id="placeholder-logo-pc" class="text-center text-gray-400 z-0"><i class="fa-solid fa-desktop text-2xl mb-1"></i><p class="text-[10px]">Sin Logo PC</p></div>
@@ -100,14 +108,20 @@
                             <div class="flex gap-1.5 mt-2">
                                 <input type="url" id="val-logo-pc" placeholder="URL o Subir ➔" class="flex-1 border border-gray-300 rounded px-2 py-1.5 text-[11px] outline-none focus:border-[#143B62]">
                                 <input type="file" id="file-logo-pc" accept="image/*" class="hidden" onchange="subirImagen(event, 'val-logo-pc', 'preview-logo-pc')">
-                                <button type="button" onclick="document.getElementById('file-logo-pc').click()" class="px-3 bg-blue-50 border border-blue-200 rounded text-blue-600 hover:bg-blue-100 transition"><i class="fa-solid fa-upload"></i></button>
+                                <button type="button" onclick="document.getElementById('file-logo-pc').click()" class="px-3 bg-blue-50 border border-blue-200 rounded text-blue-600 hover:bg-blue-100 transition" title="Subir Imagen"><i class="fa-solid fa-upload"></i></button>
+                                
                                 <button type="button" onclick="borrarImagenConfig('val-logo-pc', 'preview-logo-pc')" class="px-2.5 bg-red-50 border border-red-200 rounded text-red-500 hover:bg-red-100 transition" title="Borrar Logo"><i class="fa-solid fa-trash-can"></i></button>
                             </div>
                         </div>
 
                         <div class="space-y-2">
                             <label class="block param-label text-gray-800 text-sm">Logo Móvil (Celulares)</label>
-                            <div class="help-note mb-2"><i class="fa-solid fa-circle-info"></i><span>Aparece en la cabecera blanca. Ideal compacto/isotipo y oscuro. Formato PNG.</span></div>
+                            
+                            <div class="help-note mb-2">
+                                <i class="fa-solid fa-circle-info"></i>
+                                <span>Aparece en la cabecera blanca móvil. Ideal compacto o isotipo (ej: 80x40px), fondo transparente y colores oscuros. Formato PNG.</span>
+                            </div>
+                            
                             <div class="flex items-center justify-center w-full h-24 bg-white border-2 border-dashed border-gray-300 rounded-lg overflow-hidden relative">
                                 <img id="preview-logo-movil" src="" class="max-w-full max-h-full object-contain hidden z-10 p-2">
                                 <div id="placeholder-logo-movil" class="text-center text-gray-400 z-0"><i class="fa-solid fa-mobile-screen-button text-2xl mb-1"></i><p class="text-[10px]">Sin Logo Móvil</p></div>
@@ -115,14 +129,20 @@
                             <div class="flex gap-1.5 mt-2">
                                 <input type="url" id="val-logo-movil" placeholder="URL o Subir ➔" class="flex-1 border border-gray-300 rounded px-2 py-1.5 text-[11px] outline-none focus:border-[#143B62]">
                                 <input type="file" id="file-logo-movil" accept="image/*" class="hidden" onchange="subirImagen(event, 'val-logo-movil', 'preview-logo-movil')">
-                                <button type="button" onclick="document.getElementById('file-logo-movil').click()" class="px-3 bg-blue-50 border border-blue-200 rounded text-blue-600 hover:bg-blue-100 transition"><i class="fa-solid fa-upload"></i></button>
+                                <button type="button" onclick="document.getElementById('file-logo-movil').click()" class="px-3 bg-blue-50 border border-blue-200 rounded text-blue-600 hover:bg-blue-100 transition" title="Subir Imagen"><i class="fa-solid fa-upload"></i></button>
+                                
                                 <button type="button" onclick="borrarImagenConfig('val-logo-movil', 'preview-logo-movil')" class="px-2.5 bg-red-50 border border-red-200 rounded text-red-500 hover:bg-red-100 transition" title="Borrar Logo"><i class="fa-solid fa-trash-can"></i></button>
                             </div>
                         </div>
 
                         <div class="space-y-2">
                             <label class="block param-label text-gray-800 text-sm">Fondo / Marca de Agua</label>
-                            <div class="help-note mb-2"><i class="fa-solid fa-circle-info"></i><span>Aparece gigante en el centro. Súper transparente (4%). Logo en grises ideal.</span></div>
+                            
+                            <div class="help-note mb-2">
+                                <i class="fa-solid fa-circle-info"></i>
+                                <span>Logo gigante en el centro del panel. Ideal cuadrado (ej: 600x600px). Súper transparente (4%). Logo en grises ideal.</span>
+                            </div>
+                            
                             <div class="flex items-center justify-center w-full h-24 bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg overflow-hidden relative">
                                 <img id="preview-fondo" src="" class="max-w-full max-h-full object-contain hidden z-10 p-2">
                                 <div id="placeholder-fondo" class="text-center text-gray-400 z-0"><i class="fa-solid fa-image text-2xl mb-1"></i><p class="text-[10px]">Sin Fondo</p></div>
@@ -130,7 +150,8 @@
                             <div class="flex gap-1.5 mt-2">
                                 <input type="url" id="val-fondo" placeholder="URL o Subir ➔" class="flex-1 border border-gray-300 rounded px-2 py-1.5 text-[11px] outline-none focus:border-[#143B62]">
                                 <input type="file" id="file-fondo" accept="image/*" class="hidden" onchange="subirImagen(event, 'val-fondo', 'preview-fondo')">
-                                <button type="button" onclick="document.getElementById('file-fondo').click()" class="px-3 bg-blue-50 border border-blue-200 rounded text-blue-600 hover:bg-blue-100 transition"><i class="fa-solid fa-upload"></i></button>
+                                <button type="button" onclick="document.getElementById('file-fondo').click()" class="px-3 bg-blue-50 border border-blue-200 rounded text-blue-600 hover:bg-blue-100 transition" title="Subir Imagen"><i class="fa-solid fa-upload"></i></button>
+                                
                                 <button type="button" onclick="borrarImagenConfig('val-fondo', 'preview-fondo')" class="px-2.5 bg-red-50 border border-red-200 rounded text-red-500 hover:bg-red-100 transition" title="Borrar Fondo"><i class="fa-solid fa-trash-can"></i></button>
                             </div>
                         </div>
@@ -177,6 +198,7 @@
             }
         }
 
+        // FUNCIÓN GLOBAL PARA CARGAR LOS LOGOS EN LAS CABECERAS
         function cargarBrandingSidebar() {
             const logoPc = localStorage.getItem('pyp_logo_pc_url');
             if(logoPc) {
@@ -184,7 +206,6 @@
                 document.getElementById('app-logo-sidebar').classList.remove('hidden');
                 document.getElementById('app-text-sidebar').classList.add('hidden');
             }
-            
             const logoMovil = localStorage.getItem('pyp_logo_movil_url');
             if(logoMovil) {
                 document.getElementById('app-logo-header').src = logoMovil;
@@ -193,11 +214,11 @@
             }
         }
 
+        // CARGAR DATOS EN EL FORMULARIO DE CONFIGURACIÓN
         async function cargarDatosConfiguracion() {
             try {
                 const res = await fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } });
                 if(!res.ok) return;
-                
                 const config = await res.json();
                 
                 const logoPcObj = config.find(c => c.parametro === 'LOGO_PC_URL');
@@ -211,7 +232,6 @@
                     document.getElementById('placeholder-logo-pc').classList.add('hidden');
                     localStorage.setItem('pyp_logo_pc_url', logoPcObj.valor);
                 }
-
                 if(logoMovilObj && logoMovilObj.valor) {
                     document.getElementById('val-logo-movil').value = logoMovilObj.valor;
                     document.getElementById('preview-logo-movil').src = logoMovilObj.valor;
@@ -219,7 +239,6 @@
                     document.getElementById('placeholder-logo-movil').classList.add('hidden');
                     localStorage.setItem('pyp_logo_movil_url', logoMovilObj.valor);
                 }
-
                 if(fondoObj && fondoObj.valor) {
                     document.getElementById('val-fondo').value = fondoObj.valor;
                     document.getElementById('preview-fondo').src = fondoObj.valor;
@@ -227,99 +246,58 @@
                     document.getElementById('placeholder-fondo').classList.add('hidden');
                     localStorage.setItem('pyp_fondo_url', fondoObj.valor);
                 }
-                
                 cargarBrandingSidebar();
             } catch(e) { console.error("Error cargando configuración."); }
         }
 
-        // FUNCIÓN PARA BORRAR LOGOS
+        // FUNCIÓN PARA BORRAR LOGOS (Front-end)
         function borrarImagenConfig(inputId, previewId) {
-            document.getElementById(inputId).value = '';
-            document.getElementById(previewId).src = '';
-            document.getElementById(previewId).classList.add('hidden');
-            document.getElementById(previewId.replace('preview-', 'placeholder-')).classList.remove('hidden');
+            if(confirm("¿Estás seguro de borrar esta imagen? Deberás aplicar cambios para guardar.")) {
+                document.getElementById(inputId).value = ''; // Limpia el input oculto
+                document.getElementById(previewId).src = ''; // Limpia la previsualización
+                document.getElementById(previewId).classList.add('hidden'); // Oculta la imagen
+                document.getElementById(previewId.replace('preview-', 'placeholder-')).classList.remove('hidden'); // Muestra el placeholder
+            }
         }
 
+        // SUBIR IMAGEN A SUPABASE STORAGE
         async function subirImagen(event, inputId, previewId) {
             const file = event.target.files[0];
             if (!file) return;
-
-            if (file.size > 2 * 1024 * 1024) { 
-                alert("La imagen es muy pesada. Máximo permitido: 2MB."); 
-                return; 
-            }
-
-            const overlay = document.getElementById('upload-overlay');
-            overlay.classList.remove('hidden');
-            overlay.classList.add('flex');
-
+            if (file.size > 2 * 1024 * 1024) { alert("La imagen es muy pesada. Máximo permitido: 2MB."); return; }
+            const overlay = document.getElementById('upload-overlay'); overlay.classList.remove('hidden'); overlay.classList.add('flex');
             try {
                 const fileExt = file.name.split('.').pop().toLowerCase();
                 const fileName = `sistema_${Date.now()}.${fileExt}`;
-                
-                const res = await fetch(`${SUPABASE_URL}/storage/v1/object/inventario/${fileName}`, {
-                    method: 'POST', 
-                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': file.type }, 
-                    body: file
-                });
-
-                if (!res.ok) {
-                    const errText = await res.text();
-                    throw new Error(`Detalle técnico: ${res.status} - ${errText}`);
-                }
-
+                const res = await fetch(`${SUPABASE_URL}/storage/v1/object/inventario/${fileName}`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': file.type }, body: file });
+                if (!res.ok) { const errText = await res.text(); throw new Error(`Detalle técnico: ${res.status} - ${errText}`); }
                 const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/inventario/${fileName}`;
-                
                 document.getElementById(inputId).value = publicUrl;
                 document.getElementById(previewId).src = publicUrl;
                 document.getElementById(previewId).classList.remove('hidden');
                 document.getElementById(previewId.replace('preview-', 'placeholder-')).classList.add('hidden');
-                
-            } catch (error) {
-                alert("ERROR AL SUBIR LA IMAGEN.\n\n" + error.message);
-            } finally {
-                overlay.classList.add('hidden'); overlay.classList.remove('flex');
-                event.target.value = ''; 
-            }
+            } catch (error) { alert("ERROR AL SUBIR LA IMAGEN.\n\n" + error.message); } 
+            finally { overlay.classList.add('hidden'); overlay.classList.remove('flex'); event.target.value = ''; }
         }
 
+        // GUARDAR CAMBIOS EN LA BASE DE DATOS (Upsert)
         async function guardarBranding() {
-            const btn = document.getElementById('btn-guardar-branding');
-            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Aplicando...`;
-            btn.disabled = true;
-
+            const btn = document.getElementById('btn-guardar-branding'); btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Aplicando...`; btn.disabled = true;
             const logoPc = document.getElementById('val-logo-pc').value.trim();
             const logoMovil = document.getElementById('val-logo-movil').value.trim();
             const fondo = document.getElementById('val-fondo').value.trim();
-
-            const headers = { 
-                'apikey': SUPABASE_KEY, 
-                'Authorization': `Bearer ${SUPABASE_KEY}`, 
-                'Content-Type': 'application/json', 
-                'Prefer': 'resolution=merge-duplicates' 
-            };
-
+            const headers = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' };
             try {
-                // Upsert para guardar (Si está vacío, también guarda vacío)
-                await Promise.all([
-                    fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?on_conflict=parametro`, { method: 'POST', headers, body: JSON.stringify({ parametro: 'LOGO_PC_URL', valor: logoPc }) }),
-                    fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?on_conflict=parametro`, { method: 'POST', headers, body: JSON.stringify({ parametro: 'LOGO_MOVIL_URL', valor: logoMovil }) }),
-                    fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?on_conflict=parametro`, { method: 'POST', headers, body: JSON.stringify({ parametro: 'FONDO_URL', valor: fondo }) })
-                ]);
-                
-                // Limpiar cache por si se borró alguno
-                if(!logoPc) localStorage.removeItem('pyp_logo_pc_url');
-                if(!logoMovil) localStorage.removeItem('pyp_logo_movil_url');
-                if(!fondo) localStorage.removeItem('pyp_fondo_url');
-
+                // Upsert: Si está vacío, guarda vacío (borra)
+                await Promise.all([ fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?on_conflict=parametro`, { method: 'POST', headers, body: JSON.stringify({ parametro: 'LOGO_PC_URL', valor: logoPc }) }), fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?on_conflict=parametro`, { method: 'POST', headers, body: JSON.stringify({ parametro: 'LOGO_MOVIL_URL', valor: logoMovil }) }), fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?on_conflict=parametro`, { method: 'POST', headers, body: JSON.stringify({ parametro: 'FONDO_URL', valor: fondo }) }) ]);
+                // Actualiza LocalStorage para reflejar cambios de inmediato
+                if(logoPc) localStorage.setItem('pyp_logo_pc_url', logoPc); else localStorage.removeItem('pyp_logo_pc_url');
+                if(logoMovil) localStorage.setItem('pyp_logo_movil_url', logoMovil); else localStorage.removeItem('pyp_logo_movil_url');
+                if(fondo) localStorage.setItem('pyp_fondo_url', fondo); else localStorage.removeItem('pyp_fondo_url');
                 await cargarDatosConfiguracion();
                 alert("Branding actualizado correctamente. Los cambios se verán en todo el sistema.");
-            } catch(e) {
-                alert("Error al guardar la configuración en la base de datos:\n" + e.message);
-            } finally {
-                btn.innerHTML = `<i class="fa-solid fa-save"></i> Aplicar Cambios`;
-                btn.disabled = false;
-            }
+            } catch(e) { alert("Error al guardar la configuración:\n" + e.message); } 
+            finally { btn.innerHTML = `<i class="fa-solid fa-save"></i> Aplicar Cambios`; btn.disabled = false; }
         }
     </script>
 </body>
