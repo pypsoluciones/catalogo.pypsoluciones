@@ -11,7 +11,12 @@
         .custom-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
         .btn-press:active { transform: scale(0.95); }
     </style>
-    <script>if (localStorage.getItem('pyp_sesion_activa') !== 'true') window.location.href = 'login.html';</script>
+    <script>
+    // Guardián de Seguridad: Exige el Token Real
+    if (!localStorage.getItem('pyp_token_seguro')) {
+        window.location.href = 'login.html';
+    }
+</script>
 </head>
 <body class="bg-[#f0f2f5] font-sans flex h-screen overflow-hidden text-gray-800">
 
@@ -265,7 +270,7 @@
 
                 const res = await fetch(`${SUPABASE_URL}/rest/v1/cuentas_bancarias`, {
                     method: 'POST',
-                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' },
+                    headers: { 'apikey': SUPABASE_KEY, ''Authorization': `Bearer ${localStorage.getItem('pyp_token_seguro')}`, 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
                 });
 
@@ -364,14 +369,15 @@
             });
             if(!res.ok) throw new Error("Error en base de datos");
         }
-        function cerrarSesion() {
-            if(confirm("¿Estás seguro que deseas cerrar sesión?")) {
-                localStorage.removeItem('pyp_sesion_activa');
-                localStorage.removeItem('pyp_usuario_rol');
-                localStorage.removeItem('pyp_usuario_nombre');
-                window.location.href = 'login.html';
-            }
-        }
+       function cerrarSesion() {
+    if(confirm("¿Estás seguro que deseas cerrar sesión?")) {
+        localStorage.removeItem('pyp_sesion_activa');
+        localStorage.removeItem('pyp_token_seguro'); // <--- Destruye el Token VIP
+        localStorage.removeItem('pyp_usuario_rol');
+        localStorage.removeItem('pyp_usuario_nombre');
+        window.location.href = 'login.html';
+    }
+}
     </script>
 </body>
 </html>
