@@ -29,13 +29,12 @@
             z-index: 0;
         }
     </style>
+    
     <script>
-    // Verificamos si existe el Token Real Cifrado
-    const tokenSeguro = localStorage.getItem('pyp_token_seguro');
-    if (!tokenSeguro) {
-        window.location.href = 'login.html';
-    }
-</script>
+        if (!localStorage.getItem('pyp_token_seguro')) {
+            window.location.href = 'login.html';
+        }
+    </script>
 </head>
 <body class="bg-[#f4f6f8] flex h-screen overflow-hidden text-gray-800 relative modo-privado" id="body-dashboard">
 
@@ -133,16 +132,19 @@
             
             if(localStorage.getItem('pyp_privacidad') === 'false') { togglePrivacidad(); }
             
-            // PRIMERO: Buscamos en la BD el logo y lo guardamos
             await cargarConfiguracionGlobal();
-            
             cargarIndicadores();
         };
 
-        // NUEVA FUNCIÓN: Busca en la base de datos directamente al iniciar sesión
         async function cargarConfiguracionGlobal() {
             try {
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } });
+                // NUEVO: FETCH CON JWT SEGURO APLICADO
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?select=*`, {
+                    headers: { 
+                        'apikey': SUPABASE_KEY, 
+                        'Authorization': `Bearer ${localStorage.getItem('pyp_token_seguro')}` 
+                    }
+                });
                 if(res.ok) {
                     const config = await res.json();
                     const logoObj = config.find(c => c.parametro === 'LOGO_URL');
@@ -153,7 +155,7 @@
                 }
             } catch(e) { console.error("No se pudo cargar la configuración de la BD."); }
             
-            cargarBranding(); // Pinta lo que encontró
+            cargarBranding(); 
         }
 
         function cargarBranding() {
@@ -198,18 +200,33 @@
             }
         }
 
+        // NUEVO: LA FUNCIÓN DE CERRAR SESIÓN DESTRUYE EL TOKEN
         function cerrarSesion() {
             if (confirm("¿Estás seguro que deseas cerrar sesión?")) {
                 localStorage.removeItem('pyp_sesion_activa');
+                localStorage.removeItem('pyp_token_seguro'); // Destruimos el Gafete VIP
+                localStorage.removeItem('pyp_usuario_rol');
+                localStorage.removeItem('pyp_usuario_nombre');
                 window.location.href = 'login.html';
             }
         }
 
         async function cargarIndicadores() {
             try {
+                // NUEVO: FETCH CON JWT SEGURO APLICADO EN AMBAS PETICIONES
                 const [resProd, resCli] = await Promise.all([
-                    fetch(`${SUPABASE_URL}/rest/v1/productos?select=id_producto_sku&estado_producto=eq.ACTIVO`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${localStorage.getItem('pyp_token_seguro')}),
-                    fetch(`${SUPABASE_URL}/rest/v1/clientes?select=id`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } })
+                    fetch(`${SUPABASE_URL}/rest/v1/productos?select=id_producto_sku&estado_producto=eq.ACTIVO`, { 
+                        headers: { 
+                            'apikey': SUPABASE_KEY, 
+                            'Authorization': `Bearer ${localStorage.getItem('pyp_token_seguro')}` 
+                        } 
+                    }),
+                    fetch(`${SUPABASE_URL}/rest/v1/clientes?select=id`, { 
+                        headers: { 
+                            'apikey': SUPABASE_KEY, 
+                            'Authorization': `Bearer ${localStorage.getItem('pyp_token_seguro')}` 
+                        } 
+                    })
                 ]);
                 const dataProd = await resProd.json();
                 const dataCli = await resCli.json();
