@@ -17,10 +17,8 @@
         .sidebar-link { font-weight: 500; padding: 8px 14px; font-size: 13px; letter-spacing: 0.01em; }
         .sidebar-icon { font-size: 14px; width: 22px; text-align: center; }
         .param-label { font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
-        
         .help-note { font-size: 11px; color: #475569; margin-top: 6px; line-height: 1.5; display: flex; gap: 6px; background-color: #f8fafc; padding: 8px; border-radius: 6px; border: 1px solid #e2e8f0; }
         .help-note i { margin-top: 3px; color: #3b82f6; font-size: 14px; }
-
         #upload-overlay { background-color: rgba(255,255,255,0.8); backdrop-filter: blur(2px); }
     </style>
     <script>if (localStorage.getItem('pyp_sesion_activa') !== 'true') window.location.href = 'login.html';</script>
@@ -36,7 +34,7 @@
 
     <aside id="sidebar" class="w-64 md:w-56 bg-[#143B62] text-white flex flex-col fixed inset-y-0 left-0 z-50 transform -translate-x-full md:translate-x-0 md:relative transition-transform duration-300 shadow-2xl md:shadow-xl">
         <div class="p-4 border-b border-white/10 flex items-center justify-between gap-3 shrink-0 h-20">
-            <div class="flex items-center w-full h-full">
+            <div class="flex items-center w-full h-full overflow-hidden">
                 <img id="app-logo-sidebar" src="" class="max-h-14 max-w-full w-auto object-contain object-left hidden">
                 <div id="app-text-sidebar" class="flex items-center gap-3">
                     <i class="fa-solid fa-layer-group text-[#E67E22] text-2xl"></i>
@@ -69,16 +67,16 @@
 
     <main class="flex-1 flex flex-col h-screen overflow-hidden bg-[#f4f6f8] w-full">
         <header class="bg-white shadow-sm px-4 md:px-6 py-2 flex justify-between items-center z-10 shrink-0 border-b border-gray-200 h-16">
-            <div class="flex items-center gap-3 h-full">
+            <div class="flex items-center gap-3 h-full max-w-[70%]">
                 <button onclick="toggleMobileMenu()" class="md:hidden text-gray-600 hover:text-[#143B62] text-xl transition btn-press px-2"><i class="fa-solid fa-bars"></i></button>
-                <h1 class="text-base md:text-lg font-semibold text-[#143B62] flex items-center gap-2 truncate h-full">
-                    <img id="app-logo-header" src="" class="max-h-12 w-auto hidden object-contain">
-                    <div id="app-text-header" class="flex items-center gap-2">
-                        <i class="fa-solid fa-gear text-[#E67E22] hidden sm:inline-block"></i> <span>Configuración del Sistema</span>
-                    </div>
-                </h1>
+                <div class="flex items-center h-full overflow-hidden">
+                    <img id="app-logo-header" src="" class="max-h-10 max-w-full w-auto hidden object-contain">
+                    <h1 id="app-text-header" class="text-base md:text-lg font-semibold text-[#143B62] flex items-center gap-2 truncate">
+                        <i class="fa-solid fa-gear text-[#E67E22] hidden sm:inline-block"></i> <span>Configuración</span>
+                    </h1>
+                </div>
             </div>
-            <div class="flex items-center gap-2 md:gap-3">
+            <div class="flex items-center gap-2 md:gap-3 shrink-0">
                 <div class="bg-gray-50 px-2 md:px-3 py-1.5 rounded-md border border-gray-200 flex items-center gap-2 text-[10px] md:text-[11px] font-semibold text-gray-600 tracking-wide uppercase"><i class="fa-solid fa-user-tie text-[#143B62]"></i> <span id="nombre-usuario" class="hidden sm:inline-block">Admin</span></div>
             </div>
         </header>
@@ -99,10 +97,11 @@
                                 <img id="preview-logo-pc" src="" class="max-w-full max-h-full object-contain hidden z-10 p-2">
                                 <div id="placeholder-logo-pc" class="text-center text-gray-400 z-0"><i class="fa-solid fa-desktop text-2xl mb-1"></i><p class="text-[10px]">Sin Logo PC</p></div>
                             </div>
-                            <div class="flex gap-2">
+                            <div class="flex gap-1.5 mt-2">
                                 <input type="url" id="val-logo-pc" placeholder="URL o Subir ➔" class="flex-1 border border-gray-300 rounded px-2 py-1.5 text-[11px] outline-none focus:border-[#143B62]">
                                 <input type="file" id="file-logo-pc" accept="image/*" class="hidden" onchange="subirImagen(event, 'val-logo-pc', 'preview-logo-pc')">
                                 <button type="button" onclick="document.getElementById('file-logo-pc').click()" class="px-3 bg-blue-50 border border-blue-200 rounded text-blue-600 hover:bg-blue-100 transition"><i class="fa-solid fa-upload"></i></button>
+                                <button type="button" onclick="borrarImagenConfig('val-logo-pc', 'preview-logo-pc')" class="px-2.5 bg-red-50 border border-red-200 rounded text-red-500 hover:bg-red-100 transition" title="Borrar Logo"><i class="fa-solid fa-trash-can"></i></button>
                             </div>
                         </div>
 
@@ -113,10 +112,11 @@
                                 <img id="preview-logo-movil" src="" class="max-w-full max-h-full object-contain hidden z-10 p-2">
                                 <div id="placeholder-logo-movil" class="text-center text-gray-400 z-0"><i class="fa-solid fa-mobile-screen-button text-2xl mb-1"></i><p class="text-[10px]">Sin Logo Móvil</p></div>
                             </div>
-                            <div class="flex gap-2">
+                            <div class="flex gap-1.5 mt-2">
                                 <input type="url" id="val-logo-movil" placeholder="URL o Subir ➔" class="flex-1 border border-gray-300 rounded px-2 py-1.5 text-[11px] outline-none focus:border-[#143B62]">
                                 <input type="file" id="file-logo-movil" accept="image/*" class="hidden" onchange="subirImagen(event, 'val-logo-movil', 'preview-logo-movil')">
                                 <button type="button" onclick="document.getElementById('file-logo-movil').click()" class="px-3 bg-blue-50 border border-blue-200 rounded text-blue-600 hover:bg-blue-100 transition"><i class="fa-solid fa-upload"></i></button>
+                                <button type="button" onclick="borrarImagenConfig('val-logo-movil', 'preview-logo-movil')" class="px-2.5 bg-red-50 border border-red-200 rounded text-red-500 hover:bg-red-100 transition" title="Borrar Logo"><i class="fa-solid fa-trash-can"></i></button>
                             </div>
                         </div>
 
@@ -127,10 +127,11 @@
                                 <img id="preview-fondo" src="" class="max-w-full max-h-full object-contain hidden z-10 p-2">
                                 <div id="placeholder-fondo" class="text-center text-gray-400 z-0"><i class="fa-solid fa-image text-2xl mb-1"></i><p class="text-[10px]">Sin Fondo</p></div>
                             </div>
-                            <div class="flex gap-2">
+                            <div class="flex gap-1.5 mt-2">
                                 <input type="url" id="val-fondo" placeholder="URL o Subir ➔" class="flex-1 border border-gray-300 rounded px-2 py-1.5 text-[11px] outline-none focus:border-[#143B62]">
                                 <input type="file" id="file-fondo" accept="image/*" class="hidden" onchange="subirImagen(event, 'val-fondo', 'preview-fondo')">
                                 <button type="button" onclick="document.getElementById('file-fondo').click()" class="px-3 bg-blue-50 border border-blue-200 rounded text-blue-600 hover:bg-blue-100 transition"><i class="fa-solid fa-upload"></i></button>
+                                <button type="button" onclick="borrarImagenConfig('val-fondo', 'preview-fondo')" class="px-2.5 bg-red-50 border border-red-200 rounded text-red-500 hover:bg-red-100 transition" title="Borrar Fondo"><i class="fa-solid fa-trash-can"></i></button>
                             </div>
                         </div>
 
@@ -231,6 +232,14 @@
             } catch(e) { console.error("Error cargando configuración."); }
         }
 
+        // FUNCIÓN PARA BORRAR LOGOS
+        function borrarImagenConfig(inputId, previewId) {
+            document.getElementById(inputId).value = '';
+            document.getElementById(previewId).src = '';
+            document.getElementById(previewId).classList.add('hidden');
+            document.getElementById(previewId.replace('preview-', 'placeholder-')).classList.remove('hidden');
+        }
+
         async function subirImagen(event, inputId, previewId) {
             const file = event.target.files[0];
             if (!file) return;
@@ -291,12 +300,18 @@
             };
 
             try {
+                // Upsert para guardar (Si está vacío, también guarda vacío)
                 await Promise.all([
                     fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?on_conflict=parametro`, { method: 'POST', headers, body: JSON.stringify({ parametro: 'LOGO_PC_URL', valor: logoPc }) }),
                     fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?on_conflict=parametro`, { method: 'POST', headers, body: JSON.stringify({ parametro: 'LOGO_MOVIL_URL', valor: logoMovil }) }),
                     fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?on_conflict=parametro`, { method: 'POST', headers, body: JSON.stringify({ parametro: 'FONDO_URL', valor: fondo }) })
                 ]);
                 
+                // Limpiar cache por si se borró alguno
+                if(!logoPc) localStorage.removeItem('pyp_logo_pc_url');
+                if(!logoMovil) localStorage.removeItem('pyp_logo_movil_url');
+                if(!fondo) localStorage.removeItem('pyp_fondo_url');
+
                 await cargarDatosConfiguracion();
                 alert("Branding actualizado correctamente. Los cambios se verán en todo el sistema.");
             } catch(e) {
