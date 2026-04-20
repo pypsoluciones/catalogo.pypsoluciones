@@ -197,7 +197,6 @@
                     if (paramImg && paramImg.valor.trim() !== '') { imagenGlobalDefecto = paramImg.valor; }
                 } catch(e) {}
 
-                // CEREBRO DE SINCRONIZACIÓN Y DIAGNÓSTICO RLS
                 const [resProd, resPre] = await Promise.all([
                     fetch(`${SUPABASE_URL}/rest/v1/productos?select=*&limit=3000`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }),
                     fetch(`${SUPABASE_URL}/rest/v1/precios?select=*&limit=3000`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } })
@@ -205,27 +204,23 @@
 
                 const dataProd = await resProd.json();
                 
-                // DIAGNÓSTICO CERO SOPORTE: Si Supabase bloquea por seguridad (RLS)
-                if (!resProd.ok) {
-                    if (dataProd.message && dataProd.message.includes('security')) {
-                        document.getElementById('vista-inicio-compleja').innerHTML = `
-                            <div class="max-w-[1200px] mx-auto px-4 pt-16">
-                                <div class="bg-red-50 border-l-8 border-red-500 rounded p-8 shadow-sm">
-                                    <h2 class="text-3xl font-black text-red-700 mb-2"><i class="fa-solid fa-lock mr-2"></i> Bloqueo de Base de Datos Detectado</h2>
-                                    <p class="text-red-800 text-lg mb-6">Supabase está bloqueando la lectura pública de la tabla <b>productos</b> mediante una política RLS.</p>
-                                    <p class="text-gray-800 font-bold mb-2">Para que tu catálogo web vuelva a funcionar:</p>
-                                    <ol class="list-decimal pl-6 mt-2 space-y-2 text-gray-700 font-medium">
-                                        <li>Abre tu panel de <b>Supabase</b>.</li>
-                                        <li>Ve a <b>Table Editor</b> y selecciona la tabla <b>productos</b>.</li>
-                                        <li>Arriba a la izquierda, dale clic al botón verde que dice <b>"1 RLS Policy"</b>.</li>
-                                        <li>Selecciona <b>"Disable RLS"</b> (O crea una política pública para anon). El botón debe cambiar a "RLS disabled" (igual que en la tabla precios).</li>
-                                        <li>Recarga esta página.</li>
-                                    </ol>
-                                </div>
-                            </div>`;
-                        return; // Se detiene aquí para proteger la web.
-                    }
-                    throw new Error("Error genérico");
+                // DIAGNÓSTICO CERO SOPORTE (RLS)
+                if (dataProd.length === 0) {
+                    document.getElementById('vista-inicio-compleja').innerHTML = `
+                        <div class="max-w-[1200px] mx-auto px-4 pt-16">
+                            <div class="bg-red-50 border-l-8 border-red-500 rounded p-8 shadow-sm">
+                                <h2 class="text-3xl font-black text-red-700 mb-2">Bloqueo de Seguridad Supabase</h2>
+                                <p class="text-red-800 text-lg mb-6">La tabla <b>productos</b> está devolviendo 0 resultados porque tiene RLS activado.</p>
+                                <p class="text-gray-800 font-bold mb-2">Solución rápida:</p>
+                                <ol class="list-decimal pl-6 mt-2 space-y-2 text-gray-700 font-medium">
+                                    <li>Ve a Supabase > Table Editor > <b>productos</b>.</li>
+                                    <li>Arriba, dale clic al botón que dice <b>"1 RLS Policy"</b>.</li>
+                                    <li>Selecciona <b>"Disable RLS"</b>.</li>
+                                    <li>Recarga esta página.</li>
+                                </ol>
+                            </div>
+                        </div>`;
+                    return;
                 }
 
                 const dataPre = await resPre.json();
@@ -235,7 +230,6 @@
                     return { ...p, ...pre };
                 });
 
-                // LAS REGLAS ESTRICTAS DE NEGOCIO (Stock > 0, ACTIVO, Con Imagen Real)
                 todosLosProductos = dataFusionada.filter(p => {
                     const tieneStock = parseFloat(p.stock_actual) > 0;
                     const estaActivo = p.estado_producto === 'ACTIVO';
