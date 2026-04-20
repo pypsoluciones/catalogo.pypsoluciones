@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>P&P Admin | Directorio</title>
+    <title>P&P Admin | Directorio Maestro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -14,12 +14,11 @@
         .custom-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
         .btn-press:active { transform: scale(0.97); }
         .fade-in { animation: fadeIn 0.2s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .tab-active { border-bottom: 2px solid #E67E22; color: #143B62; font-weight: bold; }
-        .tab-inactive { color: #64748b; font-weight: 500; border-bottom: 2px solid transparent; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        .tab-active { border-bottom: 3px solid #E67E22; color: #143B62; font-weight: 800; }
+        .tab-inactive { color: #64748b; font-weight: 500; border-bottom: 3px solid transparent; }
         .btn-vista.active { background-color: #e2e8f0; color: #143B62; border-color: #cbd5e1; }
-        .param-label { font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
-        .uppercase-input { text-transform: uppercase; }
+        .param-label { font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; }
     </style>
     
     <script src="config.js"></script>
@@ -30,39 +29,44 @@
     <script src="menu.js"></script>
 
     <main class="flex-1 flex flex-col h-screen overflow-hidden bg-[#f4f6f8] w-full z-10 relative">
-        <header class="bg-white shadow-sm px-4 md:px-6 py-3 flex justify-between items-center z-10 shrink-0 border-b border-gray-200">
-            <div class="flex items-center gap-2 min-w-0">
-                <button onclick="toggleMobileMenu()" class="md:hidden text-gray-600 hover:text-[#143B62] text-xl transition btn-press px-1 shrink-0"><i class="fa-solid fa-bars"></i></button>
-                <h1 class="text-base md:text-lg font-semibold text-[#143B62] flex items-center gap-2 truncate"><i class="fa-solid fa-address-book text-[#E67E22]"></i> <span class="truncate">Directorio Maestro</span></h1>
+        <header class="bg-white shadow-sm px-4 py-2 flex justify-between items-center z-10 shrink-0 border-b border-gray-200 h-14">
+            <div class="flex items-center gap-3">
+                <button onclick="toggleMobileMenu()" class="md:hidden text-gray-600 hover:text-[#143B62] text-xl transition px-2"><i class="fa-solid fa-bars"></i></button>
+                <h1 class="text-base font-semibold text-[#143B62] flex items-center gap-2"><i class="fa-solid fa-address-book text-[#E67E22]"></i> Directorio Maestro</h1>
             </div>
             <div class="flex items-center gap-3 shrink-0">
                 <button onclick="window.location.reload()" class="md:hidden text-blue-600 bg-blue-50 w-8 h-8 rounded-full flex items-center justify-center hover:bg-blue-100 transition shadow-sm btn-press"><i class="fa-solid fa-rotate-right"></i></button>
-                <div class="bg-gray-50 px-2 md:px-3 py-1.5 rounded-md border border-gray-200 hidden sm:flex items-center gap-2 text-[11px] font-semibold text-gray-600 tracking-wide uppercase"><i class="fa-solid fa-user-tie text-[#143B62]"></i> <span id="nombre-usuario">Admin</span></div>
+                <div class="text-[11px] font-semibold text-gray-500 bg-gray-100 px-3 py-1 rounded border border-gray-200 uppercase tracking-wide hidden sm:block">
+                    <i class="fa-solid fa-user-tie text-[#143B62] mr-1"></i> <span id="nombre-usuario">Admin</span>
+                </div>
             </div>
         </header>
 
-        <div class="flex-1 overflow-auto p-2 md:p-4 custom-scroll pb-24 md:pb-6 flex flex-col">
+        <div class="flex-1 overflow-auto p-2 md:p-3 custom-scroll pb-24 md:pb-16 flex flex-col">
+            
             <div class="bg-white rounded-t-xl border border-gray-200 border-b-0 px-4 pt-3 flex gap-6 shrink-0">
-                <button onclick="cambiarPestana('clientes')" id="tab-clientes" class="tab-active pb-2 px-2 text-xs uppercase tracking-wider transition">Clientes</button>
-                <button onclick="cambiarPestana('proveedores')" id="tab-proveedores" class="tab-inactive pb-2 px-2 text-xs uppercase tracking-wider transition">Proveedores</button>
+                <button onclick="cambiarPestana('CLIENTE')" id="tab-clientes" class="tab-active pb-2 px-2 text-xs uppercase tracking-wider transition">Clientes</button>
+                <button onclick="cambiarPestana('PROVEEDOR')" id="tab-proveedores" class="tab-inactive pb-2 px-2 text-xs uppercase tracking-wider transition">Proveedores</button>
             </div>
 
             <div class="bg-white p-3 border border-gray-200 shadow-sm flex flex-col sm:flex-row justify-between items-center gap-3 shrink-0">
                 <div class="relative w-full sm:w-1/2">
                     <i class="fa-solid fa-search absolute left-3 top-2.5 text-gray-400 text-sm"></i>
-                    <input type="text" id="buscador" oninput="filtrarContactos()" placeholder="Buscador Inteligente (Ignora Acentos)..." class="w-full border border-gray-300 rounded-md pl-9 pr-4 py-2 text-xs focus:outline-none focus:border-[#143B62] uppercase transition">
+                    <input type="text" id="buscador" oninput="filtrarContactos()" placeholder="Buscador Inteligente (Ignora acentos)..." class="w-full border border-gray-300 rounded-md pl-9 pr-4 py-1.5 text-xs focus:outline-none focus:border-[#143B62] uppercase transition">
                 </div>
                 <div class="flex gap-2 w-full sm:w-auto justify-end">
-                    <div class="flex bg-gray-50 rounded-md border border-gray-300 p-0.5">
+                    <div class="flex bg-gray-50 rounded-md border border-gray-300 p-0.5 shadow-inner">
                         <button id="btn-vista-tabla" onclick="cambiarVista('tabla')" class="btn-vista active px-3 py-1 rounded text-gray-500 hover:text-[#143B62] transition text-sm"><i class="fa-solid fa-list"></i></button>
                         <button id="btn-vista-grid" onclick="cambiarVista('grid')" class="btn-vista px-3 py-1 rounded text-gray-500 hover:text-[#143B62] transition text-sm"><i class="fa-solid fa-border-all"></i></button>
                     </div>
-                    <button onclick="abrirModalContacto()" class="bg-[#25D366] hover:bg-[#1ebd5c] text-white px-4 py-1.5 rounded-md font-bold text-[12px] shadow-sm transition btn-press flex justify-center items-center gap-2 whitespace-nowrap"><i class="fa-solid fa-plus"></i> <span id="lbl-btn-nuevo">NUEVO CLIENTE</span></button>
+                    <button onclick="abrirModalContacto()" class="bg-[#25D366] hover:bg-[#1ebd5c] text-white px-4 py-1.5 rounded-md font-bold text-[12px] shadow-sm transition btn-press flex justify-center items-center gap-2 whitespace-nowrap">
+                        <i class="fa-solid fa-plus"></i> <span id="lbl-btn-nuevo">NUEVO CLIENTE</span>
+                    </button>
                 </div>
             </div>
 
-            <div id="contenedor-contactos" class="flex-1 bg-white border border-gray-200 border-t-0 rounded-b-xl shadow-sm flex flex-col">
-                <div class="p-10 text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin text-2xl mb-2 block"></i> Cargando data...</div>
+            <div id="contenedor-contactos" class="flex-1 bg-white border border-gray-200 border-t-0 rounded-b-xl shadow-sm flex flex-col min-h-[400px]">
+                <div class="p-10 text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin text-2xl mb-2 block"></i> Sincronizando Directorio...</div>
             </div>
         </div>
     </main>
@@ -70,7 +74,7 @@
     <div id="modal-contacto" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4 fade-in">
         <div class="bg-white rounded-lg shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden border border-gray-200 relative">
             <div class="bg-[#143B62] text-white px-5 py-3 flex justify-between items-center shrink-0">
-                <h3 class="font-medium text-sm tracking-wide flex items-center" id="modal-titulo"><i class="fa-solid fa-address-card mr-2 text-[#E67E22]"></i> REGISTRO</h3>
+                <h3 class="font-medium text-sm tracking-wide flex items-center uppercase" id="modal-titulo">REGISTRO</h3>
                 <button onclick="cerrarModalContacto()" class="text-gray-300 hover:text-white text-lg transition"><i class="fa-solid fa-times"></i></button>
             </div>
             
@@ -79,47 +83,57 @@
                 <input type="hidden" id="cont-id-original" value="">
                 
                 <div class="bg-white p-4 rounded border border-gray-200 shadow-sm mb-4">
-                    <h4 class="text-[11px] font-bold text-[#E67E22] uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Datos Principales</h4>
+                    <h4 class="text-[11px] font-bold text-[#E67E22] uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Identificación Legal</h4>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
-                        <div><label class="block param-label mb-1">Documento (C.I / RIF) *</label><input type="text" id="cont-doc" required class="uppercase-input w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-bold focus:border-[#143B62] outline-none" oninput="this.value = this.value.toUpperCase()"></div>
-                        <div><label class="block param-label mb-1">Nombre o Razón Social *</label><input type="text" id="cont-nombre" required class="uppercase-input w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-bold focus:border-[#143B62] outline-none" oninput="this.value = this.value.toUpperCase()"></div>
+                        <div>
+                            <label class="block param-label mb-1">Doc. Identidad / RIF *</label>
+                            <input type="text" id="cont-doc" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-bold focus:border-[#143B62] outline-none uppercase">
+                        </div>
+                        <div>
+                            <label class="block param-label mb-1">Nombre o Razón Social *</label>
+                            <input type="text" id="cont-nombre" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-bold focus:border-[#143B62] outline-none uppercase">
+                        </div>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div><label class="block param-label mb-1">Dirección Fiscal</label><input type="text" id="cont-dir-fiscal" class="uppercase-input w-full border border-gray-300 rounded px-2 py-1.5 text-xs focus:border-[#143B62] outline-none" oninput="this.value = this.value.toUpperCase()"></div>
-                        <div><label class="block param-label mb-1">Correo Electrónico</label><input type="email" id="cont-correo" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs focus:border-[#143B62] outline-none" oninput="this.value = this.value.toLowerCase()"></div>
+                        <div><label class="block param-label mb-1">Dirección Fiscal / Principal</label><input type="text" id="cont-dir-p" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none uppercase"></div>
+                        <div><label class="block param-label mb-1">Correo Electrónico</label><input type="email" id="cont-email" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none"></div>
                     </div>
                 </div>
 
                 <div class="bg-white p-4 rounded border border-gray-200 shadow-sm mb-4">
-                    <h4 class="text-[11px] font-bold text-[#143B62] uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Contacto Telefónico</h4>
+                    <h4 class="text-[11px] font-bold text-[#143B62] uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Comunicación Directa</h4>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div><label class="block param-label mb-1" id="lbl-cel1">Celular Principal *</label><input type="number" id="cont-cel1" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs focus:border-[#143B62] outline-none bg-blue-50"></div>
-                        <div><label class="block param-label mb-1" id="lbl-cel2">Celular Secundario</label><input type="text" id="cont-cel2" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs focus:border-[#143B62] outline-none"></div>
-                        <div id="div-tel-fijo"><label class="block param-label mb-1">Teléfono Local / Fijo</label><input type="text" id="cont-tel-fijo" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs focus:border-[#143B62] outline-none"></div>
+                        <div>
+                            <label class="block param-label mb-1">Celular Principal *</label>
+                            <p class="text-[8px] text-gray-400 mb-1 leading-none">Cero Soporte: Escribir sin guiones.</p>
+                            <input type="text" id="cont-tel1" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-bold focus:border-[#143B62] outline-none bg-blue-50" placeholder="Ej: 04141234567">
+                        </div>
+                        <div><label class="block param-label mb-1">Teléfono Alternativo</label><input type="text" id="cont-tel2" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none"></div>
+                        <div><label class="block param-label mb-1">Estatus</label><select id="cont-estatus" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-bold outline-none"><option value="ACTIVO">ACTIVO</option><option value="INACTIVO">INACTIVO</option></select></div>
                     </div>
                 </div>
 
                 <div id="caja-cliente" class="bg-white p-4 rounded border border-gray-200 shadow-sm border-l-4 border-l-emerald-500">
-                    <h4 class="text-[11px] font-bold text-emerald-600 uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Datos Exclusivos: Cliente</h4>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
-                        <div><label class="block param-label mb-1">Dirección de Entrega</label><input type="text" id="cli-dir-entrega" class="uppercase-input w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none" oninput="this.value = this.value.toUpperCase()"></div>
+                    <h4 class="text-[11px] font-bold text-emerald-600 uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Parámetros de Venta (Cliente)</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div><label class="block param-label mb-1">Dirección de Entrega</label><input type="text" id="cli-dir-sec" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none uppercase"></div>
                         <div class="grid grid-cols-2 gap-2">
-                            <div><label class="block param-label mb-1">Tipo Contribuyente</label><select id="cli-tipo-con" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none"><option value="NATURAL">NATURAL</option><option value="JURIDICA">JURÍDICA</option></select></div>
-                            <div><label class="block param-label mb-1">Nivel Precio</label><select id="cli-nivel" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none"><option value="PRECIO_GENERAL">GENERAL</option><option value="PRECIO_1">MAYOR (P1)</option><option value="PRECIO_2">GRAN MAYOR (P2)</option><option value="PRECIO_3">DIST. (P3)</option></select></div>
+                            <div><label class="block param-label mb-1">Tipo Persona</label><select id="cli-tipo" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none"><option value="NATURAL">NATURAL</option><option value="JURIDICA">JURÍDICA</option></select></div>
+                            <div><label class="block param-label mb-1">Nivel de Precio</label><select id="cli-nivel" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none"><option value="GENERAL">GENERAL</option><option value="P1">MAYOR (P1)</option><option value="P2">GRAN MAYOR (P2)</option><option value="P3">DISTRIBUIDOR (P3)</option></select></div>
                         </div>
                     </div>
                 </div>
 
                 <div id="caja-proveedor" class="bg-white p-4 rounded border border-gray-200 shadow-sm border-l-4 border-l-purple-500 hidden">
-                    <h4 class="text-[11px] font-bold text-purple-600 uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Datos Exclusivos: Proveedor</h4>
+                    <h4 class="text-[11px] font-bold text-purple-600 uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Parámetros de Compra (Proveedor)</h4>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
-                        <div class="md:col-span-2"><label class="block param-label mb-1">Dirección Sucursal</label><input type="text" id="prov-dir-suc" class="uppercase-input w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none" oninput="this.value = this.value.toUpperCase()"></div>
-                        <div><label class="block param-label mb-1">Clasificación Fiscal</label><select id="prov-clas" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none"><option value="ORDINARIO">ORDINARIO</option><option value="ESPECIAL">ESPECIAL</option><option value="FORMAL">FORMAL</option></select></div>
+                        <div class="md:col-span-2"><label class="block param-label mb-1">Dirección Sucursal</label><input type="text" id="prov-dir-sec" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none uppercase"></div>
+                        <div><label class="block param-label mb-1">Contribuyente</label><select id="prov-clas" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none"><option value="ORDINARIO">ORDINARIO</option><option value="ESPECIAL">ESPECIAL</option><option value="FORMAL">FORMAL</option></select></div>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div><label class="block param-label mb-1">Vendedor Asignado</label><input type="text" id="prov-ven-nom" class="uppercase-input w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none" oninput="this.value = this.value.toUpperCase()"></div>
+                        <div><label class="block param-label mb-1">Vendedor Asignado</label><input type="text" id="prov-ven-nom" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none uppercase"></div>
                         <div><label class="block param-label mb-1">Celular Vendedor</label><input type="text" id="prov-ven-cel" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none"></div>
-                        <div><label class="block param-label mb-1">Días de Crédito</label><input type="text" id="prov-dias" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs text-center font-bold bg-gray-50 outline-none"></div>
+                        <div><label class="block param-label mb-1">Días de Crédito</label><input type="number" id="prov-dias" value="0" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs text-center font-bold bg-gray-50 outline-none"></div>
                     </div>
                 </div>
             </form>
@@ -133,13 +147,10 @@
 
     <script>
         const TOKEN_JWT = localStorage.getItem('pyp_token_seguro');
-        
-        let pestanaActual = 'clientes';
+        let tipoActual = 'CLIENTE';
         let vistaActual = localStorage.getItem('pyp_vista_contactos') || 'tabla';
-        let dataClientes = []; let dataProveedores = [];
-        
-        // IA BÚSQUEDA
-        let fuseClientes = null; let fuseProveedores = null;
+        let dbDirectorio = [];
+        let fuseMaestro = null;
 
         window.onload = async () => {
             const nombre = localStorage.getItem('pyp_usuario_nombre');
@@ -148,47 +159,34 @@
             await cargarDatos();
         };
 
-        document.addEventListener('keydown', function(event) {
-            if (event.key === 'Escape') {
-                const modal = document.getElementById('modal-contacto');
-                if (modal && !modal.classList.contains('hidden')) cerrarModalContacto();
-            }
-        });
+        // Tecla ESC para cerrar modal
+        document.addEventListener('keydown', (e) => { if(e.key === 'Escape') cerrarModalContacto(); });
 
         async function cargarDatos() {
             try {
-                const [resCli, resProv] = await Promise.all([
-                    fetch(`${SUPABASE_URL}/rest/v1/clientes?select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
-                    fetch(`${SUPABASE_URL}/rest/v1/proveedores?select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } })
-                ]);
-                if(resCli.ok) dataClientes = await resCli.json();
-                if(resProv.ok) dataProveedores = await resProv.json();
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/directorio_maestro?select=*&order=nombre_razon_social.asc`, {
+                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` }
+                });
+                dbDirectorio = await res.json();
                 
-                // Preparar IA de Búsqueda
-                fuseClientes = new Fuse(dataClientes, { keys: ['documento_identidad', 'nombre_razon_social', 'celular_01', 'correo'], threshold: 0.3, ignoreLocation: true });
-                fuseProveedores = new Fuse(dataProveedores, { keys: ['rif', 'razon_social', 'vendedor_asignado'], threshold: 0.3, ignoreLocation: true });
+                // IA de Búsqueda calibrada (Threshold 0.15 = Estricto pero tolerante a acentos)
+                fuseMaestro = new Fuse(dbDirectorio, { 
+                    keys: ['documento_identidad', 'nombre_razon_social', 'vendedor_asignado'], 
+                    threshold: 0.15, ignoreLocation: true 
+                });
 
                 renderizarPantalla();
-            } catch(e) { document.getElementById('contenedor-contactos').innerHTML = `<div class="p-10 text-center text-red-500 font-bold uppercase"><i class="fa-solid fa-triangle-exclamation text-2xl mb-2 block"></i> Error de conexión a la Base de Datos.</div>`; }
+            } catch(e) { 
+                document.getElementById('contenedor-contactos').innerHTML = `<div class="p-10 text-center text-red-500 font-bold uppercase">Error de conexión a la Base de Datos.</div>`; 
+            }
         }
 
         function cambiarPestana(tipo) {
-            pestanaActual = tipo;
-            document.getElementById('tab-clientes').className = tipo === 'clientes' ? 'tab-active pb-2 px-2 text-xs uppercase tracking-wider transition' : 'tab-inactive pb-2 px-2 text-xs uppercase tracking-wider transition';
-            document.getElementById('tab-proveedores').className = tipo === 'proveedores' ? 'tab-active pb-2 px-2 text-xs uppercase tracking-wider transition' : 'tab-inactive pb-2 px-2 text-xs uppercase tracking-wider transition';
-            document.getElementById('lbl-btn-nuevo').innerText = tipo === 'clientes' ? 'NUEVO CLIENTE' : 'NUEVO PROVEEDOR';
+            tipoActual = tipo;
+            document.getElementById('tab-clientes').className = tipo === 'CLIENTE' ? 'tab-active pb-2 px-2 text-xs uppercase tracking-wider transition' : 'tab-inactive pb-2 px-2 text-xs uppercase tracking-wider transition';
+            document.getElementById('tab-proveedores').className = tipo === 'PROVEEDOR' ? 'tab-active pb-2 px-2 text-xs uppercase tracking-wider transition' : 'tab-inactive pb-2 px-2 text-xs uppercase tracking-wider transition';
+            document.getElementById('lbl-btn-nuevo').innerText = tipo === 'CLIENTE' ? 'NUEVO CLIENTE' : 'NUEVO PROVEEDOR';
             document.getElementById('buscador').value = '';
-            
-            if(tipo === 'proveedores') {
-                document.getElementById('div-tel-fijo').classList.add('hidden');
-                document.getElementById('lbl-cel1').innerText = 'Teléfono 01 *';
-                document.getElementById('lbl-cel2').innerText = 'Teléfono 02';
-            } else {
-                document.getElementById('div-tel-fijo').classList.remove('hidden');
-                document.getElementById('lbl-cel1').innerText = 'Celular Principal *';
-                document.getElementById('lbl-cel2').innerText = 'Celular Secundario';
-            }
-            
             renderizarPantalla();
         }
 
@@ -197,85 +195,95 @@
         function filtrarContactos() { renderizarPantalla(); }
 
         function renderizarPantalla() {
-            const query = document.getElementById('buscador').value;
-            let datosFiltrados = [];
+            const query = document.getElementById('buscador').value.trim();
+            let dataFiltrada = dbDirectorio.filter(p => p.tipo_persona === tipoActual);
 
-            if (query.trim() === '') {
-                datosFiltrados = pestanaActual === 'clientes' ? dataClientes : dataProveedores;
-            } else {
-                // USO DE IA DE BÚSQUEDA
-                if (pestanaActual === 'clientes') {
-                    datosFiltrados = fuseClientes.search(query).map(r => r.item);
-                } else {
-                    datosFiltrados = fuseProveedores.search(query).map(r => r.item);
-                }
+            if (query !== '') {
+                // Aplicar IA de Búsqueda
+                const resultadosFuse = fuseMaestro.search(query);
+                dataFiltrada = resultadosFuse.map(r => r.item).filter(p => p.tipo_persona === tipoActual);
             }
 
             const c = document.getElementById('contenedor-contactos');
-            if(datosFiltrados.length === 0) { c.innerHTML = `<div class="p-10 text-center text-gray-400 font-medium"><i class="fa-solid fa-folder-open text-3xl mb-2 block opacity-50"></i> No se encontraron registros.</div>`; return; }
+            if(dataFiltrada.length === 0) {
+                c.innerHTML = `<div class="p-10 text-center text-gray-400 font-medium"><i class="fa-solid fa-folder-open text-3xl mb-2 block opacity-50"></i> No se encontraron registros de ${tipoActual.toLowerCase()}s.</div>`;
+                return;
+            }
 
             if(vistaActual === 'tabla') {
                 let html = `<div class="overflow-x-auto flex-1 custom-scroll"><table class="w-full text-left text-xs whitespace-nowrap min-w-[900px]">`;
-                if (pestanaActual === 'clientes') {
+                
+                if(tipoActual === 'CLIENTE') {
                     html += `<thead class="bg-[#143B62] text-white text-[10px] uppercase tracking-wider sticky top-0"><tr><th class="py-3 px-4 w-[15%]">Doc / RIF</th><th class="py-3 px-4 w-[25%]">Razón Social</th><th class="py-3 px-4 w-[15%]">Celular</th><th class="py-3 px-4 w-[25%]">Dirección</th><th class="py-3 px-4 w-[15%]">Correo</th><th class="py-3 px-4 text-center w-[5%]">Acción</th></tr></thead><tbody class="divide-y divide-gray-100">`;
-                    datosFiltrados.forEach(item => { const itemStr = encodeURIComponent(JSON.stringify(item)); html += `<tr class="hover:bg-gray-50 transition"><td class="py-2.5 px-4 font-mono text-[11px] font-semibold text-gray-500">${item.documento_identidad || '-'}</td><td class="py-2.5 px-4 font-bold text-[#143B62] truncate max-w-[200px]">${item.nombre_razon_social || '-'}</td><td class="py-2.5 px-4 text-gray-600 font-mono">${item.celular_01 || '-'}</td><td class="py-2.5 px-4 text-gray-500 truncate max-w-[250px]">${item.direccion_fiscal || '-'}</td><td class="py-2.5 px-4 text-gray-500 truncate max-w-[150px]">${item.correo || '-'}</td><td class="py-2.5 px-4 text-center"><button onclick="abrirModalContacto('${itemStr}')" class="text-blue-500 hover:bg-blue-50 px-2 py-1 rounded transition"><i class="fa-solid fa-pen-to-square"></i></button></td></tr>`; });
+                    dataFiltrada.forEach(item => {
+                        const itemStr = encodeURIComponent(JSON.stringify(item));
+                        html += `<tr class="hover:bg-gray-50 transition border-b border-gray-50"><td class="py-2.5 px-4 font-mono text-[11px] font-semibold text-gray-500">${item.documento_identidad || '-'}</td><td class="py-2.5 px-4 font-bold text-[#143B62] truncate max-w-[200px]">${item.nombre_razon_social}</td><td class="py-2.5 px-4 text-gray-600 font-mono">${item.telefono_principal || '-'}</td><td class="py-2.5 px-4 text-gray-500 truncate max-w-[250px]">${item.direccion_principal || '-'}</td><td class="py-2.5 px-4 text-gray-400 truncate max-w-[150px] text-[10px]">${item.correo_electronico || '-'}</td><td class="py-2.5 px-4 text-center"><button onclick="abrirModalContacto('${itemStr}')" class="text-blue-500 hover:bg-blue-50 px-2 py-1 rounded transition"><i class="fa-solid fa-pen-to-square"></i></button></td></tr>`;
+                    });
                 } else {
                     html += `<thead class="bg-[#143B62] text-white text-[10px] uppercase tracking-wider sticky top-0"><tr><th class="py-3 px-4">Doc / RIF</th><th class="py-3 px-4">Razón Social</th><th class="py-3 px-4">Dirección</th><th class="py-3 px-4">Teléfono 1</th><th class="py-3 px-4">Vendedor Asignado</th><th class="py-3 px-4">Cel. Vendedor</th><th class="py-3 px-4 text-center">Acción</th></tr></thead><tbody class="divide-y divide-gray-100">`;
-                    datosFiltrados.forEach(item => { const itemStr = encodeURIComponent(JSON.stringify(item)); html += `<tr class="hover:bg-gray-50 transition"><td class="py-2.5 px-4 font-mono text-[11px] font-semibold text-gray-500">${item.rif || '-'}</td><td class="py-2.5 px-4 font-bold text-[#143B62] truncate max-w-[200px]">${item.razon_social || '-'}</td><td class="py-2.5 px-4 text-gray-500 truncate max-w-[200px]">${item.direccion_fiscal || '-'}</td><td class="py-2.5 px-4 text-gray-600 font-mono">${item.telefono_01 || '-'}</td><td class="py-2.5 px-4 text-gray-600 font-semibold truncate max-w-[150px]">${item.vendedor_asignado || 'NO ASIGNADO'}</td><td class="py-2.5 px-4 text-gray-600 font-mono">${item.celular_vendedor || '-'}</td><td class="py-2.5 px-4 text-center"><button onclick="abrirModalContacto('${itemStr}')" class="text-blue-500 hover:bg-blue-50 px-2 py-1 rounded transition"><i class="fa-solid fa-pen-to-square"></i></button></td></tr>`; });
+                    dataFiltrada.forEach(item => {
+                        const itemStr = encodeURIComponent(JSON.stringify(item));
+                        html += `<tr class="hover:bg-gray-50 transition border-b border-gray-50"><td class="py-2.5 px-4 font-mono text-[11px] font-semibold text-gray-500">${item.documento_identidad || '-'}</td><td class="py-2.5 px-4 font-bold text-[#143B62] truncate max-w-[200px]">${item.nombre_razon_social}</td><td class="py-2.5 px-4 text-gray-500 truncate max-w-[200px]">${item.direccion_principal || '-'}</td><td class="py-2.5 px-4 text-gray-600 font-mono">${item.telefono_principal || '-'}</td><td class="py-2.5 px-4 text-purple-600 font-semibold truncate max-w-[150px]">${item.vendedor_asignado || 'NO ASIGNADO'}</td><td class="py-2.5 px-4 text-gray-600 font-mono">${item.celular_vendedor || '-'}</td><td class="py-2.5 px-4 text-center"><button onclick="abrirModalContacto('${itemStr}')" class="text-blue-500 hover:bg-blue-50 px-2 py-1 rounded transition"><i class="fa-solid fa-pen-to-square"></i></button></td></tr>`;
+                    });
                 }
                 html += `</tbody></table></div>`; c.innerHTML = html;
             } else {
                 let html = `<div class="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 overflow-y-auto custom-scroll">`;
-                if (pestanaActual === 'clientes') {
-                    datosFiltrados.forEach(item => { const itemStr = encodeURIComponent(JSON.stringify(item)); html += `<div class="bg-white border border-gray-200 rounded-lg p-4 flex flex-col shadow-sm relative hover:border-[#E67E22] transition"><div class="bg-gray-100 px-2 py-1 rounded font-mono text-[10px] font-bold text-gray-600 w-fit mb-2">${item.documento_identidad || '-'}</div><h3 class="font-bold text-[#143B62] text-[13px] leading-tight mb-3 line-clamp-2">${item.nombre_razon_social || '-'}</h3><div class="text-[11px] text-gray-500 space-y-1.5 mb-4 flex-1"><p><i class="fa-solid fa-mobile-screen w-4 text-gray-400"></i> ${item.celular_01 || '-'}</p><p class="truncate" title="${item.correo || '-'}"><i class="fa-solid fa-envelope w-4 text-gray-400"></i> ${item.correo || '-'}</p><p class="line-clamp-2" title="${item.direccion_fiscal || '-'}"><i class="fa-solid fa-location-dot w-4 text-gray-400"></i> ${item.direccion_fiscal || '-'}</p></div><div class="border-t border-gray-100 pt-3 flex justify-end"><button onclick="abrirModalContacto('${itemStr}')" class="text-[11px] bg-blue-50 text-blue-700 font-bold px-3 py-1.5 rounded uppercase tracking-wider hover:bg-blue-100 transition"><i class="fa-solid fa-pen-to-square mr-1"></i> Editar</button></div></div>`; });
-                } else {
-                    datosFiltrados.forEach(item => { const itemStr = encodeURIComponent(JSON.stringify(item)); html += `<div class="bg-white border border-gray-200 rounded-lg p-4 flex flex-col shadow-sm relative hover:border-[#E67E22] transition"><div class="bg-gray-100 px-2 py-1 rounded font-mono text-[10px] font-bold text-gray-600 w-fit mb-2">${item.rif || '-'}</div><h3 class="font-bold text-[#143B62] text-[13px] leading-tight mb-3 line-clamp-2">${item.razon_social || '-'}</h3><div class="text-[11px] text-gray-500 space-y-1.5 mb-4 flex-1"><p class="line-clamp-2" title="${item.direccion_fiscal || '-'}"><i class="fa-solid fa-location-dot w-4 text-gray-400"></i> ${item.direccion_fiscal || '-'}</p><p><i class="fa-solid fa-phone w-4 text-gray-400"></i> ${item.telefono_01 || '-'}</p><div class="mt-2 pt-2 border-t border-gray-100"><p class="text-[9px] font-bold text-purple-500 mb-1">VENDEDOR</p><p><i class="fa-solid fa-user-tie w-4 text-gray-400"></i> ${item.vendedor_asignado || 'NO ASIGNADO'}</p><p><i class="fa-solid fa-mobile-screen w-4 text-gray-400"></i> ${item.celular_vendedor || '-'}</p></div></div><div class="border-t border-gray-100 pt-3 flex justify-end"><button onclick="abrirModalContacto('${itemStr}')" class="text-[11px] bg-blue-50 text-blue-700 font-bold px-3 py-1.5 rounded uppercase tracking-wider hover:bg-blue-100 transition"><i class="fa-solid fa-pen-to-square mr-1"></i> Editar</button></div></div>`; });
-                }
+                dataFiltrada.forEach(item => {
+                    const itemStr = encodeURIComponent(JSON.stringify(item));
+                    const esCliente = tipoActual === 'CLIENTE';
+                    html += `
+                    <div class="bg-white border border-gray-200 rounded-lg p-4 flex flex-col shadow-sm relative hover:border-[#E67E22] transition fade-in">
+                        <div class="bg-gray-100 px-2 py-1 rounded font-mono text-[10px] font-bold text-gray-600 w-fit mb-2">${item.documento_identidad || '-'}</div>
+                        <h3 class="font-bold text-[#143B62] text-[13px] leading-tight mb-3 line-clamp-2">${item.nombre_razon_social}</h3>
+                        <div class="text-[11px] text-gray-500 space-y-1.5 mb-4 flex-1">
+                            <p><i class="fa-solid fa-phone w-4 text-gray-400"></i> ${item.telefono_principal || '-'}</p>
+                            <p class="truncate" title="${item.correo_electronico}"><i class="fa-solid fa-envelope w-4 text-gray-400"></i> ${item.correo_electronico || '-'}</p>
+                            <p class="line-clamp-2"><i class="fa-solid fa-location-dot w-4 text-gray-400"></i> ${item.direccion_principal || '-'}</p>
+                            ${!esCliente ? `<div class="mt-2 pt-2 border-t border-gray-50"><p class="text-purple-600 font-bold uppercase text-[9px] mb-1">Vendedor</p><p><i class="fa-solid fa-user-tie w-4"></i> ${item.vendedor_asignado || 'N/A'}</p></div>` : ''}
+                        </div>
+                        <div class="border-t border-gray-100 pt-3 flex justify-end">
+                            <button onclick="abrirModalContacto('${itemStr}')" class="text-[11px] bg-blue-50 text-blue-700 font-bold px-3 py-1.5 rounded uppercase tracking-wider hover:bg-blue-100 transition"><i class="fa-solid fa-pen-to-square mr-1"></i> Editar</button>
+                        </div>
+                    </div>`;
+                });
                 html += `</div>`; c.innerHTML = html;
             }
         }
 
         function abrirModalContacto(itemStr = null) {
             const f = document.getElementById('form-contacto'); f.reset();
-            
-            document.getElementById('caja-cliente').classList.toggle('hidden', pestanaActual !== 'clientes');
-            document.getElementById('caja-proveedor').classList.toggle('hidden', pestanaActual === 'proveedores');
+            document.getElementById('caja-cliente').classList.toggle('hidden', tipoActual !== 'CLIENTE');
+            document.getElementById('caja-proveedor').classList.toggle('hidden', tipoActual !== 'PROVEEDOR');
 
             if (itemStr) {
                 const c = JSON.parse(decodeURIComponent(itemStr));
-                document.getElementById('modal-titulo').innerHTML = `<i class="fa-solid fa-pen-to-square mr-2 text-blue-400"></i> EDITAR ${pestanaActual.substring(0, pestanaActual.length-1).toUpperCase()}`;
+                document.getElementById('modal-titulo').innerText = `EDITAR ${tipoActual}`;
                 document.getElementById('cont-modo-edicion').value = "true";
+                document.getElementById('cont-id-original').value = c.id;
+                document.getElementById('cont-doc').value = c.documento_identidad || '';
+                document.getElementById('cont-nombre').value = c.nombre_razon_social || '';
+                document.getElementById('cont-dir-p').value = c.direccion_principal || '';
+                document.getElementById('cont-email').value = c.correo_electronico || '';
+                document.getElementById('cont-tel1').value = c.telefono_principal || '';
+                document.getElementById('cont-tel2').value = c.telefono_secundario || '';
+                document.getElementById('cont-estatus').value = c.estatus || 'ACTIVO';
                 
-                const docOriginal = pestanaActual === 'clientes' ? c.documento_identidad : c.rif;
-                document.getElementById('cont-id-original').value = docOriginal;
-                document.getElementById('cont-doc').value = docOriginal || '';
-                document.getElementById('cont-doc').readOnly = true; document.getElementById('cont-doc').classList.add('bg-gray-100', 'text-gray-500');
-                
-                document.getElementById('cont-nombre').value = c.nombre_razon_social || c.razon_social || '';
-                document.getElementById('cont-dir-fiscal').value = c.direccion_fiscal || '';
-                document.getElementById('cont-correo').value = c.correo || '';
-                
-                if(pestanaActual === 'clientes') {
-                    document.getElementById('cont-cel1').value = c.celular_01 || '';
-                    document.getElementById('cont-cel2').value = c.celular_02 || '';
-                    document.getElementById('cont-tel-fijo').value = c.telefono || '';
-                    document.getElementById('cli-dir-entrega').value = c.direccion_entrega || '';
-                    document.getElementById('cli-tipo-con').value = c.tipo_contribuyente || 'NATURAL';
-                    document.getElementById('cli-nivel').value = c.nivel_precio || 'PRECIO_GENERAL';
+                if(tipoActual === 'CLIENTE') {
+                    document.getElementById('cli-dir-sec').value = c.direccion_secundaria || '';
+                    document.getElementById('cli-tipo').value = c.tipo_contribuyente || 'NATURAL';
+                    document.getElementById('cli-nivel').value = c.nivel_precio || 'GENERAL';
                 } else {
-                    document.getElementById('cont-cel1').value = c.telefono_01 || '';
-                    document.getElementById('cont-cel2').value = c.telefono_02 || '';
-                    document.getElementById('prov-dir-suc').value = c.direccion_sucursal || '';
+                    document.getElementById('prov-dir-sec').value = c.direccion_secundaria || '';
                     document.getElementById('prov-clas').value = c.clasificacion_fiscal || 'ORDINARIO';
                     document.getElementById('prov-ven-nom').value = c.vendedor_asignado || '';
                     document.getElementById('prov-ven-cel').value = c.celular_vendedor || '';
-                    document.getElementById('prov-dias').value = c.dias_credito || '';
+                    document.getElementById('prov-dias').value = c.dias_credito || 0;
                 }
             } else {
-                document.getElementById('modal-titulo').innerHTML = `<i class="fa-solid fa-address-card mr-2 text-[#E67E22]"></i> NUEVO ${pestanaActual.substring(0, pestanaActual.length-1).toUpperCase()}`;
+                document.getElementById('modal-titulo').innerText = `NUEVO ${tipoActual}`;
                 document.getElementById('cont-modo-edicion').value = "false";
                 document.getElementById('cont-id-original').value = "";
-                document.getElementById('cont-doc').readOnly = false; document.getElementById('cont-doc').classList.remove('bg-gray-100', 'text-gray-500');
             }
             document.getElementById('modal-contacto').classList.remove('hidden');
         }
@@ -283,38 +291,58 @@
         function cerrarModalContacto() { document.getElementById('modal-contacto').classList.add('hidden'); }
 
         async function guardarContacto(e) {
-            e.preventDefault(); 
-            const btn = document.getElementById('btn-guardar-cont'); btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Guardando...`; btn.disabled = true;
+            e.preventDefault();
+            const btn = document.getElementById('btn-guardar-cont');
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Guardando...`;
+            btn.disabled = true;
+
             const isEdit = document.getElementById('cont-modo-edicion').value === "true";
-            
+            const idOriginal = document.getElementById('cont-id-original').value;
+
             try {
+                // Obtener ID Empresa (Tenant)
                 const resUser = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?select=id_empresa&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
-                const dataUser = await resUser.json(); const miEmpresa = dataUser.length > 0 ? dataUser[0].id_empresa : null;
+                const dataUser = await resUser.json();
+                const miEmpresa = dataUser.length > 0 ? dataUser[0].id_empresa : null;
 
-                const doc = document.getElementById('cont-doc').value.trim().toUpperCase();
-                const nom = document.getElementById('cont-nombre').value.trim().toUpperCase();
-                const dir = document.getElementById('cont-dir-fiscal').value.trim().toUpperCase();
-                const em = document.getElementById('cont-correo').value.trim().toLowerCase();
+                const payload = {
+                    id_empresa: miEmpresa,
+                    tipo_persona: tipoActual,
+                    documento_identidad: document.getElementById('cont-doc').value.trim().toUpperCase(),
+                    nombre_razon_social: document.getElementById('cont-nombre').value.trim().toUpperCase(),
+                    direccion_principal: document.getElementById('cont-dir-p').value.trim().toUpperCase(),
+                    correo_electronico: document.getElementById('cont-email').value.trim().toLowerCase(),
+                    telefono_principal: document.getElementById('cont-tel1').value.trim(),
+                    telefono_secundario: document.getElementById('cont-tel2').value.trim(),
+                    estatus: document.getElementById('cont-estatus').value,
+                    // Campos Dinámicos
+                    direccion_secundaria: tipoActual === 'CLIENTE' ? document.getElementById('cli-dir-sec').value.trim().toUpperCase() : document.getElementById('prov-dir-sec').value.trim().toUpperCase(),
+                    tipo_contribuyente: tipoActual === 'CLIENTE' ? document.getElementById('cli-tipo').value : null,
+                    nivel_precio: tipoActual === 'CLIENTE' ? document.getElementById('cli-nivel').value : null,
+                    clasificacion_fiscal: tipoActual === 'PROVEEDOR' ? document.getElementById('prov-clas').value : null,
+                    vendedor_asignado: tipoActual === 'PROVEEDOR' ? document.getElementById('prov-ven-nom').value.trim().toUpperCase() : null,
+                    celular_vendedor: tipoActual === 'PROVEEDOR' ? document.getElementById('prov-ven-cel').value.trim() : null,
+                    dias_credito: tipoActual === 'PROVEEDOR' ? parseInt(document.getElementById('prov-dias').value) || 0 : 0
+                };
 
-                let endpoint = ''; let payload = {}; let matchColumn = '';
-
-                if(pestanaActual === 'clientes') {
-                    endpoint = 'clientes'; matchColumn = 'documento_identidad';
-                    payload = { documento_identidad: doc, nombre_razon_social: nom, direccion_fiscal: dir, direccion_entrega: document.getElementById('cli-dir-entrega').value.toUpperCase() || null, telefono: document.getElementById('cont-tel-fijo').value.trim() || null, celular_01: parseInt(document.getElementById('cont-cel1').value.replace(/\D/g, '')) || null, celular_02: document.getElementById('cont-cel2').value.trim() || null, correo: em || null, tipo_contribuyente: document.getElementById('cli-tipo-con').value || null, nivel_precio: document.getElementById('cli-nivel').value || null, id_empresa: miEmpresa };
-                } else {
-                    endpoint = 'proveedores'; matchColumn = 'rif';
-                    payload = { rif: doc, razon_social: nom, direccion_fiscal: dir, direccion_sucursal: document.getElementById('prov-dir-suc').value.toUpperCase() || null, clasificacion_fiscal: document.getElementById('prov-clas').value || null, telefono_01: document.getElementById('cont-cel1').value.trim() || null, telefono_02: parseFloat(document.getElementById('cont-cel2').value.replace(/[^\d.-]/g, '')) || null, vendedor_asignado: document.getElementById('prov-ven-nom').value.toUpperCase() || null, celular_vendedor: document.getElementById('prov-ven-cel').value.trim() || null, correo: em || null, dias_credito: document.getElementById('prov-dias').value.trim() || null, id_empresa: miEmpresa };
-                }
-
-                const url = isEdit ? `${SUPABASE_URL}/rest/v1/${endpoint}?${matchColumn}=eq.${doc}` : `${SUPABASE_URL}/rest/v1/${endpoint}`;
+                const url = isEdit ? `${SUPABASE_URL}/rest/v1/directorio_maestro?id=eq.${idOriginal}` : `${SUPABASE_URL}/rest/v1/directorio_maestro`;
                 const method = isEdit ? 'PATCH' : 'POST';
 
-                const res = await fetch(url, { method: method, headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' }, body: JSON.stringify(payload) });
-                if (!res.ok) { const errorData = await res.json(); throw new Error(`Verifica que el Documento no esté duplicado. (${errorData.message})`); }
-                
-                cerrarModalContacto(); await cargarDatos(); 
-            } catch(e) { alert("FALLO AL GUARDAR:\n" + e.message); } finally { btn.innerHTML = `<i class="fa-solid fa-save"></i> Guardar`; btn.disabled = false; }
+                const res = await fetch(url, {
+                    method: method,
+                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+                    body: JSON.stringify(payload)
+                });
+
+                if(!res.ok) throw new Error("Error en base de datos.");
+
+                cerrarModalContacto();
+                await cargarTodo(); // Recargar localmente
+            } catch(e) { alert("Error al guardar: " + e.message); }
+            finally { btn.innerHTML = `<i class="fa-solid fa-save"></i> Guardar`; btn.disabled = false; }
         }
+
+        async function cargarTodo() { await cargarDatos(); }
     </script>
 </body>
 </html>
