@@ -21,7 +21,6 @@
         .toggle-checkbox:checked + .toggle-label { background-color: #25D366; }
         .param-label { font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
         .btn-vista.active { background-color: #e2e8f0; color: #143B62; border-color: #cbd5e1; }
-        .text-truncate-25 { max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .filter-panel { transition: all 0.3s ease-in-out; overflow: hidden; max-height: 0; opacity: 0; padding-top: 0; padding-bottom: 0; margin-bottom: 0; border-width: 0; }
         .filter-panel.open { max-height: 200px; opacity: 1; padding-top: 12px; padding-bottom: 8px; margin-bottom: 8px; border-width: 1px; overflow: visible; }
         #upload-overlay { background-color: rgba(255,255,255,0.8); backdrop-filter: blur(2px); }
@@ -55,7 +54,7 @@
                 <div class="flex-1 flex gap-2 w-full">
                     <div class="relative flex-1">
                         <i class="fa-solid fa-search absolute left-3 top-2 text-gray-400 text-sm"></i>
-                        <input type="text" id="buscador-inv" oninput="filtrarInventario()" placeholder="Buscador con Inteligencia Artificial (Ignora Acentos)..." class="uppercase-input w-full border border-gray-300 rounded-md pl-9 pr-4 py-1.5 text-[13px] font-medium focus:outline-none focus:border-[#143B62] bg-white shadow-sm">
+                        <input type="text" id="buscador-inv" oninput="filtrarInventario()" placeholder="Buscar producto (Ignora acentos)..." class="uppercase-input w-full border border-gray-300 rounded-md pl-9 pr-4 py-1.5 text-[13px] font-medium focus:outline-none focus:border-[#143B62] bg-white shadow-sm">
                     </div>
                     <button onclick="toggleFiltrosPanel()" class="bg-white border border-gray-300 text-gray-600 px-3 py-1.5 rounded-md hover:bg-gray-50 transition shadow-sm text-[13px] font-medium flex items-center gap-2"><i class="fa-solid fa-filter"></i> <span class="hidden sm:inline">Filtros</span></button>
                 </div>
@@ -231,7 +230,6 @@
         
         let paginaActual = 1; const ITEMS_POR_PAGINA = 50; let dataFiltradaGlobal = [];
         
-        // IA DE BÚSQUEDA
         let fuseInventario = null; let dbFusionadaGlobal = [];
 
         window.onload = async () => {
@@ -240,7 +238,6 @@
             actualizarUIBotonesVista(); await cargarTodo();
         };
 
-        // Restaurar ESC para modales
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
                 const modalProd = document.getElementById('modal-producto');
@@ -259,9 +256,10 @@
 
         async function cargarTodo() {
             try {
+                // Aumenté el límite por si aún no cambias el setting global en Supabase
                 const [resInv, resPre, resPar] = await Promise.all([
-                    fetch(`${SUPABASE_URL}/rest/v1/productos?select=*&order=id_producto_sku.asc&limit=3000`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
-                    fetch(`${SUPABASE_URL}/rest/v1/precios?select=*&limit=3000`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
+                    fetch(`${SUPABASE_URL}/rest/v1/productos?select=*&order=id_producto_sku.asc&limit=10000`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
+                    fetch(`${SUPABASE_URL}/rest/v1/precios?select=*&limit=10000`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
                     fetch(`${SUPABASE_URL}/rest/v1/parametros_inventario?select=*&estatus=eq.ACTIVO`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } })
                 ]);
                 
@@ -274,9 +272,10 @@
                 llenarSelect('prod-estado', 'ESTADO_PRODUCTO', false); llenarSelect('prod-condicion', 'CONDICION_PRODUCTO', false); llenarSelect('prod-tipo', 'TIPO_PRODUCTO', false); llenarSelect('prod-categoria', 'CATEGORIA', false); llenarSelect('prod-marca', 'MARCA', false); llenarSelect('prod-cat-venta', 'CATEGORIA_VENTA', true); llenarSelect('prod-unidad', 'UNIDAD_MEDIDA', false); llenarSelect('prod-iva', 'TIPO_IMPUESTO', false); llenarSelect('prod-talla', 'TALLA', true); llenarSelect('prod-color', 'COLOR', true);
                 llenarSelectFiltros('filtro-categoria', 'CATEGORIA'); llenarSelectFiltros('filtro-marca', 'MARCA'); llenarSelectFiltros('filtro-estado', 'ESTADO_PRODUCTO'); llenarSelectFiltros('filtro-condicion', 'CONDICION_PRODUCTO');
                 
-                // Preparar IA de Búsqueda
                 dbFusionadaGlobal = dbInventario.map(p => { const pre = dbPrecios.find(pr => pr.id_producto_sku === p.id_producto_sku) || {}; return { ...p, ...pre }; });
-                fuseInventario = new Fuse(dbFusionadaGlobal, { keys: ['nombre', 'id_producto_sku', 'codigo_barras'], threshold: 0.3, ignoreLocation: true });
+                
+                // IA CALIBRADA: threshold 0.15 = ignora acentos y minúsculas pero NO se inventa palabras
+                fuseInventario = new Fuse(dbFusionadaGlobal, { keys: ['nombre', 'id_producto_sku', 'codigo_barras'], threshold: 0.15, ignoreLocation: true });
 
                 filtrarInventario();
             } catch(e) { document.getElementById('contenedor-inventario').innerHTML = `<div class="p-5 text-center text-red-500 font-bold uppercase">Error cargando Base de Datos.</div>`; }
@@ -296,11 +295,8 @@
             const q = document.getElementById('buscador-inv').value; 
             const fCat = document.getElementById('filtro-categoria').value; const fMar = document.getElementById('filtro-marca').value; const fEst = document.getElementById('filtro-estado').value; const fCon = document.getElementById('filtro-condicion').value; const fStock = document.getElementById('filtro-stock').value;
             
-            // IA DE BÚSQUEDA APLICADA
             let dataProcesar = dbFusionadaGlobal;
-            if(q.trim() !== '') {
-                dataProcesar = fuseInventario.search(q).map(r => r.item);
-            }
+            if(q.trim() !== '') { dataProcesar = fuseInventario.search(q).map(r => r.item); }
             
             dataFiltradaGlobal = dataProcesar.filter(p => {
                 const cat = p.categoria_del_producto || ''; const mar = p.marca || ''; const est = p.estado_producto || ''; const con = p.condicion_producto || ''; const stx = parseInt(p.stock_actual) || 0;
