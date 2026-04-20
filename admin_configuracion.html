@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="widtFh=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>P&P Admin | Configuración</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -12,251 +12,193 @@
         .custom-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
         .custom-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
         .btn-press:active { transform: scale(0.97); }
-        .fade-in { animation: fadeIn 0.3s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .sidebar-link { font-weight: 500; padding: 8px 14px; font-size: 13px; letter-spacing: 0.01em; }
-        .sidebar-icon { font-size: 14px; width: 22px; text-align: center; }
-        .param-label { font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
-        
-        .help-note { font-size: 11px; color: #475569; margin-top: 6px; line-height: 1.5; display: flex; gap: 6px; background-color: #f8fafc; padding: 8px; border-radius: 6px; border: 1px solid #e2e8f0; }
-        .help-note i { margin-top: 3px; color: #3b82f6; font-size: 14px; }
-
-        #upload-overlay { background-color: rgba(255,255,255,0.8); backdrop-filter: blur(2px); }
     </style>
+
+    <script src="config.js"></script>
     <script>
-    // Guardián de Seguridad: Exige el Token Real
-    if (!localStorage.getItem('pyp_token_seguro')) {
-        window.location.href = 'login.html';
-    }
-</script>
+        if (!localStorage.getItem('pyp_token_seguro')) window.location.href = 'login.html';
+    </script>
 </head>
 <body class="bg-[#f4f6f8] flex h-screen overflow-hidden text-gray-800 relative">
-    <main class="flex-1 flex flex-col h-screen overflow-hidden bg-[#f4f6f8] w-full">
-        <header class="bg-white shadow-sm px-4 md:px-6 py-2 flex justify-between items-center z-10 shrink-0 border-b border-gray-200 h-16">
-            <div class="flex items-center gap-3 h-full max-w-[70%]">
-                <button onclick="toggleMobileMenu()" class="md:hidden text-gray-600 hover:text-[#143B62] text-xl transition btn-press px-2"><i class="fa-solid fa-bars"></i></button>
-                <div class="flex items-center h-full overflow-hidden">
-                    <img id="app-logo-header" src="" class="max-h-10 max-w-full w-auto hidden md:hidden object-contain pr-2">
-                    
-                    <h1 id="app-text-header" class="text-base md:text-lg font-semibold text-[#143B62] flex items-center gap-2 truncate">
-                        <i class="fa-solid fa-gear text-[#E67E22] hidden sm:inline-block"></i> <span>Configuración</span>
-                    </h1>
-                </div>
+
+    <main class="flex-1 flex flex-col h-screen overflow-hidden bg-[#f4f6f8] w-full z-10 relative">
+        <header class="bg-white shadow-sm px-4 md:px-6 py-4 flex justify-between items-center z-10 shrink-0 border-b border-gray-200">
+            <div class="flex items-center gap-3">
+                <button onclick="toggleMobileMenu()" class="md:hidden text-gray-600 hover:text-[#143B62] text-xl transition px-2"><i class="fa-solid fa-bars"></i></button>
+                <h1 class="text-lg font-bold text-[#143B62] flex items-center gap-2"><i class="fa-solid fa-gear text-[#E67E22]"></i> Configuración</h1>
             </div>
-            <div class="flex items-center gap-2 md:gap-3 shrink-0">
-                <div class="bg-gray-50 px-2 md:px-3 py-1.5 rounded-md border border-gray-200 flex items-center gap-2 text-[10px] md:text-[11px] font-semibold text-gray-600 tracking-wide uppercase"><i class="fa-solid fa-user-tie text-[#143B62]"></i> <span id="nombre-usuario" class="hidden sm:inline-block">Admin</span></div>
+            <div class="text-[11px] font-semibold text-gray-500 bg-gray-100 px-3 py-1 rounded border border-gray-200 uppercase tracking-wide">
+                <i class="fa-solid fa-user-tie text-[#143B62] mr-1"></i> <span id="nombre-usuario">Admin</span>
             </div>
         </header>
 
-        <div class="flex-1 overflow-auto p-4 md:p-6 custom-scroll pb-24 md:pb-6 fade-in">
+        <div class="flex-1 overflow-y-auto p-4 md:p-6 custom-scroll relative">
+            <div id="loading-overlay" class="absolute inset-0 bg-white/80 z-50 flex flex-col items-center justify-center hidden">
+                <i class="fa-solid fa-spinner fa-spin text-4xl text-[#E67E22] mb-3"></i>
+                <p class="font-bold text-[#143B62]">Procesando...</p>
+            </div>
+
             <div class="max-w-5xl mx-auto space-y-6">
-                
-                <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                    <div class="bg-[#143B62] px-5 py-3 border-b border-white/10 flex justify-between items-center">
-                        <h3 class="text-white font-semibold text-sm tracking-wide"><i class="fa-solid fa-palette mr-2 text-[#E67E22]"></i> Branding y Marca Blanca</h3>
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="bg-[#143B62] px-5 py-3 border-b border-gray-200">
+                        <h2 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2"><i class="fa-solid fa-palette text-[#E67E22]"></i> Branding y Marca Blanca</h2>
                     </div>
-                    <div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        
-                        <div class="space-y-2">
-                            <label class="block param-label text-gray-800 text-sm">Logo Principal (Para PC)</label>
-                            <div class="help-note mb-2"><i class="fa-solid fa-circle-info"></i><span>Aparece en la barra lateral oscura. Ideal horizontal (ej: 250x60px), fondo transparente y letras blancas. Formato PNG.</span></div>
-                            <div class="flex items-center justify-center w-full h-24 bg-gray-800 border-2 border-dashed border-gray-600 rounded-lg overflow-hidden relative">
-                                <img id="preview-logo-pc" src="" class="max-w-full max-h-full object-contain hidden z-10 p-2">
-                                <div id="placeholder-logo-pc" class="text-center text-gray-400 z-0"><i class="fa-solid fa-desktop text-2xl mb-1"></i><p class="text-[10px]">Sin Logo PC</p></div>
+                    
+                    <div class="p-5 grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-2">Logo Principal (Para PC)</label>
+                            <p class="text-[10px] text-gray-400 mb-3 bg-blue-50 p-2 rounded border border-blue-100"><i class="fa-solid fa-circle-info text-blue-400 mr-1"></i> Aparece en la barra lateral oscura. Fondo transparente, letras blancas.</p>
+                            <div class="border-2 border-dashed border-gray-300 rounded-lg p-2 flex flex-col items-center justify-center bg-[#143B62] h-24 mb-3 relative group">
+                                <img id="preview-logo-pc" src="" class="max-h-full max-w-full object-contain hidden z-10">
+                                <span id="txt-logo-pc" class="text-xs text-gray-400">Sin Logo PC</span>
                             </div>
-                            <div class="flex gap-1.5 mt-2">
-                                <input type="url" id="val-logo-pc" placeholder="URL o Subir ➔" class="flex-1 border border-gray-300 rounded px-2 py-1.5 text-[11px] outline-none focus:border-[#143B62]">
-                                <input type="file" id="file-logo-pc" accept="image/*" class="hidden" onchange="subirImagen(event, 'val-logo-pc', 'preview-logo-pc')">
-                                <button type="button" onclick="document.getElementById('file-logo-pc').click()" class="px-3 bg-blue-50 border border-blue-200 rounded text-blue-600 hover:bg-blue-100 transition" title="Subir Imagen"><i class="fa-solid fa-upload"></i></button>
-                                <button type="button" onclick="borrarImagenConfig('val-logo-pc', 'preview-logo-pc')" class="px-2.5 bg-red-50 border border-red-200 rounded text-red-500 hover:bg-red-100 transition" title="Borrar Logo"><i class="fa-solid fa-trash-can"></i></button>
-                            </div>
-                        </div>
-
-                        <div class="space-y-2">
-                            <label class="block param-label text-gray-800 text-sm">Logo Móvil (Celulares)</label>
-                            <div class="help-note mb-2"><i class="fa-solid fa-circle-info"></i><span>Aparece en la cabecera blanca móvil. Ideal compacto o isotipo (ej: 80x40px), fondo transparente y colores oscuros. Formato PNG.</span></div>
-                            <div class="flex items-center justify-center w-full h-24 bg-white border-2 border-dashed border-gray-300 rounded-lg overflow-hidden relative">
-                                <img id="preview-logo-movil" src="" class="max-w-full max-h-full object-contain hidden z-10 p-2">
-                                <div id="placeholder-logo-movil" class="text-center text-gray-400 z-0"><i class="fa-solid fa-mobile-screen-button text-2xl mb-1"></i><p class="text-[10px]">Sin Logo Móvil</p></div>
-                            </div>
-                            <div class="flex gap-1.5 mt-2">
-                                <input type="url" id="val-logo-movil" placeholder="URL o Subir ➔" class="flex-1 border border-gray-300 rounded px-2 py-1.5 text-[11px] outline-none focus:border-[#143B62]">
-                                <input type="file" id="file-logo-movil" accept="image/*" class="hidden" onchange="subirImagen(event, 'val-logo-movil', 'preview-logo-movil')">
-                                <button type="button" onclick="document.getElementById('file-logo-movil').click()" class="px-3 bg-blue-50 border border-blue-200 rounded text-blue-600 hover:bg-blue-100 transition" title="Subir Imagen"><i class="fa-solid fa-upload"></i></button>
-                                <button type="button" onclick="borrarImagenConfig('val-logo-movil', 'preview-logo-movil')" class="px-2.5 bg-red-50 border border-red-200 rounded text-red-500 hover:bg-red-100 transition" title="Borrar Logo"><i class="fa-solid fa-trash-can"></i></button>
+                            <div class="flex gap-2">
+                                <input type="url" id="url-logo-pc" placeholder="URL de la imagen" class="flex-1 border border-gray-300 rounded px-2 py-1.5 text-xs focus:outline-none focus:border-[#E67E22]">
+                                <input type="file" id="file-logo-pc" accept="image/png, image/jpeg" class="hidden" onchange="subirImagenBranding(event, 'url-logo-pc', 'preview-logo-pc', 'txt-logo-pc')">
+                                <button type="button" onclick="document.getElementById('file-logo-pc').click()" class="bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100 px-3 py-1.5 rounded transition"><i class="fa-solid fa-upload"></i></button>
                             </div>
                         </div>
 
-                        <div class="space-y-2">
-                            <label class="block param-label text-gray-800 text-sm">Fondo / Marca de Agua</label>
-                            <div class="help-note mb-2"><i class="fa-solid fa-circle-info"></i><span>Logo gigante en el centro del panel. Ideal cuadrado (ej: 600x600px). Súper transparente (4%). Logo en grises ideal.</span></div>
-                            <div class="flex items-center justify-center w-full h-24 bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg overflow-hidden relative">
-                                <img id="preview-fondo" src="" class="max-w-full max-h-full object-contain hidden z-10 p-2">
-                                <div id="placeholder-fondo" class="text-center text-gray-400 z-0"><i class="fa-solid fa-image text-2xl mb-1"></i><p class="text-[10px]">Sin Fondo</p></div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-2">Logo Móvil (Celulares)</label>
+                            <p class="text-[10px] text-gray-400 mb-3 bg-blue-50 p-2 rounded border border-blue-100"><i class="fa-solid fa-circle-info text-blue-400 mr-1"></i> Aparece en la cabecera blanca móvil. Letras oscuras.</p>
+                            <div class="border-2 border-dashed border-gray-300 rounded-lg p-2 flex flex-col items-center justify-center bg-gray-50 h-24 mb-3 relative">
+                                <img id="preview-logo-movil" src="" class="max-h-full max-w-full object-contain hidden z-10">
+                                <span id="txt-logo-movil" class="text-xs text-gray-400">Sin Logo Móvil</span>
                             </div>
-                            <div class="flex gap-1.5 mt-2">
-                                <input type="url" id="val-fondo" placeholder="URL o Subir ➔" class="flex-1 border border-gray-300 rounded px-2 py-1.5 text-[11px] outline-none focus:border-[#143B62]">
-                                <input type="file" id="file-fondo" accept="image/*" class="hidden" onchange="subirImagen(event, 'val-fondo', 'preview-fondo')">
-                                <button type="button" onclick="document.getElementById('file-fondo').click()" class="px-3 bg-blue-50 border border-blue-200 rounded text-blue-600 hover:bg-blue-100 transition" title="Subir Imagen"><i class="fa-solid fa-upload"></i></button>
-                                <button type="button" onclick="borrarImagenConfig('val-fondo', 'preview-fondo')" class="px-2.5 bg-red-50 border border-red-200 rounded text-red-500 hover:bg-red-100 transition" title="Borrar Fondo"><i class="fa-solid fa-trash-can"></i></button>
+                            <div class="flex gap-2">
+                                <input type="url" id="url-logo-movil" placeholder="URL de la imagen" class="flex-1 border border-gray-300 rounded px-2 py-1.5 text-xs focus:outline-none focus:border-[#E67E22]">
+                                <input type="file" id="file-logo-movil" accept="image/png, image/jpeg" class="hidden" onchange="subirImagenBranding(event, 'url-logo-movil', 'preview-logo-movil', 'txt-logo-movil')">
+                                <button type="button" onclick="document.getElementById('file-logo-movil').click()" class="bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100 px-3 py-1.5 rounded transition"><i class="fa-solid fa-upload"></i></button>
                             </div>
                         </div>
 
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-2">Fondo / Marca de Agua</label>
+                            <p class="text-[10px] text-gray-400 mb-3 bg-blue-50 p-2 rounded border border-blue-100"><i class="fa-solid fa-circle-info text-blue-400 mr-1"></i> Logo gigante transparente (4%) en el centro del Dashboard.</p>
+                            <div class="border-2 border-dashed border-gray-300 rounded-lg p-2 flex flex-col items-center justify-center bg-gray-50 h-24 mb-3 relative">
+                                <img id="preview-fondo" src="" class="max-h-full max-w-full object-contain hidden z-10 opacity-30">
+                                <span id="txt-fondo" class="text-xs text-gray-400">Sin Fondo</span>
+                            </div>
+                            <div class="flex gap-2">
+                                <input type="url" id="url-fondo" placeholder="URL de la imagen" class="flex-1 border border-gray-300 rounded px-2 py-1.5 text-xs focus:outline-none focus:border-[#E67E22]">
+                                <input type="file" id="file-fondo" accept="image/png, image/jpeg" class="hidden" onchange="subirImagenBranding(event, 'url-fondo', 'preview-fondo', 'txt-fondo')">
+                                <button type="button" onclick="document.getElementById('file-fondo').click()" class="bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100 px-3 py-1.5 rounded transition"><i class="fa-solid fa-upload"></i></button>
+                            </div>
+                        </div>
                     </div>
-                    <div class="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-end">
-                        <button type="button" onclick="guardarBranding()" id="btn-guardar-branding" class="bg-[#143B62] hover:bg-[#0f2d4a] text-white px-6 py-2.5 rounded-md font-medium text-[13px] shadow-sm transition btn-press flex items-center gap-2">
-                            <i class="fa-solid fa-save"></i> Aplicar Cambios
-                        </button>
+                    <div class="bg-gray-50 p-4 border-t border-gray-200 flex justify-end">
+                        <button onclick="guardarConfiguracion()" class="bg-[#143B62] hover:bg-[#0f2d4a] text-white px-6 py-2 rounded-lg font-bold text-sm transition btn-press shadow-sm"><i class="fa-solid fa-save mr-2"></i> Aplicar Cambios</button>
                     </div>
                 </div>
-
             </div>
         </div>
     </main>
 
-    <nav class="md:hidden fixed bottom-0 w-full bg-white border-t border-gray-200 flex justify-around items-center pb-2 pt-2 px-1 z-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-        <a href="admin_dashboard.html" class="flex flex-col items-center p-2 text-gray-400 hover:text-[#143B62] transition w-1/4"><i class="fa-solid fa-chart-pie text-lg mb-1"></i><span class="text-[9px] font-semibold">Inicio</span></a>
-        <a href="admin_ventas.html" class="flex flex-col items-center p-2 text-gray-400 hover:text-[#143B62] transition w-1/4"><i class="fa-solid fa-cash-register text-lg mb-1"></i><span class="text-[9px] font-semibold">Vender</span></a>
-        <a href="admin_productos.html" class="flex flex-col items-center p-2 text-gray-400 hover:text-[#143B62] transition w-1/4"><i class="fa-solid fa-boxes-stacked text-lg mb-1"></i><span class="text-[9px] font-semibold">Inventario</span></a>
-        <button onclick="toggleMobileMenu()" class="flex flex-col items-center p-2 text-[#E67E22] transition w-1/4 btn-press"><i class="fa-solid fa-bars text-lg mb-1"></i><span class="text-[9px] font-bold">Menú</span></button>
-    </nav>
+    <script src="menu.js"></script>
 
     <script>
-        const SUPABASE_URL = 'https://icvfmdvvochzaktugqvj.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImljdmZtZHZ2b2NoemFrdHVncXZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyNDEzMzEsImV4cCI6MjA5MTgxNzMzMX0.gO3D39piT6KGbMMOzrPGWXUp5-g_nOBAgJ-nwPv8IcQ';
+        const TOKEN_JWT = localStorage.getItem('pyp_token_seguro');
 
         window.onload = async () => {
             const nombre = localStorage.getItem('pyp_usuario_nombre');
             if(nombre) document.getElementById('nombre-usuario').innerText = nombre.split(' ')[0];
-            cargarBrandingSidebar();
-            await cargarDatosConfiguracion();
+            await cargarConfigActual();
         };
 
-        function toggleMobileMenu() {
-            document.getElementById('sidebar').classList.toggle('-translate-x-full');
-            document.getElementById('mobile-overlay').classList.toggle('hidden');
-        }
-
-        function cerrarSesion() {
-            if(confirm("¿Estás seguro que deseas cerrar sesión?")) {
-                localStorage.removeItem('pyp_sesion_activa');
-                window.location.href = 'login.html';
-            }
-        }
-
-        // --- LÓGICA DE BRANDING ARREGLADA ---
-        function cargarBrandingSidebar() {
-            const logoPc = localStorage.getItem('pyp_logo_pc_url');
-            if(logoPc) {
-                document.getElementById('app-logo-sidebar').src = logoPc;
-                document.getElementById('app-logo-sidebar').classList.remove('hidden');
-                document.getElementById('app-text-sidebar').classList.add('hidden');
-            }
-            
-            const logoMovil = localStorage.getItem('pyp_logo_movil_url');
-            if(logoMovil) {
-                const imgHeader = document.getElementById('app-logo-header');
-                const txtHeader = document.getElementById('app-text-header');
-                
-                imgHeader.src = logoMovil;
-                // Le quitamos el hidden pero lo forzamos a ocultarse en PC
-                imgHeader.classList.remove('hidden');
-                imgHeader.classList.add('block', 'md:hidden');
-                
-                // Ocultamos el texto SOLO en celular
-                txtHeader.classList.add('hidden', 'md:flex');
-            }
-        }
-
-        async function cargarDatosConfiguracion() {
+        async function cargarConfigActual() {
             try {
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${localStorage.getItem('pyp_token_seguro')}`;
-                if(!res.ok) return;
-                const config = await res.json();
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?select=*`, {
+                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` }
+                });
+                const data = await res.json();
                 
-                const logoPcObj = config.find(c => c.parametro === 'LOGO_PC_URL');
-                const logoMovilObj = config.find(c => c.parametro === 'LOGO_MOVIL_URL');
-                const fondoObj = config.find(c => c.parametro === 'FONDO_URL');
+                const logoPc = data.find(c => c.parametro === 'LOGO_URL')?.valor || '';
+                const logoMovil = data.find(c => c.parametro === 'LOGO_MOVIL_URL')?.valor || '';
+                const fondo = data.find(c => c.parametro === 'FONDO_URL')?.valor || '';
 
-                if(logoPcObj && logoPcObj.valor) {
-                    document.getElementById('val-logo-pc').value = logoPcObj.valor;
-                    document.getElementById('preview-logo-pc').src = logoPcObj.valor;
-                    document.getElementById('preview-logo-pc').classList.remove('hidden');
-                    document.getElementById('placeholder-logo-pc').classList.add('hidden');
-                    localStorage.setItem('pyp_logo_pc_url', logoPcObj.valor);
-                }
-                if(logoMovilObj && logoMovilObj.valor) {
-                    document.getElementById('val-logo-movil').value = logoMovilObj.valor;
-                    document.getElementById('preview-logo-movil').src = logoMovilObj.valor;
-                    document.getElementById('preview-logo-movil').classList.remove('hidden');
-                    document.getElementById('placeholder-logo-movil').classList.add('hidden');
-                    localStorage.setItem('pyp_logo_movil_url', logoMovilObj.valor);
-                }
-                if(fondoObj && fondoObj.valor) {
-                    document.getElementById('val-fondo').value = fondoObj.valor;
-                    document.getElementById('preview-fondo').src = fondoObj.valor;
-                    document.getElementById('preview-fondo').classList.remove('hidden');
-                    document.getElementById('placeholder-fondo').classList.add('hidden');
-                    localStorage.setItem('pyp_fondo_url', fondoObj.valor);
-                }
-                cargarBrandingSidebar();
-            } catch(e) { console.error("Error cargando configuración."); }
+                if(logoPc) { document.getElementById('url-logo-pc').value = logoPc; document.getElementById('preview-logo-pc').src = logoPc; document.getElementById('preview-logo-pc').classList.remove('hidden'); document.getElementById('txt-logo-pc').classList.add('hidden'); }
+                if(logoMovil) { document.getElementById('url-logo-movil').value = logoMovil; document.getElementById('preview-logo-movil').src = logoMovil; document.getElementById('preview-logo-movil').classList.remove('hidden'); document.getElementById('txt-logo-movil').classList.add('hidden'); }
+                if(fondo) { document.getElementById('url-fondo').value = fondo; document.getElementById('preview-fondo').src = fondo; document.getElementById('preview-fondo').classList.remove('hidden'); document.getElementById('txt-fondo').classList.add('hidden'); }
+            } catch(e) { console.error("Error al cargar configuraciones", e); }
         }
 
-        function borrarImagenConfig(inputId, previewId) {
-            if(confirm("¿Estás seguro de borrar esta imagen? Deberás APLICAR CAMBIOS para guardar.")) {
-                document.getElementById(inputId).value = ''; 
-                document.getElementById(previewId).src = ''; 
-                document.getElementById(previewId).classList.add('hidden'); 
-                document.getElementById(previewId.replace('preview-', 'placeholder-')).classList.remove('hidden'); 
-            }
-        }
-
-        async function subirImagen(event, inputId, previewId) {
+        async function subirImagenBranding(event, inputUrlId, imgPreviewId, textId) {
             const file = event.target.files[0];
             if (!file) return;
-            if (file.size > 2 * 1024 * 1024) { alert("La imagen es muy pesada. Máximo permitido: 2MB."); return; }
-            
-            const overlay = document.getElementById('upload-overlay');
-            overlay.classList.remove('hidden'); overlay.classList.add('flex');
+
+            document.getElementById('loading-overlay').classList.remove('hidden');
+
             try {
-                const fileExt = file.name.split('.').pop().toLowerCase();
-                const fileName = `sistema_${Date.now()}.${fileExt}`;
-                const res = await fetch(`${SUPABASE_URL}/storage/v1/object/inventario/${fileName}`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${localStorage.getItem('pyp_token_seguro')}`, 'Content-Type': file.type }, body: file });
-                if (!res.ok) throw new Error("Error al subir a Supabase");
+                const fileName = `branding_${Date.now()}_${Math.random().toString(36).substring(7)}.png`;
+                
+                // Usamos el bucket 'inventario' que sabemos que existe
+                const res = await fetch(`${SUPABASE_URL}/storage/v1/object/inventario/${fileName}`, {
+                    method: 'POST', 
+                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': file.type }, 
+                    body: file
+                });
+                
+                if (!res.ok) throw new Error("Error al subir al servidor.");
                 
                 const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/inventario/${fileName}`;
-                document.getElementById(inputId).value = publicUrl;
-                document.getElementById(previewId).src = publicUrl;
-                document.getElementById(previewId).classList.remove('hidden');
-                document.getElementById(previewId.replace('preview-', 'placeholder-')).classList.add('hidden');
-            } catch (error) { alert("ERROR AL SUBIR LA IMAGEN."); } 
-            finally { overlay.classList.add('hidden'); overlay.classList.remove('flex'); event.target.value = ''; }
+                
+                document.getElementById(inputUrlId).value = publicUrl;
+                document.getElementById(imgPreviewId).src = publicUrl;
+                document.getElementById(imgPreviewId).classList.remove('hidden');
+                document.getElementById(textId).classList.add('hidden');
+
+            } catch(error) {
+                alert("Error subiendo la imagen: " + error.message);
+            } finally {
+                document.getElementById('loading-overlay').classList.add('hidden');
+            }
         }
 
-        async function guardarBranding() {
-            const btn = document.getElementById('btn-guardar-branding'); btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Aplicando...`; btn.disabled = true;
-            const logoPc = document.getElementById('val-logo-pc').value.trim();
-            const logoMovil = document.getElementById('val-logo-movil').value.trim();
-            const fondo = document.getElementById('val-fondo').value.trim();
-            const headers = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${localStorage.getItem('pyp_token_seguro')}`, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' };
+        async function guardarConfiguracion() {
+            document.getElementById('loading-overlay').classList.remove('hidden');
+
+            const logoPc = document.getElementById('url-logo-pc').value.trim();
+            const logoMovil = document.getElementById('url-logo-movil').value.trim();
+            const fondo = document.getElementById('url-fondo').value.trim();
+
             try {
-                await Promise.all([
-                    fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?on_conflict=parametro`, { method: 'POST', headers, body: JSON.stringify({ parametro: 'LOGO_PC_URL', valor: logoPc }) }),
-                    fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?on_conflict=parametro`, { method: 'POST', headers, body: JSON.stringify({ parametro: 'LOGO_MOVIL_URL', valor: logoMovil }) }),
-                    fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?on_conflict=parametro`, { method: 'POST', headers, body: JSON.stringify({ parametro: 'FONDO_URL', valor: fondo }) })
-                ]);
+                // Obtenemos id_empresa
+                const resUser = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?select=id_empresa&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                const dataUser = await resUser.json();
+                const miEmpresa = dataUser.length > 0 ? dataUser[0].id_empresa : null;
+
+                const configs = [
+                    { parametro: 'LOGO_URL', valor: logoPc, id_empresa: miEmpresa },
+                    { parametro: 'LOGO_MOVIL_URL', valor: logoMovil, id_empresa: miEmpresa },
+                    { parametro: 'FONDO_URL', valor: fondo, id_empresa: miEmpresa }
+                ];
+
+                for (let c of configs) {
+                    if(c.valor !== '') {
+                        await fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?on_conflict=parametro`, {
+                            method: 'POST',
+                            headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
+                            body: JSON.stringify(c)
+                        });
+                    }
+                }
+
+                // Guardar en localStorage para que cambie al instante
+                if(logoPc) localStorage.setItem('pyp_logo_pc_url', logoPc);
+                if(logoMovil) localStorage.setItem('pyp_logo_movil_url', logoMovil);
                 
-                if(logoPc) localStorage.setItem('pyp_logo_pc_url', logoPc); else localStorage.removeItem('pyp_logo_pc_url');
-                if(logoMovil) localStorage.setItem('pyp_logo_movil_url', logoMovil); else localStorage.removeItem('pyp_logo_movil_url');
-                if(fondo) localStorage.setItem('pyp_fondo_url', fondo); else localStorage.removeItem('pyp_fondo_url');
-                
-                // Recargar página para refrescar cabeceras inmediatamente
-                location.reload();
-            } catch(e) { alert("Error al guardar la configuración."); btn.innerHTML = `<i class="fa-solid fa-save"></i> Aplicar Cambios`; btn.disabled = false;} 
+                // Forzar actualización del menú
+                if(window.cargarBrandingGlobal) window.cargarBrandingGlobal();
+
+                alert("¡Configuración guardada exitosamente!");
+
+            } catch(error) {
+                alert("Error al guardar la configuración.");
+            } finally {
+                document.getElementById('loading-overlay').classList.add('hidden');
+            }
         }
-        
     </script>
-    <script src="menu.js"></script>
 </body>
 </html>
