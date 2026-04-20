@@ -159,8 +159,6 @@
         </div>
     </div>
 
-    <div id="toast"><i class="fa-solid fa-check-circle text-green-400 mr-2"></i> ¡Enlace copiado al portapapeles!</div>
-
     <script>
         const SUPABASE_URL = 'https://icvfmdvvochzaktugqvj.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImljdmZtZHZ2b2NoemFrdHVncXZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyNDEzMzEsImV4cCI6MjA5MTgxNzMzMX0.gO3D39piT6KGbMMOzrPGWXUp5-g_nOBAgJ-nwPv8IcQ';
@@ -232,14 +230,12 @@
                     return { ...p, ...pre };
                 });
 
-                // EL FILTRO ANTI-FANTASMAS
                 todosLosProductos = dataFusionada.filter(p => {
                     const tieneStock = parseFloat(p.stock_actual) > 0;
                     const estaActivo = p.estado_producto === 'ACTIVO';
                     const tieneImagen = p.imagen_principal && p.imagen_principal.trim() !== '';
                     const noEsDefecto = p.imagen_principal !== imagenGlobalDefecto;
                     
-                    // REGLA NUEVA: Si no tiene precio configurado, es un fantasma y se bloquea.
                     const tienePrecioUsd = Number(p.precio_general_usd) > 0;
                     const tienePrecioBsFijo = p.es_precio_fijo_bs === true && Number(p.precio_fijo_bs) > 0;
                     const precioValido = tienePrecioUsd || tienePrecioBsFijo;
@@ -443,15 +439,44 @@
 
         function abrirCheckout() { if(carrito.length === 0) return alert("Agrega productos al carrito."); const descTotal = subtotalBaseUsdGlobal - totalUsdGlobal; document.getElementById('check-subtotal').innerText = `US $${subtotalBaseUsdGlobal.toFixed(2)}`; document.getElementById('check-descuento').innerText = descTotal > 0 ? `- US $${descTotal.toFixed(2)}` : `US $0.00`; document.getElementById('check-total-usd').innerText = `US $${totalUsdGlobal.toFixed(2)}`; document.getElementById('check-total-bs').innerText = `Bs. ${(totalUsdGlobal * tasaBcvGlobal).toFixed(2)}`; toggleCarrito(); document.getElementById('modal-checkout').classList.remove('hidden'); }
         function cerrarCheckout() { document.getElementById('modal-checkout').classList.add('hidden'); }
+        
+        // --- FUNCIÓN ACTUALIZADA PARA BUSCAR CLIENTES EN EL CHECKOUT ---
         async function buscarCliente() {
-            const cedula = document.getElementById('input-cedula').value.trim(); const msg = document.getElementById('msg-cliente');
-            if(!cedula) return; msg.innerText = "Buscando..."; msg.className = "text-xs mt-1.5 text-gray-500 font-semibold";
+            const cedula = document.getElementById('input-cedula').value.trim(); 
+            const msg = document.getElementById('msg-cliente');
+            if(!cedula) return; 
+            msg.innerText = "Buscando..."; 
+            msg.className = "text-xs mt-1.5 text-gray-500 font-semibold";
+            
             try {
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/clientes?documento_identidad=eq.${document.getElementById('tipo-doc').value}${cedula}`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }); const datos = await res.json();
-                if(datos.length > 0) { const d = datos[0]; document.getElementById('cliente-nombre').value = d.nombre_razon_social || ''; document.getElementById('cliente-celular').value = d.celular_01 || d.telefono || ''; document.getElementById('cliente-dir-entrega').value = d.direccion_entrega || ''; msg.innerHTML = '<i class="fa-solid fa-check-circle"></i> Encontrado'; msg.className = "text-xs mt-1.5 text-green-600 font-bold"; } 
-                else { document.getElementById('cliente-nombre').value = ''; document.getElementById('cliente-celular').value = ''; document.getElementById('cliente-dir-entrega').value = ''; msg.innerText = "Nuevo cliente."; msg.className = "text-xs mt-1.5 text-[#E67E22] font-bold"; }
+                const docFull = document.getElementById('tipo-doc').value + cedula;
+                
+                // Busca específicamente en la tabla "directorio_maestro" y que sea "CLIENTE"
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/directorio_maestro?tipo_persona=eq.CLIENTE&documento_identidad=eq.${docFull}`, { 
+                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } 
+                }); 
+                
+                const datos = await res.json();
+                
+                if(datos.length > 0) { 
+                    const d = datos[0]; 
+                    document.getElementById('cliente-nombre').value = d.nombre_razon_social || ''; 
+                    document.getElementById('cliente-celular').value = d.telefono_principal || ''; 
+                    // Usa la dirección de entrega, si no tiene, usa la principal
+                    document.getElementById('cliente-dir-entrega').value = d.direccion_secundaria || d.direccion_principal || ''; 
+                    
+                    msg.innerHTML = '<i class="fa-solid fa-check-circle"></i> Encontrado en Directorio'; 
+                    msg.className = "text-xs mt-1.5 text-green-600 font-bold"; 
+                } else { 
+                    document.getElementById('cliente-nombre').value = ''; 
+                    document.getElementById('cliente-celular').value = ''; 
+                    document.getElementById('cliente-dir-entrega').value = ''; 
+                    msg.innerText = "Nuevo cliente."; 
+                    msg.className = "text-xs mt-1.5 text-[#E67E22] font-bold"; 
+                }
             } catch (e) { msg.innerText = "Error de red."; }
         }
+
         function enviarPedidoWhatsApp() {
             const doc = document.getElementById('tipo-doc').value + document.getElementById('input-cedula').value.trim(); const nombre = document.getElementById('cliente-nombre').value.trim(); const celular = document.getElementById('cliente-celular').value.trim();
             if(!nombre || !celular || document.getElementById('input-cedula').value.trim() === '') return alert("Cédula, Nombre y Celular son obligatorios.");
