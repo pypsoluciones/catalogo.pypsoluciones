@@ -14,11 +14,11 @@
     </style>
     
     <script src="config.js"></script>
-    <script>
-        if (!localStorage.getItem('pyp_token_seguro')) window.location.href = 'login.html';
-    </script>
+    <script>if (!localStorage.getItem('pyp_token_seguro')) window.location.href = 'login.html';</script>
 </head>
 <body class="bg-[#f4f6f8] flex h-screen overflow-hidden text-gray-800 relative">
+
+    <script src="menu.js"></script>
 
     <main class="flex-1 flex flex-col h-screen overflow-hidden bg-[#f4f6f8] w-full z-10 relative">
         <header class="bg-white shadow-sm px-4 md:px-6 py-4 flex justify-between items-center z-10 shrink-0 border-b border-gray-200">
@@ -26,7 +26,7 @@
                 <button onclick="toggleMobileMenu()" class="md:hidden text-gray-600 hover:text-[#143B62] text-xl transition px-2"><i class="fa-solid fa-bars"></i></button>
                 <h1 class="text-lg font-semibold text-[#143B62] flex items-center gap-2"><i class="fa-solid fa-tags text-[#E67E22]"></i> Parámetros de Inventario</h1>
             </div>
-            <div class="text-[11px] font-semibold text-gray-500 bg-gray-100 px-3 py-1 rounded border border-gray-200 uppercase tracking-wide">
+            <div class="text-[11px] font-semibold text-gray-500 bg-gray-100 px-3 py-1 rounded border border-gray-200 uppercase tracking-wide hidden sm:block">
                 <i class="fa-solid fa-user-tie text-[#143B62] mr-1"></i> <span id="nombre-usuario">Admin</span>
             </div>
         </header>
@@ -49,10 +49,17 @@
                             <option value="COLOR">COLOR</option>
                         </select>
                     </div>
+                    
                     <div class="mb-4" id="caja-nuevo-valor" style="display:none;">
+                        <div class="bg-blue-50 border border-blue-200 text-blue-700 p-2.5 rounded text-[10px] mb-3 flex items-start gap-2 shadow-sm">
+                            <i class="fa-solid fa-circle-info mt-0.5"></i>
+                            <p id="texto-ayuda-param">Selecciona un grupo para ver sugerencias.</p>
+                        </div>
+
                         <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Nuevo Valor a Registrar *</label>
-                        <input type="text" id="param-valor" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-bold focus:border-[#E67E22] outline-none uppercase" oninput="this.value = this.value.toUpperCase()" placeholder="Ej: ELECTRODOMÉSTICOS">
+                        <input type="text" id="param-valor" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-bold focus:border-[#E67E22] outline-none uppercase" oninput="this.value = this.value.toUpperCase()">
                     </div>
+                    
                     <button type="submit" id="btn-guardar" style="display:none;" class="w-full bg-[#143B62] hover:bg-[#0f2d4a] text-white font-bold py-2.5 rounded-lg shadow-sm transition flex justify-center items-center gap-2"><i class="fa-solid fa-plus"></i> Guardar Parámetro</button>
                     <p id="msg-selecciona" class="text-xs text-center text-gray-400 font-medium mt-2">Selecciona un grupo específico arriba para agregar nuevos valores.</p>
                 </form>
@@ -78,15 +85,25 @@
         </div>
     </main>
 
-    <script src="menu.js"></script>
-
     <script>
         const TOKEN_JWT = localStorage.getItem('pyp_token_seguro');
 
-        window.onload = () => {
+        window.onload = () => { 
             const nombre = localStorage.getItem('pyp_usuario_nombre');
             if(nombre) document.getElementById('nombre-usuario').innerText = nombre.split(' ')[0];
-            cargarParametros();
+            cargarParametros(); 
+        };
+
+        // Textos de ayuda según el grupo seleccionado
+        const textosAyuda = {
+            'CATEGORIA': "Ejemplo: Si vendes electrónica, escribe <strong>'SMARTPHONES'</strong> o <strong>'LAPTOPS'</strong>.",
+            'MARCA': "Ejemplo: Escribe la marca del fabricante como <strong>'SAMSUNG'</strong>, <strong>'APPLE'</strong> o <strong>'SONY'</strong>.",
+            'TIPO_PRODUCTO': "Ejemplo: Define la naturaleza. Ej: <strong>'PRODUCTO TERMINADO'</strong>, <strong>'SERVICIO'</strong> o <strong>'MATERIA PRIMA'</strong>.",
+            'UNIDAD_MEDIDA': "Ejemplo: Cómo se vende. Ej: <strong>'UNIDAD'</strong>, <strong>'KG'</strong>, <strong>'LITRO'</strong> o <strong>'PAQUETE'</strong>.",
+            'ESTADO_PRODUCTO': "Ejemplo: Su estado en tienda. Ej: <strong>'ACTIVO'</strong>, <strong>'SUSPENDIDO'</strong> o <strong>'DESCONTINUADO'</strong>.",
+            'CONDICION_PRODUCTO': "Ejemplo: Su estado físico. Ej: <strong>'NUEVO'</strong>, <strong>'USADO'</strong> o <strong>'REMANUFACTURADO'</strong>.",
+            'TALLA': "Ejemplo: Tamaños estándar. Ej: <strong>'S'</strong>, <strong>'M'</strong>, <strong>'L'</strong> o números como <strong>'40'</strong>.",
+            'COLOR': "Ejemplo: Colores básicos. Ej: <strong>'ROJO'</strong>, <strong>'NEGRO'</strong> o <strong>'MULTICOLOR'</strong>."
         };
 
         async function cargarParametros() {
@@ -94,11 +111,13 @@
             const cajaValor = document.getElementById('caja-nuevo-valor');
             const btnGuardar = document.getElementById('btn-guardar');
             const msg = document.getElementById('msg-selecciona');
+            const txtAyuda = document.getElementById('texto-ayuda-param');
 
             if(grupo === 'TODOS') {
                 cajaValor.style.display = 'none'; btnGuardar.style.display = 'none'; msg.style.display = 'block';
             } else {
                 cajaValor.style.display = 'block'; btnGuardar.style.display = 'flex'; msg.style.display = 'none';
+                txtAyuda.innerHTML = textosAyuda[grupo] || "Escribe el nuevo valor a registrar.";
             }
 
             let urlFetch = `${SUPABASE_URL}/rest/v1/parametros_inventario?select=*&order=grupo.asc,valor.asc`;
@@ -117,7 +136,7 @@
         function pintarTabla(arr) {
             const tbody = document.getElementById('tabla-parametros');
             if(arr.length === 0) { tbody.innerHTML = `<tr><td colspan="4" class="p-10 text-center text-gray-400 font-medium"><i class="fa-solid fa-folder-open text-3xl mb-2 block opacity-50"></i> No hay parámetros registrados en este grupo.</td></tr>`; return; }
-
+            
             let html = '';
             arr.forEach(p => {
                 const badge = p.estatus === 'ACTIVO' ? `<span class="bg-emerald-50 border border-emerald-200 text-emerald-600 px-2 py-0.5 rounded text-[9px] font-bold tracking-wider">ACTIVO</span>` : `<span class="bg-red-50 border border-red-200 text-red-600 px-2 py-0.5 rounded text-[9px] font-bold tracking-wider">INACTIVO</span>`;
@@ -153,7 +172,7 @@
                     body: JSON.stringify({ grupo: grupo, valor: valor, estatus: 'ACTIVO', id_empresa: miEmpresa })
                 });
                 if(!res.ok) throw new Error("Error al guardar");
-
+                
                 document.getElementById('param-valor').value = '';
                 cargarParametros();
             } catch(err) { alert("Error al guardar parámetro. Asegúrese de que no esté duplicado."); }
