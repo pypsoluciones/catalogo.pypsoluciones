@@ -31,10 +31,13 @@
                 <button onclick="toggleMobileMenu()" class="md:hidden text-gray-600 hover:text-[#143B62] text-xl transition px-2"><i class="fa-solid fa-bars"></i></button>
                 <h1 class="text-base font-bold text-[#143B62] flex items-center gap-2"><i class="fa-solid fa-cash-register text-[#25D366]"></i> Punto de Venta (POS)</h1>
             </div>
-            <div class="flex items-center gap-4">
-                <div class="bg-blue-50 border border-blue-200 px-3 py-1 rounded flex items-center gap-2">
+            <div class="flex items-center gap-3 shrink-0">
+                <div class="bg-blue-50 border border-blue-200 px-3 py-1 rounded hidden sm:flex items-center gap-2">
                     <span class="text-[10px] font-bold text-blue-800 uppercase tracking-wider">Tasa BCV:</span>
                     <span class="text-sm font-black text-[#143B62]" id="tasa-display">Bs. 0.00</span>
+                </div>
+                <div class="text-[11px] font-semibold text-gray-500 bg-gray-100 px-3 py-1 rounded border border-gray-200 uppercase tracking-wide hidden md:block">
+                    <i class="fa-solid fa-user-tie text-[#143B62] mr-1"></i> <span id="nombre-usuario">Admin</span>
                 </div>
             </div>
         </header>
@@ -180,7 +183,10 @@
 
         window.onload = async () => {
             const nombre = localStorage.getItem('pyp_usuario_nombre');
-            if(nombre) document.getElementById('nombre-usuario').innerText = nombre.split(' ')[0];
+            // AQUÍ ESTABA EL ERROR: Aseguramos que el elemento exista antes de escribir en él
+            if(nombre && document.getElementById('nombre-usuario')) {
+                document.getElementById('nombre-usuario').innerText = nombre.split(' ')[0];
+            }
             
             // Mostrar u ocultar campo de referencia según el método de pago
             document.getElementById('cobro-metodo').addEventListener('change', function() {
