@@ -27,12 +27,12 @@
         .filter-panel.open { max-height: 200px; opacity: 1; overflow: visible; }
         #upload-overlay { background-color: rgba(255,255,255,0.8); backdrop-filter: blur(2px); }
     </style>
-   <script>
-    // Guardián de Seguridad: Exige el Token Real
-    if (!localStorage.getItem('pyp_token_seguro')) {
-        window.location.href = 'login.html';
-    }
-</script>
+    
+    <script>
+        if (!localStorage.getItem('pyp_token_seguro')) {
+            window.location.href = 'login.html';
+        }
+    </script>
 </head>
 <body class="bg-[#f4f6f8] flex h-screen overflow-hidden text-gray-800 relative">
 
@@ -84,7 +84,7 @@
             <div class="flex items-center gap-3 h-full max-w-[70%]">
                 <button onclick="toggleMobileMenu()" class="md:hidden text-gray-600 hover:text-[#143B62] text-xl transition btn-press px-2"><i class="fa-solid fa-bars"></i></button>
                 <div class="flex items-center h-full overflow-hidden">
-                    <img id="app-logo-header" src="" class="h-9 w-auto hidden md:hidden object-contain">
+                    <img id="app-logo-header" src="" class="max-h-10 w-auto hidden md:hidden object-contain pr-2">
                     <h1 id="app-text-header" class="text-base md:text-lg font-semibold text-[#143B62] flex items-center gap-2 truncate">
                         <i class="fa-solid fa-boxes-stacked text-[#E67E22] hidden sm:inline-block"></i> <span>Inventario</span>
                     </h1>
@@ -299,6 +299,9 @@
         const SUPABASE_URL = 'https://icvfmdvvochzaktugqvj.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImljdmZtZHZ2b2NoemFrdHVncXZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyNDEzMzEsImV4cCI6MjA5MTgxNzMzMX0.gO3D39piT6KGbMMOzrPGWXUp5-g_nOBAgJ-nwPv8IcQ';
         
+        // EL TOKEN SEGURO QUE NOS DIO EL LOGIN
+        const TOKEN_JWT = localStorage.getItem('pyp_token_seguro');
+
         let dbInventario = [], dbPrecios = [], dataMaestra = [];
         let vistaActual = localStorage.getItem('pyp_vista_inventario') || 'tabla';
         let imagenGlobalDefecto = 'https://via.placeholder.com/300/f8fafc/94a3b8?text=SIN+IMAGEN';
@@ -344,9 +347,13 @@
             }
         });
 
+        // CERRAR SESION SEGURO
         function cerrarSesion() {
             if(confirm("¿Estás seguro que deseas cerrar sesión?")) {
                 localStorage.removeItem('pyp_sesion_activa');
+                localStorage.removeItem('pyp_token_seguro');
+                localStorage.removeItem('pyp_usuario_rol');
+                localStorage.removeItem('pyp_usuario_nombre');
                 window.location.href = 'login.html';
             }
         }
@@ -394,14 +401,18 @@
                 }; reader.onerror = error => reject(error);
             });
         }
+        
         async function subirImagenComprimida(event, inputIdTarget) {
             const fileOriginal = event.target.files[0]; if (!fileOriginal) return;
-            const overlay = document.getElementById('upload-overlay'); overlay.classList.remove('hidden'); overlay.classList.add('flex');
+            const overlay = document.getElementById('upload-overlay');
+            overlay.classList.remove('hidden'); overlay.classList.add('flex');
             try {
                 const fileComprimido = await comprimirImagen(fileOriginal, 800, 800, 0.75);
                 const fileName = `prod_${Date.now()}_${Math.random().toString(36).substring(7)}.jpg`;
                 const res = await fetch(`${SUPABASE_URL}/storage/v1/object/inventario/${fileName}`, {
-                    method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${localStorage.getItem('pyp_token_seguro')}`, 'Content-Type': 'image/jpeg' }, body: fileComprimido
+                    method: 'POST', 
+                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'image/jpeg' }, 
+                    body: fileComprimido
                 });
                 if (!res.ok) throw new Error("Error al subir");
                 const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/inventario/${fileName}`;
@@ -410,13 +421,17 @@
             finally { overlay.classList.add('hidden'); overlay.classList.remove('flex'); event.target.value = ''; }
         }
 
+        // CARGAR DATOS CON AUTENTICACIÓN
         async function cargarTodo() {
             try {
-                const resInv = await fetch(`${SUPABASE_URL}/rest/v1/productos?select=*&order=id_producto_sku.asc`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${localStorage.getItem('pyp_token_seguro')}`;
-                const resPre = await fetch(`${SUPABASE_URL}/rest/v1/precios?select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${localStorage.getItem('pyp_token_seguro')}`;
-                const resPar = await fetch(`${SUPABASE_URL}/rest/v1/parametros_inventario?select=*&estatus=eq.ACTIVO`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${localStorage.getItem('pyp_token_seguro')}`;
+                const resInv = await fetch(`${SUPABASE_URL}/rest/v1/productos?select=*&order=id_producto_sku.asc`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                const resPre = await fetch(`${SUPABASE_URL}/rest/v1/precios?select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                const resPar = await fetch(`${SUPABASE_URL}/rest/v1/parametros_inventario?select=*&estatus=eq.ACTIVO`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
                 
-                dbInventario = await resInv.json(); dbPrecios = await resPre.json(); dataMaestra = await resPar.json();
+                dbInventario = await resInv.json();
+                dbPrecios = await resPre.json(); 
+                dataMaestra = await resPar.json();
+                
                 if(!Array.isArray(dbInventario)) throw new Error("Error en conexión.");
                 
                 const paramImg = dataMaestra.find(p => p.grupo === 'IMAGEN_DEFECTO');
@@ -424,6 +439,7 @@
 
                 llenarSelect('prod-estado', 'ESTADO_PRODUCTO', false); llenarSelect('prod-condicion', 'CONDICION_PRODUCTO', false); llenarSelect('prod-tipo', 'TIPO_PRODUCTO', false); llenarSelect('prod-categoria', 'CATEGORIA', false); llenarSelect('prod-marca', 'MARCA', false); llenarSelect('prod-cat-venta', 'CATEGORIA_VENTA', true); llenarSelect('prod-unidad', 'UNIDAD_MEDIDA', false); llenarSelect('prod-iva', 'TIPO_IMPUESTO', false); llenarSelect('prod-talla', 'TALLA', true); llenarSelect('prod-color', 'COLOR', true);
                 llenarSelectFiltros('filtro-categoria', 'CATEGORIA'); llenarSelectFiltros('filtro-marca', 'MARCA'); llenarSelectFiltros('filtro-estado', 'ESTADO_PRODUCTO'); llenarSelectFiltros('filtro-condicion', 'CONDICION_PRODUCTO');
+                
                 filtrarInventario();
             } catch(e) { document.getElementById('contenedor-inventario').innerHTML = `<div class="p-5 text-center text-red-500 font-bold uppercase">Error cargando Base de Datos.</div>`; }
         }
@@ -440,13 +456,19 @@
 
         function toggleFiltrosPanel() { document.getElementById('panel-filtros').classList.toggle('open'); }
         function limpiarFiltros() {
-            document.getElementById('buscador-inv').value = ''; document.getElementById('filtro-categoria').value = 'TODAS'; document.getElementById('filtro-marca').value = 'TODAS'; document.getElementById('filtro-estado').value = 'TODAS'; document.getElementById('filtro-condicion').value = 'TODAS'; document.getElementById('filtro-stock').value = 'TODOS';
+            document.getElementById('buscador-inv').value = '';
+            document.getElementById('filtro-categoria').value = 'TODAS';
+            document.getElementById('filtro-marca').value = 'TODAS';
+            document.getElementById('filtro-estado').value = 'TODAS';
+            document.getElementById('filtro-condicion').value = 'TODAS';
+            document.getElementById('filtro-stock').value = 'TODOS';
             filtrarInventario();
         }
 
         function toggleInputsPrecio() {
             const esBs = document.getElementById('prod-fijo-bs').checked;
-            document.getElementById('section-bs').classList.toggle('hidden', !esBs); document.getElementById('section-usd').classList.toggle('hidden', esBs);
+            document.getElementById('section-bs').classList.toggle('hidden', !esBs);
+            document.getElementById('section-usd').classList.toggle('hidden', esBs);
         }
 
         function calcularPreciosPorMargen() {
@@ -461,7 +483,8 @@
             vistaActual = v; localStorage.setItem('pyp_vista_inventario', v); actualizarUIBotonesVista(); filtrarInventario();
         }
         function actualizarUIBotonesVista() {
-            document.getElementById('btn-vista-tabla').classList.toggle('active', vistaActual === 'tabla'); document.getElementById('btn-vista-grid').classList.toggle('active', vistaActual === 'grid');
+            document.getElementById('btn-vista-tabla').classList.toggle('active', vistaActual === 'tabla');
+            document.getElementById('btn-vista-grid').classList.toggle('active', vistaActual === 'grid');
         }
 
         function filtrarInventario() {
@@ -476,7 +499,6 @@
             if(vistaActual === 'tabla') pintarTabla(dataFiltrada); else pintarGrid(dataFiltrada);
         }
 
-        // ===================== RENDERIZADO TABLA (IMÁGENES GIGANTES EN MÓVIL) =====================
         function pintarTabla(arr) {
             const c = document.getElementById('contenedor-inventario');
             if(arr.length === 0) { c.innerHTML = `<div class="bg-white rounded border p-10 text-center text-gray-500 font-medium">No se encontraron productos.</div>`; return; }
@@ -524,7 +546,7 @@
                     <td class="py-1.5 px-2 text-right font-bold text-[#143B62] text-[11px] cursor-pointer" onclick="toggleDetalleTbl('${p.id_producto_sku}')">${precioMostrar}</td>
                     <td class="py-1.5 px-2 text-center cursor-pointer" onclick="toggleDetalleTbl('${p.id_producto_sku}')"><span class="px-1.5 py-0.5 rounded font-bold text-[9px] ${bgStock}">${p.stock_actual}</span></td>
                     <td class="py-1.5 px-2 text-center">
-                        <button onclick="abrirModalProducto('${prodStr}')" class="text-blue-500 hover:bg-blue-50 p-1 rounded transition"><i class="fa-solid fa-pen-to-square"></i></button> 
+                        <button onclick="abrirModalProducto('${prodStr}')" class="text-blue-500 hover:bg-blue-50 p-1 rounded transition"><i class="fa-solid fa-pen-to-square"></i></button>
                         <button onclick="toggleDetalleTbl('${p.id_producto_sku}')" class="text-gray-400 hover:text-gray-700 p-1 rounded transition"><i id="icon-tbl-${p.id_producto_sku}" class="fa-solid fa-chevron-down"></i></button>
                     </td>
                 </tr>
@@ -544,7 +566,6 @@
             htmlStr += `</tbody></table></div>`; c.innerHTML = htmlStr;
         }
 
-        // ===================== RENDERIZADO GRID DE TARJETAS =====================
         function pintarGrid(arr) {
             const c = document.getElementById('contenedor-inventario');
             if(arr.length === 0) { c.innerHTML = `<div class="bg-white rounded border p-10 text-center text-gray-500 font-medium">No se encontraron productos.</div>`; return; }
@@ -612,8 +633,8 @@
             htmlStr += `</div>`; c.innerHTML = htmlStr;
         }
 
-        // ===================== FUNCIONES DE MODAL =====================
         function toggleDetalleTbl(id) { const el = document.getElementById(`dt-tbl-${id}`); const icon = document.getElementById(`icon-tbl-${id}`); if(el.classList.contains('hidden')) { el.classList.remove('hidden'); if(el.tagName !== 'TR') el.classList.add('flex'); icon.classList.remove('fa-chevron-down'); icon.classList.add('fa-chevron-up'); } else { el.classList.add('hidden'); if(el.tagName !== 'TR') el.classList.remove('flex'); icon.classList.remove('fa-chevron-up'); icon.classList.add('fa-chevron-down'); } }
+        
         function toggleEscanerCamara() { const container = document.getElementById('reader-container'); if(container.classList.contains('hidden')) { container.classList.remove('hidden'); html5QrCode = new Html5Qrcode("reader"); html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 100 } }, (decodedText) => { document.getElementById('prod-barras').value = decodedText; cerrarEscaner(); }, (errorMessage) => { }).catch(err => { alert("Error al acceder a la cámara."); cerrarEscaner(); }); } else { cerrarEscaner(); } }
         function cerrarEscaner() { if(html5QrCode) { html5QrCode.stop().then(() => { html5QrCode.clear(); html5QrCode = null; }).catch(e => console.error(e)); } document.getElementById('reader-container').classList.add('hidden'); }
 
@@ -621,10 +642,16 @@
             const f = document.getElementById('form-producto'); f.reset(); cerrarEscaner();
             document.getElementById('prod-fijo-bs').checked = false; document.getElementById('prod-margen-gen').value = ''; document.getElementById('prod-m1').value = ''; document.getElementById('prod-m2').value = ''; document.getElementById('prod-m3').value = ''; toggleInputsPrecio();
             if (prodStr) {
-                const p = JSON.parse(decodeURIComponent(prodStr)); document.getElementById('modal-titulo').innerHTML = `<i class="fa-solid fa-pen-to-square mr-2 text-blue-400"></i> EDITAR REGISTRO`; document.getElementById('modo-edicion').value = "true";
+                const p = JSON.parse(decodeURIComponent(prodStr));
+                document.getElementById('modal-titulo').innerHTML = `<i class="fa-solid fa-pen-to-square mr-2 text-blue-400"></i> EDITAR REGISTRO`;
+                document.getElementById('modo-edicion').value = "true";
                 document.getElementById('prod-sku').value = p.id_producto_sku || ''; document.getElementById('prod-sku').readOnly = true; document.getElementById('prod-sku').classList.add('bg-gray-100', 'text-gray-500', 'cursor-not-allowed');
                 document.getElementById('prod-barras').value = p.codigo_barras || ''; document.getElementById('prod-nombre').value = p.nombre || ''; document.getElementById('prod-imagen').value = p.imagen_principal || ''; document.getElementById('prod-imagen2').value = p.imagen_2 || ''; document.getElementById('prod-imagen3').value = p.imagen_3 || ''; document.getElementById('prod-video').value = p.video_url || ''; document.getElementById('prod-descripcion').value = p.descripcion || ''; document.getElementById('prod-estado').value = p.estado_producto || ''; document.getElementById('prod-categoria').value = p.categoria_del_producto || ''; document.getElementById('prod-marca').value = p.marca || ''; document.getElementById('prod-tipo').value = p.tipo_producto || ''; document.getElementById('prod-condicion').value = p.condicion_producto || ''; document.getElementById('prod-unidad').value = p.unidad_medida || ''; document.getElementById('prod-iva').value = p.tipo_impuesto || ''; document.getElementById('prod-talla').value = p.talla || ''; document.getElementById('prod-color').value = p.color || ''; document.getElementById('prod-cat-venta').value = p.categoria_venta || ''; document.getElementById('prod-stock').value = p.stock_actual || 0; document.getElementById('prod-negativo').checked = p.permitir_negativo === true; document.getElementById('prod-req1').value = p.requerido_precio_1 || ''; document.getElementById('prod-req2').value = p.requerido_precio_2 || ''; document.getElementById('prod-req3').value = p.requerido_precio_3 || ''; document.getElementById('prod-fijo-bs').checked = p.es_precio_fijo_bs || false; document.getElementById('prod-precio-bs').value = p.precio_fijo_bs || 0; document.getElementById('prod-costo').value = p.costo_actual || 0; document.getElementById('prod-precio-gen').value = p.precio_general_usd || 0; document.getElementById('prod-p1').value = p.precio_1_usd ? `$${p.precio_1_usd}` : ''; document.getElementById('prod-p2').value = p.precio_2_usd ? `$${p.precio_2_usd}` : ''; document.getElementById('prod-p3').value = p.precio_3_usd ? `$${p.precio_3_usd}` : ''; toggleInputsPrecio();
-            } else { document.getElementById('modal-titulo').innerHTML = `<i class="fa-solid fa-box-open mr-2 text-[#E67E22]"></i> NUEVO REGISTRO`; document.getElementById('modo-edicion').value = "false"; document.getElementById('prod-sku').value = ''; document.getElementById('prod-sku').readOnly = false; document.getElementById('prod-sku').classList.remove('bg-gray-100', 'text-gray-500', 'cursor-not-allowed'); }
+            } else {
+                document.getElementById('modal-titulo').innerHTML = `<i class="fa-solid fa-box-open mr-2 text-[#E67E22]"></i> NUEVO REGISTRO`;
+                document.getElementById('modo-edicion').value = "false";
+                document.getElementById('prod-sku').value = ''; document.getElementById('prod-sku').readOnly = false; document.getElementById('prod-sku').classList.remove('bg-gray-100', 'text-gray-500', 'cursor-not-allowed'); 
+            }
             document.getElementById('modal-producto').classList.remove('hidden');
         }
         function cerrarModalProducto() { cerrarEscaner(); document.getElementById('modal-producto').classList.add('hidden'); }
@@ -635,18 +662,20 @@
             const dataProd = { id_producto_sku: sku, nombre: document.getElementById('prod-nombre').value.toUpperCase(), codigo_barras: document.getElementById('prod-barras').value.toUpperCase() || null, imagen_principal: document.getElementById('prod-imagen').value || null, imagen_2: document.getElementById('prod-imagen2').value || null, imagen_3: document.getElementById('prod-imagen3').value || null, video_url: document.getElementById('prod-video').value || null, descripcion: document.getElementById('prod-descripcion').value || null, estado_producto: document.getElementById('prod-estado').value || null, categoria_del_producto: document.getElementById('prod-categoria').value || null, marca: document.getElementById('prod-marca').value || null, condicion_producto: document.getElementById('prod-condicion').value || null, tipo_producto: document.getElementById('prod-tipo').value || null, unidad_medida: document.getElementById('prod-unidad').value || null, tipo_impuesto: document.getElementById('prod-iva').value || null, talla: document.getElementById('prod-talla').value || null, color: document.getElementById('prod-color').value || null, categoria_venta: document.getElementById('prod-cat-venta').value || null, stock_actual: parseInt(document.getElementById('prod-stock').value) || 0, permitir_negativo: document.getElementById('prod-negativo').checked, requerido_precio_1: parseInt(document.getElementById('prod-req1').value) || null, requerido_precio_2: parseInt(document.getElementById('prod-req2').value) || null, requerido_precio_3: parseInt(document.getElementById('prod-req3').value) || null };
             let p1Val = document.getElementById('prod-p1').value.replace('$', ''); let p2Val = document.getElementById('prod-p2').value.replace('$', ''); let p3Val = document.getElementById('prod-p3').value.replace('$', '');
             const dataPre = { id_producto_sku: sku, es_precio_fijo_bs: esBs, precio_fijo_bs: esBs ? (parseFloat(document.getElementById('prod-precio-bs').value) || 0) : 0, costo_actual: parseFloat(document.getElementById('prod-costo').value) || 0, precio_general_usd: esBs ? 0 : (parseFloat(document.getElementById('prod-precio-gen').value) || 0), precio_1_usd: esBs ? 0 : (parseFloat(p1Val) || 0), precio_2_usd: esBs ? 0 : (parseFloat(p2Val) || 0), precio_3_usd: esBs ? 0 : (parseFloat(p3Val) || 0) };
-            const headers = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${localStorage.getItem('pyp_token_seguro')}`, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' };
-            try { const [resProd, resPre] = await Promise.all([ fetch(`${SUPABASE_URL}/rest/v1/productos?on_conflict=id_producto_sku`, { method: 'POST', headers, body: JSON.stringify(dataProd) }), fetch(`${SUPABASE_URL}/rest/v1/precios?on_conflict=id_producto_sku`, { method: 'POST', headers, body: JSON.stringify(dataPre) }) ]); if (!resProd.ok) { const err = await resProd.json(); throw new Error(`Error Productos: ${err.message}`); } if (!resPre.ok) { const err = await resPre.json(); throw new Error(`Error Precios: ${err.message}`); } cerrarModalProducto(); await cargarTodo(); } catch(e) { alert("FALLO AL GUARDAR:\n" + e.message); } finally { btn.innerHTML = `<i class="fa-solid fa-save"></i> Guardar Registro`; btn.disabled = false; }
+            
+            const headers = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' };
+            
+            try {
+                const [resProd, resPre] = await Promise.all([
+                    fetch(`${SUPABASE_URL}/rest/v1/productos?on_conflict=id_producto_sku`, { method: 'POST', headers, body: JSON.stringify(dataProd) }), 
+                    fetch(`${SUPABASE_URL}/rest/v1/precios?on_conflict=id_producto_sku`, { method: 'POST', headers, body: JSON.stringify(dataPre) }) 
+                ]); 
+                if (!resProd.ok) { const err = await resProd.json(); throw new Error(`Error Productos: ${err.message}`); } 
+                if (!resPre.ok) { const err = await resPre.json(); throw new Error(`Error Precios: ${err.message}`); }
+                cerrarModalProducto(); await cargarTodo(); 
+            } catch(e) { alert("FALLO AL GUARDAR:\n" + e.message); } 
+            finally { btn.innerHTML = `<i class="fa-solid fa-save"></i> Guardar Registro`; btn.disabled = false; }
         }
-        function cerrarSesion() {
-    if(confirm("¿Estás seguro que deseas cerrar sesión?")) {
-        localStorage.removeItem('pyp_sesion_activa');
-        localStorage.removeItem('pyp_token_seguro'); // <--- Destruye el Token VIP
-        localStorage.removeItem('pyp_usuario_rol');
-        localStorage.removeItem('pyp_usuario_nombre');
-        window.location.href = 'login.html';
-    }
-}
     </script>
 </body>
 </html>
