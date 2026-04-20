@@ -107,12 +107,30 @@ window.forzarCierreSesion = function() { localStorage.removeItem('pyp_sesion_act
 
 window.cargarBrandingGlobal = function() {
     const logoPc = localStorage.getItem('pyp_logo_pc_url');
+    
     if(logoPc) {
+        // 1. Mostrar en la barra lateral (PC)
         const imgSidebar = document.getElementById('app-logo-sidebar');
         const txtSidebar = document.getElementById('app-text-sidebar');
         if(imgSidebar) { imgSidebar.src = logoPc; imgSidebar.classList.remove('hidden'); }
         if(txtSidebar) txtSidebar.classList.add('hidden');
+        
+        // 2. Mostrar en la cabecera superior (Móviles) usando el MISMO logo de PC
+        const imgHeader = document.getElementById('app-logo-header');
+        const txtHeader = document.getElementById('app-text-header');
+        const iconHeader = document.getElementById('app-icon-header');
+        
+        if(imgHeader) { 
+            imgHeader.src = logoPc; 
+            imgHeader.classList.remove('hidden'); 
+            imgHeader.classList.add('block', 'md:hidden'); 
+        }
+        
+        // Ocultar texto e icono en móviles para que el logo tenga todo el espacio y no se atraviese
+        if(txtHeader) txtHeader.classList.add('hidden', 'md:flex');
+        if(iconHeader) iconHeader.classList.add('hidden');
     }
+};
     
     const logoMovil = localStorage.getItem('pyp_logo_movil_url');
     if(logoMovil) {
