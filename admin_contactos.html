@@ -12,157 +12,313 @@
         .custom-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
         .custom-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
         .btn-press:active { transform: scale(0.97); }
+        .fade-in { animation: fadeIn 0.2s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .tab-active { border-bottom: 2px solid #E67E22; color: #143B62; font-weight: bold; }
         .tab-inactive { color: #64748b; font-weight: 500; border-bottom: 2px solid transparent; }
+        .btn-vista.active { background-color: #e2e8f0; color: #143B62; border-color: #cbd5e1; }
+        .param-label { font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+        .uppercase-input { text-transform: uppercase; }
     </style>
     
     <script src="config.js"></script>
-    <script>
-        if (!localStorage.getItem('pyp_token_seguro')) window.location.href = 'login.html';
-    </script>
+    <script>if (!localStorage.getItem('pyp_token_seguro')) window.location.href = 'login.html';</script>
 </head>
 <body class="bg-[#f4f6f8] flex h-screen overflow-hidden text-gray-800 relative">
 
     <script src="menu.js"></script>
 
     <main class="flex-1 flex flex-col h-screen overflow-hidden bg-[#f4f6f8] w-full z-10 relative">
-        
-        <header class="bg-white shadow-sm px-4 md:px-6 py-3 flex justify-between items-center z-10 shrink-0 border-b border-gray-200">
-            <div class="flex items-center gap-2 min-w-0">
-                <button onclick="toggleMobileMenu()" class="md:hidden text-gray-600 hover:text-[#143B62] text-xl transition btn-press px-1 shrink-0"><i class="fa-solid fa-bars"></i></button>
-                <div class="flex items-center gap-2 overflow-hidden">
-                    <img id="app-logo-header" src="" class="h-7 md:h-8 hidden object-contain shrink-0">
-                    <h1 id="app-text-header" class="text-base md:text-lg font-semibold text-[#143B62] flex items-center gap-2 truncate">
-                        <i id="app-icon-header" class="fa-solid fa-address-book text-[#143B62] hidden sm:inline-block shrink-0"></i> 
-                        <span class="truncate">Directorio Maestro</span>
-                    </h1>
-                </div>
+        <header class="bg-white shadow-sm px-4 py-2 flex justify-between items-center z-10 shrink-0 border-b border-gray-200 h-14">
+            <div class="flex items-center gap-3">
+                <button onclick="toggleMobileMenu()" class="md:hidden text-gray-600 hover:text-[#143B62] text-xl transition px-2"><i class="fa-solid fa-bars"></i></button>
+                <h1 class="text-base font-semibold text-[#143B62] flex items-center gap-2"><i class="fa-solid fa-address-book text-[#E67E22]"></i> Directorio Maestro</h1>
             </div>
             <div class="flex items-center gap-3 shrink-0">
                 <button onclick="window.location.reload()" class="md:hidden text-blue-600 bg-blue-50 w-8 h-8 rounded-full flex items-center justify-center hover:bg-blue-100 transition shadow-sm btn-press"><i class="fa-solid fa-rotate-right"></i></button>
-                <div class="bg-gray-50 px-2 md:px-3 py-1.5 rounded-md border border-gray-200 hidden sm:flex items-center gap-2 text-[11px] font-semibold text-gray-600 tracking-wide uppercase">
-                    <i class="fa-solid fa-user-tie text-[#143B62]"></i> <span id="nombre-usuario">Admin</span>
+                <div class="text-[11px] font-semibold text-gray-500 bg-gray-100 px-3 py-1 rounded border border-gray-200 uppercase tracking-wide hidden sm:block">
+                    <i class="fa-solid fa-user-tie text-[#143B62] mr-1"></i> <span id="nombre-usuario">Admin</span>
                 </div>
             </div>
         </header>
 
-        <div class="flex-1 overflow-auto p-4 md:p-6 custom-scroll pb-24 md:pb-6 flex flex-col">
+        <div class="flex-1 overflow-auto p-2 md:p-3 custom-scroll pb-16 flex flex-col">
             
             <div class="bg-white rounded-t-xl border border-gray-200 border-b-0 px-4 pt-3 flex gap-6 shrink-0">
-                <button onclick="cambiarPestana('clientes')" id="tab-clientes" class="tab-active pb-3 px-2 text-sm uppercase tracking-wider transition">Clientes</button>
-                <button onclick="cambiarPestana('proveedores')" id="tab-proveedores" class="tab-inactive pb-3 px-2 text-sm uppercase tracking-wider transition">Proveedores</button>
+                <button onclick="cambiarPestana('clientes')" id="tab-clientes" class="tab-active pb-2 px-2 text-xs uppercase tracking-wider transition">Clientes</button>
+                <button onclick="cambiarPestana('proveedores')" id="tab-proveedores" class="tab-inactive pb-2 px-2 text-xs uppercase tracking-wider transition">Proveedores</button>
             </div>
 
-            <div class="bg-white p-4 border border-gray-200 shadow-sm flex flex-col sm:flex-row justify-between items-center gap-3 shrink-0">
-                <div class="relative w-full sm:w-1/2 lg:w-1/3">
-                    <i class="fa-solid fa-search absolute left-3 top-2.5 text-gray-400"></i>
-                    <input type="text" id="buscador" oninput="filtrarContactos()" placeholder="Buscar por Documento o Nombre..." class="w-full border border-gray-300 rounded-lg pl-9 pr-4 py-2 text-sm focus:outline-none focus:border-[#143B62] uppercase transition">
+            <div class="bg-white p-3 border border-gray-200 shadow-sm flex flex-col sm:flex-row justify-between items-center gap-3 shrink-0">
+                <div class="relative w-full sm:w-1/2">
+                    <i class="fa-solid fa-search absolute left-3 top-2 text-gray-400 text-sm"></i>
+                    <input type="text" id="buscador" oninput="filtrarContactos()" placeholder="Buscar por Documento o Nombre..." class="w-full border border-gray-300 rounded-md pl-9 pr-4 py-1.5 text-xs focus:outline-none focus:border-[#143B62] uppercase transition">
                 </div>
-                <button onclick="alert('Módulo de registro en desarrollo')" class="w-full sm:w-auto bg-[#25D366] hover:bg-[#1ebd5c] text-white px-5 py-2.5 rounded-lg font-bold text-[13px] shadow-sm transition btn-press flex justify-center items-center gap-2">
-                    <i class="fa-solid fa-plus"></i> NUEVO CONTACTO
-                </button>
-            </div>
-
-            <div class="flex-1 bg-white border border-gray-200 border-t-0 rounded-b-xl shadow-sm overflow-hidden flex flex-col">
-                <div class="overflow-x-auto flex-1 custom-scroll">
-                    <table class="w-full text-left text-sm whitespace-nowrap min-w-[700px]">
-                        <thead class="bg-[#143B62] text-white text-[10px] uppercase tracking-wider sticky top-0">
-                            <tr>
-                                <th class="py-3 px-4 w-32">Documento</th>
-                                <th class="py-3 px-4">Nombre / Razón Social</th>
-                                <th class="py-3 px-4 w-40">Contacto</th>
-                                <th class="py-3 px-4">Dirección</th>
-                                <th class="py-3 px-4 text-center w-24">Estado</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tabla-contactos" class="divide-y divide-gray-100">
-                            <tr><td colspan="5" class="p-10 text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin text-2xl mb-2 block"></i> Cargando contactos...</td></tr>
-                        </tbody>
-                    </table>
+                <div class="flex gap-2 w-full sm:w-auto justify-end">
+                    <div class="flex bg-gray-50 rounded-md border border-gray-300 p-0.5">
+                        <button id="btn-vista-tabla" onclick="cambiarVista('tabla')" class="btn-vista active px-3 py-1 rounded text-gray-500 hover:text-[#143B62] transition text-sm"><i class="fa-solid fa-list"></i></button>
+                        <button id="btn-vista-grid" onclick="cambiarVista('grid')" class="btn-vista px-3 py-1 rounded text-gray-500 hover:text-[#143B62] transition text-sm"><i class="fa-solid fa-border-all"></i></button>
+                    </div>
+                    <button onclick="abrirModalContacto()" class="bg-[#25D366] hover:bg-[#1ebd5c] text-white px-4 py-1.5 rounded-md font-bold text-[12px] shadow-sm transition btn-press flex justify-center items-center gap-2 whitespace-nowrap">
+                        <i class="fa-solid fa-plus"></i> <span id="lbl-btn-nuevo">NUEVO CLIENTE</span>
+                    </button>
                 </div>
             </div>
 
+            <div id="contenedor-contactos" class="flex-1 bg-white border border-gray-200 border-t-0 rounded-b-xl shadow-sm flex flex-col">
+                <div class="p-10 text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin text-2xl mb-2 block"></i> Cargando data...</div>
+            </div>
         </div>
     </main>
+
+    <div id="modal-contacto" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4 fade-in">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden border border-gray-200 relative">
+            <div class="bg-[#143B62] text-white px-5 py-3 flex justify-between items-center shrink-0">
+                <h3 class="font-medium text-sm tracking-wide flex items-center" id="modal-titulo"><i class="fa-solid fa-address-card mr-2 text-[#E67E22]"></i> REGISTRO</h3>
+                <button onclick="cerrarModalContacto()" class="text-gray-300 hover:text-white text-lg transition"><i class="fa-solid fa-times"></i></button>
+            </div>
+            
+            <form id="form-contacto" onsubmit="guardarContacto(event)" class="flex-1 overflow-y-auto custom-scroll p-4 md:p-5 bg-gray-50">
+                <input type="hidden" id="cont-modo-edicion" value="false">
+                <input type="hidden" id="cont-id-original" value="">
+                
+                <div class="bg-white p-4 rounded border border-gray-200 shadow-sm mb-4">
+                    <h4 class="text-[11px] font-bold text-[#E67E22] uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Datos Principales</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                        <div>
+                            <label class="block param-label mb-1">Documento (C.I / RIF) *</label>
+                            <input type="text" id="cont-doc" required class="uppercase-input w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-bold focus:border-[#143B62] outline-none" oninput="this.value = this.value.toUpperCase()" placeholder="Ej: V12345678 o J123456789">
+                        </div>
+                        <div>
+                            <label class="block param-label mb-1">Nombre o Razón Social *</label>
+                            <input type="text" id="cont-nombre" required class="uppercase-input w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-bold focus:border-[#143B62] outline-none" oninput="this.value = this.value.toUpperCase()">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="md:col-span-2">
+                            <label class="block param-label mb-1">Dirección Fiscal</label>
+                            <input type="text" id="cont-dir" class="uppercase-input w-full border border-gray-300 rounded px-2 py-1.5 text-xs focus:border-[#143B62] outline-none" oninput="this.value = this.value.toUpperCase()">
+                        </div>
+                        <div>
+                            <label class="block param-label mb-1">Correo Electrónico</label>
+                            <input type="email" id="cont-email" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs focus:border-[#143B62] outline-none" oninput="this.value = this.value.toLowerCase()">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded border border-gray-200 shadow-sm mb-4">
+                    <h4 class="text-[11px] font-bold text-[#143B62] uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Contacto Telefónico</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div><label class="block param-label mb-1">Teléfono Principal *</label><input type="text" id="cont-tel1" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs focus:border-[#143B62] outline-none" placeholder="04141234567"></div>
+                        <div><label class="block param-label mb-1">Teléfono Secundario</label><input type="text" id="cont-tel2" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs focus:border-[#143B62] outline-none"></div>
+                        <div><label class="block param-label mb-1">Estatus</label><select id="cont-estatus" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-bold text-[#143B62] bg-blue-50 outline-none"><option value="ACTIVO">ACTIVO</option><option value="INACTIVO">INACTIVO</option></select></div>
+                    </div>
+                </div>
+
+                <div id="caja-cliente" class="bg-white p-4 rounded border border-gray-200 shadow-sm border-l-4 border-l-emerald-500">
+                    <h4 class="text-[11px] font-bold text-emerald-600 uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Datos Exclusivos: Cliente</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                        <div><label class="block param-label mb-1">Dirección de Entrega</label><input type="text" id="cli-dir-entrega" class="uppercase-input w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none" oninput="this.value = this.value.toUpperCase()"></div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div><label class="block param-label mb-1">Tipo Contribuyente</label><select id="cli-tipo-con" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none"><option value="NATURAL">NATURAL</option><option value="JURIDICA">JURÍDICA</option></select></div>
+                            <div><label class="block param-label mb-1">Nivel Precio</label><select id="cli-nivel" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none"><option value="PRECIO_GENERAL">GENERAL</option><option value="PRECIO_1">MAYOR (P1)</option><option value="PRECIO_2">GRAN MAYOR (P2)</option><option value="PRECIO_3">DIST. (P3)</option></select></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="caja-proveedor" class="bg-white p-4 rounded border border-gray-200 shadow-sm border-l-4 border-l-purple-500 hidden">
+                    <h4 class="text-[11px] font-bold text-purple-600 uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Datos Exclusivos: Proveedor</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
+                        <div class="md:col-span-2"><label class="block param-label mb-1">Dirección Sucursal</label><input type="text" id="prov-dir-suc" class="uppercase-input w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none" oninput="this.value = this.value.toUpperCase()"></div>
+                        <div><label class="block param-label mb-1">Clasificación Fiscal</label><select id="prov-clas" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none"><option value="ORDINARIO">ORDINARIO</option><option value="ESPECIAL">ESPECIAL</option><option value="FORMAL">FORMAL</option></select></div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div><label class="block param-label mb-1">Vendedor Asignado</label><input type="text" id="prov-ven-nom" class="uppercase-input w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none" oninput="this.value = this.value.toUpperCase()"></div>
+                        <div><label class="block param-label mb-1">Celular Vendedor</label><input type="text" id="prov-ven-cel" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none"></div>
+                        <div><label class="block param-label mb-1">Días de Crédito</label><input type="number" id="prov-dias" value="0" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs text-center font-bold bg-gray-50 outline-none"></div>
+                    </div>
+                </div>
+            </form>
+
+            <div class="bg-gray-50 border-t border-gray-200 px-4 py-3 flex gap-3 justify-end shrink-0">
+                <button type="button" onclick="cerrarModalContacto()" class="px-5 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-md text-[12px] shadow-sm hover:bg-gray-100 transition btn-press">Cancelar</button>
+                <button type="submit" form="form-contacto" id="btn-guardar-cont" class="px-5 py-2 bg-[#143B62] text-white font-medium rounded-md text-[12px] shadow-sm hover:bg-[#0f2d4a] transition flex items-center gap-2 btn-press"><i class="fa-solid fa-save"></i> Guardar</button>
+            </div>
+        </div>
+    </div>
 
     <script>
         const TOKEN_JWT = localStorage.getItem('pyp_token_seguro');
         
         let pestanaActual = 'clientes';
-        let dataClientes = [];
-        let dataProveedores = [];
+        let vistaActual = localStorage.getItem('pyp_vista_contactos') || 'tabla';
+        let dataClientes = []; let dataProveedores = [];
 
         window.onload = async () => {
             const nombre = localStorage.getItem('pyp_usuario_nombre');
             if(nombre) document.getElementById('nombre-usuario').innerText = nombre.split(' ')[0];
+            actualizarUIBotonesVista();
             await cargarDatos();
         };
 
+        // ESC para cerrar modal
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                const modal = document.getElementById('modal-contacto');
+                if (modal && !modal.classList.contains('hidden')) cerrarModalContacto();
+            }
+        });
+
         async function cargarDatos() {
             try {
-                // Descargamos ambos al mismo tiempo para mayor velocidad
                 const [resCli, resProv] = await Promise.all([
                     fetch(`${SUPABASE_URL}/rest/v1/clientes?select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
                     fetch(`${SUPABASE_URL}/rest/v1/proveedores?select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } })
                 ]);
-
                 if(resCli.ok) dataClientes = await resCli.json();
                 if(resProv.ok) dataProveedores = await resProv.json();
-
-                renderizarTabla();
-            } catch(e) {
-                document.getElementById('tabla-contactos').innerHTML = `<tr><td colspan="5" class="p-10 text-center text-red-500 font-bold uppercase"><i class="fa-solid fa-triangle-exclamation text-2xl mb-2 block"></i> Error de conexión.</td></tr>`;
-            }
+                renderizarPantalla();
+            } catch(e) { document.getElementById('contenedor-contactos').innerHTML = `<div class="p-10 text-center text-red-500 font-bold uppercase"><i class="fa-solid fa-triangle-exclamation text-2xl mb-2 block"></i> Error de conexión.</div>`; }
         }
 
         function cambiarPestana(tipo) {
             pestanaActual = tipo;
-            document.getElementById('tab-clientes').className = tipo === 'clientes' ? 'tab-active pb-3 px-2 text-sm uppercase tracking-wider transition' : 'tab-inactive pb-3 px-2 text-sm uppercase tracking-wider transition';
-            document.getElementById('tab-proveedores').className = tipo === 'proveedores' ? 'tab-active pb-3 px-2 text-sm uppercase tracking-wider transition' : 'tab-inactive pb-3 px-2 text-sm uppercase tracking-wider transition';
+            document.getElementById('tab-clientes').className = tipo === 'clientes' ? 'tab-active pb-2 px-2 text-xs uppercase tracking-wider transition' : 'tab-inactive pb-2 px-2 text-xs uppercase tracking-wider transition';
+            document.getElementById('tab-proveedores').className = tipo === 'proveedores' ? 'tab-active pb-2 px-2 text-xs uppercase tracking-wider transition' : 'tab-inactive pb-2 px-2 text-xs uppercase tracking-wider transition';
+            document.getElementById('lbl-btn-nuevo').innerText = tipo === 'clientes' ? 'NUEVO CLIENTE' : 'NUEVO PROVEEDOR';
             document.getElementById('buscador').value = '';
-            renderizarTabla();
+            renderizarPantalla();
         }
 
-        function filtrarContactos() { renderizarTabla(); }
+        function cambiarVista(v) { vistaActual = v; localStorage.setItem('pyp_vista_contactos', v); actualizarUIBotonesVista(); renderizarPantalla(); }
+        function actualizarUIBotonesVista() { document.getElementById('btn-vista-tabla').classList.toggle('active', vistaActual === 'tabla'); document.getElementById('btn-vista-grid').classList.toggle('active', vistaActual === 'grid'); }
+        function filtrarContactos() { renderizarPantalla(); }
 
-        function renderizarTabla() {
+        function renderizarPantalla() {
             const query = document.getElementById('buscador').value.toLowerCase();
-            const tbody = document.getElementById('tabla-contactos');
             const dataBase = pestanaActual === 'clientes' ? dataClientes : dataProveedores;
-
-            // Mapeamos los nombres de columnas porque a veces varían entre Clientes y Proveedores en la Base de Datos
             const datosFiltrados = dataBase.filter(c => {
-                const doc = (c.documento_identidad || c.rif || '').toLowerCase();
-                const nom = (c.nombre_razon_social || c.razon_social || '').toLowerCase();
+                const doc = (c.documento_identidad || c.rif || '').toLowerCase(); const nom = (c.nombre_razon_social || c.razon_social || '').toLowerCase();
                 return doc.includes(query) || nom.includes(query);
             });
 
-            if(datosFiltrados.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-gray-400 font-medium"><i class="fa-solid fa-folder-open text-3xl mb-2 block opacity-50"></i> No se encontraron ${pestanaActual}.</td></tr>`;
-                return;
-            }
+            const c = document.getElementById('contenedor-contactos');
+            if(datosFiltrados.length === 0) { c.innerHTML = `<div class="p-10 text-center text-gray-400 font-medium"><i class="fa-solid fa-folder-open text-3xl mb-2 block opacity-50"></i> No se encontraron ${pestanaActual}.</div>`; return; }
 
-            let html = '';
-            datosFiltrados.forEach(c => {
-                const doc = c.documento_identidad || c.rif || '-';
-                const nom = c.nombre_razon_social || c.razon_social || '-';
-                const tel = c.telefono || '-';
-                const dir = c.direccion || '-';
-                const estado = (c.estatus || 'ACTIVO').toUpperCase();
+            if(vistaActual === 'tabla') {
+                let html = `<div class="overflow-x-auto flex-1 custom-scroll"><table class="w-full text-left text-xs whitespace-nowrap min-w-[900px]"><thead class="bg-[#143B62] text-white text-[10px] uppercase tracking-wider sticky top-0"><tr><th class="py-2 px-3 w-28">Doc / RIF</th><th class="py-2 px-3">Razón Social</th><th class="py-2 px-3">Teléfono</th><th class="py-2 px-3">Dirección</th><th class="py-2 px-3 text-center">Estado</th><th class="py-2 px-3 text-center w-20">Acción</th></tr></thead><tbody class="divide-y divide-gray-100">`;
                 
-                const badge = estado === 'ACTIVO' ? `<span class="bg-emerald-50 text-emerald-600 px-2 py-1 rounded text-[9px] font-bold border border-emerald-200">ACTIVO</span>` : `<span class="bg-red-50 text-red-600 px-2 py-1 rounded text-[9px] font-bold border border-red-200">INACTIVO</span>`;
+                datosFiltrados.forEach(item => {
+                    const doc = item.documento_identidad || item.rif || '-'; const nom = item.nombre_razon_social || item.razon_social || '-'; const tel = item.telefono || item.telefono_01 || '-'; const dir = item.direccion_fiscal || '-'; const estado = (item.estatus || 'ACTIVO').toUpperCase();
+                    const badge = estado === 'ACTIVO' ? `<span class="bg-emerald-50 text-emerald-600 px-1.5 py-0.5 rounded text-[8px] font-bold border border-emerald-200">ACTIVO</span>` : `<span class="bg-red-50 text-red-600 px-1.5 py-0.5 rounded text-[8px] font-bold border border-red-200">INACTIVO</span>`;
+                    const itemStr = encodeURIComponent(JSON.stringify(item));
+                    
+                    html += `<tr class="hover:bg-gray-50 transition"><td class="py-2 px-3 font-mono text-[10px] font-semibold text-gray-500">${doc}</td><td class="py-2 px-3 font-bold text-[#143B62] truncate max-w-[200px]">${nom}</td><td class="py-2 px-3 text-gray-600">${tel}</td><td class="py-2 px-3 text-gray-500 truncate max-w-[250px]">${dir}</td><td class="py-2 px-3 text-center">${badge}</td><td class="py-2 px-3 text-center"><button onclick="abrirModalContacto('${itemStr}')" class="text-blue-500 hover:bg-blue-50 p-1 rounded transition"><i class="fa-solid fa-pen-to-square"></i></button></td></tr>`;
+                });
+                html += `</tbody></table></div>`; c.innerHTML = html;
+            } else {
+                let html = `<div class="p-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 overflow-y-auto custom-scroll">`;
+                datosFiltrados.forEach(item => {
+                    const doc = item.documento_identidad || item.rif || '-'; const nom = item.nombre_razon_social || item.razon_social || '-'; const tel = item.telefono || item.telefono_01 || '-'; const dir = item.direccion_fiscal || '-'; const estado = (item.estatus || 'ACTIVO').toUpperCase();
+                    const badge = estado === 'ACTIVO' ? `<span class="text-emerald-600 text-[8px] font-bold"><i class="fa-solid fa-circle text-[5px] mr-1"></i>ACTIVO</span>` : `<span class="text-red-600 text-[8px] font-bold"><i class="fa-solid fa-circle text-[5px] mr-1"></i>INACTIVO</span>`;
+                    const itemStr = encodeURIComponent(JSON.stringify(item));
+                    const email = item.correo || '-';
 
-                html += `
-                <tr class="hover:bg-gray-50 transition border-b border-gray-100">
-                    <td class="py-3 px-4 font-mono text-[11px] text-gray-500">${doc}</td>
-                    <td class="py-3 px-4 font-bold text-[#143B62] text-[12px] truncate max-w-xs">${nom}</td>
-                    <td class="py-3 px-4 text-gray-600 text-[11px]"><i class="fa-solid fa-phone text-gray-400 mr-1"></i> ${tel}</td>
-                    <td class="py-3 px-4 text-gray-500 text-[11px] truncate max-w-xs">${dir}</td>
-                    <td class="py-3 px-4 text-center">${badge}</td>
-                </tr>`;
-            });
+                    html += `
+                    <div class="bg-white border border-gray-200 rounded-lg p-3 flex flex-col shadow-sm relative hover:border-[#143B62] transition">
+                        <div class="flex justify-between items-start mb-2"><div class="bg-gray-100 px-2 py-0.5 rounded font-mono text-[9px] font-bold text-gray-600">${doc}</div>${badge}</div>
+                        <h3 class="font-bold text-[#143B62] text-[13px] leading-tight mb-1 line-clamp-2">${nom}</h3>
+                        <div class="text-[10px] text-gray-500 space-y-1 mb-3 flex-1"><p><i class="fa-solid fa-phone w-3 text-gray-400"></i> ${tel}</p><p><i class="fa-solid fa-envelope w-3 text-gray-400"></i> <span class="truncate">${email}</span></p><p class="line-clamp-2" title="${dir}"><i class="fa-solid fa-location-dot w-3 text-gray-400"></i> ${dir}</p></div>
+                        <div class="border-t border-gray-100 pt-2 flex justify-end"><button onclick="abrirModalContacto('${itemStr}')" class="text-[10px] bg-blue-50 text-blue-700 font-bold px-3 py-1 rounded uppercase tracking-wider hover:bg-blue-100 transition"><i class="fa-solid fa-pen-to-square mr-1"></i> Editar</button></div>
+                    </div>`;
+                });
+                html += `</div>`; c.innerHTML = html;
+            }
+        }
 
-            tbody.innerHTML = html;
+        function abrirModalContacto(itemStr = null) {
+            const f = document.getElementById('form-contacto'); f.reset();
+            
+            // Lógica de visualización según pestaña
+            document.getElementById('caja-cliente').classList.toggle('hidden', pestanaActual !== 'clientes');
+            document.getElementById('caja-proveedor').classList.toggle('hidden', pestanaActual === 'proveedores');
+
+            if (itemStr) {
+                const c = JSON.parse(decodeURIComponent(itemStr));
+                document.getElementById('modal-titulo').innerHTML = `<i class="fa-solid fa-pen-to-square mr-2 text-blue-400"></i> EDITAR ${pestanaActual.substring(0, pestanaActual.length-1).toUpperCase()}`;
+                document.getElementById('cont-modo-edicion').value = "true";
+                
+                const docOriginal = pestanaActual === 'clientes' ? c.documento_identidad : c.rif;
+                document.getElementById('cont-id-original').value = docOriginal;
+                document.getElementById('cont-doc').value = docOriginal || '';
+                document.getElementById('cont-doc').readOnly = true; document.getElementById('cont-doc').classList.add('bg-gray-100', 'text-gray-500');
+                
+                document.getElementById('cont-nombre').value = c.nombre_razon_social || c.razon_social || '';
+                document.getElementById('cont-dir').value = c.direccion_fiscal || '';
+                document.getElementById('cont-email').value = c.correo || '';
+                document.getElementById('cont-estatus').value = c.estatus || 'ACTIVO';
+                
+                if(pestanaActual === 'clientes') {
+                    document.getElementById('cont-tel1').value = c.telefono || '';
+                    document.getElementById('cont-tel2').value = c.celular_01 || '';
+                    document.getElementById('cli-dir-entrega').value = c.direccion_entrega || '';
+                    document.getElementById('cli-tipo-con').value = c.tipo_contribuyente || 'NATURAL';
+                    document.getElementById('cli-nivel').value = c.nivel_precio || 'PRECIO_GENERAL';
+                } else {
+                    document.getElementById('cont-tel1').value = c.telefono_01 || '';
+                    document.getElementById('cont-tel2').value = c.telefono_02 || '';
+                    document.getElementById('prov-dir-suc').value = c.direccion_sucursal || '';
+                    document.getElementById('prov-clas').value = c.clasificacion_fiscal || 'ORDINARIO';
+                    document.getElementById('prov-ven-nom').value = c.vendedor_asignado || '';
+                    document.getElementById('prov-ven-cel').value = c.celular_vendedor || '';
+                    document.getElementById('prov-dias').value = c.dias_credito || 0;
+                }
+            } else {
+                document.getElementById('modal-titulo').innerHTML = `<i class="fa-solid fa-address-card mr-2 text-[#E67E22]"></i> NUEVO ${pestanaActual.substring(0, pestanaActual.length-1).toUpperCase()}`;
+                document.getElementById('cont-modo-edicion').value = "false";
+                document.getElementById('cont-id-original').value = "";
+                document.getElementById('cont-doc').readOnly = false; document.getElementById('cont-doc').classList.remove('bg-gray-100', 'text-gray-500');
+            }
+            document.getElementById('modal-contacto').classList.remove('hidden');
+        }
+        
+        function cerrarModalContacto() { document.getElementById('modal-contacto').classList.add('hidden'); }
+
+        async function guardarContacto(e) {
+            e.preventDefault(); const btn = document.getElementById('btn-guardar-cont'); btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Guardando...`; btn.disabled = true;
+            const isEdit = document.getElementById('cont-modo-edicion').value === "true";
+            
+            try {
+                const resUser = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?select=id_empresa&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                const dataUser = await resUser.json(); const miEmpresa = dataUser.length > 0 ? dataUser[0].id_empresa : null;
+
+                const doc = document.getElementById('cont-doc').value.trim().toUpperCase();
+                const nom = document.getElementById('cont-nombre').value.trim().toUpperCase();
+                const dir = document.getElementById('cont-dir').value.trim().toUpperCase();
+                const t1 = document.getElementById('cont-tel1').value.trim();
+                const t2 = document.getElementById('cont-tel2').value.trim();
+                const em = document.getElementById('cont-email').value.trim().toLowerCase();
+                const est = document.getElementById('cont-estatus').value;
+
+                let endpoint = ''; let payload = {}; let matchColumn = '';
+
+                if(pestanaActual === 'clientes') {
+                    endpoint = 'clientes'; matchColumn = 'documento_identidad';
+                    payload = { documento_identidad: doc, nombre_razon_social: nom, direccion_fiscal: dir, telefono: t1, celular_01: t2, correo: em, estatus: est, direccion_entrega: document.getElementById('cli-dir-entrega').value.toUpperCase(), tipo_contribuyente: document.getElementById('cli-tipo-con').value, nivel_precio: document.getElementById('cli-nivel').value, id_empresa: miEmpresa };
+                } else {
+                    endpoint = 'proveedores'; matchColumn = 'rif';
+                    payload = { rif: doc, razon_social: nom, direccion_fiscal: dir, telefono_01: t1, telefono_02: t2, correo: em, estatus: est, direccion_sucursal: document.getElementById('prov-dir-suc').value.toUpperCase(), clasificacion_fiscal: document.getElementById('prov-clas').value, vendedor_asignado: document.getElementById('prov-ven-nom').value.toUpperCase(), celular_vendedor: document.getElementById('prov-ven-cel').value, dias_credito: parseInt(document.getElementById('prov-dias').value)||0, id_empresa: miEmpresa };
+                }
+
+                const url = isEdit ? `${SUPABASE_URL}/rest/v1/${endpoint}?${matchColumn}=eq.${doc}` : `${SUPABASE_URL}/rest/v1/${endpoint}`;
+                const method = isEdit ? 'PATCH' : 'POST';
+
+                const res = await fetch(url, { method: method, headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' }, body: JSON.stringify(payload) });
+                if (!res.ok) throw new Error("Error en base de datos. Verifica que el ID no esté duplicado.");
+                
+                cerrarModalContacto(); await cargarDatos(); 
+            } catch(e) { alert("FALLO AL GUARDAR:\n" + e.message); } 
+            finally { btn.innerHTML = `<i class="fa-solid fa-save"></i> Guardar`; btn.disabled = false; }
         }
     </script>
 </body>
