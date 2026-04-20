@@ -350,21 +350,54 @@
 
         async function cargarDatos(skuParaAbrir = null) {
             try {
+                // 1. Cargar Tasa BCV
                 try {
                     const resTasa = await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?select=tasa&order=fecha_actualizacion.desc&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } });
                     const dataTasa = await resTasa.json();
                     if(dataTasa.length > 0) { tasaBcvGlobal = dataTasa[0].tasa; document.getElementById('tasa-bcv-display').innerText = `${tasaBcvGlobal.toFixed(2)}`; }
                 } catch(e) {}
 
+                // 2. Cargar Publicidad
                 try {
                     const resBanners = await fetch(`${SUPABASE_URL}/rest/v1/vitrinas_publicidad?select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } });
                     const bannersInfo = await resBanners.json();
                     inyectarBannersDOM(bannersInfo);
                 } catch(e) { console.error("Error cargando publicidad"); }
 
-                const resProd = await fetch(`${SUPABASE_URL}/rest/v1/vista_catalogo_web?select=*&limit=1000`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } });
-                todosLosProductos = await resProd.json();
-                fuse = new Fuse(todosLosProductos, { keys: ['nombre', 'categoria_producto', 'id_producto_sku', 'marca'], threshold: 0.3, ignoreLocation: true });
+                // 3. Cargar la Imagen por Defecto para poder filtrarla
+                let imagenGlobalDefecto = 'https://via.placeholder.com/300/f8fafc/94a3b8?text=SIN+IMAGEN';
+                try {
+                    const resPar = await fetch(`${SUPABASE_URL}/rest/v1/parametros_inventario?select=*&estatus=eq.ACTIVO`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } });
+                    const dataPar = await resPar.json();
+                    const paramImg = dataPar.find(p => p.grupo === 'IMAGEN_DEFECTO');
+                    if (paramImg && paramImg.valor.trim() !== '') { imagenGlobalDefecto = paramImg.valor; }
+                } catch(e) {}
+
+                // 4. NUEVO CEREBRO: Fusionar Productos y Precios directamente (Límites Altos)
+                const [resProd, resPre] = await Promise.all([
+                    fetch(`${SUPABASE_URL}/rest/v1/productos?select=*&limit=3000`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }),
+                    fetch(`${SUPABASE_URL}/rest/v1/precios?select=*&limit=3000`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } })
+                ]);
+                const dataProd = await resProd.json();
+                const dataPre = await resPre.json();
+
+                const dataFusionada = dataProd.map(p => {
+                    const pre = dataPre.find(pr => pr.id_producto_sku === p.id_producto_sku) || {};
+                    return { ...p, ...pre };
+                });
+
+                // 5. EL GRAN FILTRO (Tus Reglas de Negocio)
+                todosLosProductos = dataFusionada.filter(p => {
+                    const tieneStock = parseInt(p.stock_actual) > 0;
+                    const estaActivo = p.estado_producto === 'ACTIVO';
+                    const tieneImagenValida = p.imagen_principal && p.imagen_principal.trim() !== '' && p.imagen_principal !== imagenGlobalDefecto;
+                    
+                    // Solo pasan si cumplen las 3 condiciones
+                    return tieneStock && estaActivo && tieneImagenValida;
+                });
+
+                // Configuración del buscador con las nuevas columnas
+                fuse = new Fuse(todosLosProductos, { keys: ['nombre', 'categoria_del_producto', 'id_producto_sku', 'marca'], threshold: 0.3, ignoreLocation: true });
 
                 extraerCategorias(todosLosProductos);
                 
@@ -394,7 +427,8 @@
         function formatearPrecio(precioUsd) { return mostrarEnBs ? `Bs. ${(precioUsd * tasaBcvGlobal).toFixed(2)}` : `US$ ${precioUsd.toFixed(2)}`; }
 
         function generarTarjetaHTML(prod) {
-            const pUsd = Number(prod.precio_detal_usd) || 0; 
+            // Actualizado para usar precio_general_usd y categoria_del_producto
+            const pUsd = Number(prod.precio_general_usd) || 0; 
             const img = prod.imagen_principal || 'https://via.placeholder.com/300?text=P%26P';
             const esFav = favoritos.includes(prod.id_producto_sku); const cCorazon = esFav ? 'text-blue-600' : 'text-gray-300';
             const tTiers = prod.requerido_precio_1 != null && prod.requerido_precio_1 > 0;
@@ -430,7 +464,7 @@
         function renderLayoutInicio(resetearIndices = false) {
             if(resetearIndices) { indices.bloque1 = 0; indices.bloque2 = 0; }
             document.getElementById('carrusel-1').innerHTML = todosLosProductos.slice(-10).map(generarTarjetaHTML).join('');
-            const papeleria = todosLosProductos.filter(p => p.categoria_producto === 'Papelería');
+            const papeleria = todosLosProductos.filter(p => p.categoria_del_producto === 'PAPELERÍA'); // Actualizado
             document.getElementById('carrusel-2').innerHTML = (papeleria.length > 0 ? papeleria : todosLosProductos).slice(0, 10).map(generarTarjetaHTML).join('');
             if(resetearIndices) indices.bloque1 = LIMITES.bloque1;
             document.getElementById('grilla-bloque-1').innerHTML = todosLosProductos.slice(0, indices.bloque1).map(generarTarjetaHTML).join('');
@@ -457,15 +491,15 @@
             if (texto.trim() === '') { dropdown.classList.add('hidden'); return; }
             const resultados = fuse.search(texto).slice(0, 8); dropdown.innerHTML = '';
             if(resultados.length === 0) dropdown.innerHTML = `<div class="p-4 text-sm text-gray-500 text-center font-bold">No se encontraron productos</div>`; 
-            else resultados.forEach(res => { const p = res.item; const prodDataStr = encodeURIComponent(JSON.stringify(p)); dropdown.innerHTML += `<div class="flex items-center gap-3 p-3 border-b hover:bg-gray-50 cursor-pointer transition" onclick="abrirPDPObj('${prodDataStr}'); cerrarDropdown();"><img src="${p.imagen_principal}" class="w-10 h-10 object-contain rounded border border-gray-100"><div class="flex-1"><h4 class="text-xs font-normal line-clamp-1 text-gray-800">${p.nombre}</h4><span class="text-xs font-bold text-[#143B62]">${formatearPrecio(Number(p.precio_detal_usd))}</span></div></div>`; });
+            else resultados.forEach(res => { const p = res.item; const prodDataStr = encodeURIComponent(JSON.stringify(p)); dropdown.innerHTML += `<div class="flex items-center gap-3 p-3 border-b hover:bg-gray-50 cursor-pointer transition" onclick="abrirPDPObj('${prodDataStr}'); cerrarDropdown();"><img src="${p.imagen_principal}" class="w-10 h-10 object-contain rounded border border-gray-100"><div class="flex-1"><h4 class="text-xs font-normal line-clamp-1 text-gray-800">${p.nombre}</h4><span class="text-xs font-bold text-[#143B62]">${formatearPrecio(Number(p.precio_general_usd))}</span></div></div>`; });
             dropdown.classList.remove('hidden');
         }
         function buscarConEnter(e) { if (e.key === 'Enter') ejecutarBusquedaFull(); }
         function ejecutarBusquedaFull() { const texto = document.getElementById('buscador').value; cerrarDropdown(); if (texto.trim() === '') { irAInicio(false); return; } const resultados = fuse.search(texto).map(r => r.item); const url = new URL(window.location); url.searchParams.delete('producto'); window.history.pushState({}, '', url); renderBusquedaLimpia(resultados, `Resultados para: <span class="font-bold text-[#143B62]">'${texto}'</span>`, true); }
         function cerrarDropdown() { document.getElementById('dropdown-busqueda').classList.add('hidden'); }
 
-        function extraerCategorias(productos) { const contCat = document.getElementById('contenedor-categorias'); contCat.innerHTML = ''; const catArr = [...new Set(productos.map(p => p.categoria_producto).filter(c => c))].sort(); contCat.innerHTML += `<button onclick="filtrarPorCategoria('Todas')" class="hover:text-white transition whitespace-nowrap font-semibold">Todas</button><span class="text-[#1a4a7a]">|</span>`; catArr.forEach((cat, idx) => { contCat.innerHTML += `<button onclick="filtrarPorCategoria('${cat}')" class="hover:text-white transition whitespace-nowrap font-semibold">${cat}</button>`; if(idx < catArr.length-1) contCat.innerHTML += `<span class="text-[#1a4a7a]">|</span>`; }); }
-        function filtrarPorCategoria(categoria) { document.getElementById('buscador').value = ''; cerrarDropdown(); const url = new URL(window.location); url.searchParams.delete('producto'); window.history.pushState({}, '', url); if(categoria === 'Todas') { irAInicio(false); } else { renderBusquedaLimpia(todosLosProductos.filter(p => p.categoria_producto === categoria), `<span class="text-gray-500 font-normal">Categoría:</span> ${categoria}`, true); } }
+        function extraerCategorias(productos) { const contCat = document.getElementById('contenedor-categorias'); contCat.innerHTML = ''; const catArr = [...new Set(productos.map(p => p.categoria_del_producto).filter(c => c))].sort(); contCat.innerHTML += `<button onclick="filtrarPorCategoria('Todas')" class="hover:text-white transition whitespace-nowrap font-semibold">Todas</button><span class="text-[#1a4a7a]">|</span>`; catArr.forEach((cat, idx) => { contCat.innerHTML += `<button onclick="filtrarPorCategoria('${cat}')" class="hover:text-white transition whitespace-nowrap font-semibold">${cat}</button>`; if(idx < catArr.length-1) contCat.innerHTML += `<span class="text-[#1a4a7a]">|</span>`; }); }
+        function filtrarPorCategoria(categoria) { document.getElementById('buscador').value = ''; cerrarDropdown(); const url = new URL(window.location); url.searchParams.delete('producto'); window.history.pushState({}, '', url); if(categoria === 'Todas') { irAInicio(false); } else { renderBusquedaLimpia(todosLosProductos.filter(p => p.categoria_del_producto === categoria), `<span class="text-gray-500 font-normal">Categoría:</span> ${categoria}`, true); } }
 
         function copiarLinkShare() { navigator.clipboard.writeText(window.location.href).then(() => { const toast = document.getElementById("toast"); toast.className = "show"; setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000); }); }
         function abrirPDPObj(prodDataStr) { abrirPDP(JSON.parse(decodeURIComponent(prodDataStr)), true); }
@@ -475,7 +509,7 @@
             const pdp = document.getElementById('vista-pdp'); pdp.classList.remove('hidden'); window.scrollTo(0, 0);
             if(pushHistory) { const url = new URL(window.location); url.searchParams.set('producto', prod.id_producto_sku); window.history.pushState({}, '', url); }
 
-            const pDetalUsd = Number(prod.precio_detal_usd) || 0; const esServicio = (prod.tipo_producto || "").toLowerCase().includes('servicio');
+            const pDetalUsd = Number(prod.precio_general_usd) || 0; const esServicio = (prod.tipo_producto || "").toLowerCase().includes('servicio');
             const pPrinc = mostrarEnBs ? (pDetalUsd * tasaBcvGlobal).toFixed(2) : pDetalUsd.toFixed(2);
             const pSec = mostrarEnBs ? `US$ ${pDetalUsd.toFixed(2)}` : `Bs. ${(pDetalUsd * tasaBcvGlobal).toFixed(2)}`;
             const simbPrinc = mostrarEnBs ? 'Bs.' : 'US$';
@@ -483,28 +517,28 @@
             let htmlTiers = '';
             if(!esServicio && prod.requerido_precio_1 > 0) {
                 htmlTiers += `<p class="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-2 mt-4">Ofertas Mayoristas</p>`;
-                if(prod.requerido_precio_1 > 0) htmlTiers += `<div class="border border-green-200 bg-green-50 text-green-800 text-xs px-3 py-2.5 rounded mb-2 flex justify-between items-center"><span class="font-semibold"><i class="fa-solid fa-tag mr-1"></i> A partir de ${prod.requerido_precio_1} unds</span> <span>${formatearPrecio(Number(prod.precio_tier1_usd))} c/u</span></div>`;
-                if(prod.requerido_precio_2 > 0) htmlTiers += `<div class="border border-green-200 bg-green-50 text-green-800 text-xs px-3 py-2.5 rounded mb-2 flex justify-between items-center"><span class="font-semibold"><i class="fa-solid fa-tag mr-1"></i> A partir de ${prod.requerido_precio_2} unds</span> <span>${formatearPrecio(Number(prod.precio_tier2_usd))} c/u</span></div>`;
-                if(prod.requerido_precio_3 > 0) htmlTiers += `<div class="border border-green-200 bg-green-50 text-green-800 text-xs px-3 py-2.5 rounded flex justify-between items-center"><span class="font-semibold"><i class="fa-solid fa-tag mr-1"></i> A partir de ${prod.requerido_precio_3} unds</span> <span>${formatearPrecio(Number(prod.precio_tier3_usd))} c/u</span></div>`;
+                if(prod.requerido_precio_1 > 0) htmlTiers += `<div class="border border-green-200 bg-green-50 text-green-800 text-xs px-3 py-2.5 rounded mb-2 flex justify-between items-center"><span class="font-semibold"><i class="fa-solid fa-tag mr-1"></i> A partir de ${prod.requerido_precio_1} unds</span> <span>${formatearPrecio(Number(prod.precio_1_usd))} c/u</span></div>`;
+                if(prod.requerido_precio_2 > 0) htmlTiers += `<div class="border border-green-200 bg-green-50 text-green-800 text-xs px-3 py-2.5 rounded mb-2 flex justify-between items-center"><span class="font-semibold"><i class="fa-solid fa-tag mr-1"></i> A partir de ${prod.requerido_precio_2} unds</span> <span>${formatearPrecio(Number(prod.precio_2_usd))} c/u</span></div>`;
+                if(prod.requerido_precio_3 > 0) htmlTiers += `<div class="border border-green-200 bg-green-50 text-green-800 text-xs px-3 py-2.5 rounded flex justify-between items-center"><span class="font-semibold"><i class="fa-solid fa-tag mr-1"></i> A partir de ${prod.requerido_precio_3} unds</span> <span>${formatearPrecio(Number(prod.precio_3_usd))} c/u</span></div>`;
             }
 
-            let htmlFicha = ''; const specs = [{ label: 'Código SKU', val: prod.id_producto_sku }, { label: 'Categoría', val: prod.categoria_producto }, { label: 'Marca', val: prod.marca }, { label: 'Tipo', val: prod.tipo_producto }, { label: 'Estatus', val: prod.estado_producto }, { label: 'Talla', val: prod.talla }, { label: 'Color', val: prod.color }, { label: 'Aplica IVA', val: prod.tipo_impuesto }];
+            let htmlFicha = ''; const specs = [{ label: 'Código SKU', val: prod.id_producto_sku }, { label: 'Categoría', val: prod.categoria_del_producto }, { label: 'Marca', val: prod.marca }, { label: 'Tipo', val: prod.tipo_producto }, { label: 'Estatus', val: prod.estado_producto }, { label: 'Talla', val: prod.talla }, { label: 'Color', val: prod.color }, { label: 'Aplica IVA', val: prod.tipo_impuesto }];
             specs.forEach(s => { if(s.val && s.val !== 'NULL' && s.val !== '') { htmlFicha += `<div class="bg-white p-3 border border-gray-100 rounded shadow-sm"><label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">${s.label}</label><p class="text-sm font-semibold text-[#143B62]">${s.val}</p></div>`; } });
 
-            const relacionados = todosLosProductos.filter(p => p.categoria_producto === prod.categoria_producto && p.id_producto_sku !== prod.id_producto_sku).slice(0, 7);
+            const relacionados = todosLosProductos.filter(p => p.categoria_del_producto === prod.categoria_del_producto && p.id_producto_sku !== prod.id_producto_sku).slice(0, 7);
             let htmlRelacionados = '';
             if(relacionados.length > 0) { htmlRelacionados = `<h3 class="text-xl font-semibold text-gray-900 mb-6 border-l-4 border-[#143B62] pl-3">Quienes vieron esto también compraron</h3><div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 xl:grid-cols-7 gap-4">${relacionados.map(generarTarjetaHTML).join('')}</div>`; }
             const imgPrincipal = prod.imagen_principal || 'https://via.placeholder.com/500'; const prodDataStr = encodeURIComponent(JSON.stringify(prod));
 
             pdp.innerHTML = `
                 <div class="max-w-[1600px] mx-auto px-4 py-4 flex-1">
-                    <div class="text-sm text-gray-500 mb-4 flex items-center gap-2"><button onclick="window.history.back()" class="hover:text-[#143B62] font-bold transition"><i class="fa-solid fa-arrow-left"></i> Atrás</button><span class="text-gray-400">|</span><span class="text-gray-600 font-semibold cursor-pointer hover:underline" onclick="filtrarPorCategoria('${prod.categoria_producto}')">${prod.categoria_producto || 'Categoría'}</span> > ${prod.marca || 'Marca'}</div>
+                    <div class="text-sm text-gray-500 mb-4 flex items-center gap-2"><button onclick="window.history.back()" class="hover:text-[#143B62] font-bold transition"><i class="fa-solid fa-arrow-left"></i> Atrás</button><span class="text-gray-400">|</span><span class="text-gray-600 font-semibold cursor-pointer hover:underline" onclick="filtrarPorCategoria('${prod.categoria_del_producto}')">${prod.categoria_del_producto || 'Categoría'}</span> > ${prod.marca || 'Marca'}</div>
                     <div class="bg-white rounded shadow-sm border border-gray-200"><div class="grid grid-cols-1 lg:grid-cols-12 gap-0"><div class="lg:col-span-8 p-6 border-b lg:border-b-0 lg:border-r border-gray-200 flex flex-col md:flex-row gap-6"><div class="flex md:flex-col gap-2 order-2 md:order-1 w-full md:w-16 shrink-0 no-scrollbar overflow-x-auto md:overflow-visible"><div class="w-14 h-14 border-2 border-[#143B62] rounded cursor-pointer p-1 shrink-0"><img src="${imgPrincipal}" class="w-full h-full object-contain"></div></div><div class="flex-1 flex justify-center items-center order-1 md:order-2 min-h-[300px] md:h-[500px]"><img src="${imgPrincipal}" class="max-h-full max-w-full object-contain fade-in"></div></div><div class="lg:col-span-4 p-8 flex flex-col justify-start"><div class="text-xs text-gray-400 mb-2 flex justify-between items-center"><span class="font-bold">${prod.estado_producto || 'Nuevo'} | SKU: ${prod.id_producto_sku}</span><button onclick="copiarLinkShare()" class="text-[#143B62] hover:text-[#E67E22] flex items-center gap-1 font-bold transition"><i class="fa-regular fa-copy"></i> Copiar Link</button></div><h1 class="text-2xl font-bold text-[#143B62] mb-4 leading-tight">${prod.nombre}</h1><div class="mb-6"><div class="flex items-start gap-1"><span class="text-2xl text-gray-900 mt-1 font-bold">${simbPrinc}</span><span class="text-5xl font-light text-gray-900">${pPrinc}</span></div><div class="text-sm text-gray-500 mt-1 font-bold">${pSec}</div></div><div class="mb-6">${htmlTiers}</div><p class="text-sm font-semibold text-gray-800 mb-4">${!esServicio ? `¡Últimas en Stock! (${prod.stock_actual} disponibles)` : 'Servicio Disponible'}</p><div class="space-y-3 mb-6 mt-auto"><div class="flex gap-2"><div class="flex items-center w-32 border-2 border-gray-300 rounded bg-gray-50 shrink-0"><button onclick="cambiarCantidadPDP(-1)" class="w-10 h-12 text-gray-500 hover:text-[#143B62] font-black transition text-xl">-</button><input type="number" id="pdp-cantidad" value="1" min="1" class="w-full text-center bg-transparent font-bold focus:outline-none" readonly><button onclick="cambiarCantidadPDP(1)" class="w-10 h-12 text-gray-500 hover:text-[#143B62] font-black transition text-xl">+</button></div><button onclick="agregarAlCarritoDesdePDP('${prodDataStr}')" class="flex-1 bg-[#E67E22] hover:bg-[#d6731e] text-white font-bold py-3 rounded shadow transition text-lg flex justify-center items-center gap-2"><i class="fa-solid fa-cart-plus"></i> Agregar</button></div><a href="${`https://wa.me/${NUMERO_WHATSAPP}?text=${encodeURIComponent(`Hola, quiero info de:\n*${prod.nombre}*\nLink: ${window.location.href}`)}`}" target="_blank" class="w-full border-2 border-[#25D366] text-[#25D366] hover:bg-[#25D366] hover:text-white font-bold py-3 rounded shadow-sm transition text-lg flex items-center justify-center gap-2"><i class="fa-brands fa-whatsapp text-xl"></i> Consultar</a></div></div></div><div class="border-t border-gray-200"><div class="grid grid-cols-1 lg:grid-cols-2 gap-0"><div class="p-8 border-b lg:border-b-0 lg:border-r border-gray-200"><h3 class="text-xl font-bold text-gray-900 mb-6 border-l-4 border-[#E67E22] pl-3">Descripción</h3><p class="text-gray-600 text-sm leading-relaxed whitespace-pre-line font-medium">${prod.descripcion || 'Sin descripción.'}</p></div><div class="p-8 bg-gray-50"><h3 class="text-xl font-bold text-[#143B62] mb-6 border-l-4 border-[#143B62] pl-3">Ficha Técnica</h3><div class="grid grid-cols-2 md:grid-cols-3 gap-3">${htmlFicha}</div></div></div></div></div><div class="mt-12">${htmlRelacionados}</div></div>`;
         }
         function cambiarCantidadPDP(delta) { const input = document.getElementById('pdp-cantidad'); let val = parseInt(input.value) + delta; if(val < 1) val = 1; input.value = val; }
         function agregarAlCarritoDesdePDP(prodDataStr) { procesarAgregarCarrito(JSON.parse(decodeURIComponent(prodDataStr)), parseInt(document.getElementById('pdp-cantidad').value)); }
 
-        function calcularPrecioUnitario(prod, cantidad) { let pU = Number(prod.precio_detal_usd) || 0; if (prod.requerido_precio_3 && cantidad >= prod.requerido_precio_3 && prod.precio_tier3_usd != null) pU = Number(prod.precio_tier3_usd); else if (prod.requerido_precio_2 && cantidad >= prod.requerido_precio_2 && prod.precio_tier2_usd != null) pU = Number(prod.precio_tier2_usd); else if (prod.requerido_precio_1 && cantidad >= prod.requerido_precio_1 && prod.precio_tier1_usd != null) pU = Number(prod.precio_tier1_usd); return pU; }
+        function calcularPrecioUnitario(prod, cantidad) { let pU = Number(prod.precio_general_usd) || 0; if (prod.requerido_precio_3 && cantidad >= prod.requerido_precio_3 && prod.precio_3_usd != null) pU = Number(prod.precio_3_usd); else if (prod.requerido_precio_2 && cantidad >= prod.requerido_precio_2 && prod.precio_2_usd != null) pU = Number(prod.precio_2_usd); else if (prod.requerido_precio_1 && cantidad >= prod.requerido_precio_1 && prod.precio_1_usd != null) pU = Number(prod.precio_1_usd); return pU; }
         function procesarAgregarCarrito(prod, cantidad) { const index = carrito.findIndex(item => item.id_producto_sku === prod.id_producto_sku); if (index !== -1) carrito[index].cantidad += cantidad; else { prod.cantidad = cantidad; carrito.push(prod); } actualizarUI_Carrito(); abrirCarrito(); }
         function cambiarCantidadCarrito(sku, delta) { const index = carrito.findIndex(item => item.id_producto_sku === sku); if (index !== -1) { carrito[index].cantidad += delta; if (carrito[index].cantidad <= 0) carrito.splice(index, 1); actualizarUI_Carrito(); } }
         function eliminarDelCarrito(sku) { carrito = carrito.filter(item => item.id_producto_sku !== sku); actualizarUI_Carrito(); }
@@ -513,7 +547,7 @@
             if (carrito.length === 0) { contenedor.innerHTML = `<div class="flex flex-col items-center justify-center h-full text-gray-400"><i class="fa-solid fa-basket-shopping text-4xl mb-3"></i><p>Tu carrito está vacío</p></div>`; contadorBurbuja.classList.add('hidden'); document.getElementById('subtotal-usd').innerText = `US $0.00`; document.getElementById('total-bs').innerText = `Bs. 0.00`; return; }
             contenedor.innerHTML = '';
             carrito.forEach(item => {
-                const precioBaseUsd = Number(item.precio_detal_usd) || 0; const precioAplicadoUsd = calcularPrecioUnitario(item, item.cantidad); subtotalBaseUsdGlobal += (precioBaseUsd * item.cantidad); totalUsdGlobal += (precioAplicadoUsd * item.cantidad); totalArticulos += item.cantidad;
+                const precioBaseUsd = Number(item.precio_general_usd) || 0; const precioAplicadoUsd = calcularPrecioUnitario(item, item.cantidad); subtotalBaseUsdGlobal += (precioBaseUsd * item.cantidad); totalUsdGlobal += (precioAplicadoUsd * item.cantidad); totalArticulos += item.cantidad;
                 contenedor.innerHTML += `<div class="flex bg-white p-3 rounded shadow-sm border border-gray-100 relative"><img src="${item.imagen_principal}" class="w-16 h-16 object-contain rounded border p-1 mr-3"><div class="flex-1"><h4 class="text-xs font-normal text-gray-800 line-clamp-2 pr-5">${item.nombre}</h4><div class="flex items-center mt-1"><span class="text-gray-900 font-semibold text-sm">${formatearPrecio(precioAplicadoUsd)}</span>${precioAplicadoUsd < precioBaseUsd ? `<span class="text-[9px] bg-green-100 text-green-700 px-1 rounded ml-1 font-bold">OFERTA</span>` : ''}</div><div class="flex items-center border w-max rounded overflow-hidden mt-2"><button onclick="cambiarCantidadCarrito('${item.id_producto_sku}', -1)" class="px-2 py-0.5 bg-gray-50 hover:bg-gray-200"><i class="fa-solid fa-minus text-[10px]"></i></button><span class="px-3 py-0.5 text-xs font-semibold bg-white">${item.cantidad}</span><button onclick="cambiarCantidadCarrito('${item.id_producto_sku}', 1)" class="px-2 py-0.5 bg-gray-50 hover:bg-gray-200"><i class="fa-solid fa-plus text-[10px]"></i></button></div></div><button onclick="eliminarDelCarrito('${item.id_producto_sku}')" class="absolute top-2 right-2 text-red-400 hover:text-red-600"><i class="fa-solid fa-trash-can"></i></button></div>`;
             });
             document.getElementById('subtotal-usd').innerText = formatearPrecio(totalUsdGlobal); document.getElementById('total-bs').innerText = `Bs. ${(totalUsdGlobal * tasaBcvGlobal).toFixed(2)}`; contadorBurbuja.innerText = totalArticulos; contadorBurbuja.classList.remove('hidden');
@@ -542,7 +576,6 @@
             window.open(`https://wa.me/${NUMERO_WHATSAPP}?text=${encodeURIComponent(t)}`, '_blank'); cerrarCheckout(); carrito = []; actualizarUI_Carrito();
         }
 
-        // --- LÓGICA PWA ---
         let eventoInstalacionDiferido;
         const cartelInstalacion = document.getElementById('cartel-instalacion');
         const btnInstalar = document.getElementById('btn-instalar');
