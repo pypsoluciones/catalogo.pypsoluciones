@@ -47,6 +47,9 @@
                             <option value="CONDICION_PRODUCTO">CONDICIÓN DEL PRODUCTO</option>
                             <option value="TALLA">TALLA</option>
                             <option value="COLOR">COLOR</option>
+                            <option value="CATEGORIA_VENTA">CATEGORÍA DE VENTA (ETIQUETA)</option>
+                            <option value="TIPO_IMPUESTO">TIPO DE IMPUESTO (IVA)</option>
+                            <option value="IMAGEN_DEFECTO">IMAGEN POR DEFECTO</option>
                         </select>
                     </div>
                     
@@ -57,7 +60,7 @@
                         </div>
 
                         <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Nuevo Valor a Registrar *</label>
-                        <input type="text" id="param-valor" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-bold focus:border-[#E67E22] outline-none uppercase" oninput="this.value = this.value.toUpperCase()">
+                        <input type="text" id="param-valor" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-bold focus:border-[#E67E22] outline-none">
                     </div>
                     
                     <button type="submit" id="btn-guardar" style="display:none;" class="w-full bg-[#143B62] hover:bg-[#0f2d4a] text-white font-bold py-2.5 rounded-lg shadow-sm transition flex justify-center items-center gap-2"><i class="fa-solid fa-plus"></i> Guardar Parámetro</button>
@@ -94,16 +97,19 @@
             cargarParametros(); 
         };
 
-        // Textos de ayuda según el grupo seleccionado
+        // Textos de ayuda según el grupo seleccionado (ACTUALIZADO CON LAS NUEVAS OPCIONES)
         const textosAyuda = {
             'CATEGORIA': "Ejemplo: Si vendes electrónica, escribe <strong>'SMARTPHONES'</strong> o <strong>'LAPTOPS'</strong>.",
             'MARCA': "Ejemplo: Escribe la marca del fabricante como <strong>'SAMSUNG'</strong>, <strong>'APPLE'</strong> o <strong>'SONY'</strong>.",
-            'TIPO_PRODUCTO': "Ejemplo: Define la naturaleza. Ej: <strong>'PRODUCTO TERMINADO'</strong>, <strong>'SERVICIO'</strong> o <strong>'MATERIA PRIMA'</strong>.",
-            'UNIDAD_MEDIDA': "Ejemplo: Cómo se vende. Ej: <strong>'UNIDAD'</strong>, <strong>'KG'</strong>, <strong>'LITRO'</strong> o <strong>'PAQUETE'</strong>.",
-            'ESTADO_PRODUCTO': "Ejemplo: Su estado en tienda. Ej: <strong>'ACTIVO'</strong>, <strong>'SUSPENDIDO'</strong> o <strong>'DESCONTINUADO'</strong>.",
+            'TIPO_PRODUCTO': "Ejemplo: Define la naturaleza. Ej: <strong>'PRODUCTO'</strong>, <strong>'SERVICIO'</strong> o <strong>'INSUMO'</strong>.",
+            'UNIDAD_MEDIDA': "Ejemplo: Cómo se vende. Ej: <strong>'UNIDADES'</strong>, <strong>'PAQUETE'</strong>, <strong>'KG'</strong>.",
+            'ESTADO_PRODUCTO': "Ejemplo: Su estado en tienda. Ej: <strong>'ACTIVO'</strong> o <strong>'INACTIVO'</strong>.",
             'CONDICION_PRODUCTO': "Ejemplo: Su estado físico. Ej: <strong>'NUEVO'</strong>, <strong>'USADO'</strong> o <strong>'REMANUFACTURADO'</strong>.",
-            'TALLA': "Ejemplo: Tamaños estándar. Ej: <strong>'S'</strong>, <strong>'M'</strong>, <strong>'L'</strong> o números como <strong>'40'</strong>.",
-            'COLOR': "Ejemplo: Colores básicos. Ej: <strong>'ROJO'</strong>, <strong>'NEGRO'</strong> o <strong>'MULTICOLOR'</strong>."
+            'TALLA': "Ejemplo: Tamaños estándar. Ej: <strong>'S'</strong>, <strong>'M'</strong>, <strong>'L'</strong> o números.",
+            'COLOR': "Ejemplo: Colores básicos. Ej: <strong>'ROJO'</strong>, <strong>'NEGRO'</strong> o <strong>'MULTI-COLOR'</strong>.",
+            'CATEGORIA_VENTA': "Ejemplo: Etiquetas visuales para la tienda. Ej: <strong>'OFERTA'</strong>, <strong>'COMBO'</strong>, <strong>'ESTRELLA'</strong>.",
+            'TIPO_IMPUESTO': "Ejemplo: Impuestos a aplicar en factura. Ej: <strong>'GENERAL'</strong>, <strong>'EXENTO'</strong>.",
+            'IMAGEN_DEFECTO': "Pega aquí el enlace <strong>(URL)</strong> exacto de la imagen que se mostrará cuando un producto no tenga foto."
         };
 
         async function cargarParametros() {
@@ -112,12 +118,20 @@
             const btnGuardar = document.getElementById('btn-guardar');
             const msg = document.getElementById('msg-selecciona');
             const txtAyuda = document.getElementById('texto-ayuda-param');
+            const inputValor = document.getElementById('param-valor');
 
             if(grupo === 'TODOS') {
                 cajaValor.style.display = 'none'; btnGuardar.style.display = 'none'; msg.style.display = 'block';
             } else {
                 cajaValor.style.display = 'block'; btnGuardar.style.display = 'flex'; msg.style.display = 'none';
                 txtAyuda.innerHTML = textosAyuda[grupo] || "Escribe el nuevo valor a registrar.";
+                
+                // Formateo visual del input en tiempo real (evita dañar las URL de las imágenes)
+                inputValor.oninput = function() {
+                    if (grupo !== 'IMAGEN_DEFECTO') {
+                        this.value = this.value.toUpperCase();
+                    }
+                };
             }
 
             let urlFetch = `${SUPABASE_URL}/rest/v1/parametros_inventario?select=*&order=grupo.asc,valor.asc`;
@@ -143,7 +157,7 @@
                 html += `
                 <tr class="hover:bg-gray-50 transition border-b border-gray-100">
                     <td class="py-2 px-4 text-[10px] font-bold text-gray-400 tracking-wider">${p.grupo}</td>
-                    <td class="py-2 px-4 text-xs font-bold text-[#143B62]">${p.valor}</td>
+                    <td class="py-2 px-4 text-xs font-bold text-[#143B62] truncate max-w-xs">${p.valor}</td>
                     <td class="py-2 px-4 text-center">${badge}</td>
                     <td class="py-2 px-4 text-center">
                         <button onclick="eliminarParametro('${p.id_parametro}')" class="text-gray-400 hover:text-red-500 transition px-2 py-1 rounded hover:bg-red-50"><i class="fa-solid fa-trash"></i></button>
@@ -157,9 +171,12 @@
             e.preventDefault();
             const btn = document.getElementById('btn-guardar'); btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Guardando...'; btn.disabled = true;
             const grupo = document.getElementById('param-grupo').value;
-            const valor = document.getElementById('param-valor').value.trim().toUpperCase();
-
-            if(!valor) { alert("Debe escribir un valor."); btn.innerHTML = '<i class="fa-solid fa-plus"></i> Guardar Parámetro'; btn.disabled = false; return; }
+            
+            // Lógica para NO poner en mayúsculas las URL de las imágenes
+            let valorInput = document.getElementById('param-valor').value.trim();
+            if(!valorInput) { alert("Debe escribir un valor."); btn.innerHTML = '<i class="fa-solid fa-plus"></i> Guardar Parámetro'; btn.disabled = false; return; }
+            
+            const valorFinal = grupo === 'IMAGEN_DEFECTO' ? valorInput : valorInput.toUpperCase();
 
             try {
                 const resUser = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?select=id_empresa&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
@@ -169,7 +186,7 @@
                 const res = await fetch(`${SUPABASE_URL}/rest/v1/parametros_inventario`, {
                     method: 'POST',
                     headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ grupo: grupo, valor: valor, estatus: 'ACTIVO', id_empresa: miEmpresa })
+                    body: JSON.stringify({ grupo: grupo, valor: valorFinal, estatus: 'ACTIVO', id_empresa: miEmpresa })
                 });
                 if(!res.ok) throw new Error("Error al guardar");
                 
