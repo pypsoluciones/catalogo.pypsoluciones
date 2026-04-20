@@ -204,23 +204,25 @@
 
                 const dataProd = await resProd.json();
                 
-                // DIAGNÓSTICO CERO SOPORTE (RLS)
-                if (dataProd.length === 0) {
-                    document.getElementById('vista-inicio-compleja').innerHTML = `
-                        <div class="max-w-[1200px] mx-auto px-4 pt-16">
-                            <div class="bg-red-50 border-l-8 border-red-500 rounded p-8 shadow-sm">
-                                <h2 class="text-3xl font-black text-red-700 mb-2">Bloqueo de Seguridad Supabase</h2>
-                                <p class="text-red-800 text-lg mb-6">La tabla <b>productos</b> está devolviendo 0 resultados porque tiene RLS activado.</p>
-                                <p class="text-gray-800 font-bold mb-2">Solución rápida:</p>
-                                <ol class="list-decimal pl-6 mt-2 space-y-2 text-gray-700 font-medium">
-                                    <li>Ve a Supabase > Table Editor > <b>productos</b>.</li>
-                                    <li>Arriba, dale clic al botón que dice <b>"1 RLS Policy"</b>.</li>
-                                    <li>Selecciona <b>"Disable RLS"</b>.</li>
-                                    <li>Recarga esta página.</li>
-                                </ol>
-                            </div>
-                        </div>`;
-                    return;
+                if (!resProd.ok) {
+                    if (dataProd.message && dataProd.message.includes('security')) {
+                        document.getElementById('vista-inicio-compleja').innerHTML = `
+                            <div class="max-w-[1200px] mx-auto px-4 pt-16">
+                                <div class="bg-red-50 border-l-8 border-red-500 rounded p-8 shadow-sm">
+                                    <h2 class="text-3xl font-black text-red-700 mb-2">Bloqueo de Seguridad Supabase</h2>
+                                    <p class="text-red-800 text-lg mb-6">La tabla <b>productos</b> está devolviendo 0 resultados porque tiene RLS activado.</p>
+                                    <p class="text-gray-800 font-bold mb-2">Solución rápida:</p>
+                                    <ol class="list-decimal pl-6 mt-2 space-y-2 text-gray-700 font-medium">
+                                        <li>Ve a Supabase > Table Editor > <b>productos</b>.</li>
+                                        <li>Arriba, dale clic al botón que dice <b>"1 RLS Policy"</b>.</li>
+                                        <li>Selecciona <b>"Disable RLS"</b>.</li>
+                                        <li>Recarga esta página.</li>
+                                    </ol>
+                                </div>
+                            </div>`;
+                        return;
+                    }
+                    throw new Error("Error genérico");
                 }
 
                 const dataPre = await resPre.json();
@@ -230,13 +232,19 @@
                     return { ...p, ...pre };
                 });
 
+                // EL FILTRO ANTI-FANTASMAS
                 todosLosProductos = dataFusionada.filter(p => {
                     const tieneStock = parseFloat(p.stock_actual) > 0;
                     const estaActivo = p.estado_producto === 'ACTIVO';
                     const tieneImagen = p.imagen_principal && p.imagen_principal.trim() !== '';
                     const noEsDefecto = p.imagen_principal !== imagenGlobalDefecto;
                     
-                    return tieneStock && estaActivo && tieneImagen && noEsDefecto;
+                    // REGLA NUEVA: Si no tiene precio configurado, es un fantasma y se bloquea.
+                    const tienePrecioUsd = Number(p.precio_general_usd) > 0;
+                    const tienePrecioBsFijo = p.es_precio_fijo_bs === true && Number(p.precio_fijo_bs) > 0;
+                    const precioValido = tienePrecioUsd || tienePrecioBsFijo;
+                    
+                    return tieneStock && estaActivo && tieneImagen && noEsDefecto && precioValido;
                 });
 
                 fuse = new Fuse(todosLosProductos, { keys: ['nombre', 'categoria_del_producto', 'id_producto_sku', 'marca'], threshold: 0.3, ignoreLocation: true });
@@ -266,19 +274,35 @@
             else { renderBusquedaLimpia(arrayBusquedaActual, document.getElementById('titulo-busqueda').innerText, false); }
             actualizarUI_Carrito();
         }
-        function formatearPrecio(precioUsd) { return mostrarEnBs ? `Bs. ${(precioUsd * tasaBcvGlobal).toFixed(2)}` : `US$ ${precioUsd.toFixed(2)}`; }
+        function formatearPrecio(precioUsd, precioBsFijo = 0, esFijoBs = false) { 
+            if (esFijoBs && precioBsFijo > 0) {
+                return mostrarEnBs ? `Bs. ${Number(precioBsFijo).toFixed(2)}` : `US$ ${(Number(precioBsFijo) / tasaBcvGlobal).toFixed(2)}`;
+            }
+            return mostrarEnBs ? `Bs. ${(precioUsd * tasaBcvGlobal).toFixed(2)}` : `US$ ${precioUsd.toFixed(2)}`; 
+        }
 
         function generarTarjetaHTML(prod) {
             const pUsd = Number(prod.precio_general_usd) || 0; 
+            const pBsFijo = Number(prod.precio_fijo_bs) || 0;
+            const esFijoBs = prod.es_precio_fijo_bs === true;
+
             const img = prod.imagen_principal || 'https://via.placeholder.com/300?text=P%26P';
             const esFav = favoritos.includes(prod.id_producto_sku); const cCorazon = esFav ? 'text-blue-600' : 'text-gray-300';
             const tTiers = prod.requerido_precio_1 != null && prod.requerido_precio_1 > 0;
             let tag = tTiers ? `<div class="absolute top-0 left-0 bg-[#E67E22] text-white text-[9px] font-bold px-2 py-1 rounded-br z-10 uppercase tracking-wider shadow-sm">Oferta</div>` : '';
             if(!tTiers && (prod.tipo_producto || "").toLowerCase().includes('servicio')) tag = `<div class="absolute top-0 left-0 bg-[#143B62] text-white text-[9px] font-bold px-2 py-1 rounded-br z-10 uppercase tracking-wider shadow-sm">Servicio</div>`;
             const pStr = encodeURIComponent(JSON.stringify(prod));
-            const pPrinc = mostrarEnBs ? (pUsd * tasaBcvGlobal).toFixed(2) : pUsd.toFixed(2);
-            const sPrinc = mostrarEnBs ? 'Bs.' : 'US$';
-            const tSec = mostrarEnBs ? `US$ ${pUsd.toFixed(2)}` : `Bs. ${(pUsd * tasaBcvGlobal).toFixed(2)}`;
+            
+            let pPrinc, sPrinc, tSec;
+            if (esFijoBs) {
+                pPrinc = mostrarEnBs ? pBsFijo.toFixed(2) : (pBsFijo / tasaBcvGlobal).toFixed(2);
+                sPrinc = mostrarEnBs ? 'Bs.' : 'US$';
+                tSec = mostrarEnBs ? `US$ ${(pBsFijo / tasaBcvGlobal).toFixed(2)}` : `Bs. ${pBsFijo.toFixed(2)}`;
+            } else {
+                pPrinc = mostrarEnBs ? (pUsd * tasaBcvGlobal).toFixed(2) : pUsd.toFixed(2);
+                sPrinc = mostrarEnBs ? 'Bs.' : 'US$';
+                tSec = mostrarEnBs ? `US$ ${pUsd.toFixed(2)}` : `Bs. ${(pUsd * tasaBcvGlobal).toFixed(2)}`;
+            }
 
             return `
                 <div class="bg-white rounded shadow-sm hover:shadow-lg transition-shadow border border-gray-200 flex flex-col relative group cursor-pointer carrusel-item" onclick="abrirPDPObj('${pStr}')">
@@ -332,7 +356,7 @@
             if (texto.trim() === '') { dropdown.classList.add('hidden'); return; }
             const resultados = fuse.search(texto).slice(0, 8); dropdown.innerHTML = '';
             if(resultados.length === 0) dropdown.innerHTML = `<div class="p-4 text-sm text-gray-500 text-center font-bold">No se encontraron productos</div>`; 
-            else resultados.forEach(res => { const p = res.item; const prodDataStr = encodeURIComponent(JSON.stringify(p)); dropdown.innerHTML += `<div class="flex items-center gap-3 p-3 border-b hover:bg-gray-50 cursor-pointer transition" onclick="abrirPDPObj('${prodDataStr}'); cerrarDropdown();"><img src="${p.imagen_principal}" class="w-10 h-10 object-contain rounded border border-gray-100"><div class="flex-1"><h4 class="text-xs font-normal line-clamp-1 text-gray-800">${p.nombre}</h4><span class="text-xs font-bold text-[#143B62]">${formatearPrecio(Number(p.precio_general_usd))}</span></div></div>`; });
+            else resultados.forEach(res => { const p = res.item; const prodDataStr = encodeURIComponent(JSON.stringify(p)); dropdown.innerHTML += `<div class="flex items-center gap-3 p-3 border-b hover:bg-gray-50 cursor-pointer transition" onclick="abrirPDPObj('${prodDataStr}'); cerrarDropdown();"><img src="${p.imagen_principal}" class="w-10 h-10 object-contain rounded border border-gray-100"><div class="flex-1"><h4 class="text-xs font-normal line-clamp-1 text-gray-800">${p.nombre}</h4><span class="text-xs font-bold text-[#143B62]">${formatearPrecio(Number(p.precio_general_usd), Number(p.precio_fijo_bs), p.es_precio_fijo_bs)}</span></div></div>`; });
             dropdown.classList.remove('hidden');
         }
         function buscarConEnter(e) { if (e.key === 'Enter') ejecutarBusquedaFull(); }
@@ -350,10 +374,21 @@
             const pdp = document.getElementById('vista-pdp'); pdp.classList.remove('hidden'); window.scrollTo(0, 0);
             if(pushHistory) { const url = new URL(window.location); url.searchParams.set('producto', prod.id_producto_sku); window.history.pushState({}, '', url); }
 
-            const pDetalUsd = Number(prod.precio_general_usd) || 0; const esServicio = (prod.tipo_producto || "").toLowerCase().includes('servicio');
-            const pPrinc = mostrarEnBs ? (pDetalUsd * tasaBcvGlobal).toFixed(2) : pDetalUsd.toFixed(2);
-            const pSec = mostrarEnBs ? `US$ ${pDetalUsd.toFixed(2)}` : `Bs. ${(pDetalUsd * tasaBcvGlobal).toFixed(2)}`;
-            const simbPrinc = mostrarEnBs ? 'Bs.' : 'US$';
+            const pDetalUsd = Number(prod.precio_general_usd) || 0; 
+            const pBsFijo = Number(prod.precio_fijo_bs) || 0;
+            const esFijoBs = prod.es_precio_fijo_bs === true;
+            const esServicio = (prod.tipo_producto || "").toLowerCase().includes('servicio');
+            
+            let pPrinc, pSec, simbPrinc;
+            if (esFijoBs) {
+                pPrinc = mostrarEnBs ? pBsFijo.toFixed(2) : (pBsFijo / tasaBcvGlobal).toFixed(2);
+                pSec = mostrarEnBs ? `US$ ${(pBsFijo / tasaBcvGlobal).toFixed(2)}` : `Bs. ${pBsFijo.toFixed(2)}`;
+                simbPrinc = mostrarEnBs ? 'Bs.' : 'US$';
+            } else {
+                pPrinc = mostrarEnBs ? (pDetalUsd * tasaBcvGlobal).toFixed(2) : pDetalUsd.toFixed(2);
+                pSec = mostrarEnBs ? `US$ ${pDetalUsd.toFixed(2)}` : `Bs. ${(pDetalUsd * tasaBcvGlobal).toFixed(2)}`;
+                simbPrinc = mostrarEnBs ? 'Bs.' : 'US$';
+            }
 
             let htmlTiers = '';
             if(!esServicio && prod.requerido_precio_1 > 0) {
@@ -379,7 +414,13 @@
         function cambiarCantidadPDP(delta) { const input = document.getElementById('pdp-cantidad'); let val = parseInt(input.value) + delta; if(val < 1) val = 1; input.value = val; }
         function agregarAlCarritoDesdePDP(prodDataStr) { procesarAgregarCarrito(JSON.parse(decodeURIComponent(prodDataStr)), parseInt(document.getElementById('pdp-cantidad').value)); }
 
-        function calcularPrecioUnitario(prod, cantidad) { let pU = Number(prod.precio_general_usd) || 0; if (prod.requerido_precio_3 && cantidad >= prod.requerido_precio_3 && prod.precio_3_usd != null) pU = Number(prod.precio_3_usd); else if (prod.requerido_precio_2 && cantidad >= prod.requerido_precio_2 && prod.precio_2_usd != null) pU = Number(prod.precio_2_usd); else if (prod.requerido_precio_1 && cantidad >= prod.requerido_precio_1 && prod.precio_1_usd != null) pU = Number(prod.precio_1_usd); return pU; }
+        function calcularPrecioUnitario(prod, cantidad) { 
+            let pU = prod.es_precio_fijo_bs ? (Number(prod.precio_fijo_bs) / tasaBcvGlobal) : (Number(prod.precio_general_usd) || 0); 
+            if (prod.requerido_precio_3 && cantidad >= prod.requerido_precio_3 && prod.precio_3_usd != null) pU = Number(prod.precio_3_usd); 
+            else if (prod.requerido_precio_2 && cantidad >= prod.requerido_precio_2 && prod.precio_2_usd != null) pU = Number(prod.precio_2_usd); 
+            else if (prod.requerido_precio_1 && cantidad >= prod.requerido_precio_1 && prod.precio_1_usd != null) pU = Number(prod.precio_1_usd); 
+            return pU; 
+        }
         function procesarAgregarCarrito(prod, cantidad) { const index = carrito.findIndex(item => item.id_producto_sku === prod.id_producto_sku); if (index !== -1) carrito[index].cantidad += cantidad; else { prod.cantidad = cantidad; carrito.push(prod); } actualizarUI_Carrito(); abrirCarrito(); }
         function cambiarCantidadCarrito(sku, delta) { const index = carrito.findIndex(item => item.id_producto_sku === sku); if (index !== -1) { carrito[index].cantidad += delta; if (carrito[index].cantidad <= 0) carrito.splice(index, 1); actualizarUI_Carrito(); } }
         function eliminarDelCarrito(sku) { carrito = carrito.filter(item => item.id_producto_sku !== sku); actualizarUI_Carrito(); }
@@ -388,8 +429,10 @@
             if (carrito.length === 0) { contenedor.innerHTML = `<div class="flex flex-col items-center justify-center h-full text-gray-400"><i class="fa-solid fa-basket-shopping text-4xl mb-3"></i><p>Tu carrito está vacío</p></div>`; contadorBurbuja.classList.add('hidden'); document.getElementById('subtotal-usd').innerText = `US $0.00`; document.getElementById('total-bs').innerText = `Bs. 0.00`; return; }
             contenedor.innerHTML = '';
             carrito.forEach(item => {
-                const precioBaseUsd = Number(item.precio_general_usd) || 0; const precioAplicadoUsd = calcularPrecioUnitario(item, item.cantidad); subtotalBaseUsdGlobal += (precioBaseUsd * item.cantidad); totalUsdGlobal += (precioAplicadoUsd * item.cantidad); totalArticulos += item.cantidad;
-                contenedor.innerHTML += `<div class="flex bg-white p-3 rounded shadow-sm border border-gray-100 relative"><img src="${item.imagen_principal}" class="w-16 h-16 object-contain rounded border p-1 mr-3"><div class="flex-1"><h4 class="text-xs font-normal text-gray-800 line-clamp-2 pr-5">${item.nombre}</h4><div class="flex items-center mt-1"><span class="text-gray-900 font-semibold text-sm">${formatearPrecio(precioAplicadoUsd)}</span>${precioAplicadoUsd < precioBaseUsd ? `<span class="text-[9px] bg-green-100 text-green-700 px-1 rounded ml-1 font-bold">OFERTA</span>` : ''}</div><div class="flex items-center border w-max rounded overflow-hidden mt-2"><button onclick="cambiarCantidadCarrito('${item.id_producto_sku}', -1)" class="px-2 py-0.5 bg-gray-50 hover:bg-gray-200"><i class="fa-solid fa-minus text-[10px]"></i></button><span class="px-3 py-0.5 text-xs font-semibold bg-white">${item.cantidad}</span><button onclick="cambiarCantidadCarrito('${item.id_producto_sku}', 1)" class="px-2 py-0.5 bg-gray-50 hover:bg-gray-200"><i class="fa-solid fa-plus text-[10px]"></i></button></div></div><button onclick="eliminarDelCarrito('${item.id_producto_sku}')" class="absolute top-2 right-2 text-red-400 hover:text-red-600"><i class="fa-solid fa-trash-can"></i></button></div>`;
+                const precioBaseUsd = item.es_precio_fijo_bs ? (Number(item.precio_fijo_bs) / tasaBcvGlobal) : (Number(item.precio_general_usd) || 0); 
+                const precioAplicadoUsd = calcularPrecioUnitario(item, item.cantidad); 
+                subtotalBaseUsdGlobal += (precioBaseUsd * item.cantidad); totalUsdGlobal += (precioAplicadoUsd * item.cantidad); totalArticulos += item.cantidad;
+                contenedor.innerHTML += `<div class="flex bg-white p-3 rounded shadow-sm border border-gray-100 relative"><img src="${item.imagen_principal}" class="w-16 h-16 object-contain rounded border p-1 mr-3"><div class="flex-1"><h4 class="text-xs font-normal text-gray-800 line-clamp-2 pr-5">${item.nombre}</h4><div class="flex items-center mt-1"><span class="text-gray-900 font-semibold text-sm">${formatearPrecio(precioAplicadoUsd, Number(item.precio_fijo_bs), item.es_precio_fijo_bs)}</span>${precioAplicadoUsd < (precioBaseUsd - 0.01) ? `<span class="text-[9px] bg-green-100 text-green-700 px-1 rounded ml-1 font-bold">OFERTA</span>` : ''}</div><div class="flex items-center border w-max rounded overflow-hidden mt-2"><button onclick="cambiarCantidadCarrito('${item.id_producto_sku}', -1)" class="px-2 py-0.5 bg-gray-50 hover:bg-gray-200"><i class="fa-solid fa-minus text-[10px]"></i></button><span class="px-3 py-0.5 text-xs font-semibold bg-white">${item.cantidad}</span><button onclick="cambiarCantidadCarrito('${item.id_producto_sku}', 1)" class="px-2 py-0.5 bg-gray-50 hover:bg-gray-200"><i class="fa-solid fa-plus text-[10px]"></i></button></div></div><button onclick="eliminarDelCarrito('${item.id_producto_sku}')" class="absolute top-2 right-2 text-red-400 hover:text-red-600"><i class="fa-solid fa-trash-can"></i></button></div>`;
             });
             document.getElementById('subtotal-usd').innerText = formatearPrecio(totalUsdGlobal); document.getElementById('total-bs').innerText = `Bs. ${(totalUsdGlobal * tasaBcvGlobal).toFixed(2)}`; contadorBurbuja.innerText = totalArticulos; contadorBurbuja.classList.remove('hidden');
         }
