@@ -60,7 +60,6 @@ document.addEventListener("DOMContentLoaded", () => {
     </aside>
     `;
 
-    // INYECTAR MENÚ Y MODALES DE ERROR INTELIGENTES
     const errorModalsHTML = `
     <div id="pyp-modal-401" class="fixed inset-0 bg-slate-900/95 z-[99999] hidden flex-col items-center justify-center p-6 text-center backdrop-blur-sm">
         <div class="bg-white p-8 rounded-2xl shadow-2xl max-w-sm w-full transform transition-all">
@@ -70,7 +69,6 @@ document.addEventListener("DOMContentLoaded", () => {
             <button onclick="forzarCierreSesion()" class="w-full bg-[#E67E22] hover:bg-[#d67118] text-white py-3 rounded-lg font-bold shadow-md transition active:scale-95 text-lg uppercase tracking-wider">Volver a Ingresar</button>
         </div>
     </div>
-
     <div id="pyp-modal-offline" class="fixed inset-0 bg-slate-900/95 z-[99999] hidden flex-col items-center justify-center p-6 text-center backdrop-blur-sm">
         <div class="bg-white p-8 rounded-2xl shadow-2xl max-w-sm w-full transform transition-all">
             <i class="fa-solid fa-wifi text-6xl text-red-500 mb-4 opacity-80"></i>
@@ -83,57 +81,29 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.body.insertAdjacentHTML('afterbegin', menuHTML);
     document.body.insertAdjacentHTML('beforeend', errorModalsHTML);
-    
     cargarBrandingGlobal();
 });
 
-// =========================================================
-// GUARDIÁN DE RED (INTERCEPTOR GLOBAL DE PETICIONES)
-// =========================================================
 const { fetch: originalFetch } = window;
 window.fetch = async (...args) => {
     try {
         const response = await originalFetch(...args);
-        
-        // Si Supabase devuelve 401 (No Autorizado / Token Vencido)
         if (response.status === 401) {
-            document.getElementById('pyp-modal-401').classList.remove('hidden');
-            document.getElementById('pyp-modal-401').classList.add('flex');
-            return response; // Evitamos que la app siga procesando el error rojo feo
+            document.getElementById('pyp-modal-401').classList.remove('hidden'); document.getElementById('pyp-modal-401').classList.add('flex');
+            return response; 
         }
-        
         return response;
     } catch (error) {
-        // Falla a nivel de navegador (No hay internet o servidor caído)
         if (error.name === 'TypeError' && !navigator.onLine) {
-            document.getElementById('pyp-modal-offline').classList.remove('hidden');
-            document.getElementById('pyp-modal-offline').classList.add('flex');
+            document.getElementById('pyp-modal-offline').classList.remove('hidden'); document.getElementById('pyp-modal-offline').classList.add('flex');
         }
         throw error;
     }
 };
 
-// =========================================================
-// FUNCIONES GLOBALES
-// =========================================================
-window.toggleMobileMenu = function() {
-    document.getElementById('sidebar').classList.toggle('-translate-x-full');
-    document.getElementById('mobile-overlay').classList.toggle('hidden');
-};
-
-window.cerrarSesion = function() {
-    if(confirm("¿Estás seguro que deseas cerrar sesión?")) {
-        forzarCierreSesion();
-    }
-};
-
-window.forzarCierreSesion = function() {
-    localStorage.removeItem('pyp_sesion_activa');
-    localStorage.removeItem('pyp_token_seguro');
-    localStorage.removeItem('pyp_usuario_rol');
-    localStorage.removeItem('pyp_usuario_nombre');
-    window.location.href = 'login.html';
-};
+window.toggleMobileMenu = function() { document.getElementById('sidebar').classList.toggle('-translate-x-full'); document.getElementById('mobile-overlay').classList.toggle('hidden'); };
+window.cerrarSesion = function() { if(confirm("¿Estás seguro que deseas cerrar sesión?")) { forzarCierreSesion(); } };
+window.forzarCierreSesion = function() { localStorage.removeItem('pyp_sesion_activa'); localStorage.removeItem('pyp_token_seguro'); localStorage.removeItem('pyp_usuario_rol'); localStorage.removeItem('pyp_usuario_nombre'); window.location.href = 'login.html'; };
 
 window.cargarBrandingGlobal = function() {
     const logoPc = localStorage.getItem('pyp_logo_pc_url');
@@ -147,8 +117,13 @@ window.cargarBrandingGlobal = function() {
     const logoMovil = localStorage.getItem('pyp_logo_movil_url');
     if(logoMovil) {
         const imgHeader = document.getElementById('app-logo-header');
-        const txtHeader = document.getElementById('app-text-header');
-        if(imgHeader) { imgHeader.src = logoMovil; imgHeader.classList.remove('hidden'); imgHeader.classList.add('block', 'md:hidden'); }
-        if(txtHeader) txtHeader.classList.add('hidden', 'md:flex');
+        const iconHeader = document.getElementById('app-icon-header');
+        
+        if(imgHeader) { 
+            imgHeader.src = logoMovil; 
+            imgHeader.classList.remove('hidden'); 
+            imgHeader.classList.add('block', 'md:hidden'); 
+        }
+        if(iconHeader) iconHeader.classList.add('hidden'); // Oculta el iconito genérico para darle el protagonismo total al Logo.
     }
 };
