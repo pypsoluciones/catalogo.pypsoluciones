@@ -11,251 +11,170 @@
         body { font-family: 'Inter', sans-serif; }
         .custom-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
         .custom-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
-        .btn-press:active { transform: scale(0.97); }
-        .uppercase-input { text-transform: uppercase; }
-        .sidebar-link { font-weight: 500; padding: 8px 14px; font-size: 13px; letter-spacing: 0.01em; }
-        .sidebar-icon { font-size: 14px; width: 22px; text-align: center; }
-        
-        /* Caja de Ayuda Dinámica */
-        .help-box { background-color: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; padding: 10px 14px; border-radius: 6px; font-size: 11px; margin-top: 8px; display: flex; gap: 8px; line-height: 1.5; }
-        .help-box i { margin-top: 2px; font-size: 14px; }
     </style>
+    
     <script>
-    // Guardián de Seguridad: Exige el Token Real
-    if (!localStorage.getItem('pyp_token_seguro')) {
-        window.location.href = 'login.html';
-    }
-</script>
+        if (!localStorage.getItem('pyp_token_seguro')) window.location.href = 'login.html';
+    </script>
 </head>
-<body class="bg-[#f4f6f8] flex h-screen overflow-hidden text-gray-800 relative">
+<body class="bg-[#f4f6f8] flex h-screen overflow-hidden text-gray-800 relative md:pl-56">
+
     <main class="flex-1 flex flex-col h-screen overflow-hidden bg-[#f4f6f8] w-full">
-        <header class="bg-white shadow-sm px-4 md:px-6 py-3 flex justify-between items-center z-10 shrink-0 border-b border-gray-200">
+        <header class="bg-white shadow-sm px-4 md:px-6 py-4 flex justify-between items-center z-10 shrink-0 border-b border-gray-200">
             <div class="flex items-center gap-3">
-                <button onclick="toggleMobileMenu()" class="md:hidden text-gray-600 hover:text-[#143B62] text-xl transition btn-press px-2"><i class="fa-solid fa-bars"></i></button>
-                <h1 class="text-base md:text-lg font-semibold text-[#143B62] flex items-center gap-2 truncate"><i class="fa-solid fa-tags text-[#E67E22] hidden sm:inline-block"></i> Parámetros de Inventario</h1>
+                <button onclick="toggleMobileMenu()" class="md:hidden text-gray-600 hover:text-[#143B62] text-xl transition px-2"><i class="fa-solid fa-bars"></i></button>
+                <h1 class="text-lg font-semibold text-[#143B62] flex items-center gap-2"><i class="fa-solid fa-tags text-[#E67E22]"></i> Parámetros de Inventario</h1>
             </div>
-            <div class="flex items-center gap-2 md:gap-3">
-                <div class="bg-gray-50 px-2 md:px-3 py-1.5 rounded-md border border-gray-200 flex items-center gap-2 text-[10px] md:text-[11px] font-semibold text-gray-600 tracking-wide uppercase"><i class="fa-solid fa-user-tie text-[#143B62]"></i> <span id="nombre-usuario" class="hidden sm:inline-block">Admin</span></div>
+            <div class="text-[11px] font-semibold text-gray-500 bg-gray-100 px-3 py-1 rounded border border-gray-200 uppercase tracking-wide">
+                <i class="fa-solid fa-user-tie text-[#143B62] mr-1"></i> <span id="nombre-usuario">Admin</span>
             </div>
         </header>
 
-        <div class="flex-1 overflow-auto p-4 md:p-6 custom-scroll pb-24 md:pb-6">
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
-                
-                <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 lg:col-span-1 h-fit">
-                    <h3 class="font-semibold text-[#143B62] text-sm mb-4 border-b border-gray-100 pb-2 tracking-wide"><i class="fa-solid fa-layer-group mr-2"></i> Gestión de Etiquetas</h3>
-                    
-                    <form id="form-parametro" onsubmit="guardarParametro(event)" class="space-y-4">
-                        <div>
-                            <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1 tracking-wider">Seleccionar Grupo *</label>
-                            <select id="param-grupo" required onchange="ajustarInputValor()" class="w-full border border-gray-300 rounded-md px-3 py-2 text-[13px] focus:border-[#E67E22] outline-none font-semibold bg-gray-50">
-                                <option value="TODOS">-- 👁️ MOSTRAR TODOS LOS GRUPOS --</option>
-                                <option disabled>-----------------------------------</option>
-                                <option value="CATEGORIA">CATEGORÍA DEL PRODUCTO</option>
-                                <option value="CATEGORIA_VENTA">CATEGORÍA DE VENTA</option>
-                                <option value="COLOR">COLOR</option>
-                                <option value="CONDICION_PRODUCTO">CONDICIÓN DEL PRODUCTO</option>
-                                <option value="ESTADO_PRODUCTO">ESTADO DEL PRODUCTO</option>
-                                <option value="MARCA">MARCA</option>
-                                <option value="TALLA">TALLA</option>
-                                <option value="TIPO_IMPUESTO">TIPO DE IMPUESTO</option>
-                                <option value="TIPO_PRODUCTO">TIPO DE PRODUCTO</option>
-                                <option value="UNIDAD_MEDIDA">UNIDAD DE MEDIDA</option>
-                            </select>
-                        </div>
-                        
-                        <div id="caja-ayuda" class="help-box hidden">
-                            <i class="fa-solid fa-lightbulb"></i>
-                            <div><strong class="block mb-0.5" id="ayuda-titulo">Ayuda</strong><span id="ayuda-texto">Selecciona un grupo para ver sugerencias.</span></div>
-                        </div>
-
-                        <div id="bloque-valor" class="hidden mt-4">
-                            <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1 tracking-wider">Nuevo Valor *</label>
-                            <input type="text" id="param-valor" class="uppercase-input w-full border border-gray-300 rounded-md px-3 py-2 text-[13px] focus:border-[#E67E22] outline-none font-semibold" oninput="this.value = this.value.toUpperCase()">
-                        </div>
-                        
-                        <button type="submit" id="btn-guardar" class="hidden w-full bg-[#143B62] hover:bg-[#0f2d4a] text-white font-medium py-2 rounded-md shadow-sm transition btn-press mt-2 text-[13px]">
-                            Guardar Etiqueta
-                        </button>
-                    </form>
-                </div>
-
-                <div class="bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col lg:col-span-2 h-full overflow-hidden">
-                    <div class="flex-1 overflow-y-auto custom-scroll p-0">
-                        <table class="w-full text-left text-sm border-collapse">
-                            <thead class="bg-[#143B62] text-white text-[10px] uppercase font-semibold tracking-wider sticky top-0 z-10">
-                                <tr>
-                                    <th class="p-3">Grupo</th>
-                                    <th class="p-3">Valor Registrado</th>
-                                    <th class="p-3 text-center">Estatus</th>
-                                    <th class="p-3 text-center w-20">Acción</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tabla-parametros" class="divide-y divide-gray-100">
-                                <tr><td colspan="4" class="p-10 text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin text-2xl mb-3 block"></i> Cargando data maestra...</td></tr>
-                            </tbody>
-                        </table>
+        <div class="flex-1 overflow-auto p-4 md:p-6 custom-scroll flex flex-col md:flex-row gap-6">
+            <div class="w-full md:w-1/3 bg-white rounded-xl shadow-sm border border-gray-200 p-5 shrink-0 h-fit">
+                <h3 class="font-bold text-[#143B62] mb-4 flex items-center gap-2 border-b pb-2"><i class="fa-solid fa-layer-group"></i> Gestión de Etiquetas</h3>
+                <form id="form-param" onsubmit="guardarParametro(event)">
+                    <div class="mb-4">
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Seleccionar Grupo *</label>
+                        <select id="param-grupo" onchange="cargarParametros()" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-semibold text-[#143B62] focus:border-[#E67E22] outline-none bg-gray-50 transition">
+                            <option value="TODOS">-- 📦 MOSTRAR TODOS LOS GRUPOS --</option>
+                            <option value="CATEGORIA">CATEGORÍA</option>
+                            <option value="MARCA">MARCA</option>
+                            <option value="TIPO_PRODUCTO">TIPO DE PRODUCTO</option>
+                            <option value="UNIDAD_MEDIDA">UNIDAD DE MEDIDA</option>
+                            <option value="ESTADO_PRODUCTO">ESTADO DEL PRODUCTO</option>
+                            <option value="CONDICION_PRODUCTO">CONDICIÓN DEL PRODUCTO</option>
+                            <option value="TALLA">TALLA</option>
+                            <option value="COLOR">COLOR</option>
+                        </select>
                     </div>
-                </div>
+                    <div class="mb-4" id="caja-nuevo-valor" style="display:none;">
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Nuevo Valor a Registrar *</label>
+                        <input type="text" id="param-valor" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-bold focus:border-[#E67E22] outline-none uppercase" oninput="this.value = this.value.toUpperCase()" placeholder="Ej: ELECTRODOMÉSTICOS">
+                    </div>
+                    <button type="submit" id="btn-guardar" style="display:none;" class="w-full bg-[#143B62] hover:bg-[#0f2d4a] text-white font-bold py-2.5 rounded-lg shadow-sm transition flex justify-center items-center gap-2"><i class="fa-solid fa-plus"></i> Guardar Parámetro</button>
+                    <p id="msg-selecciona" class="text-xs text-center text-gray-400 font-medium mt-2">Selecciona un grupo específico arriba para agregar nuevos valores.</p>
+                </form>
+            </div>
 
+            <div class="flex-1 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
+                <div class="overflow-x-auto flex-1 custom-scroll">
+                    <table class="w-full text-left text-sm whitespace-nowrap">
+                        <thead class="bg-[#143B62] text-white text-[10px] uppercase tracking-wider sticky top-0">
+                            <tr>
+                                <th class="py-3 px-4">Grupo</th>
+                                <th class="py-3 px-4">Valor Registrado</th>
+                                <th class="py-3 px-4 text-center">Estatus</th>
+                                <th class="py-3 px-4 text-center">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-parametros" class="divide-y divide-gray-100">
+                            <tr><td colspan="4" class="p-10 text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin text-2xl mb-2 block"></i> Cargando data maestra...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </main>
 
-    <nav class="md:hidden fixed bottom-0 w-full bg-white border-t border-gray-200 flex justify-around items-center pb-2 pt-2 px-1 z-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-        <a href="admin_dashboard.html" class="flex flex-col items-center p-2 text-gray-400 hover:text-[#143B62] transition w-1/4"><i class="fa-solid fa-chart-pie text-lg mb-1"></i><span class="text-[9px] font-semibold">Inicio</span></a>
-        <a href="admin_ventas.html" class="flex flex-col items-center p-2 text-gray-400 hover:text-[#143B62] transition w-1/4"><i class="fa-solid fa-cash-register text-lg mb-1"></i><span class="text-[9px] font-semibold">Vender</span></a>
-        <a href="admin_productos.html" class="flex flex-col items-center p-2 text-[#E67E22] transition w-1/4"><i class="fa-solid fa-boxes-stacked text-lg mb-1"></i><span class="text-[9px] font-bold">Inventario</span></a>
-        <button onclick="toggleMobileMenu()" class="flex flex-col items-center p-2 text-gray-400 hover:text-[#143B62] transition w-1/4 btn-press"><i class="fa-solid fa-bars text-lg mb-1"></i><span class="text-[9px] font-semibold">Menú</span></button>
-    </nav>
-
+    <script src="menu.js"></script>
+    
     <script>
         const SUPABASE_URL = 'https://icvfmdvvochzaktugqvj.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImljdmZtZHZ2b2NoemFrdHVncXZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyNDEzMzEsImV4cCI6MjA5MTgxNzMzMX0.gO3D39piT6KGbMMOzrPGWXUp5-g_nOBAgJ-nwPv8IcQ';
-        
-        let parametros = [];
+        const TOKEN_JWT = localStorage.getItem('pyp_token_seguro');
 
-        // DICCIONARIO DE AYUDA (Cero Soporte)
-        const descripcionesAyuda = {
-            'CATEGORIA': { titulo: 'Clasificación Principal', texto: 'Agrupa el producto por su familia. Ej: PAPELERÍA, TECNOLOGÍA, FERRETERÍA, VÍVERES.' },
-            'MARCA': { titulo: 'Fabricante', texto: 'La marca comercial del producto. Ej: HP, SAMSUNG, SHARPIE, GENÉRICA.' },
-            'ESTADO_PRODUCTO': { titulo: 'Control de Venta', texto: 'Define si se puede facturar. Obligatorio: ACTIVO (para vender) o INACTIVO (para ocultar).' },
-            'CONDICION_PRODUCTO': { titulo: 'Estado Físico', texto: 'Ej: NUEVO, USADO, REACONDICIONADO.' },
-            'CATEGORIA_VENTA': { titulo: 'Estrategia de Venta', texto: 'Ej: DETAL, MAYOR, COMBO PROMO.' },
-            'TIPO_PRODUCTO': { titulo: 'Naturaleza', texto: 'Ej: FÍSICO (requiere stock), SERVICIO (sin stock), DIGITAL.' },
-            'UNIDAD_MEDIDA': { titulo: 'Medición', texto: 'Cómo se cuenta. Ej: UNIDAD, CAJA, PAQUETE, KG, LITRO.' },
-            'TIPO_IMPUESTO': { titulo: 'Regla Fiscal', texto: 'Ej: EXENTO, GENERAL (16%), REDUCIDO (8%).' },
-            'TALLA': { titulo: 'Dimensiones', texto: 'Si aplica. Ej: S, M, L, XL, 42, 44.' },
-            'COLOR': { titulo: 'Variante Visual', texto: 'Si aplica. Ej: ROJO, AZUL, MULTICOLOR.' }
-        };
-
-        window.onload = async () => {
+        window.onload = () => { 
             const nombre = localStorage.getItem('pyp_usuario_nombre');
             if(nombre) document.getElementById('nombre-usuario').innerText = nombre.split(' ')[0];
-            cargarBrandingSidebar();
-            document.getElementById('param-grupo').value = 'TODOS';
-            ajustarInputValor();
-            await cargarParametros();
+            cargarParametros(); 
         };
 
-        function cargarBrandingSidebar() {
-            const logo = localStorage.getItem('pyp_logo_url');
-            if(logo) {
-                document.getElementById('app-logo-sidebar').src = logo;
-                document.getElementById('app-logo-sidebar').classList.remove('hidden');
-                document.getElementById('app-icon-sidebar').classList.add('hidden');
-                document.getElementById('app-title-sidebar').classList.add('hidden');
-            }
-        }
-
-        function toggleMobileMenu() {
-            document.getElementById('sidebar').classList.toggle('-translate-x-full');
-            document.getElementById('mobile-overlay').classList.toggle('hidden');
-        }
-
-        function cerrarSesion() {
-            if(confirm("¿Estás seguro que deseas cerrar sesión?")) {
-                localStorage.removeItem('pyp_sesion_activa');
-                window.location.href = 'login.html';
-            }
-        }
-
-        function ajustarInputValor() {
-            const grupo = document.getElementById('param-grupo').value;
-            const inputVal = document.getElementById('param-valor');
-            const bloqueValor = document.getElementById('bloque-valor');
-            const btnGuardar = document.getElementById('btn-guardar');
-            const cajaAyuda = document.getElementById('caja-ayuda');
-            
-            filtrarTabla();
-
-            if (grupo === 'TODOS') {
-                bloqueValor.classList.add('hidden');
-                btnGuardar.classList.add('hidden');
-                cajaAyuda.classList.add('hidden');
-                inputVal.removeAttribute('required');
-            } else {
-                bloqueValor.classList.remove('hidden');
-                btnGuardar.classList.remove('hidden');
-                inputVal.setAttribute('required', 'true');
-                inputVal.placeholder = "Escribe el nuevo valor aquí...";
-
-                // Activar Caja de Ayuda Dinámica
-                if(descripcionesAyuda[grupo]) {
-                    document.getElementById('ayuda-titulo').innerText = descripcionesAyuda[grupo].titulo;
-                    document.getElementById('ayuda-texto').innerText = descripcionesAyuda[grupo].texto;
-                    cajaAyuda.classList.remove('hidden');
-                } else {
-                    cajaAyuda.classList.add('hidden');
-                }
-            }
-        }
-
         async function cargarParametros() {
+            const grupo = document.getElementById('param-grupo').value;
+            const cajaValor = document.getElementById('caja-nuevo-valor');
+            const btnGuardar = document.getElementById('btn-guardar');
+            const msg = document.getElementById('msg-selecciona');
+
+            // Mostrar/Ocultar formulario de ingreso
+            if(grupo === 'TODOS') {
+                cajaValor.style.display = 'none'; btnGuardar.style.display = 'none'; msg.style.display = 'block';
+            } else {
+                cajaValor.style.display = 'block'; btnGuardar.style.display = 'flex'; msg.style.display = 'none';
+            }
+
+            // Construir URL de búsqueda
+            let urlFetch = `${SUPABASE_URL}/rest/v1/parametros_inventario?select=*&order=grupo.asc,valor.asc`;
+            if(grupo !== 'TODOS') { urlFetch += `&grupo=eq.${grupo}`; }
+
             try {
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/parametros_inventario?select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } });
-                parametros = await res.json();
-                filtrarTabla();
-            } catch(e) { document.getElementById('tabla-parametros').innerHTML = `<tr><td colspan="4" class="p-5 text-center text-red-500 font-bold">Error cargando parámetros.</td></tr>`; }
+                // AQUI ESTÁ LA MAGIA DEL TOKEN VIP
+                const res = await fetch(urlFetch, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                if(!res.ok) throw new Error("Error cargando");
+                const data = await res.json();
+                pintarTabla(data);
+            } catch(e) {
+                document.getElementById('tabla-parametros').innerHTML = `<tr><td colspan="4" class="p-5 text-center text-red-500 font-bold uppercase"><i class="fa-solid fa-triangle-exclamation text-2xl mb-2 block"></i> Error de conexión</td></tr>`;
+            }
         }
 
         function pintarTabla(arr) {
             const tbody = document.getElementById('tabla-parametros');
-            if(!arr.length) { tbody.innerHTML = `<tr><td colspan="4" class="p-10 text-center text-gray-500 font-medium">No se encontraron registros.</td></tr>`; return; }
-            tbody.innerHTML = arr.map(p => `
-                <tr class="hover:bg-gray-50 transition">
-                    <td class="p-3 font-semibold text-gray-500 text-[11px]">${p.grupo}</td>
-                    <td class="p-3 font-bold text-[#143B62] text-[13px] break-all">${p.valor}</td>
-                    <td class="p-3 text-center"><span class="bg-emerald-50 text-emerald-600 border border-emerald-200 text-[10px] font-bold px-2 py-0.5 rounded">${p.estatus}</span></td>
-                    <td class="p-3 text-center"><button onclick="eliminarParametro('${p.id}')" class="text-red-400 hover:text-red-600 hover:bg-red-50 p-1.5 rounded transition"><i class="fa-solid fa-trash-can"></i></button></td>
-                </tr>
-            `).join('');
-        }
-
-        function filtrarTabla() {
-            const grupo = document.getElementById('param-grupo').value;
-            let dataMostrar = [];
-            if (grupo === 'TODOS') {
-                dataMostrar = [...parametros].sort((a, b) => {
-                    if (a.grupo === b.grupo) return a.valor.localeCompare(b.valor);
-                    return a.grupo.localeCompare(b.grupo);
-                });
-            } else {
-                dataMostrar = parametros.filter(p => p.grupo === grupo).sort((a, b) => a.valor.localeCompare(b.valor));
-            }
-            pintarTabla(dataMostrar);
+            if(arr.length === 0) { tbody.innerHTML = `<tr><td colspan="4" class="p-10 text-center text-gray-400 font-medium"><i class="fa-solid fa-folder-open text-3xl mb-2 block opacity-50"></i> No hay parámetros registrados en este grupo.</td></tr>`; return; }
+            
+            let html = '';
+            arr.forEach(p => {
+                const badge = p.estatus === 'ACTIVO' ? `<span class="bg-emerald-50 border border-emerald-200 text-emerald-600 px-2 py-0.5 rounded text-[9px] font-bold tracking-wider">ACTIVO</span>` : `<span class="bg-red-50 border border-red-200 text-red-600 px-2 py-0.5 rounded text-[9px] font-bold tracking-wider">INACTIVO</span>`;
+                html += `
+                <tr class="hover:bg-gray-50 transition border-b border-gray-100">
+                    <td class="py-2 px-4 text-[10px] font-bold text-gray-400 tracking-wider">${p.grupo}</td>
+                    <td class="py-2 px-4 text-xs font-bold text-[#143B62]">${p.valor}</td>
+                    <td class="py-2 px-4 text-center">${badge}</td>
+                    <td class="py-2 px-4 text-center">
+                        <button onclick="eliminarParametro('${p.id_parametro}')" class="text-gray-400 hover:text-red-500 transition px-2 py-1 rounded hover:bg-red-50"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                </tr>`;
+            });
+            tbody.innerHTML = html;
         }
 
         async function guardarParametro(e) {
             e.preventDefault();
-            const btn = document.getElementById('btn-guardar');
+            const btn = document.getElementById('btn-guardar'); btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Guardando...'; btn.disabled = true;
             const grupo = document.getElementById('param-grupo').value;
-            let valor = document.getElementById('param-valor').value.trim().toUpperCase();
+            const valor = document.getElementById('param-valor').value.trim().toUpperCase();
 
-            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>`;
-            btn.disabled = true;
+            if(!valor) { alert("Debe escribir un valor."); btn.innerHTML = '<i class="fa-solid fa-plus"></i> Guardar Parámetro'; btn.disabled = false; return; }
 
             try {
+                // Obtenemos el ID de empresa para el Multi-Tenant
+                const resUser = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?select=id_empresa&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                const dataUser = await resUser.json();
+                const miEmpresa = dataUser.length > 0 ? dataUser[0].id_empresa : null;
+
                 const res = await fetch(`${SUPABASE_URL}/rest/v1/parametros_inventario`, {
-                    method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ grupo: grupo, valor: valor })
+                    method: 'POST',
+                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ grupo: grupo, valor: valor, estatus: 'ACTIVO', id_empresa: miEmpresa })
                 });
-                if (!res.ok) throw new Error("Posible duplicado");
+                if(!res.ok) throw new Error("Error al guardar");
                 
                 document.getElementById('param-valor').value = '';
-                await cargarParametros();
-            } catch(e) { alert("Error: Verifica que el valor no exista en ese grupo."); } 
-            finally { btn.innerHTML = `Guardar Etiqueta`; btn.disabled = false; }
+                cargarParametros();
+            } catch(err) { alert("Error al guardar parámetro. Asegúrese de que no esté duplicado."); }
+            finally { btn.innerHTML = '<i class="fa-solid fa-plus"></i> Guardar Parámetro'; btn.disabled = false; }
         }
 
         async function eliminarParametro(id) {
-            if(!confirm("¿Seguro que deseas eliminar este parámetro?")) return;
+            if(!confirm("¿Estás seguro de eliminar este parámetro? Podría afectar a los productos que ya lo usan.")) return;
             try {
-                await fetch(`${SUPABASE_URL}/rest/v1/parametros_inventario?id=eq.${id}`, { method: 'DELETE', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } });
-                await cargarParametros();
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/parametros_inventario?id_parametro=eq.${id}`, {
+                    method: 'DELETE',
+                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` }
+                });
+                if(res.ok) cargarParametros();
             } catch(e) { alert("Error al eliminar."); }
         }
-      
     </script>
-    <script src="menu.js"></script>
 </body>
 </html>
