@@ -17,7 +17,7 @@
         <header class="bg-white shadow-sm px-4 md:px-6 py-4 flex justify-between items-center z-10 shrink-0 border-b border-gray-200">
             <div class="flex items-center gap-3">
                 <button onclick="toggleMobileMenu()" class="md:hidden text-gray-600 hover:text-[#143B62] text-xl transition px-2"><i class="fa-solid fa-bars"></i></button>
-                <h1 class="text-lg font-semibold text-[#143B62] flex items-center gap-2"><i class="fa-solid fa-tags text-[#E67E22]"></i> Parámetros de Inventario</h1>
+                <h1 class="text-lg font-semibold text-[#143B62] flex items-center gap-2"><i class="fa-solid fa-tags text-[#E67E22]"></i> Parámetros de Sistema</h1>
             </div>
         </header>
 
@@ -29,8 +29,8 @@
                         <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Seleccionar Grupo *</label>
                         <select id="param-grupo" onchange="cargarParametros()" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-semibold text-[#143B62] focus:border-[#E67E22] outline-none bg-gray-50 transition">
                             <option value="TODOS">-- 📦 MOSTRAR TODOS LOS GRUPOS --</option>
-                            <option value="CATEGORIA">CATEGORÍA</option>
-                            <option value="MARCA">MARCA</option>
+                            <option value="CATEGORIA">CATEGORÍA DE PRODUCTO</option>
+                            <option value="MARCA">MARCA DE PRODUCTO</option>
                             <option value="TIPO_PRODUCTO">TIPO DE PRODUCTO</option>
                             <option value="UNIDAD_MEDIDA">UNIDAD DE MEDIDA</option>
                             <option value="ESTADO_PRODUCTO">ESTADO DEL PRODUCTO</option>
@@ -40,6 +40,7 @@
                             <option value="CATEGORIA_VENTA">CATEGORÍA DE VENTA</option>
                             <option value="TIPO_IMPUESTO">TIPO DE IMPUESTO</option>
                             <option value="IMAGEN_DEFECTO">IMAGEN POR DEFECTO</option>
+                            <option value="CATEGORIA_CONTACTO">CATEGORÍA / RUBRO (DIRECTORIO)</option>
                         </select>
                     </div>
                     
@@ -71,7 +72,6 @@
 
         window.onload = () => { cargarParametros(); };
 
-        // AYUDAS CERO SOPORTE
         const textosAyuda = {
             'CATEGORIA': "Ejemplo: Escribe <strong>'SMARTPHONES'</strong>, <strong>'LAPTOPS'</strong> o <strong>'PAPELERÍA'</strong>.",
             'MARCA': "Ejemplo: Escribe <strong>'SAMSUNG'</strong> o <strong>'APPLE'</strong>.",
@@ -83,7 +83,8 @@
             'COLOR': "Ejemplo: <strong>'ROJO'</strong>, <strong>'NEGRO'</strong>.",
             'CATEGORIA_VENTA': "Ejemplo: <strong>'OFERTA'</strong>, <strong>'COMBO'</strong>.",
             'TIPO_IMPUESTO': "Ejemplo: <strong>'GENERAL'</strong> o <strong>'EXENTO'</strong>.",
-            'IMAGEN_DEFECTO': "Pega aquí el enlace <strong>(URL)</strong> exacto de la imagen para los artículos sin foto."
+            'IMAGEN_DEFECTO': "Pega aquí el enlace <strong>(URL)</strong> exacto de la imagen para los artículos sin foto.",
+            'CATEGORIA_CONTACTO': "Ejemplo: Para proveedores: <strong>'PAPELERÍA'</strong> o <strong>'TECNOLOGÍA'</strong>. Para clientes: <strong>'GOBIERNO'</strong> o <strong>'COLEGIO'</strong>."
         };
 
         async function cargarParametros() {
@@ -132,7 +133,7 @@
                 const resUser = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?select=id_empresa&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }); const dataUser = await resUser.json(); const miEmpresa = dataUser.length > 0 ? dataUser[0].id_empresa : null;
                 await fetch(`${SUPABASE_URL}/rest/v1/parametros_inventario`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ grupo: grupo, valor: valorFinal, estatus: 'ACTIVO', id_empresa: miEmpresa }) });
                 document.getElementById('param-valor').value = ''; cargarParametros();
-            } catch(err) { alert("Error al guardar."); } finally { btn.innerHTML = '<i class="fa-solid fa-plus"></i> Guardar Parámetro'; btn.disabled = false; }
+            } catch(err) { alert("Error al guardar."); } finally { btn.innerHTML = `<i class="fa-solid fa-plus"></i> Guardar Parámetro`; btn.disabled = false; }
         }
 
         async function eliminarParametro(id) {
