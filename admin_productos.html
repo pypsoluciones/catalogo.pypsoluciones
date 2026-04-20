@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.js"></script>
     <style>
         body { font-family: 'Inter', sans-serif; }
         .custom-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
@@ -21,25 +22,22 @@
         .param-label { font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
         .btn-vista.active { background-color: #e2e8f0; color: #143B62; border-color: #cbd5e1; }
         .text-truncate-25 { max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .filter-panel { transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out; overflow: hidden; max-height: 0; opacity: 0; }
-        .filter-panel.open { max-height: 200px; opacity: 1; overflow: visible; }
+        .filter-panel { transition: all 0.3s ease-in-out; overflow: hidden; max-height: 0; opacity: 0; padding-top: 0; padding-bottom: 0; margin-bottom: 0; border-width: 0; }
+        .filter-panel.open { max-height: 200px; opacity: 1; padding-top: 12px; padding-bottom: 8px; margin-bottom: 8px; border-width: 1px; overflow: visible; }
         #upload-overlay { background-color: rgba(255,255,255,0.8); backdrop-filter: blur(2px); }
     </style>
-    
     <script src="config.js"></script>
-    <script>
-        if (!localStorage.getItem('pyp_token_seguro')) window.location.href = 'login.html';
-    </script>
+    <script>if (!localStorage.getItem('pyp_token_seguro')) window.location.href = 'login.html';</script>
 </head>
 <body class="bg-[#f4f6f8] flex h-screen overflow-hidden text-gray-800 relative">
 
     <div id="media-viewer" class="fixed inset-0 bg-black/90 z-[9999] hidden flex-col items-center justify-center p-4 fade-in" onclick="cerrarVisor()">
         <button class="absolute top-4 right-4 text-white text-4xl hover:text-gray-300 z-10 transition"><i class="fa-solid fa-times"></i></button>
         <img id="viewer-img" src="" class="max-w-full max-h-[90vh] object-contain hidden rounded-md shadow-2xl" onclick="event.stopPropagation()">
-        <div id="viewer-video-container" class="w-full max-w-4xl aspect-video hidden relative rounded-xl overflow-hidden shadow-2xl bg-black" onclick="event.stopPropagation()">
-            <iframe id="viewer-video" src="" class="absolute top-0 left-0 w-full h-full" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-        </div>
+        <div id="viewer-video-container" class="w-full max-w-4xl aspect-video hidden relative rounded-xl overflow-hidden shadow-2xl bg-black" onclick="event.stopPropagation()"><iframe id="viewer-video" src="" class="absolute top-0 left-0 w-full h-full" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>
     </div>
+
+    <script src="menu.js"></script>
 
     <main class="flex-1 flex flex-col h-screen overflow-hidden bg-[#f4f6f8] w-full z-10 relative">
         <header class="bg-white shadow-sm px-4 py-2 flex justify-between items-center z-10 shrink-0 border-b border-gray-200 h-14">
@@ -52,13 +50,12 @@
             </div>
         </header>
 
-        <div class="flex-1 overflow-auto p-2 md:p-3 custom-scroll pb-16 flex flex-col">
-            
+        <div class="flex-1 overflow-auto p-2 md:p-3 custom-scroll pb-24 md:pb-16 flex flex-col">
             <div class="flex flex-col md:flex-row gap-2 mb-2 items-center shrink-0">
                 <div class="flex-1 flex gap-2 w-full">
                     <div class="relative flex-1">
                         <i class="fa-solid fa-search absolute left-3 top-2 text-gray-400 text-sm"></i>
-                        <input type="text" id="buscador-inv" oninput="filtrarInventario()" placeholder="Buscar por SKU o Nombre..." class="uppercase-input w-full border border-gray-300 rounded-md pl-9 pr-4 py-1.5 text-[13px] font-medium focus:outline-none focus:border-[#143B62] bg-white shadow-sm">
+                        <input type="text" id="buscador-inv" oninput="filtrarInventario()" placeholder="Buscador con Inteligencia Artificial (Ignora Acentos)..." class="uppercase-input w-full border border-gray-300 rounded-md pl-9 pr-4 py-1.5 text-[13px] font-medium focus:outline-none focus:border-[#143B62] bg-white shadow-sm">
                     </div>
                     <button onclick="toggleFiltrosPanel()" class="bg-white border border-gray-300 text-gray-600 px-3 py-1.5 rounded-md hover:bg-gray-50 transition shadow-sm text-[13px] font-medium flex items-center gap-2"><i class="fa-solid fa-filter"></i> <span class="hidden sm:inline">Filtros</span></button>
                 </div>
@@ -67,11 +64,11 @@
                         <button id="btn-vista-tabla" onclick="cambiarVista('tabla')" class="btn-vista active px-3 py-1 rounded text-gray-500 hover:text-[#143B62] transition text-sm"><i class="fa-solid fa-list"></i></button>
                         <button id="btn-vista-grid" onclick="cambiarVista('grid')" class="btn-vista px-3 py-1 rounded text-gray-500 hover:text-[#143B62] transition text-sm"><i class="fa-solid fa-border-all"></i></button>
                     </div>
-                    <button onclick="abrirModalProducto()" class="bg-[#25D366] hover:bg-[#1ebd5c] text-white px-4 py-1.5 rounded-md font-semibold text-[13px] shadow-sm transition flex items-center justify-center gap-2 whitespace-nowrap"><i class="fa-solid fa-plus"></i> NUEVO PRODUCTO</button>
+                    <button onclick="abrirModalProducto()" class="bg-[#25D366] hover:bg-[#1ebd5c] text-white px-4 py-1.5 rounded-md font-semibold text-[13px] shadow-sm transition flex items-center justify-center gap-2 whitespace-nowrap btn-press"><i class="fa-solid fa-plus"></i> NUEVO PRODUCTO</button>
                 </div>
             </div>
 
-            <div id="panel-filtros" class="filter-panel shrink-0 bg-white border border-gray-200 rounded-md shadow-sm px-4 pt-3 pb-2 mb-2">
+            <div id="panel-filtros" class="filter-panel shrink-0 bg-white border-gray-200 rounded-md shadow-sm px-4">
                 <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-2">
                     <div><label class="param-label block mb-1">Categoría</label><select id="filtro-categoria" onchange="filtrarInventario()" class="w-full border border-gray-300 rounded px-2 py-1 text-[11px] font-semibold bg-gray-50 outline-none"><option value="TODAS">TODAS</option></select></div>
                     <div><label class="param-label block mb-1">Marca</label><select id="filtro-marca" onchange="filtrarInventario()" class="w-full border border-gray-300 rounded px-2 py-1 text-[11px] font-semibold bg-gray-50 outline-none"><option value="TODAS">TODAS</option></select></div>
@@ -165,20 +162,14 @@
                                     <input type="url" id="prod-video" placeholder="Link del video" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[11px] text-red-600 outline-none">
                                 </div>
                             </div>
-                            <div>
-                                <label class="block param-label mb-1">Descripción para la Web</label>
-                                <textarea id="prod-descripcion" rows="2" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[12px] outline-none focus:border-[#143B62]"></textarea>
-                            </div>
+                            <div><label class="block param-label mb-1">Descripción para la Web</label><textarea id="prod-descripcion" rows="2" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[12px] outline-none focus:border-[#143B62]"></textarea></div>
                         </div>
                     </div>
 
                     <div class="space-y-4">
                         <div class="bg-white p-3 md:p-4 rounded border border-gray-200 shadow-sm border-t-2 border-t-emerald-500">
                             <h4 class="text-[11px] font-semibold text-emerald-600 uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Inventario Físico</h4>
-                            <div class="mb-4">
-                                <label class="block param-label mb-1 text-center">Stock Actual</label>
-                                <input type="number" id="prod-stock" value="0" class="w-full border border-gray-300 rounded px-3 py-1.5 text-xl font-semibold text-center focus:border-emerald-500 outline-none bg-gray-50">
-                            </div>
+                            <div class="mb-4"><label class="block param-label mb-1 text-center">Stock Actual</label><input type="number" id="prod-stock" value="0" class="w-full border border-gray-300 rounded px-3 py-1.5 text-xl font-semibold text-center focus:border-emerald-500 outline-none bg-gray-50"></div>
                             <div class="flex items-center justify-between bg-gray-50 p-2 rounded border border-gray-200 mb-4">
                                 <label class="param-label cursor-pointer" for="prod-negativo">¿Venta en Negativo?</label>
                                 <div class="relative inline-block w-9 align-middle select-none transition">
@@ -212,26 +203,10 @@
                                     </div>
                                 </div>
                                 <div class="pt-2 border-t border-gray-100">
-                                    <div class="grid grid-cols-3 gap-2 mb-1">
-                                        <label class="param-label text-[8px] text-center text-blue-600">P1 Mayor</label>
-                                        <label class="param-label text-[8px] text-center text-blue-600">P2 Gran Mayor</label>
-                                        <label class="param-label text-[8px] text-center text-blue-600">P3 Dist.</label>
-                                    </div>
-                                    <div class="grid grid-cols-3 gap-2 mb-2">
-                                        <input type="number" id="prod-req1" placeholder="Req. Unds" class="w-full border border-gray-300 rounded px-1 py-1 text-center text-[10px] font-medium outline-none">
-                                        <input type="number" id="prod-req2" placeholder="Req. Unds" class="w-full border border-gray-300 rounded px-1 py-1 text-center text-[10px] font-medium outline-none">
-                                        <input type="number" id="prod-req3" placeholder="Req. Unds" class="w-full border border-gray-300 rounded px-1 py-1 text-center text-[10px] font-medium outline-none">
-                                    </div>
-                                    <div class="grid grid-cols-3 gap-2 mb-2">
-                                        <input type="number" id="prod-m1" placeholder="Margen %" oninput="calcularPreciosPorMargen()" class="w-full border border-gray-300 rounded px-1 py-1 text-center text-[10px] font-semibold bg-blue-50 text-blue-700 outline-none">
-                                        <input type="number" id="prod-m2" placeholder="Margen %" oninput="calcularPreciosPorMargen()" class="w-full border border-gray-300 rounded px-1 py-1 text-center text-[10px] font-semibold bg-blue-50 text-blue-700 outline-none">
-                                        <input type="number" id="prod-m3" placeholder="Margen %" oninput="calcularPreciosPorMargen()" class="w-full border border-gray-300 rounded px-1 py-1 text-center text-[10px] font-semibold bg-blue-50 text-blue-700 outline-none">
-                                    </div>
-                                    <div class="grid grid-cols-3 gap-2">
-                                        <input type="text" id="prod-p1" placeholder="Precio $" readonly class="w-full border-none bg-gray-100 rounded py-1 text-[11px] text-center font-bold text-gray-600 outline-none">
-                                        <input type="text" id="prod-p2" placeholder="Precio $" readonly class="w-full border-none bg-gray-100 rounded py-1 text-[11px] text-center font-bold text-gray-600 outline-none">
-                                        <input type="text" id="prod-p3" placeholder="Precio $" readonly class="w-full border-none bg-gray-100 rounded py-1 text-[11px] text-center font-bold text-gray-600 outline-none">
-                                    </div>
+                                    <div class="grid grid-cols-3 gap-2 mb-1"><label class="param-label text-[8px] text-center text-blue-600">P1 Mayor</label><label class="param-label text-[8px] text-center text-blue-600">P2 Gran Mayor</label><label class="param-label text-[8px] text-center text-blue-600">P3 Dist.</label></div>
+                                    <div class="grid grid-cols-3 gap-2 mb-2"><input type="number" id="prod-req1" placeholder="Req. Unds" class="w-full border border-gray-300 rounded px-1 py-1 text-center text-[10px] font-medium outline-none"><input type="number" id="prod-req2" placeholder="Req. Unds" class="w-full border border-gray-300 rounded px-1 py-1 text-center text-[10px] font-medium outline-none"><input type="number" id="prod-req3" placeholder="Req. Unds" class="w-full border border-gray-300 rounded px-1 py-1 text-center text-[10px] font-medium outline-none"></div>
+                                    <div class="grid grid-cols-3 gap-2 mb-2"><input type="number" id="prod-m1" placeholder="Margen %" oninput="calcularPreciosPorMargen()" class="w-full border border-gray-300 rounded px-1 py-1 text-center text-[10px] font-semibold bg-blue-50 text-blue-700 outline-none"><input type="number" id="prod-m2" placeholder="Margen %" oninput="calcularPreciosPorMargen()" class="w-full border border-gray-300 rounded px-1 py-1 text-center text-[10px] font-semibold bg-blue-50 text-blue-700 outline-none"><input type="number" id="prod-m3" placeholder="Margen %" oninput="calcularPreciosPorMargen()" class="w-full border border-gray-300 rounded px-1 py-1 text-center text-[10px] font-semibold bg-blue-50 text-blue-700 outline-none"></div>
+                                    <div class="grid grid-cols-3 gap-2"><input type="text" id="prod-p1" placeholder="Precio $" readonly class="w-full border-none bg-gray-100 rounded py-1 text-[11px] text-center font-bold text-gray-600 outline-none"><input type="text" id="prod-p2" placeholder="Precio $" readonly class="w-full border-none bg-gray-100 rounded py-1 text-[11px] text-center font-bold text-gray-600 outline-none"><input type="text" id="prod-p3" placeholder="Precio $" readonly class="w-full border-none bg-gray-100 rounded py-1 text-[11px] text-center font-bold text-gray-600 outline-none"></div>
                                 </div>
                             </div>
                         </div>
@@ -240,13 +215,11 @@
             </form>
 
             <div class="bg-gray-50 border-t border-gray-200 px-4 py-3 flex gap-3 justify-end shrink-0">
-                <button type="button" onclick="cerrarModalProducto()" class="px-5 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-md text-[12px] shadow-sm hover:bg-gray-100 transition">Cancelar</button>
-                <button type="submit" form="form-producto" id="btn-guardar-prod" class="px-5 py-2 bg-[#143B62] text-white font-medium rounded-md text-[12px] shadow-sm hover:bg-[#0f2d4a] transition flex items-center gap-2"><i class="fa-solid fa-save"></i> Guardar</button>
+                <button type="button" onclick="cerrarModalProducto()" class="px-5 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-md text-[12px] shadow-sm hover:bg-gray-100 transition btn-press">Cancelar</button>
+                <button type="submit" form="form-producto" id="btn-guardar-prod" class="px-5 py-2 bg-[#143B62] text-white font-medium rounded-md text-[12px] shadow-sm hover:bg-[#0f2d4a] transition flex items-center gap-2 btn-press"><i class="fa-solid fa-save"></i> Guardar</button>
             </div>
         </div>
     </div>
-
-    <script src="menu.js"></script>
 
     <script>
         const TOKEN_JWT = localStorage.getItem('pyp_token_seguro');
@@ -255,104 +228,40 @@
         let vistaActual = localStorage.getItem('pyp_vista_inventario') || 'tabla';
         let imagenGlobalDefecto = 'https://via.placeholder.com/300/f8fafc/94a3b8?text=SIN+IMAGEN';
         let html5QrCode = null;
+        
+        let paginaActual = 1; const ITEMS_POR_PAGINA = 50; let dataFiltradaGlobal = [];
+        
+        // IA DE BÚSQUEDA
+        let fuseInventario = null; let dbFusionadaGlobal = [];
 
         window.onload = async () => {
             const nombre = localStorage.getItem('pyp_usuario_nombre');
             if(nombre) { document.getElementById('nombre-usuario').innerText = nombre.split(' ')[0]; }
-            actualizarUIBotonesVista();
-            await cargarTodo();
+            actualizarUIBotonesVista(); await cargarTodo();
         };
 
-        // RESTAURADA: Función para cerrar modales con la tecla ESC
+        // Restaurar ESC para modales
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
                 const modalProd = document.getElementById('modal-producto');
                 const modalMedia = document.getElementById('media-viewer');
-                
-                if(modalMedia && !modalMedia.classList.contains('hidden')) { 
-                    cerrarVisor(); 
-                } else if (modalProd && !modalProd.classList.contains('hidden') && document.getElementById('upload-overlay').classList.contains('hidden')) { 
-                    cerrarModalProducto(); 
-                }
+                if(modalMedia && !modalMedia.classList.contains('hidden')) { cerrarVisor(); } 
+                else if (modalProd && !modalProd.classList.contains('hidden') && document.getElementById('upload-overlay').classList.contains('hidden')) { cerrarModalProducto(); }
             }
         });
 
-        // --- FUNCIONES DEL VISOR DE MULTIMEDIA (RESTAURADAS) ---
-        function abrirVisorImagen(url) {
-            if(!url) return;
-            const visor = document.getElementById('media-viewer'); 
-            const img = document.getElementById('viewer-img'); 
-            const video = document.getElementById('viewer-video-container');
-            img.src = url; img.classList.remove('hidden'); video.classList.add('hidden');
-            visor.classList.remove('hidden'); visor.classList.add('flex');
-        }
-        function abrirVisorVideo(urlRaw) {
-            if(!urlRaw) return; let finalUrl = urlRaw;
-            if (urlRaw.includes('youtube.com') || urlRaw.includes('youtu.be')) {
-                let videoId = '';
-                if(urlRaw.includes('v=')) videoId = urlRaw.split('v=')[1].split('&')[0];
-                else if(urlRaw.includes('youtu.be/')) videoId = urlRaw.split('youtu.be/')[1].split('?')[0];
-                else if(urlRaw.includes('/shorts/')) videoId = urlRaw.split('/shorts/')[1].split('?')[0];
-                if(videoId) finalUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
-            } else if (urlRaw.includes('vimeo.com')) {
-                let videoId = urlRaw.split('vimeo.com/')[1].split('?')[0];
-                if(videoId) finalUrl = `https://player.vimeo.com/video/${videoId}?autoplay=1`;
-            }
-            const visor = document.getElementById('media-viewer'); 
-            const img = document.getElementById('viewer-img'); 
-            const video = document.getElementById('viewer-video-container'); 
-            const iframe = document.getElementById('viewer-video');
-            iframe.src = finalUrl; img.classList.add('hidden'); video.classList.remove('hidden');
-            visor.classList.remove('hidden'); visor.classList.add('flex');
-        }
-        function cerrarVisor() {
-            const visor = document.getElementById('media-viewer'); 
-            const iframe = document.getElementById('viewer-video');
-            iframe.src = ''; visor.classList.add('hidden'); visor.classList.remove('flex');
-        }
+        function abrirVisorImagen(url) { if(!url) return; const visor = document.getElementById('media-viewer'); const img = document.getElementById('viewer-img'); const video = document.getElementById('viewer-video-container'); img.src = url; img.classList.remove('hidden'); video.classList.add('hidden'); visor.classList.remove('hidden'); visor.classList.add('flex'); }
+        function abrirVisorVideo(urlRaw) { if(!urlRaw) return; let finalUrl = urlRaw; if (urlRaw.includes('youtube.com') || urlRaw.includes('youtu.be')) { let videoId = ''; if(urlRaw.includes('v=')) videoId = urlRaw.split('v=')[1].split('&')[0]; else if(urlRaw.includes('youtu.be/')) videoId = urlRaw.split('youtu.be/')[1].split('?')[0]; else if(urlRaw.includes('/shorts/')) videoId = urlRaw.split('/shorts/')[1].split('?')[0]; if(videoId) finalUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1`; } else if (urlRaw.includes('vimeo.com')) { let videoId = urlRaw.split('vimeo.com/')[1].split('?')[0]; if(videoId) finalUrl = `https://player.vimeo.com/video/${videoId}?autoplay=1`; } const visor = document.getElementById('media-viewer'); const img = document.getElementById('viewer-img'); const video = document.getElementById('viewer-video-container'); const iframe = document.getElementById('viewer-video'); iframe.src = finalUrl; img.classList.add('hidden'); video.classList.remove('hidden'); visor.classList.remove('hidden'); visor.classList.add('flex'); }
+        function cerrarVisor() { const visor = document.getElementById('media-viewer'); const iframe = document.getElementById('viewer-video'); iframe.src = ''; visor.classList.add('hidden'); visor.classList.remove('flex'); }
 
-        // --- FUNCIÓN DE COMPRESIÓN DE IMÁGENES (INTACTA) ---
-        async function comprimirImagen(file, maxWidth = 1000, maxHeight = 1000, quality = 0.7) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader(); reader.readAsDataURL(file);
-                reader.onload = event => {
-                    const img = new Image(); img.src = event.target.result;
-                    img.onload = () => {
-                        let width = img.width; let height = img.height;
-                        if (width > height) { if (width > maxWidth) { height *= maxWidth / width; width = maxWidth; } } 
-                        else { if (height > maxHeight) { width *= maxHeight / height; height = maxHeight; } }
-                        const canvas = document.createElement('canvas'); canvas.width = width; canvas.height = height; const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, width, height);
-                        canvas.toBlob(blob => { resolve(new File([blob], file.name.replace(/\.[^/.]+$/, ".jpg"), { type: 'image/jpeg' })); }, 'image/jpeg', quality);
-                    }; img.onerror = error => reject(error);
-                }; reader.onerror = error => reject(error);
-            });
-        }
-        
-        async function subirImagenComprimida(event, inputIdTarget) {
-            const fileOriginal = event.target.files[0]; if (!fileOriginal) return;
-            const overlay = document.getElementById('upload-overlay');
-            overlay.classList.remove('hidden'); overlay.classList.add('flex');
-            try {
-                const fileComprimido = await comprimirImagen(fileOriginal, 800, 800, 0.75);
-                const fileName = `prod_${Date.now()}_${Math.random().toString(36).substring(7)}.jpg`;
-                const res = await fetch(`${SUPABASE_URL}/storage/v1/object/inventario/${fileName}`, {
-                    method: 'POST', 
-                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'image/jpeg' }, 
-                    body: fileComprimido
-                });
-                if (!res.ok) throw new Error("Error al subir");
-                const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/inventario/${fileName}`;
-                document.getElementById(inputIdTarget).value = publicUrl;
-            } catch (error) { alert("Error al procesar/subir imagen."); } 
-            finally { overlay.classList.add('hidden'); overlay.classList.remove('flex'); event.target.value = ''; }
-        }
+        async function comprimirImagen(file, maxWidth = 1000, maxHeight = 1000, quality = 0.7) { return new Promise((resolve, reject) => { const reader = new FileReader(); reader.readAsDataURL(file); reader.onload = event => { const img = new Image(); img.src = event.target.result; img.onload = () => { let width = img.width; let height = img.height; if (width > height) { if (width > maxWidth) { height *= maxWidth / width; width = maxWidth; } } else { if (height > maxHeight) { width *= maxHeight / height; height = maxHeight; } } const canvas = document.createElement('canvas'); canvas.width = width; canvas.height = height; const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, width, height); canvas.toBlob(blob => { resolve(new File([blob], file.name.replace(/\.[^/.]+$/, ".jpg"), { type: 'image/jpeg' })); }, 'image/jpeg', quality); }; img.onerror = error => reject(error); }; reader.onerror = error => reject(error); }); }
+        async function subirImagenComprimida(event, inputIdTarget) { const fileOriginal = event.target.files[0]; if (!fileOriginal) return; const overlay = document.getElementById('upload-overlay'); overlay.classList.remove('hidden'); overlay.classList.add('flex'); try { const fileComprimido = await comprimirImagen(fileOriginal, 800, 800, 0.75); const fileName = `prod_${Date.now()}_${Math.random().toString(36).substring(7)}.jpg`; const res = await fetch(`${SUPABASE_URL}/storage/v1/object/inventario/${fileName}`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'image/jpeg' }, body: fileComprimido }); if (!res.ok) throw new Error("Error al subir"); const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/inventario/${fileName}`; document.getElementById(inputIdTarget).value = publicUrl; } catch (error) { alert("Error procesando imagen."); } finally { overlay.classList.add('hidden'); overlay.classList.remove('flex'); event.target.value = ''; } }
 
         async function cargarTodo() {
             try {
                 const [resInv, resPre, resPar] = await Promise.all([
-                    fetch(`${SUPABASE_URL}/rest/v1/productos?select=*&order=id_producto_sku.asc`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
-                    fetch(`${SUPABASE_URL}/rest/v1/precios?select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
+                    fetch(`${SUPABASE_URL}/rest/v1/productos?select=*&order=id_producto_sku.asc&limit=3000`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
+                    fetch(`${SUPABASE_URL}/rest/v1/precios?select=*&limit=3000`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
                     fetch(`${SUPABASE_URL}/rest/v1/parametros_inventario?select=*&estatus=eq.ACTIVO`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } })
                 ]);
                 
@@ -365,74 +274,51 @@
                 llenarSelect('prod-estado', 'ESTADO_PRODUCTO', false); llenarSelect('prod-condicion', 'CONDICION_PRODUCTO', false); llenarSelect('prod-tipo', 'TIPO_PRODUCTO', false); llenarSelect('prod-categoria', 'CATEGORIA', false); llenarSelect('prod-marca', 'MARCA', false); llenarSelect('prod-cat-venta', 'CATEGORIA_VENTA', true); llenarSelect('prod-unidad', 'UNIDAD_MEDIDA', false); llenarSelect('prod-iva', 'TIPO_IMPUESTO', false); llenarSelect('prod-talla', 'TALLA', true); llenarSelect('prod-color', 'COLOR', true);
                 llenarSelectFiltros('filtro-categoria', 'CATEGORIA'); llenarSelectFiltros('filtro-marca', 'MARCA'); llenarSelectFiltros('filtro-estado', 'ESTADO_PRODUCTO'); llenarSelectFiltros('filtro-condicion', 'CONDICION_PRODUCTO');
                 
+                // Preparar IA de Búsqueda
+                dbFusionadaGlobal = dbInventario.map(p => { const pre = dbPrecios.find(pr => pr.id_producto_sku === p.id_producto_sku) || {}; return { ...p, ...pre }; });
+                fuseInventario = new Fuse(dbFusionadaGlobal, { keys: ['nombre', 'id_producto_sku', 'codigo_barras'], threshold: 0.3, ignoreLocation: true });
+
                 filtrarInventario();
             } catch(e) { document.getElementById('contenedor-inventario').innerHTML = `<div class="p-5 text-center text-red-500 font-bold uppercase">Error cargando Base de Datos.</div>`; }
         }
 
-        function llenarSelect(id, grupo, permiteVacio) {
-            const s = document.getElementById(id); const ops = dataMaestra.filter(p => p.grupo === grupo).sort((a,b) => a.valor.localeCompare(b.valor));
-            let h = ''; if (permiteVacio) h += '<option value="">N/A</option>'; if (ops.length === 0 && !permiteVacio) h += '<option value="">(SIN CONFIG)</option>';
-            for(let i=0; i<ops.length; i++) h += `<option value="${ops[i].valor}">${ops[i].valor}</option>`; s.innerHTML = h;
-        }
-        function llenarSelectFiltros(id, grupo) {
-            const s = document.getElementById(id); const ops = dataMaestra.filter(p => p.grupo === grupo).sort((a,b) => a.valor.localeCompare(b.valor));
-            let h = '<option value="TODAS">TODAS</option>'; for(let i=0; i<ops.length; i++) h += `<option value="${ops[i].valor}">${ops[i].valor}</option>`; s.innerHTML = h;
-        }
+        function llenarSelect(id, grupo, permiteVacio) { const s = document.getElementById(id); const ops = dataMaestra.filter(p => p.grupo === grupo).sort((a,b) => a.valor.localeCompare(b.valor)); let h = ''; if (permiteVacio) h += '<option value="">N/A</option>'; if (ops.length === 0 && !permiteVacio) h += '<option value="">(SIN CONFIG)</option>'; for(let i=0; i<ops.length; i++) h += `<option value="${ops[i].valor}">${ops[i].valor}</option>`; s.innerHTML = h; }
+        function llenarSelectFiltros(id, grupo) { const s = document.getElementById(id); const ops = dataMaestra.filter(p => p.grupo === grupo).sort((a,b) => a.valor.localeCompare(b.valor)); let h = '<option value="TODAS">TODAS</option>'; for(let i=0; i<ops.length; i++) h += `<option value="${ops[i].valor}">${ops[i].valor}</option>`; s.innerHTML = h; }
 
         function toggleFiltrosPanel() { document.getElementById('panel-filtros').classList.toggle('open'); }
-        function limpiarFiltros() {
-            document.getElementById('buscador-inv').value = '';
-            document.getElementById('filtro-categoria').value = 'TODAS'; document.getElementById('filtro-marca').value = 'TODAS';
-            document.getElementById('filtro-estado').value = 'TODAS'; document.getElementById('filtro-condicion').value = 'TODAS'; document.getElementById('filtro-stock').value = 'TODOS';
-            filtrarInventario();
-        }
-
-        function toggleInputsPrecio() {
-            const esBs = document.getElementById('prod-fijo-bs').checked;
-            document.getElementById('section-bs').classList.toggle('hidden', !esBs); document.getElementById('section-usd').classList.toggle('hidden', esBs);
-        }
-
-        function calcularPreciosPorMargen() {
-            const costo = parseFloat(document.getElementById('prod-costo').value) || 0; const mGen = parseFloat(document.getElementById('prod-margen-gen').value) || 0; const m1 = parseFloat(document.getElementById('prod-m1').value) || 0; const m2 = parseFloat(document.getElementById('prod-m2').value) || 0; const m3 = parseFloat(document.getElementById('prod-m3').value) || 0;
-            if (mGen > 0) document.getElementById('prod-precio-gen').value = (costo * (1 + mGen/100)).toFixed(2);
-            if (m1 > 0) document.getElementById('prod-p1').value = `$${(costo * (1 + m1/100)).toFixed(2)}`; else document.getElementById('prod-p1').value = '';
-            if (m2 > 0) document.getElementById('prod-p2').value = `$${(costo * (1 + m2/100)).toFixed(2)}`; else document.getElementById('prod-p2').value = '';
-            if (m3 > 0) document.getElementById('prod-p3').value = `$${(costo * (1 + m3/100)).toFixed(2)}`; else document.getElementById('prod-p3').value = '';
-        }
-
+        function limpiarFiltros() { document.getElementById('buscador-inv').value = ''; document.getElementById('filtro-categoria').value = 'TODAS'; document.getElementById('filtro-marca').value = 'TODAS'; document.getElementById('filtro-estado').value = 'TODAS'; document.getElementById('filtro-condicion').value = 'TODAS'; document.getElementById('filtro-stock').value = 'TODOS'; filtrarInventario(); }
+        function toggleInputsPrecio() { const esBs = document.getElementById('prod-fijo-bs').checked; document.getElementById('section-bs').classList.toggle('hidden', !esBs); document.getElementById('section-usd').classList.toggle('hidden', esBs); }
+        function calcularPreciosPorMargen() { const costo = parseFloat(document.getElementById('prod-costo').value) || 0; const mGen = parseFloat(document.getElementById('prod-margen-gen').value) || 0; const m1 = parseFloat(document.getElementById('prod-m1').value) || 0; const m2 = parseFloat(document.getElementById('prod-m2').value) || 0; const m3 = parseFloat(document.getElementById('prod-m3').value) || 0; if (mGen > 0) document.getElementById('prod-precio-gen').value = (costo * (1 + mGen/100)).toFixed(2); if (m1 > 0) document.getElementById('prod-p1').value = `$${(costo * (1 + m1/100)).toFixed(2)}`; else document.getElementById('prod-p1').value = ''; if (m2 > 0) document.getElementById('prod-p2').value = `$${(costo * (1 + m2/100)).toFixed(2)}`; else document.getElementById('prod-p2').value = ''; if (m3 > 0) document.getElementById('prod-p3').value = `$${(costo * (1 + m3/100)).toFixed(2)}`; else document.getElementById('prod-p3').value = ''; }
         function cambiarVista(v) { vistaActual = v; localStorage.setItem('pyp_vista_inventario', v); actualizarUIBotonesVista(); filtrarInventario(); }
         function actualizarUIBotonesVista() { document.getElementById('btn-vista-tabla').classList.toggle('active', vistaActual === 'tabla'); document.getElementById('btn-vista-grid').classList.toggle('active', vistaActual === 'grid'); }
 
         function filtrarInventario() {
-            const q = document.getElementById('buscador-inv').value.toLowerCase(); const fCat = document.getElementById('filtro-categoria').value; const fMar = document.getElementById('filtro-marca').value; const fEst = document.getElementById('filtro-estado').value; const fCon = document.getElementById('filtro-condicion').value; const fStock = document.getElementById('filtro-stock').value;
-            const fusionada = dbInventario.map(p => { const pre = dbPrecios.find(pr => pr.id_producto_sku === p.id_producto_sku) || {}; return { ...p, ...pre }; });
-            const dataFiltrada = fusionada.filter(p => {
-                const nom = p.nombre ? String(p.nombre).toLowerCase() : ''; const sku = p.id_producto_sku ? String(p.id_producto_sku).toLowerCase() : ''; const bar = p.codigo_barras ? String(p.codigo_barras).toLowerCase() : ''; const cat = p.categoria_del_producto || ''; const mar = p.marca || ''; const est = p.estado_producto || ''; const con = p.condicion_producto || ''; const stx = parseInt(p.stock_actual) || 0;
-                const matchText = nom.includes(q) || sku.includes(q) || bar.includes(q); const matchCat = fCat === 'TODAS' || cat === fCat; const matchMar = fMar === 'TODAS' || mar === fMar; const matchEst = fEst === 'TODAS' || est === fEst; const matchCon = fCon === 'TODAS' || con === fCon;
+            const q = document.getElementById('buscador-inv').value; 
+            const fCat = document.getElementById('filtro-categoria').value; const fMar = document.getElementById('filtro-marca').value; const fEst = document.getElementById('filtro-estado').value; const fCon = document.getElementById('filtro-condicion').value; const fStock = document.getElementById('filtro-stock').value;
+            
+            // IA DE BÚSQUEDA APLICADA
+            let dataProcesar = dbFusionadaGlobal;
+            if(q.trim() !== '') {
+                dataProcesar = fuseInventario.search(q).map(r => r.item);
+            }
+            
+            dataFiltradaGlobal = dataProcesar.filter(p => {
+                const cat = p.categoria_del_producto || ''; const mar = p.marca || ''; const est = p.estado_producto || ''; const con = p.condicion_producto || ''; const stx = parseInt(p.stock_actual) || 0;
+                const matchCat = fCat === 'TODAS' || cat === fCat; const matchMar = fMar === 'TODAS' || mar === fMar; const matchEst = fEst === 'TODAS' || est === fEst; const matchCon = fCon === 'TODAS' || con === fCon;
                 let matchStock = true; if(fStock === 'CON_STOCK') matchStock = stx > 0; if(fStock === 'SIN_STOCK') matchStock = stx <= 0;
-                return matchText && matchCat && matchMar && matchEst && matchCon && matchStock;
+                return matchCat && matchMar && matchEst && matchCon && matchStock;
             });
-            if(vistaActual === 'tabla') pintarTabla(dataFiltrada); else pintarGrid(dataFiltrada);
+            
+            paginaActual = 1; renderizarPagina();
         }
 
-        function pintarTabla(arr) {
+        function renderizarPagina() { const datosAPintar = dataFiltradaGlobal.slice(0, paginaActual * ITEMS_POR_PAGINA); const hayMas = dataFiltradaGlobal.length > paginaActual * ITEMS_POR_PAGINA; const restantes = dataFiltradaGlobal.length - (paginaActual * ITEMS_POR_PAGINA); if(vistaActual === 'tabla') pintarTabla(datosAPintar, hayMas, restantes); else pintarGrid(datosAPintar, hayMas, restantes); }
+        function cargarMas() { paginaActual++; renderizarPagina(); }
+
+        function pintarTabla(arr, hayMas, restantes) {
             const c = document.getElementById('contenedor-inventario');
             if(arr.length === 0) { c.innerHTML = `<div class="bg-white rounded border p-10 text-center text-gray-500 font-medium">No se encontraron productos.</div>`; return; }
-            let htmlStr = `<div class="bg-white rounded border overflow-x-auto shadow-sm">
-                <table class="w-full text-left text-xs min-w-[700px]">
-                    <thead class="bg-[#143B62] text-white uppercase font-semibold text-[10px]">
-                        <tr>
-                            <th class="py-2 px-2 text-center w-16">Img</th>
-                            <th class="py-2 px-2">SKU / Producto</th>
-                            <th class="py-2 px-2">Categoría</th>
-                            <th class="py-2 px-2 text-center">Marca</th>
-                            <th class="py-2 px-2 text-center">Estado</th>
-                            <th class="py-2 px-2 text-right">Precio Gral.</th>
-                            <th class="py-2 px-2 text-center">Stock</th>
-                            <th class="py-2 px-2 text-center w-16">⚙️</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100">`;
+            let htmlStr = `<div class="bg-white rounded border overflow-x-auto shadow-sm"><table class="w-full text-left text-xs min-w-[700px]"><thead class="bg-[#143B62] text-white uppercase font-semibold text-[10px]"><tr><th class="py-2 px-2 text-center w-16">Img</th><th class="py-2 px-2">SKU / Producto</th><th class="py-2 px-2">Categoría</th><th class="py-2 px-2 text-center">Marca</th><th class="py-2 px-2 text-center">Estado</th><th class="py-2 px-2 text-right">Precio Gral.</th><th class="py-2 px-2 text-center">Stock</th><th class="py-2 px-2 text-center w-16">⚙️</th></tr></thead><tbody class="divide-y divide-gray-100">`;
             
             for(let i=0; i<arr.length; i++) {
                 const p = arr[i]; const prodStr = encodeURIComponent(JSON.stringify(p));
@@ -441,48 +327,14 @@
                 const imgAUsar = p.imagen_principal || imagenGlobalDefecto; const precioMostrar = p.es_precio_fijo_bs ? `Bs ${p.precio_fijo_bs}` : `$${(Number(p.precio_general_usd)||0).toFixed(2)}`;
                 const p1Texto = p.precio_1_usd > 0 ? `≥${p.requerido_precio_1 || 0}: $${p.precio_1_usd}` : '-'; const p2Texto = p.precio_2_usd > 0 ? `≥${p.requerido_precio_2 || 0}: $${p.precio_2_usd}` : '-'; const p3Texto = p.precio_3_usd > 0 ? `≥${p.requerido_precio_3 || 0}: $${p.precio_3_usd}` : '-';
                 
-                let galeriaHTML = '';
-                if(p.imagen_2 || p.imagen_3 || p.video_url) {
-                    galeriaHTML = `<div class="mt-2 pt-2 border-t border-gray-200"><span class="block param-label mb-1">Galería Multimedia</span><div class="flex gap-2">
-                        ${p.imagen_2 ? `<img src="${p.imagen_2}" onclick="abrirVisorImagen('${p.imagen_2}')" class="w-10 h-10 object-cover rounded border border-gray-300 hover:opacity-80 transition cursor-pointer">` : ''}
-                        ${p.imagen_3 ? `<img src="${p.imagen_3}" onclick="abrirVisorImagen('${p.imagen_3}')" class="w-10 h-10 object-cover rounded border border-gray-300 hover:opacity-80 transition cursor-pointer">` : ''}
-                        ${p.video_url ? `<button type="button" onclick="abrirVisorVideo('${p.video_url}')" class="w-10 h-10 flex items-center justify-center bg-red-50 text-red-600 border border-red-200 rounded hover:bg-red-100 transition cursor-pointer"><i class="fa-brands fa-youtube text-xl"></i></button>` : ''}
-                    </div></div>`;
-                }
+                let galeriaHTML = ''; if(p.imagen_2 || p.imagen_3 || p.video_url) { galeriaHTML = `<div class="mt-2 pt-2 border-t border-gray-200"><span class="block param-label mb-1">Galería Multimedia</span><div class="flex gap-2">${p.imagen_2 ? `<img src="${p.imagen_2}" onclick="abrirVisorImagen('${p.imagen_2}')" class="w-10 h-10 object-cover rounded border border-gray-300 hover:opacity-80 transition cursor-pointer">` : ''}${p.imagen_3 ? `<img src="${p.imagen_3}" onclick="abrirVisorImagen('${p.imagen_3}')" class="w-10 h-10 object-cover rounded border border-gray-300 hover:opacity-80 transition cursor-pointer">` : ''}${p.video_url ? `<button type="button" onclick="abrirVisorVideo('${p.video_url}')" class="w-10 h-10 flex items-center justify-center bg-red-50 text-red-600 border border-red-200 rounded hover:bg-red-100 transition cursor-pointer"><i class="fa-brands fa-youtube text-xl"></i></button>` : ''}</div></div>`; }
 
-                htmlStr += `
-                <tr class="hover:bg-gray-50 transition border-b border-gray-100">
-                    <td class="py-1 px-2 text-center">
-                        <img src="${imgAUsar}" onerror="this.src='${imagenGlobalDefecto}'" onclick="abrirVisorImagen('${imgAUsar}')" class="w-10 h-10 object-contain mx-auto border rounded bg-white cursor-pointer hover:opacity-80">
-                    </td>
-                    <td class="py-1.5 px-2 cursor-pointer" onclick="toggleDetalleTbl('${p.id_producto_sku}')"><div class="font-semibold text-[11px]">${p.nombre}</div><div class="text-[9px] text-gray-400 font-mono mt-0.5">${p.id_producto_sku}</div></td>
-                    <td class="py-1.5 px-2 text-gray-500 font-medium uppercase text-[9px] cursor-pointer" onclick="toggleDetalleTbl('${p.id_producto_sku}')">${p.categoria_del_producto || '-'}</td>
-                    <td class="py-1.5 px-2 text-center text-gray-600 font-medium text-[10px] cursor-pointer" onclick="toggleDetalleTbl('${p.id_producto_sku}')">${p.marca || '-'}</td>
-                    <td class="py-1.5 px-2 text-center cursor-pointer" onclick="toggleDetalleTbl('${p.id_producto_sku}')">${badgeEstado}</td>
-                    <td class="py-1.5 px-2 text-right font-bold text-[#143B62] text-[11px] cursor-pointer" onclick="toggleDetalleTbl('${p.id_producto_sku}')">${precioMostrar}</td>
-                    <td class="py-1.5 px-2 text-center cursor-pointer" onclick="toggleDetalleTbl('${p.id_producto_sku}')"><span class="px-1.5 py-0.5 rounded font-bold text-[9px] ${bgStock}">${p.stock_actual}</span></td>
-                    <td class="py-1.5 px-2 text-center">
-                        <button onclick="abrirModalProducto('${prodStr}')" class="text-blue-500 hover:bg-blue-50 p-1 rounded transition"><i class="fa-solid fa-pen-to-square"></i></button>
-                        <button onclick="toggleDetalleTbl('${p.id_producto_sku}')" class="text-gray-400 hover:text-gray-700 p-1 rounded transition"><i id="icon-tbl-${p.id_producto_sku}" class="fa-solid fa-chevron-down"></i></button>
-                    </td>
-                </tr>
-                <tr id="dt-tbl-${p.id_producto_sku}" class="hidden bg-[#f8fafc] border-b-2 border-gray-200">
-                    <td colspan="8" class="p-3">
-                        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-y-2 gap-x-4">
-                            <div><span class="block param-label">Costo Actual</span><span class="param-value text-emerald-600 font-bold text-[11px]">$${p.costo_actual||'0.00'}</span></div>
-                            <div class="col-span-2"><span class="block param-label">Escalas (Unds ➔ USD)</span><span class="param-value text-[10px] font-bold text-blue-600">${p1Texto} | ${p2Texto} | ${p3Texto}</span></div>
-                            <div><span class="block param-label">Código Barras</span><span class="param-value font-mono text-[10px]">${p.codigo_barras||'-'}</span></div>
-                            <div><span class="block param-label">Venta Negativo</span><span class="param-value text-[10px] ${p.permitir_negativo ? 'text-red-500 font-bold':'text-gray-500'}">${p.permitir_negativo ? 'SÍ' : 'NO'}</span></div>
-                        </div>
-                        ${p.descripcion ? `<div class="mt-2 pt-2 border-t border-gray-200"><span class="block param-label mb-0.5">Descripción</span><p class="text-[10px] text-gray-600 italic">${p.descripcion}</p></div>` : ''}
-                        ${galeriaHTML}
-                    </td>
-                </tr>`;
+                htmlStr += `<tr class="hover:bg-gray-50 transition border-b border-gray-100"><td class="py-1 px-2 text-center"><img src="${imgAUsar}" onerror="this.src='${imagenGlobalDefecto}'" onclick="abrirVisorImagen('${imgAUsar}')" class="w-10 h-10 object-contain mx-auto border rounded bg-white cursor-pointer hover:opacity-80"></td><td class="py-1.5 px-2 cursor-pointer" onclick="toggleDetalleTbl('${p.id_producto_sku}')"><div class="font-semibold text-[11px]">${p.nombre}</div><div class="text-[9px] text-gray-400 font-mono mt-0.5">${p.id_producto_sku}</div></td><td class="py-1.5 px-2 text-gray-500 font-medium uppercase text-[9px] cursor-pointer" onclick="toggleDetalleTbl('${p.id_producto_sku}')">${p.categoria_del_producto || '-'}</td><td class="py-1.5 px-2 text-center text-gray-600 font-medium text-[10px] cursor-pointer" onclick="toggleDetalleTbl('${p.id_producto_sku}')">${p.marca || '-'}</td><td class="py-1.5 px-2 text-center cursor-pointer" onclick="toggleDetalleTbl('${p.id_producto_sku}')">${badgeEstado}</td><td class="py-1.5 px-2 text-right font-bold text-[#143B62] text-[11px] cursor-pointer" onclick="toggleDetalleTbl('${p.id_producto_sku}')">${precioMostrar}</td><td class="py-1.5 px-2 text-center cursor-pointer" onclick="toggleDetalleTbl('${p.id_producto_sku}')"><span class="px-1.5 py-0.5 rounded font-bold text-[9px] ${bgStock}">${p.stock_actual}</span></td><td class="py-1.5 px-2 text-center"><button onclick="abrirModalProducto('${prodStr}')" class="text-blue-500 hover:bg-blue-50 p-1 rounded transition"><i class="fa-solid fa-pen-to-square"></i></button><button onclick="toggleDetalleTbl('${p.id_producto_sku}')" class="text-gray-400 hover:text-gray-700 p-1 rounded transition"><i id="icon-tbl-${p.id_producto_sku}" class="fa-solid fa-chevron-down"></i></button></td></tr><tr id="dt-tbl-${p.id_producto_sku}" class="hidden bg-[#f8fafc] border-b-2 border-gray-200"><td colspan="8" class="p-3"><div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-y-2 gap-x-4"><div><span class="block param-label">Costo Actual</span><span class="param-value text-emerald-600 font-bold text-[11px]">$${p.costo_actual||'0.00'}</span></div><div class="col-span-2"><span class="block param-label">Escalas (Unds ➔ USD)</span><span class="param-value text-[10px] font-bold text-blue-600">${p1Texto} | ${p2Texto} | ${p3Texto}</span></div><div><span class="block param-label">Código Barras</span><span class="param-value font-mono text-[10px]">${p.codigo_barras||'-'}</span></div><div><span class="block param-label">Venta Negativo</span><span class="param-value text-[10px] ${p.permitir_negativo ? 'text-red-500 font-bold':'text-gray-500'}">${p.permitir_negativo ? 'SÍ' : 'NO'}</span></div></div>${p.descripcion ? `<div class="mt-2 pt-2 border-t border-gray-200"><span class="block param-label mb-0.5">Descripción</span><p class="text-[10px] text-gray-600 italic">${p.descripcion}</p></div>` : ''}${galeriaHTML}</td></tr>`;
             }
-            htmlStr += `</tbody></table></div>`; c.innerHTML = htmlStr;
+            htmlStr += `</tbody></table></div>`; if(hayMas) { htmlStr += `<div class="p-4 flex justify-center"><button onclick="cargarMas()" class="bg-white border border-gray-300 text-[#143B62] hover:bg-gray-50 px-6 py-2.5 rounded shadow-sm font-bold text-[11px] uppercase tracking-wider transition">⬇️ Cargar Más Productos (${restantes} ocultos)</button></div>`; } c.innerHTML = htmlStr;
         }
 
-        function pintarGrid(arr) {
+        function pintarGrid(arr, hayMas, restantes) {
             const c = document.getElementById('contenedor-inventario');
             if(arr.length === 0) { c.innerHTML = `<div class="bg-white rounded border p-10 text-center text-gray-500 font-medium">No se encontraron productos.</div>`; return; }
             let htmlStr = `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">`;
@@ -493,96 +345,38 @@
                 const imgAUsar = p.imagen_principal || imagenGlobalDefecto; const precioMostrar = p.es_precio_fijo_bs ? `Bs ${p.precio_fijo_bs}` : `$${(Number(p.precio_general_usd)||0).toFixed(2)}`;
                 const p1Texto = p.precio_1_usd > 0 ? `≥${p.requerido_precio_1 || 0}: $${p.precio_1_usd}` : '-'; const p2Texto = p.precio_2_usd > 0 ? `≥${p.requerido_precio_2 || 0}: $${p.precio_2_usd}` : '-'; const p3Texto = p.precio_3_usd > 0 ? `≥${p.requerido_precio_3 || 0}: $${p.precio_3_usd}` : '-';
                 
-                let galeriaHTML = '';
-                if(p.imagen_2 || p.imagen_3 || p.video_url) {
-                    galeriaHTML = `<div class="p-2 pt-0 border-b border-gray-200"><span class="block param-label mb-1">Galería</span><div class="flex gap-2">
-                        ${p.imagen_2 ? `<img src="${p.imagen_2}" onclick="abrirVisorImagen('${p.imagen_2}')" class="w-8 h-8 object-cover rounded border border-gray-300 shadow-sm hover:opacity-80 cursor-pointer">` : ''}
-                        ${p.imagen_3 ? `<img src="${p.imagen_3}" onclick="abrirVisorImagen('${p.imagen_3}')" class="w-8 h-8 object-cover rounded border border-gray-300 shadow-sm hover:opacity-80 cursor-pointer">` : ''}
-                        ${p.video_url ? `<button type="button" onclick="abrirVisorVideo('${p.video_url}')" class="w-8 h-8 flex items-center justify-center bg-red-50 text-red-600 rounded border border-red-200 shadow-sm hover:bg-red-100 cursor-pointer"><i class="fa-brands fa-youtube text-sm"></i></button>` : ''}
-                    </div></div>`;
-                }
+                let galeriaHTML = ''; if(p.imagen_2 || p.imagen_3 || p.video_url) { galeriaHTML = `<div class="p-2 pt-0 border-b border-gray-200"><span class="block param-label mb-1">Galería</span><div class="flex gap-2">${p.imagen_2 ? `<img src="${p.imagen_2}" onclick="abrirVisorImagen('${p.imagen_2}')" class="w-8 h-8 object-cover rounded border border-gray-300 shadow-sm hover:opacity-80 cursor-pointer">` : ''}${p.imagen_3 ? `<img src="${p.imagen_3}" onclick="abrirVisorImagen('${p.imagen_3}')" class="w-8 h-8 object-cover rounded border border-gray-300 shadow-sm hover:opacity-80 cursor-pointer">` : ''}${p.video_url ? `<button type="button" onclick="abrirVisorVideo('${p.video_url}')" class="w-8 h-8 flex items-center justify-center bg-red-50 text-red-600 rounded border border-red-200 shadow-sm hover:bg-red-100 cursor-pointer"><i class="fa-brands fa-youtube text-sm"></i></button>` : ''}</div></div>`; }
 
-                htmlStr += `
-                <div class="bg-white rounded border border-gray-200 shadow-sm p-2 flex flex-col gap-2 relative overflow-hidden">
-                    <div class="flex gap-3 h-28 items-stretch">
-                        <div class="w-28 h-28 shrink-0 relative cursor-pointer hover:opacity-80 transition" onclick="abrirVisorImagen('${imgAUsar}')">
-                            <img src="${imgAUsar}" onerror="this.src='${imagenGlobalDefecto}'" class="absolute inset-0 w-full h-full object-contain rounded border border-gray-200 bg-white shadow-sm">
-                        </div>
-                        <div class="min-w-0 flex-1 flex flex-col justify-between py-1">
-                            <div>
-                                <div class="flex items-center justify-between mb-1">
-                                    <div class="param-label text-[8px] truncate w-[60%]">${p.categoria_del_producto||'Sin Cat'} • ${p.marca||'Sin Marca'}</div>
-                                    ${badgeEstado}
-                                </div>
-                                <h3 class="font-semibold text-[13px] leading-tight line-clamp-2">${p.nombre}</h3>
-                                <div class="text-[9px] font-mono text-gray-400 mt-0.5">${p.id_producto_sku}</div>
-                            </div>
-                            <div class="flex justify-between items-end border-t border-gray-100 pt-1 mt-1">
-                                <div><div class="param-label text-[8px]">Precio Gral.</div><div class="text-base font-bold text-[#143B62] leading-none">${precioMostrar}</div></div>
-                                <div class="text-right"><div class="param-label text-[8px]">Stock</div><div class="font-bold text-[13px] leading-none ${p.stock_actual > 0 ? 'text-emerald-600':'text-red-500'}">${p.stock_actual}</div></div>
-                            </div>
-                        </div>
-                    </div>
-                    <button onclick="toggleDetalleTbl('${p.id_producto_sku}')" class="w-full py-1.5 bg-gray-50 border rounded text-[10px] font-semibold text-gray-500 hover:bg-gray-100 transition uppercase flex justify-center items-center gap-2">Ver Detalles <i id="icon-tbl-${p.id_producto_sku}" class="fa-solid fa-chevron-down text-[9px]"></i></button>
-                    <div id="dt-tbl-${p.id_producto_sku}" class="hidden flex-col bg-slate-50 border-t border-gray-200 mt-1">
-                        <div class="p-2 grid grid-cols-1 gap-1.5">
-                            <div class="flex justify-between border-b pb-1"><span class="param-label text-[8px]">Costo</span><span class="param-value text-[11px] text-emerald-600 font-bold">$${p.costo_actual||'0.00'}</span></div>
-                            <div class="flex flex-col border-b pb-1"><span class="param-label text-[8px] mb-0.5">Escalas (Unds ➔ USD)</span><span class="param-value text-[10px] text-blue-600 font-bold">${p1Texto} | ${p2Texto} | ${p3Texto}</span></div>
-                        </div>
-                        ${galeriaHTML}
-                        <div class="p-1.5 bg-white border-t flex justify-end"><button onclick="abrirModalProducto('${prodStr}')" class="px-3 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded text-[10px] font-bold uppercase"><i class="fa-solid fa-pen-to-square mr-1"></i> Editar</button></div>
-                    </div>
-                </div>`;
+                htmlStr += `<div class="bg-white rounded border border-gray-200 shadow-sm p-2 flex flex-col gap-2 relative overflow-hidden"><div class="flex gap-3 h-28 items-stretch"><div class="w-28 h-28 shrink-0 relative cursor-pointer hover:opacity-80 transition" onclick="abrirVisorImagen('${imgAUsar}')"><img src="${imgAUsar}" onerror="this.src='${imagenGlobalDefecto}'" class="absolute inset-0 w-full h-full object-contain rounded border border-gray-200 bg-white shadow-sm"></div><div class="min-w-0 flex-1 flex flex-col justify-between py-1"><div><div class="flex items-center justify-between mb-1"><div class="param-label text-[8px] truncate w-[60%]">${p.categoria_del_producto||'Sin Cat'} • ${p.marca||'Sin Marca'}</div>${badgeEstado}</div><h3 class="font-semibold text-[13px] leading-tight line-clamp-2">${p.nombre}</h3><div class="text-[9px] font-mono text-gray-400 mt-0.5">${p.id_producto_sku}</div></div><div class="flex justify-between items-end border-t border-gray-100 pt-1 mt-1"><div><div class="param-label text-[8px]">Precio Gral.</div><div class="text-base font-bold text-[#143B62] leading-none">${precioMostrar}</div></div><div class="text-right"><div class="param-label text-[8px]">Stock</div><div class="font-bold text-[13px] leading-none ${p.stock_actual > 0 ? 'text-emerald-600':'text-red-500'}">${p.stock_actual}</div></div></div></div></div><button onclick="toggleDetalleTbl('${p.id_producto_sku}')" class="w-full py-1.5 bg-gray-50 border rounded text-[10px] font-semibold text-gray-500 hover:bg-gray-100 transition uppercase flex justify-center items-center gap-2">Ver Detalles <i id="icon-tbl-${p.id_producto_sku}" class="fa-solid fa-chevron-down text-[9px]"></i></button><div id="dt-tbl-${p.id_producto_sku}" class="hidden flex-col bg-slate-50 border-t border-gray-200 mt-1"><div class="p-2 grid grid-cols-1 gap-1.5"><div class="flex justify-between border-b pb-1"><span class="param-label text-[8px]">Costo</span><span class="param-value text-[11px] text-emerald-600 font-bold">$${p.costo_actual||'0.00'}</span></div><div class="flex flex-col border-b pb-1"><span class="param-label text-[8px] mb-0.5">Escalas (Unds ➔ USD)</span><span class="param-value text-[10px] text-blue-600 font-bold">${p1Texto} | ${p2Texto} | ${p3Texto}</span></div></div>${galeriaHTML}<div class="p-1.5 bg-white border-t flex justify-end"><button onclick="abrirModalProducto('${prodStr}')" class="px-3 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded text-[10px] font-bold uppercase"><i class="fa-solid fa-pen-to-square mr-1"></i> Editar</button></div></div></div>`;
             }
-            htmlStr += `</div>`; c.innerHTML = htmlStr;
+            htmlStr += `</div>`; if(hayMas) { htmlStr += `<div class="p-4 flex justify-center mt-2"><button onclick="cargarMas()" class="bg-white border border-gray-300 text-[#143B62] hover:bg-gray-50 px-6 py-2.5 rounded shadow-sm font-bold text-[11px] uppercase tracking-wider transition">⬇️ Cargar Más Productos (${restantes} ocultos)</button></div>`; } c.innerHTML = htmlStr;
         }
 
         function toggleDetalleTbl(id) { const el = document.getElementById(`dt-tbl-${id}`); const icon = document.getElementById(`icon-tbl-${id}`); if(el.classList.contains('hidden')) { el.classList.remove('hidden'); if(el.tagName !== 'TR') el.classList.add('flex'); icon.classList.remove('fa-chevron-down'); icon.classList.add('fa-chevron-up'); } else { el.classList.add('hidden'); if(el.tagName !== 'TR') el.classList.remove('flex'); icon.classList.remove('fa-chevron-up'); icon.classList.add('fa-chevron-down'); } }
-        
         function toggleEscanerCamara() { const container = document.getElementById('reader-container'); if(container.classList.contains('hidden')) { container.classList.remove('hidden'); html5QrCode = new Html5Qrcode("reader"); html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 100 } }, (decodedText) => { document.getElementById('prod-barras').value = decodedText; cerrarEscaner(); }, (errorMessage) => { }).catch(err => { alert("Error al acceder a la cámara."); cerrarEscaner(); }); } else { cerrarEscaner(); } }
         function cerrarEscaner() { if(html5QrCode) { html5QrCode.stop().then(() => { html5QrCode.clear(); html5QrCode = null; }).catch(e => console.error(e)); } document.getElementById('reader-container').classList.add('hidden'); }
 
         function abrirModalProducto(prodStr = null) {
-            const f = document.getElementById('form-producto'); f.reset(); cerrarEscaner();
-            document.getElementById('prod-fijo-bs').checked = false; toggleInputsPrecio();
+            const f = document.getElementById('form-producto'); f.reset(); cerrarEscaner(); document.getElementById('prod-fijo-bs').checked = false; toggleInputsPrecio();
             if (prodStr) {
-                const p = JSON.parse(decodeURIComponent(prodStr));
-                document.getElementById('modal-titulo').innerHTML = `<i class="fa-solid fa-pen-to-square mr-2 text-blue-400"></i> EDITAR REGISTRO`;
-                document.getElementById('modo-edicion').value = "true";
-                document.getElementById('prod-sku').value = p.id_producto_sku || ''; document.getElementById('prod-sku').readOnly = true; document.getElementById('prod-sku').classList.add('bg-gray-100', 'text-gray-500', 'cursor-not-allowed');
-                document.getElementById('prod-barras').value = p.codigo_barras || ''; document.getElementById('prod-nombre').value = p.nombre || ''; document.getElementById('prod-imagen').value = p.imagen_principal || ''; document.getElementById('prod-imagen2').value = p.imagen_2 || ''; document.getElementById('prod-imagen3').value = p.imagen_3 || ''; document.getElementById('prod-video').value = p.video_url || ''; document.getElementById('prod-descripcion').value = p.descripcion || ''; document.getElementById('prod-estado').value = p.estado_producto || ''; document.getElementById('prod-categoria').value = p.categoria_del_producto || ''; document.getElementById('prod-marca').value = p.marca || ''; document.getElementById('prod-tipo').value = p.tipo_producto || ''; document.getElementById('prod-condicion').value = p.condicion_producto || ''; document.getElementById('prod-unidad').value = p.unidad_medida || ''; document.getElementById('prod-iva').value = p.tipo_impuesto || ''; document.getElementById('prod-talla').value = p.talla || ''; document.getElementById('prod-color').value = p.color || ''; document.getElementById('prod-cat-venta').value = p.categoria_venta || ''; document.getElementById('prod-stock').value = p.stock_actual || 0; document.getElementById('prod-negativo').checked = p.permitir_negativo === true; document.getElementById('prod-req1').value = p.requerido_precio_1 || ''; document.getElementById('prod-req2').value = p.requerido_precio_2 || ''; document.getElementById('prod-req3').value = p.requerido_precio_3 || ''; document.getElementById('prod-fijo-bs').checked = p.es_precio_fijo_bs || false; document.getElementById('prod-precio-bs').value = p.precio_fijo_bs || 0; document.getElementById('prod-costo').value = p.costo_actual || 0; document.getElementById('prod-precio-gen').value = p.precio_general_usd || 0; document.getElementById('prod-p1').value = p.precio_1_usd ? `$${p.precio_1_usd}` : ''; document.getElementById('prod-p2').value = p.precio_2_usd ? `$${p.precio_2_usd}` : ''; document.getElementById('prod-p3').value = p.precio_3_usd ? `$${p.precio_3_usd}` : ''; toggleInputsPrecio();
-            } else {
-                document.getElementById('modal-titulo').innerHTML = `<i class="fa-solid fa-box-open mr-2 text-[#E67E22]"></i> NUEVO REGISTRO`;
-                document.getElementById('modo-edicion').value = "false";
-                document.getElementById('prod-sku').value = ''; document.getElementById('prod-sku').readOnly = false; document.getElementById('prod-sku').classList.remove('bg-gray-100', 'text-gray-500', 'cursor-not-allowed'); 
-            }
+                const p = JSON.parse(decodeURIComponent(prodStr)); document.getElementById('modal-titulo').innerHTML = `<i class="fa-solid fa-pen-to-square mr-2 text-blue-400"></i> EDITAR REGISTRO`; document.getElementById('modo-edicion').value = "true"; document.getElementById('prod-sku').value = p.id_producto_sku || ''; document.getElementById('prod-sku').readOnly = true; document.getElementById('prod-sku').classList.add('bg-gray-100', 'text-gray-500', 'cursor-not-allowed'); document.getElementById('prod-barras').value = p.codigo_barras || ''; document.getElementById('prod-nombre').value = p.nombre || ''; document.getElementById('prod-imagen').value = p.imagen_principal || ''; document.getElementById('prod-imagen2').value = p.imagen_2 || ''; document.getElementById('prod-imagen3').value = p.imagen_3 || ''; document.getElementById('prod-video').value = p.video_url || ''; document.getElementById('prod-descripcion').value = p.descripcion || ''; document.getElementById('prod-estado').value = p.estado_producto || ''; document.getElementById('prod-categoria').value = p.categoria_del_producto || ''; document.getElementById('prod-marca').value = p.marca || ''; document.getElementById('prod-tipo').value = p.tipo_producto || ''; document.getElementById('prod-condicion').value = p.condicion_producto || ''; document.getElementById('prod-unidad').value = p.unidad_medida || ''; document.getElementById('prod-iva').value = p.tipo_impuesto || ''; document.getElementById('prod-talla').value = p.talla || ''; document.getElementById('prod-color').value = p.color || ''; document.getElementById('prod-cat-venta').value = p.categoria_venta || ''; document.getElementById('prod-stock').value = p.stock_actual || 0; document.getElementById('prod-negativo').checked = p.permitir_negativo === true; document.getElementById('prod-req1').value = p.requerido_precio_1 || ''; document.getElementById('prod-req2').value = p.requerido_precio_2 || ''; document.getElementById('prod-req3').value = p.requerido_precio_3 || ''; document.getElementById('prod-fijo-bs').checked = p.es_precio_fijo_bs || false; document.getElementById('prod-precio-bs').value = p.precio_fijo_bs || 0; document.getElementById('prod-costo').value = p.costo_actual || 0; document.getElementById('prod-precio-gen').value = p.precio_general_usd || 0; document.getElementById('prod-p1').value = p.precio_1_usd ? `$${p.precio_1_usd}` : ''; document.getElementById('prod-p2').value = p.precio_2_usd ? `$${p.precio_2_usd}` : ''; document.getElementById('prod-p3').value = p.precio_3_usd ? `$${p.precio_3_usd}` : ''; toggleInputsPrecio();
+            } else { document.getElementById('modal-titulo').innerHTML = `<i class="fa-solid fa-box-open mr-2 text-[#E67E22]"></i> NUEVO REGISTRO`; document.getElementById('modo-edicion').value = "false"; document.getElementById('prod-sku').value = ''; document.getElementById('prod-sku').readOnly = false; document.getElementById('prod-sku').classList.remove('bg-gray-100', 'text-gray-500', 'cursor-not-allowed'); }
             document.getElementById('modal-producto').classList.remove('hidden');
         }
         function cerrarModalProducto() { cerrarEscaner(); document.getElementById('modal-producto').classList.add('hidden'); }
 
         async function guardarProducto(e) {
-            e.preventDefault(); const btn = document.getElementById('btn-guardar-prod'); btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Guardando...`; btn.disabled = true;
-            const sku = document.getElementById('prod-sku').value.trim().toUpperCase(); const esBs = document.getElementById('prod-fijo-bs').checked;
-            
+            e.preventDefault(); const btn = document.getElementById('btn-guardar-prod'); btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Guardando...`; btn.disabled = true; const sku = document.getElementById('prod-sku').value.trim().toUpperCase(); const esBs = document.getElementById('prod-fijo-bs').checked;
             try {
-                const resUser = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?select=id_empresa&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
-                const dataUser = await resUser.json(); const miEmpresa = dataUser.length > 0 ? dataUser[0].id_empresa : null;
-
+                const resUser = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?select=id_empresa&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }); const dataUser = await resUser.json(); const miEmpresa = dataUser.length > 0 ? dataUser[0].id_empresa : null;
                 const dataProd = { id_producto_sku: sku, nombre: document.getElementById('prod-nombre').value.toUpperCase(), codigo_barras: document.getElementById('prod-barras').value.toUpperCase() || null, imagen_principal: document.getElementById('prod-imagen').value || null, imagen_2: document.getElementById('prod-imagen2').value || null, imagen_3: document.getElementById('prod-imagen3').value || null, video_url: document.getElementById('prod-video').value || null, descripcion: document.getElementById('prod-descripcion').value || null, estado_producto: document.getElementById('prod-estado').value || null, categoria_del_producto: document.getElementById('prod-categoria').value || null, marca: document.getElementById('prod-marca').value || null, condicion_producto: document.getElementById('prod-condicion').value || null, tipo_producto: document.getElementById('prod-tipo').value || null, unidad_medida: document.getElementById('prod-unidad').value || null, tipo_impuesto: document.getElementById('prod-iva').value || null, talla: document.getElementById('prod-talla').value || null, color: document.getElementById('prod-color').value || null, categoria_venta: document.getElementById('prod-cat-venta').value || null, stock_actual: parseInt(document.getElementById('prod-stock').value) || 0, permitir_negativo: document.getElementById('prod-negativo').checked, requerido_precio_1: parseInt(document.getElementById('prod-req1').value) || null, requerido_precio_2: parseInt(document.getElementById('prod-req2').value) || null, requerido_precio_3: parseInt(document.getElementById('prod-req3').value) || null, id_empresa: miEmpresa };
                 let p1Val = document.getElementById('prod-p1').value.replace('$', ''); let p2Val = document.getElementById('prod-p2').value.replace('$', ''); let p3Val = document.getElementById('prod-p3').value.replace('$', '');
                 const dataPre = { id_producto_sku: sku, es_precio_fijo_bs: esBs, precio_fijo_bs: esBs ? (parseFloat(document.getElementById('prod-precio-bs').value) || 0) : 0, costo_actual: parseFloat(document.getElementById('prod-costo').value) || 0, precio_general_usd: esBs ? 0 : (parseFloat(document.getElementById('prod-precio-gen').value) || 0), precio_1_usd: esBs ? 0 : (parseFloat(p1Val) || 0), precio_2_usd: esBs ? 0 : (parseFloat(p2Val) || 0), precio_3_usd: esBs ? 0 : (parseFloat(p3Val) || 0), id_empresa: miEmpresa };
-                
                 const headers = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' };
-                
-                const [resProd, resPre] = await Promise.all([
-                    fetch(`${SUPABASE_URL}/rest/v1/productos?on_conflict=id_producto_sku`, { method: 'POST', headers, body: JSON.stringify(dataProd) }), 
-                    fetch(`${SUPABASE_URL}/rest/v1/precios?on_conflict=id_producto_sku`, { method: 'POST', headers, body: JSON.stringify(dataPre) }) 
-                ]); 
-                if (!resProd.ok) { const err = await resProd.json(); throw new Error(`Error Productos: ${err.message}`); } 
-                if (!resPre.ok) { const err = await resPre.json(); throw new Error(`Error Precios: ${err.message}`); }
+                const [resProd, resPre] = await Promise.all([ fetch(`${SUPABASE_URL}/rest/v1/productos?on_conflict=id_producto_sku`, { method: 'POST', headers, body: JSON.stringify(dataProd) }), fetch(`${SUPABASE_URL}/rest/v1/precios?on_conflict=id_producto_sku`, { method: 'POST', headers, body: JSON.stringify(dataPre) }) ]); 
+                if (!resProd.ok) { const err = await resProd.json(); throw new Error(`Error Productos: ${err.message}`); } if (!resPre.ok) { const err = await resPre.json(); throw new Error(`Error Precios: ${err.message}`); }
                 cerrarModalProducto(); await cargarTodo(); 
-            } catch(e) { alert("FALLO AL GUARDAR:\n" + e.message); } 
-            finally { btn.innerHTML = `<i class="fa-solid fa-save"></i> Guardar`; btn.disabled = false; }
+            } catch(e) { alert("FALLO AL GUARDAR:\n" + e.message); } finally { btn.innerHTML = `<i class="fa-solid fa-save"></i> Guardar`; btn.disabled = false; }
         }
     </script>
 </body>
