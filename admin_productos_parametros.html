@@ -17,7 +17,7 @@
         <header class="bg-white shadow-sm px-4 md:px-6 py-4 flex justify-between items-center z-10 shrink-0 border-b border-gray-200">
             <div class="flex items-center gap-3">
                 <button onclick="toggleMobileMenu()" class="md:hidden text-gray-600 hover:text-[#143B62] text-xl transition px-2"><i class="fa-solid fa-bars"></i></button>
-                <h1 class="text-lg font-semibold text-[#143B62] flex items-center gap-2"><i class="fa-solid fa-tags text-[#E67E22]"></i> Parámetros de Sistema</h1>
+                <h1 class="text-lg font-semibold text-[#143B62] flex items-center gap-2"><i class="fa-solid fa-tags text-[#E67E22]"></i> Parámetros de Inventario</h1>
             </div>
         </header>
 
@@ -40,7 +40,6 @@
                             <option value="CATEGORIA_VENTA">CATEGORÍA DE VENTA</option>
                             <option value="TIPO_IMPUESTO">TIPO DE IMPUESTO</option>
                             <option value="IMAGEN_DEFECTO">IMAGEN POR DEFECTO</option>
-                            <option value="CATEGORIA_CONTACTO">CATEGORÍA / RUBRO (DIRECTORIO)</option>
                         </select>
                     </div>
                     
@@ -83,8 +82,7 @@
             'COLOR': "Ejemplo: <strong>'ROJO'</strong>, <strong>'NEGRO'</strong>.",
             'CATEGORIA_VENTA': "Ejemplo: <strong>'OFERTA'</strong>, <strong>'COMBO'</strong>.",
             'TIPO_IMPUESTO': "Ejemplo: <strong>'GENERAL'</strong> o <strong>'EXENTO'</strong>.",
-            'IMAGEN_DEFECTO': "Pega aquí el enlace <strong>(URL)</strong> exacto de la imagen para los artículos sin foto.",
-            'CATEGORIA_CONTACTO': "Ejemplo: Para proveedores: <strong>'PAPELERÍA'</strong> o <strong>'TECNOLOGÍA'</strong>. Para clientes: <strong>'GOBIERNO'</strong> o <strong>'COLEGIO'</strong>."
+            'IMAGEN_DEFECTO': "Pega aquí el enlace <strong>(URL)</strong> exacto de la imagen para los artículos sin foto."
         };
 
         async function cargarParametros() {
@@ -106,7 +104,10 @@
 
             try {
                 const res = await fetch(urlFetch, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
-                const data = await res.json(); pintarTabla(data);
+                let data = await res.json(); 
+                // Filtramos para no mostrar categorías de contacto aquí en la vista general
+                if (grupo === 'TODOS') data = data.filter(d => d.grupo !== 'CATEGORIA_CONTACTO');
+                pintarTabla(data);
             } catch(e) { document.getElementById('tabla-parametros').innerHTML = `<tr><td colspan="4" class="p-5 text-center text-red-500 font-bold uppercase">Error de conexión</td></tr>`; }
         }
 
