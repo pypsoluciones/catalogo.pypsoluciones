@@ -1,20 +1,18 @@
 document.addEventListener("DOMContentLoaded", () => {
-    // 1. Detectar en qué página estamos para pintar el botón de naranja automáticamente
     const currentPage = window.location.pathname.split('/').pop() || 'admin_dashboard.html';
 
-    // 2. El código HTML de nuestro menú lateral (incluyendo el fondo oscuro para móviles)
     const menuHTML = `
     <div id="mobile-overlay" onclick="toggleMobileMenu()" class="fixed inset-0 bg-gray-900/60 z-40 hidden backdrop-blur-sm md:hidden transition-opacity"></div>
     <aside id="sidebar" class="w-64 md:w-56 bg-[#143B62] text-white flex flex-col fixed inset-y-0 left-0 z-50 transform -translate-x-full md:translate-x-0 md:relative transition-transform duration-300 shadow-2xl md:shadow-xl">
-        <div class="p-4 border-b border-white/10 flex items-center justify-between gap-3 shrink-0 h-20">
-            <div class="flex items-center w-full h-full overflow-hidden">
-                <img id="app-logo-sidebar" src="" class="max-h-14 max-w-full w-auto object-contain object-left hidden">
+        <div class="p-3 border-b border-white/10 flex items-center justify-center shrink-0 h-20">
+            <div class="flex items-center justify-start w-full h-full">
+                <img id="app-logo-sidebar" src="" class="max-h-16 w-full object-contain object-left hidden">
                 <div id="app-text-sidebar" class="flex items-center gap-3">
                     <i class="fa-solid fa-layer-group text-[#E67E22] text-2xl"></i>
                     <h2 class="font-semibold text-lg tracking-wide">P&P Admin</h2>
                 </div>
             </div>
-            <button onclick="toggleMobileMenu()" class="md:hidden text-gray-300 hover:text-white text-xl"><i class="fa-solid fa-times"></i></button>
+            <button onclick="toggleMobileMenu()" class="md:hidden text-gray-300 hover:text-white text-xl ml-2"><i class="fa-solid fa-times"></i></button>
         </div>
         
         <nav class="flex-1 p-3 space-y-1 overflow-y-auto custom-scroll">
@@ -62,16 +60,9 @@ document.addEventListener("DOMContentLoaded", () => {
     </aside>
     `;
 
-    // 3. Inyectar el menú justo al inicio de la página web
     document.body.insertAdjacentHTML('afterbegin', menuHTML);
-
-    // 4. Cargar los logos de tu empresa automáticamente
     cargarBrandingGlobal();
 });
-
-// =========================================================
-// FUNCIONES GLOBALES (Para no tener que repetirlas nunca más)
-// =========================================================
 
 window.toggleMobileMenu = function() {
     document.getElementById('sidebar').classList.toggle('-translate-x-full');
@@ -80,10 +71,8 @@ window.toggleMobileMenu = function() {
 
 window.cerrarSesion = function() {
     if(confirm("¿Estás seguro que deseas cerrar sesión?")) {
-        localStorage.removeItem('pyp_sesion_activa');
-        localStorage.removeItem('pyp_token_seguro');
-        localStorage.removeItem('pyp_usuario_rol');
-        localStorage.removeItem('pyp_usuario_nombre');
+        localStorage.removeItem('pyp_sesion_activa'); localStorage.removeItem('pyp_token_seguro');
+        localStorage.removeItem('pyp_usuario_rol'); localStorage.removeItem('pyp_usuario_nombre');
         window.location.href = 'login.html';
     }
 };
