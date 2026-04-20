@@ -3,197 +3,167 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin | Directorio Maestro</title>
+    <title>P&P Admin | Directorio</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+        body { font-family: 'Inter', sans-serif; }
+        .custom-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
         .custom-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
-        .btn-press:active { transform: scale(0.95); }
+        .btn-press:active { transform: scale(0.97); }
+        .tab-active { border-bottom: 2px solid #E67E22; color: #143B62; font-weight: bold; }
+        .tab-inactive { color: #64748b; font-weight: 500; border-bottom: 2px solid transparent; }
     </style>
+    
+    <script src="config.js"></script>
     <script>
-    // Guardián de Seguridad: Exige el Token Real
-    if (!localStorage.getItem('pyp_token_seguro')) {
-        window.location.href = 'login.html';
-    }
-</script>
+        if (!localStorage.getItem('pyp_token_seguro')) window.location.href = 'login.html';
+    </script>
 </head>
-<body class="bg-[#f0f2f5] font-sans flex h-screen overflow-hidden text-gray-800">
-  
-    <main class="flex-1 flex flex-col h-screen overflow-hidden bg-gray-50">
-        <header class="bg-white shadow-sm px-6 py-4 flex justify-between items-center z-10 shrink-0">
-            <div>
-                <h1 class="text-xl font-bold text-[#143B62] flex items-center gap-2"><i class="fa-solid fa-address-book"></i> Directorio Maestro</h1>
-            </div>
-            <div class="flex items-center gap-3">
-                <div class="bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100 flex items-center gap-2 text-xs font-bold text-[#143B62]">
-                    <i class="fa-solid fa-user-tie"></i> <span id="nombre-usuario">Admin</span>
+<body class="bg-[#f4f6f8] flex h-screen overflow-hidden text-gray-800 relative">
+
+    <script src="menu.js"></script>
+
+    <main class="flex-1 flex flex-col h-screen overflow-hidden bg-[#f4f6f8] w-full z-10 relative">
+        
+        <header class="bg-white shadow-sm px-4 md:px-6 py-3 flex justify-between items-center z-10 shrink-0 border-b border-gray-200">
+            <div class="flex items-center gap-2 min-w-0">
+                <button onclick="toggleMobileMenu()" class="md:hidden text-gray-600 hover:text-[#143B62] text-xl transition btn-press px-1 shrink-0"><i class="fa-solid fa-bars"></i></button>
+                <div class="flex items-center gap-2 overflow-hidden">
+                    <img id="app-logo-header" src="" class="h-7 md:h-8 hidden object-contain shrink-0">
+                    <h1 id="app-text-header" class="text-base md:text-lg font-semibold text-[#143B62] flex items-center gap-2 truncate">
+                        <i id="app-icon-header" class="fa-solid fa-address-book text-[#143B62] hidden sm:inline-block shrink-0"></i> 
+                        <span class="truncate">Directorio Maestro</span>
+                    </h1>
                 </div>
-                <button onclick="cerrarSesion()" class="md:hidden text-red-500 hover:text-red-700 text-xl transition btn-press"><i class="fa-solid fa-power-off"></i></button>
+            </div>
+            <div class="flex items-center gap-3 shrink-0">
+                <button onclick="window.location.reload()" class="md:hidden text-blue-600 bg-blue-50 w-8 h-8 rounded-full flex items-center justify-center hover:bg-blue-100 transition shadow-sm btn-press"><i class="fa-solid fa-rotate-right"></i></button>
+                <div class="bg-gray-50 px-2 md:px-3 py-1.5 rounded-md border border-gray-200 hidden sm:flex items-center gap-2 text-[11px] font-semibold text-gray-600 tracking-wide uppercase">
+                    <i class="fa-solid fa-user-tie text-[#143B62]"></i> <span id="nombre-usuario">Admin</span>
+                </div>
             </div>
         </header>
 
-        <div class="flex-1 overflow-auto p-4 md:p-6 custom-scroll">
-            <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col h-full">
-                <div class="p-4 border-b border-gray-100 flex gap-3 bg-gray-50 justify-between items-center">
-                    <div class="flex gap-2">
-                        <button id="btn-clientes" onclick="cambiarPestana('Clientes')" class="bg-white border border-gray-300 px-4 py-1.5 rounded font-bold text-sm shadow-sm text-[#143B62] transition btn-press">CLIENTES</button>
-                        <button id="btn-proveedores" onclick="cambiarPestana('Proveedores')" class="bg-gray-100 text-gray-500 px-4 py-1.5 rounded font-semibold text-sm hover:bg-gray-200 transition btn-press uppercase">Proveedores</button>
-                    </div>
-                    <button onclick="alert('Módulo de creación en construcción')" class="bg-[#25D366] hover:bg-[#1ebd5c] text-white px-4 py-2 rounded-lg font-bold text-sm shadow-sm transition flex items-center gap-2 btn-press">
-                        <i class="fa-solid fa-plus"></i> <span class="hidden sm:inline">NUEVO CONTACTO</span>
-                    </button>
-                </div>
+        <div class="flex-1 overflow-auto p-4 md:p-6 custom-scroll pb-24 md:pb-6 flex flex-col">
+            
+            <div class="bg-white rounded-t-xl border border-gray-200 border-b-0 px-4 pt-3 flex gap-6 shrink-0">
+                <button onclick="cambiarPestana('clientes')" id="tab-clientes" class="tab-active pb-3 px-2 text-sm uppercase tracking-wider transition">Clientes</button>
+                <button onclick="cambiarPestana('proveedores')" id="tab-proveedores" class="tab-inactive pb-3 px-2 text-sm uppercase tracking-wider transition">Proveedores</button>
+            </div>
 
-                <div class="p-4 border-b border-gray-100 bg-white">
-                    <div class="relative">
-                        <i class="fa-solid fa-search absolute left-3 top-2.5 text-gray-400"></i>
-                        <input type="text" id="buscador-contactos" oninput="aplicarFiltros()" placeholder="BUSCAR POR RIF, NOMBRE O EMPRESA..." class="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2 text-sm focus:outline-none focus:border-[#E67E22] uppercase font-bold">
-                    </div>
+            <div class="bg-white p-4 border border-gray-200 shadow-sm flex flex-col sm:flex-row justify-between items-center gap-3 shrink-0">
+                <div class="relative w-full sm:w-1/2 lg:w-1/3">
+                    <i class="fa-solid fa-search absolute left-3 top-2.5 text-gray-400"></i>
+                    <input type="text" id="buscador" oninput="filtrarContactos()" placeholder="Buscar por Documento o Nombre..." class="w-full border border-gray-300 rounded-lg pl-9 pr-4 py-2 text-sm focus:outline-none focus:border-[#143B62] uppercase transition">
                 </div>
+                <button onclick="alert('Módulo de registro en desarrollo')" class="w-full sm:w-auto bg-[#25D366] hover:bg-[#1ebd5c] text-white px-5 py-2.5 rounded-lg font-bold text-[13px] shadow-sm transition btn-press flex justify-center items-center gap-2">
+                    <i class="fa-solid fa-plus"></i> NUEVO CONTACTO
+                </button>
+            </div>
 
-                <div class="flex-1 overflow-y-auto custom-scroll">
-                    <table class="w-full text-left text-sm border-collapse">
-                        <thead class="bg-[#143B62] text-white text-[10px] uppercase font-black sticky top-0 z-10">
+            <div class="flex-1 bg-white border border-gray-200 border-t-0 rounded-b-xl shadow-sm overflow-hidden flex flex-col">
+                <div class="overflow-x-auto flex-1 custom-scroll">
+                    <table class="w-full text-left text-sm whitespace-nowrap min-w-[700px]">
+                        <thead class="bg-[#143B62] text-white text-[10px] uppercase tracking-wider sticky top-0">
                             <tr>
-                                <th class="p-4">DOCUMENTO</th>
-                                <th class="p-4">NOMBRE / RAZÓN SOCIAL</th>
-                                <th class="p-4" id="col-contacto-dinamica">CONTACTO</th>
-                                <th class="p-4">DIRECCIÓN PRINCIPAL</th>
-                                <th class="p-4 text-center">ACCIONES</th>
+                                <th class="py-3 px-4 w-32">Documento</th>
+                                <th class="py-3 px-4">Nombre / Razón Social</th>
+                                <th class="py-3 px-4 w-40">Contacto</th>
+                                <th class="py-3 px-4">Dirección</th>
+                                <th class="py-3 px-4 text-center w-24">Estado</th>
                             </tr>
                         </thead>
-                        <tbody id="tabla-contactos" class="divide-y divide-gray-100"></tbody>
+                        <tbody id="tabla-contactos" class="divide-y divide-gray-100">
+                            <tr><td colspan="5" class="p-10 text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin text-2xl mb-2 block"></i> Cargando contactos...</td></tr>
+                        </tbody>
                     </table>
                 </div>
             </div>
+
         </div>
     </main>
 
     <script>
-        const SUPABASE_URL = 'https://icvfmdvvochzaktugqvj.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImljdmZtZHZ2b2NoemFrdHVncXZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyNDEzMzEsImV4cCI6MjA5MTgxNzMzMX0.gO3D39piT6KGbMMOzrPGWXUp5-g_nOBAgJ-nwPv8IcQ';
+        const TOKEN_JWT = localStorage.getItem('pyp_token_seguro');
         
-        let dataActual = [];
-        let pestanaActual = 'Clientes';
+        let pestanaActual = 'clientes';
+        let dataClientes = [];
+        let dataProveedores = [];
 
         window.onload = async () => {
             const nombre = localStorage.getItem('pyp_usuario_nombre');
-            if(nombre) document.getElementById('nombre-usuario').innerText = nombre.split(' ')[0].toUpperCase();
-            await cargarDatosDesdeBD('Clientes');
+            if(nombre) document.getElementById('nombre-usuario').innerText = nombre.split(' ')[0];
+            await cargarDatos();
         };
 
-        function cerrarSesion() {
-            if(confirm("¿Estás seguro que deseas cerrar sesión?")) {
-                localStorage.removeItem('pyp_sesion_activa');
-                window.location.href = 'login.html';
-            }
-        }
-
-        // Blindaje contra números enteros y nulos
-        function formatearTelefono(tel) {
-            if (tel === null || tel === undefined || tel === '') return 'N/A';
-            let telStr = String(tel).trim();
-            if (telStr === '' || telStr.toUpperCase() === 'N/A') return 'N/A';
-            
-            let numStr = telStr.replace(/\D/g, '');
-            if (numStr.length === 12 && numStr.startsWith('58')) {
-                return `+${numStr.substring(0, 2)} ${numStr.substring(2, 5)}-${numStr.substring(5)}`;
-            }
-            if (numStr.length === 11 && numStr.startsWith('0')) {
-                return `${numStr.substring(0, 4)}-${numStr.substring(4)}`;
-            }
-            return telStr;
-        }
-
-        async function cargarDatosDesdeBD(tipo) {
-            pestanaActual = tipo;
-            const tbody = document.getElementById('tabla-contactos');
-            tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin text-xl mb-2 block"></i> CARGANDO ${tipo.toUpperCase()}...</td></tr>`;
-
-            const nombreTabla = tipo === 'Clientes' ? 'clientes' : 'proveedores';
-            document.getElementById('col-contacto-dinamica').innerText = tipo === 'Clientes' ? 'CONTACTO' : 'VENDEDOR ASIGNADO';
-
+        async function cargarDatos() {
             try {
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/${nombreTabla}?select=*`, { 
-                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${localStorage.getItem('pyp_token_seguro')});
-                
-                const respuestaJson = await res.json();
-                
-                if (!res.ok) {
-                    tbody.innerHTML = `<tr><td colspan="5" class="p-5 text-center text-red-500 font-bold uppercase">ERROR BD: ${respuestaJson.message}</td></tr>`;
-                    dataActual = [];
-                    return;
-                }
+                // Descargamos ambos al mismo tiempo para mayor velocidad
+                const [resCli, resProv] = await Promise.all([
+                    fetch(`${SUPABASE_URL}/rest/v1/clientes?select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
+                    fetch(`${SUPABASE_URL}/rest/v1/proveedores?select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } })
+                ]);
 
-                dataActual = respuestaJson;
-                aplicarFiltros();
+                if(resCli.ok) dataClientes = await resCli.json();
+                if(resProv.ok) dataProveedores = await resProv.json();
+
+                renderizarTabla();
             } catch(e) {
-                tbody.innerHTML = `<tr><td colspan="5" class="p-5 text-center text-red-500 font-bold">ERROR DE RED O JAVASCRIPT.</td></tr>`;
-                dataActual = [];
+                document.getElementById('tabla-contactos').innerHTML = `<tr><td colspan="5" class="p-10 text-center text-red-500 font-bold uppercase"><i class="fa-solid fa-triangle-exclamation text-2xl mb-2 block"></i> Error de conexión.</td></tr>`;
             }
         }
 
-        function cambiarPestana(pestana) {
-            if(pestana === pestanaActual) return;
-            const btnC = document.getElementById('btn-clientes');
-            const btnP = document.getElementById('btn-proveedores');
-            
-            if(pestana === 'Clientes') {
-                btnC.className = "bg-white border border-gray-300 px-4 py-1.5 rounded font-bold text-sm shadow-sm text-[#143B62] transition btn-press";
-                btnP.className = "bg-gray-100 text-gray-500 px-4 py-1.5 rounded font-semibold text-sm hover:bg-gray-200 transition btn-press uppercase";
-            } else {
-                btnP.className = "bg-white border border-gray-300 px-4 py-1.5 rounded font-bold text-sm shadow-sm text-[#143B62] transition btn-press uppercase";
-                btnC.className = "bg-gray-100 text-gray-500 px-4 py-1.5 rounded font-semibold text-sm hover:bg-gray-200 transition btn-press";
-            }
-            
-            document.getElementById('buscador-contactos').value = '';
-            cargarDatosDesdeBD(pestana);
+        function cambiarPestana(tipo) {
+            pestanaActual = tipo;
+            document.getElementById('tab-clientes').className = tipo === 'clientes' ? 'tab-active pb-3 px-2 text-sm uppercase tracking-wider transition' : 'tab-inactive pb-3 px-2 text-sm uppercase tracking-wider transition';
+            document.getElementById('tab-proveedores').className = tipo === 'proveedores' ? 'tab-active pb-3 px-2 text-sm uppercase tracking-wider transition' : 'tab-inactive pb-3 px-2 text-sm uppercase tracking-wider transition';
+            document.getElementById('buscador').value = '';
+            renderizarTabla();
         }
 
-        function pintarTabla(arr) {
+        function filtrarContactos() { renderizarTabla(); }
+
+        function renderizarTabla() {
+            const query = document.getElementById('buscador').value.toLowerCase();
             const tbody = document.getElementById('tabla-contactos');
-            if(!arr.length) {
-                tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-gray-500 font-bold">NO HAY REGISTROS.</td></tr>`;
+            const dataBase = pestanaActual === 'clientes' ? dataClientes : dataProveedores;
+
+            // Mapeamos los nombres de columnas porque a veces varían entre Clientes y Proveedores en la Base de Datos
+            const datosFiltrados = dataBase.filter(c => {
+                const doc = (c.documento_identidad || c.rif || '').toLowerCase();
+                const nom = (c.nombre_razon_social || c.razon_social || '').toLowerCase();
+                return doc.includes(query) || nom.includes(query);
+            });
+
+            if(datosFiltrados.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-gray-400 font-medium"><i class="fa-solid fa-folder-open text-3xl mb-2 block opacity-50"></i> No se encontraron ${pestanaActual}.</td></tr>`;
                 return;
             }
-            
-            tbody.innerHTML = arr.map(c => {
-                let doc, nom, cel, tlf2, dir, extra;
 
-                if(pestanaActual === 'Clientes') {
-                    doc = c.documento_identidad || '-';
-                    nom = c.nombre_razon_social || '-';
-                    cel = formatearTelefono(c.celular_01 || c.telefono);
-                    dir = c.direccion_fiscal || 'SIN DIRECCIÓN';
-                    extra = (c.correo || '').toLowerCase();
-                } else {
-                    doc = c.rif || '-';
-                    nom = c.razon_social || '-';
-                    cel = formatearTelefono(c.telefono_01);
-                    dir = c.direccion_fiscal || 'SIN DIRECCIÓN';
-                    extra = c.vendedor_asignado ? `VND: ${c.vendedor_asignado}` : (c.correo || '').toLowerCase();
-                }
+            let html = '';
+            datosFiltrados.forEach(c => {
+                const doc = c.documento_identidad || c.rif || '-';
+                const nom = c.nombre_razon_social || c.razon_social || '-';
+                const tel = c.telefono || '-';
+                const dir = c.direccion || '-';
+                const estado = (c.estatus || 'ACTIVO').toUpperCase();
                 
-                return `
-                <tr class="hover:bg-gray-50 transition border-b border-gray-100">
-                    <td class="p-4 font-bold text-blue-600 text-xs">${doc}</td>
-                    <td class="p-4 font-bold text-gray-800 text-sm">${nom}</td>
-                    <td class="p-4 text-xs text-gray-600 font-bold">
-                        <div class="flex items-center gap-2 mb-1"><i class="fa-solid fa-phone text-gray-400"></i> <span class="tracking-wide">${cel}</span></div>
-                        ${extra ? `<div class="flex items-center gap-2 text-blue-500"><i class="${extra.includes('@') ? 'fa-solid fa-envelope' : 'fa-solid fa-id-badge'} text-gray-400"></i> ${extra}</div>` : ''}
-                    </td>
-                    <td class="p-4 text-[10px] text-gray-500 max-w-[250px] leading-tight font-semibold">${dir}</td>
-                    <td class="p-4 text-center">
-                        <button onclick="alert('EDICIÓN EN DESARROLLO')" class="bg-white border border-gray-200 hover:border-[#143B62] text-[#143B62] px-3 py-2 rounded shadow-sm transition"><i class="fa-solid fa-pen-to-square"></i></button>
-                    </td>
-                </tr>
-                `;
-            }).join('');
-        }
+                const badge = estado === 'ACTIVO' ? `<span class="bg-emerald-50 text-emerald-600 px-2 py-1 rounded text-[9px] font-bold border border-emerald-200">ACTIVO</span>` : `<span class="bg-red-50 text-red-600 px-2 py-1 rounded text-[9px] font-bold border border-red-200">INACTIVO</span>`;
 
-      }
+                html += `
+                <tr class="hover:bg-gray-50 transition border-b border-gray-100">
+                    <td class="py-3 px-4 font-mono text-[11px] text-gray-500">${doc}</td>
+                    <td class="py-3 px-4 font-bold text-[#143B62] text-[12px] truncate max-w-xs">${nom}</td>
+                    <td class="py-3 px-4 text-gray-600 text-[11px]"><i class="fa-solid fa-phone text-gray-400 mr-1"></i> ${tel}</td>
+                    <td class="py-3 px-4 text-gray-500 text-[11px] truncate max-w-xs">${dir}</td>
+                    <td class="py-3 px-4 text-center">${badge}</td>
+                </tr>`;
+            });
+
+            tbody.innerHTML = html;
+        }
     </script>
-    <script src="menu.js"></script>
 </body>
 </html>
