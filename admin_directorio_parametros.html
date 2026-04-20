@@ -23,13 +23,14 @@
 
         <div class="flex-1 overflow-auto p-4 md:p-6 custom-scroll pb-24 md:pb-6 flex flex-col md:flex-row gap-6">
             <div class="w-full md:w-1/3 bg-white rounded-xl shadow-sm border border-gray-200 p-5 shrink-0 h-fit">
-                <h3 class="font-bold text-[#143B62] mb-4 flex items-center gap-2 border-b pb-2"><i class="fa-solid fa-layer-group"></i> Categorías y Rubros</h3>
+                <h3 class="font-bold text-[#143B62] mb-4 flex items-center gap-2 border-b pb-2"><i class="fa-solid fa-layer-group"></i> Clasificación de Contactos</h3>
                 <form id="form-param" onsubmit="guardarParametro(event)">
                     <div class="mb-4">
                         <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Seleccionar Ajuste *</label>
                         <select id="param-grupo" onchange="cargarParametros()" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-semibold text-[#143B62] focus:border-[#E67E22] outline-none bg-gray-50 transition">
                             <option value="TODOS">-- 👥 MOSTRAR TODOS --</option>
-                            <option value="CATEGORIA_CONTACTO">CATEGORÍA / RUBRO (CLIENTES Y PROVEEDORES)</option>
+                            <option value="CATEGORIA_CLIENTE">CATEGORÍA DE CLIENTES</option>
+                            <option value="RUBRO_PROVEEDOR">RUBRO DE PROVEEDORES</option>
                         </select>
                     </div>
                     
@@ -58,11 +59,11 @@
 
     <script>
         const TOKEN_JWT = localStorage.getItem('pyp_token_seguro');
-
         window.onload = () => { cargarParametros(); };
 
         const textosAyuda = {
-            'CATEGORIA_CONTACTO': "Ejemplo: Para proveedores: <strong>'PAPELERÍA'</strong> o <strong>'TECNOLOGÍA'</strong>. Para clientes: <strong>'GOBIERNO'</strong> o <strong>'COLEGIO'</strong>."
+            'CATEGORIA_CLIENTE': "Ejemplo: <strong>'GOBIERNO'</strong>, <strong>'COLEGIO'</strong>, <strong>'MAYORISTA'</strong>, <strong>'RETAIL'</strong>.",
+            'RUBRO_PROVEEDOR': "Ejemplo: <strong>'PAPELERÍA'</strong>, <strong>'TECNOLOGÍA'</strong>, <strong>'SERVICIOS'</strong>, <strong>'LIMPIEZA'</strong>."
         };
 
         async function cargarParametros() {
@@ -81,7 +82,7 @@
             if(grupo !== 'TODOS') {
                 urlFetch += `&grupo=eq.${grupo}`;
             } else {
-                urlFetch += `&grupo=eq.CATEGORIA_CONTACTO`; // Si es TODOS, en esta pantalla solo mostramos los del directorio
+                urlFetch += `&grupo=in.(CATEGORIA_CLIENTE,RUBRO_PROVEEDOR)`;
             }
 
             try {
