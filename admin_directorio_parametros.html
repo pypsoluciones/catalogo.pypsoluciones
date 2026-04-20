@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>P&P Admin | Parámetros de Directorio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Inter', sans-serif; } .custom-scroll::-webkit-scrollbar { width: 5px; height: 5px; } .custom-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }</style>
+    <script src="config.js"></script>
+    <script>if (!localStorage.getItem('pyp_token_seguro')) window.location.href = 'login.html';</script>
+</head>
+<body class="bg-[#f4f6f8] flex h-screen overflow-hidden text-gray-800 relative">
+    <script src="menu.js"></script>
+    <main class="flex-1 flex flex-col h-screen overflow-hidden bg-[#f4f6f8] w-full z-10 relative">
+        <header class="bg-white shadow-sm px-4 md:px-6 py-4 flex justify-between items-center z-10 shrink-0 border-b border-gray-200">
+            <div class="flex items-center gap-3">
+                <button onclick="toggleMobileMenu()" class="md:hidden text-gray-600 hover:text-[#143B62] text-xl transition px-2"><i class="fa-solid fa-bars"></i></button>
+                <h1 class="text-lg font-semibold text-[#143B62] flex items-center gap-2"><i class="fa-solid fa-address-book text-[#E67E22]"></i> Parámetros de Directorio</h1>
+            </div>
+        </header>
+
+        <div class="flex-1 overflow-auto p-4 md:p-6 custom-scroll pb-24 md:pb-6 flex flex-col md:flex-row gap-6">
+            <div class="w-full md:w-1/3 bg-white rounded-xl shadow-sm border border-gray-200 p-5 shrink-0 h-fit">
+                <h3 class="font-bold text-[#143B62] mb-4 flex items-center gap-2 border-b pb-2"><i class="fa-solid fa-layer-group"></i> Categorías y Rubros</h3>
+                <form id="form-param" onsubmit="guardarParametro(event)">
+                    <div class="mb-4">
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Seleccionar Ajuste *</label>
+                        <select id="param-grupo" onchange="cargarParametros()" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-semibold text-[#143B62] focus:border-[#E67E22] outline-none bg-gray-50 transition">
+                            <option value="TODOS">-- 👥 MOSTRAR TODOS --</option>
+                            <option value="CATEGORIA_CONTACTO">CATEGORÍA / RUBRO (CLIENTES Y PROVEEDORES)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-4" id="caja-nuevo-valor" style="display:none;">
+                        <div class="bg-blue-50 border border-blue-200 text-blue-700 p-2.5 rounded text-[10px] mb-3 flex items-start gap-2 shadow-sm"><i class="fa-solid fa-circle-info mt-0.5"></i><p id="texto-ayuda-param">Selecciona un grupo para ver sugerencias.</p></div>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Nuevo Valor a Registrar *</label>
+                        <input type="text" id="param-valor" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-bold focus:border-[#E67E22] outline-none uppercase" oninput="this.value = this.value.toUpperCase()">
+                    </div>
+                    <button type="submit" id="btn-guardar" style="display:none;" class="w-full bg-[#143B62] hover:bg-[#0f2d4a] text-white font-bold py-2.5 rounded-lg shadow-sm transition flex justify-center items-center gap-2"><i class="fa-solid fa-plus"></i> Guardar Parámetro</button>
+                    <p id="msg-selecciona" class="text-xs text-center text-gray-400 font-medium mt-2">Selecciona un ajuste arriba para agregar nuevos valores.</p>
+                </form>
+            </div>
+
+            <div class="flex-1 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
+                <div class="overflow-x-auto flex-1 custom-scroll">
+                    <table class="w-full text-left text-sm table-fixed">
+                        <thead class="bg-[#143B62] text-white text-[10px] uppercase tracking-wider sticky top-0">
+                            <tr><th class="py-3 px-4 w-[35%]">Ajuste</th><th class="py-3 px-4 w-[35%]">Valor Registrado</th><th class="py-3 px-4 text-center w-[15%]">Estatus</th><th class="py-3 px-4 text-center w-[15%]">Acción</th></tr>
+                        </thead>
+                        <tbody id="tabla-parametros" class="divide-y divide-gray-100"><tr><td colspan="4" class="p-10 text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin text-2xl mb-2 block"></i> Cargando data...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const TOKEN_JWT = localStorage.getItem('pyp_token_seguro');
+
+        window.onload = () => { cargarParametros(); };
+
+        const textosAyuda = {
+            'CATEGORIA_CONTACTO': "Ejemplo: Para proveedores: <strong>'PAPELERÍA'</strong> o <strong>'TECNOLOGÍA'</strong>. Para clientes: <strong>'GOBIERNO'</strong> o <strong>'COLEGIO'</strong>."
+        };
+
+        async function cargarParametros() {
+            const grupo = document.getElementById('param-grupo').value;
+            const cajaValor = document.getElementById('caja-nuevo-valor');
+            const btnGuardar = document.getElementById('btn-guardar');
+            const msg = document.getElementById('msg-selecciona');
+
+            if(grupo === 'TODOS') { cajaValor.style.display = 'none'; btnGuardar.style.display = 'none'; msg.style.display = 'block'; } 
+            else { 
+                cajaValor.style.display = 'block'; btnGuardar.style.display = 'flex'; msg.style.display = 'none'; 
+                document.getElementById('texto-ayuda-param').innerHTML = textosAyuda[grupo] || "Escribe el nuevo valor a registrar.";
+            }
+
+            let urlFetch = `${SUPABASE_URL}/rest/v1/parametros_inventario?select=*&order=grupo.asc,valor.asc`;
+            if(grupo !== 'TODOS') {
+                urlFetch += `&grupo=eq.${grupo}`;
+            } else {
+                urlFetch += `&grupo=eq.CATEGORIA_CONTACTO`; // Si es TODOS, en esta pantalla solo mostramos los del directorio
+            }
+
+            try {
+                const res = await fetch(urlFetch, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                const data = await res.json(); pintarTabla(data);
+            } catch(e) { document.getElementById('tabla-parametros').innerHTML = `<tr><td colspan="4" class="p-5 text-center text-red-500 font-bold uppercase">Error de conexión</td></tr>`; }
+        }
+
+        function pintarTabla(arr) {
+            const tbody = document.getElementById('tabla-parametros');
+            if(arr.length === 0) { tbody.innerHTML = `<tr><td colspan="4" class="p-10 text-center text-gray-400 font-medium">No hay parámetros de directorio registrados.</td></tr>`; return; }
+            let html = '';
+            arr.forEach(p => {
+                const badge = p.estatus === 'ACTIVO' ? `<span class="bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded text-[9px] font-bold border border-emerald-200">ACTIVO</span>` : `<span class="bg-red-50 text-red-600 px-2 py-0.5 rounded text-[9px] font-bold border border-red-200">INACTIVO</span>`;
+                html += `<tr class="hover:bg-gray-50 transition border-b border-gray-100"><td class="py-2 px-4 text-[10px] font-bold text-gray-400">${p.grupo}</td><td class="py-2 px-4 text-xs font-bold text-[#143B62] truncate max-w-[200px]">${p.valor}</td><td class="py-2 px-4 text-center">${badge}</td><td class="py-2 px-4 text-center"><button onclick="eliminarParametro('${p.id_parametro}')" class="text-gray-400 hover:text-red-500 transition px-2 py-1 rounded hover:bg-red-50"><i class="fa-solid fa-trash"></i></button></td></tr>`;
+            });
+            tbody.innerHTML = html;
+        }
+
+        async function guardarParametro(e) {
+            e.preventDefault(); const btn = document.getElementById('btn-guardar'); btn.innerHTML = 'Guardando...'; btn.disabled = true;
+            const grupo = document.getElementById('param-grupo').value;
+            let valorInput = document.getElementById('param-valor').value.trim();
+            if(!valorInput) { btn.innerHTML = 'Guardar Parámetro'; btn.disabled = false; return; }
+            
+            const valorFinal = valorInput.toUpperCase();
+
+            try {
+                const resUser = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?select=id_empresa&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }); const dataUser = await resUser.json(); const miEmpresa = dataUser.length > 0 ? dataUser[0].id_empresa : null;
+                await fetch(`${SUPABASE_URL}/rest/v1/parametros_inventario`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ grupo: grupo, valor: valorFinal, estatus: 'ACTIVO', id_empresa: miEmpresa }) });
+                document.getElementById('param-valor').value = ''; cargarParametros();
+            } catch(err) { alert("Error al guardar."); } finally { btn.innerHTML = `<i class="fa-solid fa-plus"></i> Guardar Parámetro`; btn.disabled = false; }
+        }
+
+        async function eliminarParametro(id) {
+            if(!confirm("¿Estás seguro de eliminar este parámetro?")) return;
+            try { await fetch(`${SUPABASE_URL}/rest/v1/parametros_inventario?id_parametro=eq.${id}`, { method: 'DELETE', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }); cargarParametros(); } catch(e) {}
+        }
+    </script>
+</body>
+</html>
