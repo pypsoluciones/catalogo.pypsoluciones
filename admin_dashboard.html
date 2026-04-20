@@ -20,14 +20,7 @@
         .dato-sensible { transition: filter 0.3s ease; }
         .modo-privado .dato-sensible { filter: blur(6px); user-select: none; pointer-events: none; }
         
-        #watermark-bg {
-            background-size: 50%;
-            background-position: center;
-            background-repeat: no-repeat;
-            opacity: 0.04;
-            pointer-events: none;
-            z-index: 0;
-        }
+        #watermark-bg { background-size: 50%; background-position: center; background-repeat: no-repeat; opacity: 0.04; pointer-events: none; z-index: 0; }
     </style>
     
     <script src="config.js"></script>
@@ -40,19 +33,28 @@
     <div id="watermark-bg" class="absolute inset-0"></div>
 
     <main class="flex-1 flex flex-col h-screen overflow-hidden w-full relative z-10">
-        <header class="bg-white/90 backdrop-blur shadow-sm px-4 md:px-6 py-3 flex justify-between items-center z-10 shrink-0 border-b border-gray-200">
-            <div class="flex items-center gap-3">
-                <button onclick="toggleMobileMenu()" class="md:hidden text-gray-600 hover:text-[#143B62] text-xl transition btn-press px-2"><i class="fa-solid fa-bars"></i></button>
-                <h1 class="text-base md:text-lg font-semibold text-[#143B62] flex items-center gap-2 truncate">
-                    <img id="app-logo-header" src="" class="h-6 hidden object-contain">
-                    <i id="app-icon-header" class="fa-solid fa-chart-pie text-[#143B62] hidden sm:inline-block"></i> 
-                    <span id="app-title-header">Resumen Gerencial</span>
-                </h1>
+        
+        <header class="bg-white/90 backdrop-blur shadow-sm px-3 md:px-6 py-3 flex justify-between items-center z-10 shrink-0 border-b border-gray-200">
+            <div class="flex items-center gap-2 min-w-0">
+                <button onclick="toggleMobileMenu()" class="md:hidden text-gray-600 hover:text-[#143B62] text-xl transition btn-press px-1 shrink-0"><i class="fa-solid fa-bars"></i></button>
+                
+                <div class="flex items-center gap-2 overflow-hidden">
+                    <img id="app-logo-header" src="" class="h-7 md:h-8 hidden object-contain shrink-0">
+                    <h1 id="app-text-header" class="text-base md:text-lg font-semibold text-[#143B62] flex items-center gap-2 truncate">
+                        <i id="app-icon-header" class="fa-solid fa-chart-pie text-[#143B62] hidden sm:inline-block shrink-0"></i> 
+                        <span class="truncate">Resumen Gerencial</span>
+                    </h1>
+                </div>
             </div>
-            <div class="flex items-center gap-2 md:gap-4">
+            <div class="flex items-center gap-3 shrink-0">
+                <button onclick="window.location.reload()" class="md:hidden text-blue-600 bg-blue-50 w-8 h-8 rounded-full flex items-center justify-center hover:bg-blue-100 transition shadow-sm btn-press" title="Actualizar Pantalla"><i class="fa-solid fa-rotate-right"></i></button>
+                
                 <button onclick="togglePrivacidad()" id="btn-privacidad" class="text-gray-400 hover:text-[#143B62] transition text-lg btn-press" title="Ocultar/Mostrar Valores"><i class="fa-solid fa-eye-slash"></i></button>
-                <div class="bg-gray-50 px-2 md:px-3 py-1.5 rounded-md border border-gray-200 flex items-center gap-2 text-[10px] md:text-[11px] font-semibold text-gray-600 tracking-wide uppercase">
-                    <i class="fa-solid fa-user-tie text-[#143B62]"></i> <span id="nombre-usuario" class="hidden sm:inline-block">Admin</span>
+                <div class="bg-gray-50 px-2 md:px-3 py-1.5 rounded-md border border-gray-200 hidden sm:flex items-center gap-2 text-[11px] font-semibold text-gray-600 tracking-wide uppercase">
+                    <i class="fa-solid fa-user-tie text-[#143B62]"></i> <span id="nombre-usuario">Admin</span>
+                </div>
+                <div class="sm:hidden bg-gray-50 w-7 h-7 rounded-full border border-gray-200 flex items-center justify-center text-gray-600">
+                    <i class="fa-solid fa-user-tie text-xs"></i>
                 </div>
             </div>
         </header>
@@ -116,7 +118,7 @@
                         document.getElementById('watermark-bg').style.backgroundImage = `url('${fondoObj.valor}')`;
                     }
                 }
-            } catch(e) { console.error("No se pudo cargar la configuración de la BD."); }
+            } catch(e) { console.error("No se pudo cargar la configuración."); }
         }
 
         function togglePrivacidad() {
