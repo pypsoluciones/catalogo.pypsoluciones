@@ -199,7 +199,71 @@
                 if(Array.isArray(dataCli)) document.getElementById('indicador-clientes').innerText = dataCli.length;
             } catch(e) { console.error("Error cargando indicadores", e); }
         }
-    </script>
     <script src="menu.js"></script>
-</body>
-</html>
+    <script>
+        const SUPABASE_URL = 'https://icvfmdvvochzaktugqvj.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImljdmZtZHZ2b2NoemFrdHVncXZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyNDEzMzEsImV4cCI6MjA5MTgxNzMzMX0.gO3D39piT6KGbMMOzrPGWXUp5-g_nOBAgJ-nwPv8IcQ';
+
+        window.onload = async () => {
+            const nombre = localStorage.getItem('pyp_usuario_nombre');
+            if (nombre) document.getElementById('nombre-usuario').innerText = nombre.split(' ')[0];
+            
+            if(localStorage.getItem('pyp_privacidad') === 'false') { togglePrivacidad(); }
+            
+            await cargarConfiguracionGlobal();
+            cargarIndicadores();
+        };
+
+        async function cargarConfiguracionGlobal() {
+            try {
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?select=*`, {
+                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${localStorage.getItem('pyp_token_seguro')}` }
+                });
+                if(res.ok) {
+                    const config = await res.json();
+                    const logoObj = config.find(c => c.parametro === 'LOGO_URL');
+                    const fondoObj = config.find(c => c.parametro === 'FONDO_URL');
+                    
+                    if(logoObj && logoObj.valor) localStorage.setItem('pyp_logo_url', logoObj.valor);
+                    if(fondoObj && fondoObj.valor) {
+                        localStorage.setItem('pyp_fondo_url', fondoObj.valor);
+                        document.getElementById('watermark-bg').style.backgroundImage = `url('${fondoObj.valor}')`;
+                    }
+                }
+            } catch(e) { console.error("No se pudo cargar la configuración."); }
+        }
+
+        function togglePrivacidad() {
+            const body = document.getElementById('body-dashboard');
+            const icon = document.querySelector('#btn-privacidad i');
+            
+            if(body.classList.contains('modo-privado')) {
+                body.classList.remove('modo-privado');
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
+                icon.classList.add('text-[#E67E22]');
+                localStorage.setItem('pyp_privacidad', 'false');
+            } else {
+                body.classList.add('modo-privado');
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
+                icon.classList.remove('text-[#E67E22]');
+                localStorage.setItem('pyp_privacidad', 'true');
+            }
+        }
+
+        async function cargarIndicadores() {
+            try {
+                const [resProd, resCli] = await Promise.all([
+                    fetch(`${SUPABASE_URL}/rest/v1/productos?select=id_producto_sku&estado_producto=eq.ACTIVO`, { 
+                        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${localStorage.getItem('pyp_token_seguro')}` } 
+                    }),
+                    fetch(`${SUPABASE_URL}/rest/v1/clientes?select=id`, { 
+                        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${localStorage.getItem('pyp_token_seguro')}` } 
+                    })
+                ]);
+                const dataProd = await resProd.json();
+                const dataCli = await resCli.json();
+                if(Array.isArray(dataProd)) document.getElementById('indicador-productos').innerText = dataProd.length;
+                if(Array.isArray(dataCli)) document.getElementById('indicador-clientes').innerText = dataCli.length;
+            } catch(e) { console.error("Error cargando indicadores", e); }
+        }
+    </script>
