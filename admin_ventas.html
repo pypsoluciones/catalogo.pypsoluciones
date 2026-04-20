@@ -3,376 +3,500 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>P&P Admin | Punto de Venta (POS)</title>
+    <title>P&P Admin | Terminal POS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.js"></script>
     <style>
         body { font-family: 'Inter', sans-serif; }
         .custom-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
         .custom-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
-        .btn-press:active { transform: scale(0.97); }
+        .btn-press:active { transform: scale(0.95); }
+        .fade-in { animation: fadeIn 0.2s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        /* Ocultar flechas en inputs numéricos */
+        input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
     </style>
-    
     <script src="config.js"></script>
-    <script>
-        if (!localStorage.getItem('pyp_token_seguro')) window.location.href = 'login.html';
-    </script>
+    <script>if (!localStorage.getItem('pyp_token_seguro')) window.location.href = 'login.html';</script>
 </head>
-<body class="bg-[#f4f6f8] flex h-screen overflow-hidden text-gray-800 relative">
+<body class="bg-[#f4f6f8] flex h-screen overflow-hidden text-gray-800">
 
     <script src="menu.js"></script>
 
     <main class="flex-1 flex flex-col h-screen overflow-hidden bg-[#f4f6f8] w-full z-10 relative">
-        
-        <header class="bg-white shadow-sm px-4 md:px-6 py-3 flex justify-between items-center z-10 shrink-0 border-b border-gray-200">
+        <header class="bg-white shadow-sm px-4 py-2 flex justify-between items-center z-10 shrink-0 border-b border-gray-200 h-14">
             <div class="flex items-center gap-3">
                 <button onclick="toggleMobileMenu()" class="md:hidden text-gray-600 hover:text-[#143B62] text-xl transition px-2"><i class="fa-solid fa-bars"></i></button>
-                <h1 class="text-lg font-bold text-[#143B62] flex items-center gap-2"><i class="fa-solid fa-cash-register text-[#E67E22]"></i> Punto de Venta</h1>
+                <h1 class="text-base font-bold text-[#143B62] flex items-center gap-2"><i class="fa-solid fa-cash-register text-[#25D366]"></i> Punto de Venta (POS)</h1>
             </div>
             <div class="flex items-center gap-4">
-                <div class="hidden sm:flex text-xs font-bold bg-green-50 text-green-700 px-3 py-1.5 rounded border border-green-200 shadow-sm items-center gap-2">
-                    <i class="fa-solid fa-money-bill-trend-up"></i> Tasa BCV: <span id="tasa-actual">Cargando...</span>
-                </div>
-                <div class="text-[11px] font-semibold text-gray-500 bg-gray-100 px-3 py-1.5 rounded border border-gray-200 uppercase tracking-wide">
-                    <i class="fa-solid fa-user-tie text-[#143B62] mr-1"></i> <span id="nombre-usuario">Cajero</span>
+                <div class="bg-blue-50 border border-blue-200 px-3 py-1 rounded flex items-center gap-2">
+                    <span class="text-[10px] font-bold text-blue-800 uppercase tracking-wider">Tasa BCV:</span>
+                    <span class="text-sm font-black text-[#143B62]" id="tasa-display">Bs. 0.00</span>
                 </div>
             </div>
         </header>
 
-        <div class="flex-1 overflow-hidden flex flex-col lg:flex-row gap-4 p-4 md:p-6">
+        <div class="flex-1 flex flex-col md:flex-row overflow-hidden">
             
-            <div class="w-full lg:w-2/3 flex flex-col gap-4 h-full">
-                
-                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 shrink-0 relative">
-                    <div class="relative">
-                        <i class="fa-solid fa-barcode absolute left-4 top-3.5 text-gray-400 text-lg"></i>
-                        <input type="text" id="buscador-pos" oninput="buscarProducto()" onclick="event.stopPropagation()" placeholder="Escanear Código de Barras o Buscar Producto..." class="w-full bg-gray-50 border border-gray-300 rounded-lg pl-12 pr-4 py-3 text-sm font-semibold focus:outline-none focus:border-[#E67E22] focus:ring-1 focus:ring-[#E67E22] transition shadow-inner">
+            <div class="w-full md:w-3/5 lg:w-2/3 h-full flex flex-col border-r border-gray-200 bg-white">
+                <div class="p-3 border-b border-gray-100 bg-gray-50 flex gap-2 shrink-0">
+                    <div class="relative flex-1">
+                        <i class="fa-solid fa-search absolute left-3 top-2.5 text-gray-400"></i>
+                        <input type="text" id="buscador-pos" oninput="buscarProductos()" placeholder="Buscar producto por Nombre o SKU..." class="w-full border border-gray-300 rounded-lg pl-9 pr-4 py-2 text-sm focus:outline-none focus:border-[#25D366] uppercase transition shadow-sm font-medium">
                     </div>
-                    <div id="lista-resultados" class="absolute left-0 right-0 top-[70px] bg-white shadow-2xl rounded-b-lg border border-gray-200 hidden z-50 max-h-64 overflow-y-auto custom-scroll mx-4"></div>
+                    <select id="filtro-cat-pos" onchange="buscarProductos()" class="w-1/3 border border-gray-300 rounded-lg px-3 py-2 text-sm font-bold text-[#143B62] outline-none shadow-sm hidden sm:block">
+                        <option value="TODAS">TODAS LAS CATEGORÍAS</option>
+                    </select>
                 </div>
 
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 flex-1 flex flex-col overflow-hidden">
-                    <div class="bg-[#143B62] px-4 py-2 flex justify-between items-center shrink-0">
-                        <h3 class="text-xs font-bold text-white uppercase tracking-wider">Carrito de Compras</h3>
-                        <button onclick="limpiarCarrito()" class="text-red-300 hover:text-red-100 text-[10px] font-bold uppercase transition btn-press"><i class="fa-solid fa-trash mr-1"></i> Vaciar</button>
-                    </div>
-                    <div class="flex-1 overflow-auto custom-scroll p-2">
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr class="text-[10px] text-gray-400 uppercase border-b border-gray-100">
-                                    <th class="pb-2 pl-2">Producto</th>
-                                    <th class="pb-2 text-center w-20">Cant.</th>
-                                    <th class="pb-2 text-right w-24">Precio ($)</th>
-                                    <th class="pb-2 text-right w-24">Total ($)</th>
-                                    <th class="pb-2 text-center w-10"></th>
-                                </tr>
-                            </thead>
-                            <tbody id="tabla-carrito" class="divide-y divide-gray-50">
-                                <tr><td colspan="5" class="py-16 text-center text-gray-400 font-medium"><i class="fa-solid fa-cart-arrow-down text-5xl mb-3 opacity-30 block"></i> El carrito está vacío.</td></tr>
-                            </tbody>
-                        </table>
+                <div class="flex-1 overflow-y-auto p-3 custom-scroll bg-slate-50">
+                    <div id="grid-productos" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                        <div class="col-span-full p-10 text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin text-3xl mb-3 block"></i> Cargando inventario...</div>
                     </div>
                 </div>
             </div>
 
-            <div class="w-full lg:w-1/3 bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col shrink-0 h-full overflow-y-auto custom-scroll">
+            <div class="w-full md:w-2/5 lg:w-1/3 h-full flex flex-col bg-white shadow-[-5px_0_15px_rgba(0,0,0,0.03)] z-10">
                 
-                <div class="p-5 border-b border-gray-100 bg-gray-50">
-                    <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3"><i class="fa-solid fa-user-tag text-[#E67E22] mr-1"></i> Datos del Cliente</h3>
-                    <div class="space-y-3">
-                        <div class="flex gap-2">
-                            <select id="cli-tipo" class="border border-gray-300 rounded px-2 py-2 text-xs focus:outline-none font-bold text-[#143B62] bg-white"><option value="V">V</option><option value="J">J</option><option value="E">E</option></select>
-                            <input type="text" id="cli-doc" placeholder="Cédula o RIF" value="00000000" class="flex-1 border border-gray-300 rounded px-3 py-2 text-xs focus:outline-none focus:border-[#E67E22] bg-white">
-                        </div>
-                        <input type="text" id="cli-nombre" placeholder="Nombre del Cliente" value="CLIENTE GENÉRICO" class="w-full border border-gray-300 rounded px-3 py-2 text-xs focus:outline-none focus:border-[#E67E22] font-semibold uppercase bg-white">
+                <div class="p-3 border-b border-gray-200 bg-white shrink-0">
+                    <div class="flex justify-between items-end mb-1">
+                        <label class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Cliente a Facturar</label>
+                        <button onclick="limpiarCliente()" class="text-[9px] text-red-500 font-bold uppercase hover:underline">Quitar</button>
+                    </div>
+                    <div class="flex gap-2">
+                        <input type="text" id="pos-doc-cliente" placeholder="Cédula / RIF" class="w-1/3 border border-gray-300 rounded px-2 py-1.5 text-xs font-bold uppercase outline-none focus:border-[#143B62]" onkeydown="if(event.key === 'Enter') buscarClientePOS()">
+                        <input type="text" id="pos-nom-cliente" placeholder="Público General" class="flex-1 border border-gray-300 rounded px-2 py-1.5 text-xs font-bold uppercase outline-none bg-gray-50" readonly>
+                        <input type="hidden" id="pos-id-cliente" value="">
+                        <button onclick="buscarClientePOS()" class="bg-[#143B62] text-white px-3 rounded hover:bg-[#0f2d4a] transition btn-press"><i class="fa-solid fa-search"></i></button>
+                    </div>
+                    <p id="msg-cliente-pos" class="text-[10px] font-semibold text-gray-400 mt-1 h-3"></p>
+                </div>
+
+                <div class="flex-1 overflow-y-auto p-3 bg-gray-50 custom-scroll" id="lista-carrito">
+                    <div class="h-full flex flex-col items-center justify-center text-gray-300 opacity-50">
+                        <i class="fa-solid fa-cart-arrow-down text-6xl mb-3"></i>
+                        <p class="font-bold text-sm">El carrito está vacío</p>
                     </div>
                 </div>
 
-                <div class="p-5 flex-1 flex flex-col justify-end">
-                    <div class="space-y-2 mb-6">
-                        <div class="flex justify-between text-xs text-gray-500 font-semibold"><p>Subtotal</p><p id="lbl-subtotal">$0.00</p></div>
-                        <div class="flex justify-between text-xs text-emerald-600 font-semibold"><p>Descuento</p><p>-$0.00</p></div>
-                        <div class="border-t border-dashed border-gray-300 pt-2 mt-2"></div>
-                        <div class="flex justify-between items-end">
-                            <p class="text-xs font-bold text-gray-500 uppercase">TOTAL A PAGAR</p>
-                            <div class="text-right">
-                                <p class="text-4xl font-black text-[#143B62]" id="lbl-total-usd">$0.00</p>
-                                <p class="text-sm font-bold text-[#E67E22] mt-1" id="lbl-total-bs">Bs. 0.00</p>
-                            </div>
-                        </div>
+                <div class="p-4 bg-white border-t border-gray-200 shrink-0 shadow-[0_-10px_20px_rgba(0,0,0,0.03)]">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-xs font-bold text-gray-500 uppercase">Subtotal</span>
+                        <span class="text-sm font-bold text-gray-700" id="pos-subtotal">US$ 0.00</span>
                     </div>
-
-                    <div class="mb-5">
-                        <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Método de Pago</label>
-                        <select id="metodo-pago" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm font-bold text-[#143B62] focus:outline-none bg-gray-50">
-                            <option value="EFECTIVO_USD">💵 Efectivo (Divisas)</option>
-                            <option value="EFECTIVO_BS">💵 Efectivo (Bolívares)</option>
-                            <option value="PAGO_MOVIL">📱 Pago Móvil</option>
-                            <option value="PUNTO_VENTA">💳 Punto de Venta</option>
-                            <option value="ZELLE">🟣 Zelle</option>
-                        </select>
+                    <div class="flex justify-between items-center mb-3 border-b border-gray-100 pb-3">
+                        <span class="text-xs font-bold text-gray-500 uppercase">Artículos</span>
+                        <span class="text-sm font-bold text-[#143B62] bg-blue-50 px-2 py-0.5 rounded" id="pos-items">0</span>
                     </div>
-
-                    <button onclick="procesarVenta()" id="btn-cobrar" class="w-full bg-[#25D366] hover:bg-[#1ebd5c] text-white font-black py-4 rounded-xl shadow-lg transition btn-press text-lg uppercase tracking-widest flex justify-center items-center gap-2">
-                        <i class="fa-solid fa-check-double text-xl"></i> FACTURAR
+                    <div class="flex justify-between items-end mb-1">
+                        <span class="text-sm font-black text-[#143B62] uppercase tracking-wider">Total Dólares</span>
+                        <span class="text-3xl font-black text-[#25D366] leading-none" id="pos-total-usd">US$ 0.00</span>
+                    </div>
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="text-xs font-bold text-gray-400 uppercase">Equivalente BCV</span>
+                        <span class="text-lg font-bold text-[#E67E22]" id="pos-total-bs">Bs. 0.00</span>
+                    </div>
+                    
+                    <button onclick="abrirCobro()" id="btn-cobrar" disabled class="w-full bg-[#25D366] hover:bg-[#1ebd5c] disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-black py-4 rounded-xl shadow-lg transition-all text-xl uppercase tracking-widest flex justify-center items-center gap-3 btn-press">
+                        <i class="fa-solid fa-hand-holding-dollar"></i> Procesar Pago
                     </button>
                 </div>
             </div>
-
         </div>
     </main>
+
+    <div id="modal-cobro" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4 fade-in">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col">
+            <div class="bg-[#143B62] px-5 py-4 flex justify-between items-center">
+                <h3 class="font-black text-white text-lg tracking-wide uppercase"><i class="fa-solid fa-cash-register mr-2 text-[#25D366]"></i> Liquidar Venta</h3>
+                <button onclick="cerrarCobro()" class="text-gray-300 hover:text-white text-xl transition"><i class="fa-solid fa-times"></i></button>
+            </div>
+            
+            <div class="p-6 bg-gray-50 flex-1">
+                <div class="bg-[#143B62] rounded-xl p-4 mb-5 shadow-inner text-center">
+                    <p class="text-blue-200 text-[10px] font-bold uppercase tracking-widest mb-1">Monto a Cobrar</p>
+                    <h2 class="text-4xl font-black text-[#25D366] leading-none mb-1" id="modal-total-usd">US$ 0.00</h2>
+                    <p class="text-white font-semibold text-sm" id="modal-total-bs">Bs. 0.00</p>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Método de Pago Principal</label>
+                        <select id="cobro-metodo" class="w-full border-2 border-gray-300 rounded-lg px-3 py-2.5 text-sm font-bold text-[#143B62] outline-none focus:border-[#25D366] bg-white">
+                            <option value="EFECTIVO_USD">💵 Efectivo Dólares (Divisas)</option>
+                            <option value="PAGO_MOVIL">📱 Pago Móvil (Bs)</option>
+                            <option value="PUNTO_VENTA">💳 Punto de Venta (Bs)</option>
+                            <option value="ZELLE">🟣 Zelle (USD)</option>
+                            <option value="EFECTIVO_BS">🇻🇪 Efectivo Bolívares</option>
+                        </select>
+                    </div>
+                    <div id="caja-referencia" class="hidden">
+                        <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Referencia / Lote</label>
+                        <input type="text" id="cobro-referencia" placeholder="Últimos 4 o 6 dígitos" class="w-full border-2 border-gray-300 rounded-lg px-3 py-2.5 text-sm font-bold outline-none focus:border-[#25D366] uppercase">
+                    </div>
+                    
+                    <div class="border-t border-gray-200 pt-4 mt-2">
+                        <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1 text-center">Calculadora de Vuelto (Efectivo)</label>
+                        <div class="flex items-center gap-2">
+                            <div class="flex-1 relative">
+                                <span class="absolute left-3 top-2.5 font-bold text-gray-400">$</span>
+                                <input type="number" id="cobro-recibido" placeholder="0.00" class="w-full border-2 border-gray-300 rounded-lg pl-7 pr-3 py-2 text-lg font-black text-center outline-none focus:border-blue-500 bg-white" oninput="calcularVuelto()">
+                            </div>
+                            <div class="flex-1 bg-gray-200 rounded-lg p-2 text-center border-2 border-transparent">
+                                <p class="text-[9px] font-bold text-gray-500 uppercase leading-none mb-1">Cambio a Dar</p>
+                                <p class="text-xl font-black text-gray-800 leading-none" id="cobro-vuelto">$0.00</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-4 bg-white border-t border-gray-200">
+                <button onclick="procesarVenta()" id="btn-confirmar" class="w-full bg-[#143B62] hover:bg-[#0f2d4a] text-white font-black py-3.5 rounded-xl shadow-md transition-all text-lg uppercase tracking-wider flex justify-center items-center gap-2 btn-press">
+                    <i class="fa-solid fa-check-circle"></i> Confirmar y Guardar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="loading-overlay" class="fixed inset-0 bg-white/90 z-[999] hidden flex-col items-center justify-center">
+        <i class="fa-solid fa-circle-notch fa-spin text-5xl text-[#25D366] mb-4"></i>
+        <h2 class="text-2xl font-black text-[#143B62] tracking-wider uppercase">Procesando Venta</h2>
+        <p class="font-medium text-gray-500 mt-2">Actualizando inventario...</p>
+    </div>
 
     <script>
         const TOKEN_JWT = localStorage.getItem('pyp_token_seguro');
         
-        let inventario = []; 
-        let fuseBusqueda; 
-        let carrito = []; 
+        let dbInventario = [];
+        let carrito = [];
         let tasaBCV = 1;
+        let fuseInventario = null;
+        let empresaActual = null;
+        let imagenGlobalDefecto = 'https://via.placeholder.com/150/f8fafc/94a3b8?text=P%26P';
 
         window.onload = async () => {
             const nombre = localStorage.getItem('pyp_usuario_nombre');
             if(nombre) document.getElementById('nombre-usuario').innerText = nombre.split(' ')[0];
             
-            // Cerrar menú flotante al hacer clic afuera
-            document.body.addEventListener('click', () => { document.getElementById('lista-resultados').classList.add('hidden'); });
+            // Mostrar u ocultar campo de referencia según el método de pago
+            document.getElementById('cobro-metodo').addEventListener('change', function() {
+                const reqRef = ['PAGO_MOVIL', 'PUNTO_VENTA', 'ZELLE'].includes(this.value);
+                document.getElementById('caja-referencia').classList.toggle('hidden', !reqRef);
+            });
 
-            await inicializarPOS();
+            await iniciarPuntoVenta();
         };
 
-        async function inicializarPOS() {
+        async function iniciarPuntoVenta() {
             try {
-                // 1. Obtener Tasa BCV
-                const resTasa = await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?select=tasa&order=fecha_actualizacion.desc&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
-                const dataTasa = await resTasa.json();
-                if(dataTasa.length > 0) { 
-                    tasaBCV = dataTasa[0].tasa; 
-                    document.getElementById('tasa-actual').innerText = `Bs. ${tasaBCV.toFixed(2)}`; 
-                }
-
-                // 2. Cargar Inventario para el buscador
-                const [resProd, resPre] = await Promise.all([
-                    fetch(`${SUPABASE_URL}/rest/v1/productos?select=id_producto_sku,nombre,stock_actual,imagen_principal`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
-                    fetch(`${SUPABASE_URL}/rest/v1/precios?select=id_producto_sku,precio_general_usd`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } })
-                ]);
-                
-                const dataProd = await resProd.json();
-                const dataPre = await resPre.json();
-
-                // Fusionar productos con sus precios
-                inventario = dataProd.map(p => {
-                    const precioInfo = dataPre.find(pr => pr.id_producto_sku === p.id_producto_sku);
-                    return { ...p, precio_usd: precioInfo ? precioInfo.precio_general_usd : 0 };
-                });
-
-                // Configurar motor de búsqueda ultrarrápido
-                fuseBusqueda = new Fuse(inventario, { keys: ['id_producto_sku', 'nombre'], threshold: 0.3 });
-
-            } catch(e) { alert("Error de conexión al cargar el POS."); }
-        }
-
-        // ==========================================
-        // LÓGICA DEL BUSCADOR
-        // ==========================================
-        function buscarProducto() {
-            const texto = document.getElementById('buscador-pos').value;
-            const cont = document.getElementById('lista-resultados');
-            
-            if (texto.trim() === '') { cont.classList.add('hidden'); return; }
-            
-            const resultados = fuseBusqueda.search(texto).slice(0, 8).map(r => r.item);
-            
-            if(resultados.length === 0) { 
-                cont.innerHTML = '<p class="p-4 text-xs text-red-500 text-center font-bold">Producto no encontrado.</p>'; 
-            } else {
-                cont.innerHTML = resultados.map(p => {
-                    const pStr = encodeURIComponent(JSON.stringify(p));
-                    const stockClass = p.stock_actual > 0 ? 'text-emerald-600 bg-emerald-50' : 'text-red-600 bg-red-50';
-                    return `
-                    <div onclick="agregarAlCarrito('${pStr}')" class="p-3 border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition flex justify-between items-center gap-3">
-                        <img src="${p.imagen_principal || 'https://via.placeholder.com/40'}" class="w-8 h-8 object-contain rounded border border-gray-200 bg-white shrink-0">
-                        <div class="flex-1 min-w-0">
-                            <p class="text-[11px] font-bold text-[#143B62] truncate">${p.nombre}</p>
-                            <p class="text-[9px] text-gray-400 font-mono">${p.id_producto_sku}</p>
-                        </div>
-                        <div class="text-right shrink-0">
-                            <p class="text-sm font-black text-emerald-600">$${p.precio_usd.toFixed(2)}</p>
-                            <p class="text-[9px] font-bold px-1.5 py-0.5 rounded ${stockClass}">Stock: ${p.stock_actual}</p>
-                        </div>
-                    </div>`;
-                }).join('');
-            }
-            cont.classList.remove('hidden');
-        }
-
-        // ==========================================
-        // LÓGICA DEL CARRITO
-        // ==========================================
-        function agregarAlCarrito(prodStr) {
-            const p = JSON.parse(decodeURIComponent(prodStr));
-            
-            if (p.stock_actual <= 0) { alert(`¡El producto ${p.nombre} está agotado!`); return; }
-
-            const existe = carrito.find(item => item.id_producto_sku === p.id_producto_sku);
-            if (existe) {
-                if(existe.cantidad + 1 > p.stock_actual) { alert("No hay más stock disponible de este producto."); return; }
-                existe.cantidad += 1;
-            } else {
-                p.cantidad = 1;
-                carrito.unshift(p);
-            }
-            
-            document.getElementById('buscador-pos').value = ''; 
-            document.getElementById('lista-resultados').classList.add('hidden');
-            document.getElementById('buscador-pos').focus();
-            actualizarInterfazCarrito();
-        }
-
-        function cambiarCantidad(sku, delta) {
-            const item = carrito.find(i => i.id_producto_sku === sku);
-            if(item) {
-                const nuevaCant = item.cantidad + delta;
-                if(nuevaCant > item.stock_actual) { alert("Supera el stock disponible."); return; }
-                if(nuevaCant > 0) { item.cantidad = nuevaCant; }
-                else { eliminarDelCarrito(sku); return; }
-                actualizarInterfazCarrito();
-            }
-        }
-
-        function eliminarDelCarrito(sku) {
-            carrito = carrito.filter(item => item.id_producto_sku !== sku);
-            actualizarInterfazCarrito();
-        }
-
-        function limpiarCarrito() {
-            if(carrito.length > 0 && confirm("¿Deseas vaciar todo el carrito?")) {
-                carrito = []; actualizarInterfazCarrito();
-            }
-        }
-
-        function actualizarInterfazCarrito() {
-            const tbody = document.getElementById('tabla-carrito');
-            let totalUSD = 0;
-
-            if(carrito.length === 0) { 
-                tbody.innerHTML = '<tr><td colspan="5" class="py-16 text-center text-gray-400 font-medium"><i class="fa-solid fa-cart-arrow-down text-5xl mb-3 opacity-30 block"></i> El carrito está vacío.</td></tr>'; 
-                document.getElementById('lbl-subtotal').innerText = '$0.00';
-                document.getElementById('lbl-total-usd').innerText = '$0.00';
-                document.getElementById('lbl-total-bs').innerText = 'Bs. 0.00';
-                return; 
-            }
-
-            tbody.innerHTML = carrito.map(item => {
-                const subT = item.cantidad * item.precio_usd;
-                totalUSD += subT;
-                return `
-                <tr class="border-b border-gray-50 hover:bg-gray-50 transition">
-                    <td class="py-2 pl-2 pr-1">
-                        <p class="text-[11px] font-bold text-[#143B62] leading-tight line-clamp-2">${item.nombre}</p>
-                        <p class="text-[9px] text-gray-400 mt-0.5">${item.id_producto_sku}</p>
-                    </td>
-                    <td class="py-2 text-center w-24">
-                        <div class="flex items-center justify-center bg-gray-100 rounded-md border border-gray-200 p-0.5">
-                            <button onclick="cambiarCantidad('${item.id_producto_sku}', -1)" class="w-6 h-6 flex items-center justify-center text-gray-600 hover:bg-white rounded transition"><i class="fa-solid fa-minus text-[10px]"></i></button>
-                            <span class="w-8 text-center text-xs font-bold">${item.cantidad}</span>
-                            <button onclick="cambiarCantidad('${item.id_producto_sku}', 1)" class="w-6 h-6 flex items-center justify-center text-gray-600 hover:bg-white rounded transition"><i class="fa-solid fa-plus text-[10px]"></i></button>
-                        </div>
-                    </td>
-                    <td class="py-2 text-right text-[11px] font-semibold text-gray-500 w-20">$${item.precio_usd.toFixed(2)}</td>
-                    <td class="py-2 text-right font-black text-[#143B62] w-20">$${subT.toFixed(2)}</td>
-                    <td class="py-2 text-center w-10">
-                        <button onclick="eliminarDelCarrito('${item.id_producto_sku}')" class="text-gray-300 hover:text-red-500 transition text-sm p-1"><i class="fa-solid fa-times"></i></button>
-                    </td>
-                </tr>`;
-            }).join('');
-
-            document.getElementById('lbl-subtotal').innerText = `$${totalUSD.toFixed(2)}`;
-            document.getElementById('lbl-total-usd').innerText = `$${totalUSD.toFixed(2)}`;
-            document.getElementById('lbl-total-bs').innerText = `Bs. ${(totalUSD * tasaBCV).toFixed(2)}`;
-        }
-
-        // ==========================================
-        // LÓGICA DE COBRO Y BASE DE DATOS
-        // ==========================================
-        async function procesarVenta() {
-            if(carrito.length === 0) return alert("El carrito está vacío.");
-            
-            const docC = document.getElementById('cli-tipo').value + document.getElementById('cli-doc').value.trim();
-            const nomC = document.getElementById('cli-nombre').value.trim().toUpperCase();
-            
-            if(!nomC) return alert("Debe ingresar el nombre del cliente.");
-
-            const totalUSD = parseFloat(document.getElementById('lbl-total-usd').innerText.replace('$', ''));
-            const btn = document.getElementById('btn-cobrar');
-            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-xl"></i> PROCESANDO...`; btn.disabled = true;
-
-            try {
-                // 1. Conseguir el ID de la Empresa (Para el SaaS Multi-Tenant)
+                // 1. Obtener ID Empresa
                 const resUser = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?select=id_empresa&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
                 const dataUser = await resUser.json();
-                const miEmpresa = dataUser.length > 0 ? dataUser[0].id_empresa : null;
+                empresaActual = dataUser.length > 0 ? dataUser[0].id_empresa : null;
 
-                // 2. Crear Factura Maestra
-                const bodyFactura = {
-                    tipo_transaccion: 'Venta',
-                    cliente_documento: docC,
-                    cliente_nombre: nomC,
-                    subtotal_usd: totalUSD,
-                    total_usd: totalUSD,
-                    total_bs: totalUSD * tasaBCV,
-                    tasa_bcv_aplicada: tasaBCV,
-                    estatus: 'Completada',
-                    id_empresa: miEmpresa
-                };
-                
-                const resFactura = await fetch(`${SUPABASE_URL}/rest/v1/facturas`, { 
-                    method: 'POST', 
-                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, 
-                    body: JSON.stringify(bodyFactura) 
-                });
-                if(!resFactura.ok) throw new Error("Fallo al crear la factura matriz.");
-                const facData = await resFactura.json();
+                // 2. Obtener Tasa, Productos y Parámetros
+                const [resTasa, resProd, resPre, resPar] = await Promise.all([
+                    fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?select=tasa&order=fecha_actualizacion.desc&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
+                    fetch(`${SUPABASE_URL}/rest/v1/productos?select=id_producto_sku,nombre,imagen_principal,stock_actual,categoria_del_producto&estado_producto=eq.ACTIVO&stock_actual=gt.0`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
+                    fetch(`${SUPABASE_URL}/rest/v1/precios?select=id_producto_sku,precio_general_usd,es_precio_fijo_bs,precio_fijo_bs`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
+                    fetch(`${SUPABASE_URL}/rest/v1/parametros_inventario?select=valor&grupo=eq.CATEGORIA&estatus=eq.ACTIVO`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } })
+                ]);
 
-                // 3. Crear Renglones de la Factura y Restar Stock
-                for (const item of carrito) {
-                    // Insertar Renglón
-                    await fetch(`${SUPABASE_URL}/rest/v1/detalles_factura`, { 
-                        method: 'POST', 
-                        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, 
-                        body: JSON.stringify({ 
-                            factura_id: facData[0].id_factura, 
-                            producto_sku: item.id_producto_sku, 
-                            producto_nombre: item.nombre, 
-                            cantidad: item.cantidad, 
-                            precio_unitario_usd: item.precio_usd, 
-                            subtotal_usd: item.cantidad * item.precio_usd 
-                        }) 
-                    });
-
-                    // Descontar Stock Real en Inventario
-                    const nuevoStock = item.stock_actual - item.cantidad;
-                    await fetch(`${SUPABASE_URL}/rest/v1/productos?id_producto_sku=eq.${item.id_producto_sku}`, {
-                        method: 'PATCH',
-                        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ stock_actual: nuevoStock })
-                    });
+                // Set Tasa BCV
+                const dataTasa = await resTasa.json();
+                if(dataTasa.length > 0) {
+                    tasaBCV = dataTasa[0].tasa;
+                    document.getElementById('tasa-display').innerText = `Bs. ${tasaBCV.toFixed(2)}`;
                 }
 
-                alert(`¡Venta Registrada con Éxito!\nEl stock ha sido descontado.`);
+                // Fusionar Productos y Precios
+                const dataProd = await resProd.json();
+                const dataPre = await resPre.json();
                 
-                // Reiniciar para el siguiente cliente
-                carrito = [];
-                document.getElementById('cli-doc').value = '00000000';
-                document.getElementById('cli-nombre').value = 'CLIENTE GENÉRICO';
-                actualizarInterfazCarrito();
-                await inicializarPOS(); // Recargar inventario fresco con stock actualizado
+                dbInventario = dataProd.map(p => {
+                    const pre = dataPre.find(pr => pr.id_producto_sku === p.id_producto_sku) || {};
+                    let precioFinalUsd = 0;
+                    if(pre.es_precio_fijo_bs && pre.precio_fijo_bs > 0) {
+                        precioFinalUsd = pre.precio_fijo_bs / tasaBCV;
+                    } else {
+                        precioFinalUsd = pre.precio_general_usd || 0;
+                    }
+                    return { ...p, precio_usd: precioFinalUsd };
+                }).filter(p => p.precio_usd > 0); // Solo productos con precio válido
 
-            } catch (error) {
-                alert("Error al procesar la venta: " + error.message);
+                // Configurar IA de Búsqueda
+                fuseInventario = new Fuse(dbInventario, { keys: ['nombre', 'id_producto_sku'], threshold: 0.2 });
+
+                // Llenar Filtro Categorías
+                const categorias = await resPar.json();
+                let catHtml = '<option value="TODAS">TODAS LAS CATEGORÍAS</option>';
+                categorias.forEach(c => catHtml += `<option value="${c.valor}">${c.valor}</option>`);
+                document.getElementById('filtro-cat-pos').innerHTML = catHtml;
+
+                buscarProductos(); // Renderizar grilla inicial
+            } catch(e) {
+                document.getElementById('grid-productos').innerHTML = `<div class="col-span-full p-10 text-center text-red-500 font-bold uppercase"><i class="fa-solid fa-triangle-exclamation text-2xl mb-2 block"></i> Error conectando al servidor.</div>`;
+            }
+        }
+
+        // --- RENDERIZADO DE PRODUCTOS ---
+        function buscarProductos() {
+            const query = document.getElementById('buscador-pos').value.trim();
+            const cat = document.getElementById('filtro-cat-pos').value;
+            
+            let data = dbInventario;
+            
+            if (query !== '') { data = fuseInventario.search(query).map(r => r.item); }
+            if (cat !== 'TODAS') { data = data.filter(p => p.categoria_del_producto === cat); }
+
+            const grid = document.getElementById('grid-productos');
+            if (data.length === 0) { grid.innerHTML = `<div class="col-span-full p-10 text-center text-gray-400 font-medium">No se encontraron productos en stock.</div>`; return; }
+
+            let html = '';
+            // Mostrar máximo 50 para no trabar la pantalla
+            data.slice(0, 50).forEach(p => {
+                const prodStr = encodeURIComponent(JSON.stringify(p));
+                const img = p.imagen_principal || imagenGlobalDefecto;
+                html += `
+                <div class="bg-white border border-gray-200 rounded-xl p-2 flex flex-col shadow-sm hover:shadow-md transition cursor-pointer active:scale-95 fade-in" onclick="agregarAlCarrito('${prodStr}')">
+                    <div class="h-20 w-full mb-2 bg-white flex items-center justify-center rounded">
+                        <img src="${img}" class="max-h-full max-w-full object-contain">
+                    </div>
+                    <div class="flex-1 flex flex-col justify-between">
+                        <h4 class="text-[10px] font-bold text-gray-700 leading-tight line-clamp-2 mb-1">${p.nombre}</h4>
+                        <div class="flex justify-between items-end mt-auto">
+                            <span class="text-xs font-black text-[#143B62]">$${p.precio_usd.toFixed(2)}</span>
+                            <span class="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-1.5 rounded">${p.stock_actual} und</span>
+                        </div>
+                    </div>
+                </div>`;
+            });
+            grid.innerHTML = html;
+        }
+
+        // --- GESTIÓN DE CLIENTE ---
+        async function buscarClientePOS() {
+            const doc = document.getElementById('pos-doc-cliente').value.trim().replace(/\s/g, '').toUpperCase();
+            const msg = document.getElementById('msg-cliente-pos');
+            if(!doc) return;
+            
+            msg.innerText = "Buscando..."; msg.className = "text-[10px] font-semibold text-gray-400 mt-1 h-3";
+            
+            try {
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/directorio_maestro?tipo_persona=eq.CLIENTE&documento_identidad=ilike.%${doc}%`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }); 
+                const datos = await res.json();
+                
+                if(datos.length > 0) {
+                    document.getElementById('pos-nom-cliente').value = datos[0].nombre_razon_social;
+                    document.getElementById('pos-id-cliente').value = datos[0].id;
+                    msg.innerHTML = '<i class="fa-solid fa-check-circle text-green-500"></i> Cliente verificado';
+                } else {
+                    document.getElementById('pos-nom-cliente').value = '';
+                    document.getElementById('pos-id-cliente').value = '';
+                    msg.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-yellow-500"></i> Cliente no registrado';
+                }
+            } catch(e) { msg.innerText = "Error de red"; }
+        }
+        function limpiarCliente() {
+            document.getElementById('pos-doc-cliente').value = '';
+            document.getElementById('pos-nom-cliente').value = '';
+            document.getElementById('pos-id-cliente').value = '';
+            document.getElementById('msg-cliente-pos').innerText = '';
+        }
+
+        // --- LÓGICA DEL CARRITO ---
+        function agregarAlCarrito(prodStr) {
+            const prod = JSON.parse(decodeURIComponent(prodStr));
+            const idx = carrito.findIndex(item => item.id_producto_sku === prod.id_producto_sku);
+            
+            if (idx !== -1) {
+                if(carrito[idx].cantidad < prod.stock_actual) carrito[idx].cantidad++;
+                else alert("Stock máximo alcanzado para este producto.");
+            } else {
+                carrito.push({ ...prod, cantidad: 1 });
+            }
+            actualizarUI_Carrito();
+        }
+
+        function modificarCantidad(sku, delta) {
+            const idx = carrito.findIndex(item => item.id_producto_sku === sku);
+            if (idx === -1) return;
+            
+            carrito[idx].cantidad += delta;
+            
+            if (carrito[idx].cantidad <= 0) carrito.splice(idx, 1);
+            else if (carrito[idx].cantidad > carrito[idx].stock_actual) {
+                carrito[idx].cantidad = carrito[idx].stock_actual;
+            }
+            actualizarUI_Carrito();
+        }
+
+        function actualizarUI_Carrito() {
+            const lista = document.getElementById('lista-carrito');
+            const btnCobrar = document.getElementById('btn-cobrar');
+            
+            if (carrito.length === 0) {
+                lista.innerHTML = `<div class="h-full flex flex-col items-center justify-center text-gray-300 opacity-50"><i class="fa-solid fa-cart-arrow-down text-6xl mb-3"></i><p class="font-bold text-sm">El carrito está vacío</p></div>`;
+                document.getElementById('pos-subtotal').innerText = 'US$ 0.00';
+                document.getElementById('pos-total-usd').innerText = 'US$ 0.00';
+                document.getElementById('pos-total-bs').innerText = 'Bs. 0.00';
+                document.getElementById('pos-items').innerText = '0';
+                btnCobrar.disabled = true;
+                return;
+            }
+
+            let html = '';
+            let totalUsd = 0; let totalItems = 0;
+
+            carrito.forEach(item => {
+                const subLinea = item.precio_usd * item.cantidad;
+                totalUsd += subLinea; totalItems += item.cantidad;
+                const img = item.imagen_principal || imagenGlobalDefecto;
+
+                html += `
+                <div class="bg-white border border-gray-200 rounded-lg p-2 mb-2 flex items-center shadow-sm relative fade-in">
+                    <img src="${img}" class="w-10 h-10 object-contain rounded border border-gray-100 p-0.5 mr-2">
+                    <div class="flex-1 min-w-0">
+                        <h4 class="text-[10px] font-bold text-[#143B62] truncate pr-5">${item.nombre}</h4>
+                        <div class="text-[10px] font-semibold text-gray-500 mt-0.5">$${item.precio_usd.toFixed(2)} c/u</div>
+                    </div>
+                    <div class="flex flex-col items-end shrink-0 ml-2">
+                        <div class="font-black text-sm text-[#25D366] mb-1">$${subLinea.toFixed(2)}</div>
+                        <div class="flex items-center border border-gray-200 rounded overflow-hidden">
+                            <button onclick="modificarCantidad('${item.id_producto_sku}', -1)" class="bg-gray-50 hover:bg-gray-200 px-2 py-0.5 text-gray-600 font-bold transition"><i class="fa-solid fa-minus text-[8px]"></i></button>
+                            <span class="px-2 py-0.5 text-[10px] font-black bg-white w-6 text-center">${item.cantidad}</span>
+                            <button onclick="modificarCantidad('${item.id_producto_sku}', 1)" class="bg-gray-50 hover:bg-gray-200 px-2 py-0.5 text-gray-600 font-bold transition"><i class="fa-solid fa-plus text-[8px]"></i></button>
+                        </div>
+                    </div>
+                </div>`;
+            });
+
+            lista.innerHTML = html;
+            document.getElementById('pos-subtotal').innerText = `US$ ${totalUsd.toFixed(2)}`;
+            document.getElementById('pos-total-usd').innerText = `US$ ${totalUsd.toFixed(2)}`;
+            document.getElementById('pos-total-bs').innerText = `Bs. ${(totalUsd * tasaBCV).toFixed(2)}`;
+            document.getElementById('pos-items').innerText = totalItems;
+            
+            // Pasar datos al modal
+            document.getElementById('modal-total-usd').innerText = `US$ ${totalUsd.toFixed(2)}`;
+            document.getElementById('modal-total-bs').innerText = `Bs. ${(totalUsd * tasaBCV).toFixed(2)}`;
+            btnCobrar.disabled = false;
+        }
+
+        // --- MODAL DE COBRO ---
+        function abrirCobro() { 
+            document.getElementById('cobro-recibido').value = '';
+            document.getElementById('cobro-vuelto').innerText = '$0.00';
+            document.getElementById('modal-cobro').classList.remove('hidden'); 
+            document.getElementById('modal-cobro').classList.add('flex'); 
+        }
+        function cerrarCobro() { 
+            document.getElementById('modal-cobro').classList.add('hidden'); 
+            document.getElementById('modal-cobro').classList.remove('flex'); 
+        }
+        function calcularVuelto() {
+            let total = 0; carrito.forEach(i => total += (i.precio_usd * i.cantidad));
+            const recibido = parseFloat(document.getElementById('cobro-recibido').value) || 0;
+            const vuelto = recibido - total;
+            document.getElementById('cobro-vuelto').innerText = vuelto > 0 ? `$${vuelto.toFixed(2)}` : '$0.00';
+            if(vuelto > 0) document.getElementById('cobro-vuelto').className = "text-xl font-black text-green-500 leading-none";
+            else document.getElementById('cobro-vuelto').className = "text-xl font-black text-gray-800 leading-none";
+        }
+
+        // --- PROCESAR LA VENTA (MAGIA EN BASE DE DATOS) ---
+        async function procesarVenta() {
+            const btn = document.getElementById('btn-confirmar');
+            btn.disabled = true;
+            document.getElementById('loading-overlay').classList.remove('hidden');
+            document.getElementById('loading-overlay').classList.add('flex');
+
+            try {
+                let totalUsd = 0; carrito.forEach(i => totalUsd += (i.precio_usd * i.cantidad));
+                const totalBs = totalUsd * tasaBCV;
+                const idCliente = document.getElementById('pos-id-cliente').value || null;
+                const metodo = document.getElementById('cobro-metodo').value;
+                const referencia = document.getElementById('cobro-referencia').value.trim() || null;
+
+                // 1. Guardar la Factura (Cabecera)
+                const payloadFactura = {
+                    id_empresa: empresaActual,
+                    id_cliente: idCliente,
+                    subtotal_usd: totalUsd,
+                    total_usd: totalUsd,
+                    tasa_bcv: tasaBCV,
+                    total_bs: totalBs,
+                    metodo_pago: metodo,
+                    referencia_pago: referencia,
+                    estatus: 'PAGADA'
+                };
+
+                const resFactura = await fetch(`${SUPABASE_URL}/rest/v1/facturas`, {
+                    method: 'POST',
+                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
+                    body: JSON.stringify(payloadFactura)
+                });
+                
+                if(!resFactura.ok) throw new Error("Error creando factura.");
+                const facturaData = await resFactura.json();
+                const idFactura = facturaData[0].id;
+
+                // 2. Guardar los Detalles y Descontar Stock
+                const promesas = [];
+                const payloadDetalles = [];
+
+                for (let i = 0; i < carrito.length; i++) {
+                    const item = carrito[i];
+                    
+                    // Preparar payload para detalles_factura
+                    payloadDetalles.push({
+                        id_factura: idFactura,
+                        id_producto_sku: item.id_producto_sku,
+                        nombre_producto: item.nombre,
+                        cantidad: item.cantidad,
+                        precio_unitario_usd: item.precio_usd,
+                        total_linea_usd: item.precio_usd * item.cantidad
+                    });
+
+                    // Preparar promesa para rebajar stock en productos
+                    const nuevoStock = item.stock_actual - item.cantidad;
+                    promesas.push(
+                        fetch(`${SUPABASE_URL}/rest/v1/productos?id_producto_sku=eq.${item.id_producto_sku}`, {
+                            method: 'PATCH',
+                            headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ stock_actual: nuevoStock })
+                        })
+                    );
+                }
+
+                // Insertar todos los detalles de golpe
+                promesas.push(
+                    fetch(`${SUPABASE_URL}/rest/v1/detalles_factura`, {
+                        method: 'POST',
+                        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payloadDetalles)
+                    })
+                );
+
+                // Ejecutar todas las transacciones al mismo tiempo
+                await Promise.all(promesas);
+
+                // ¡Éxito!
+                carrito = [];
+                limpiarCliente();
+                cerrarCobro();
+                actualizarUI_Carrito();
+                await iniciarPuntoVenta(); // Recarga el inventario para reflejar el nuevo stock
+
+            } catch(e) {
+                alert("Ocurrió un error al procesar la venta: " + e.message);
             } finally {
-                btn.innerHTML = `<i class="fa-solid fa-check-double text-xl"></i> FACTURAR`; btn.disabled = false;
+                btn.disabled = false;
+                document.getElementById('loading-overlay').classList.add('hidden');
+                document.getElementById('loading-overlay').classList.remove('flex');
             }
         }
     </script>
