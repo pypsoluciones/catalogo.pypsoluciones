@@ -109,7 +109,10 @@
                 <div class="bg-white p-4 rounded border border-gray-200 shadow-sm mb-4">
                     <h4 class="text-[11px] font-bold text-[#143B62] uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Comunicación Directa</h4>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
-                        <div><label class="block param-label mb-1">Celular Principal *</label><input type="text" id="cont-tel1" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-bold focus:border-[#143B62] outline-none bg-blue-50" placeholder="Ej: 04141234567"></div>
+                        <div>
+                            <label class="block param-label mb-1" id="lbl-tel1">Celular Principal *</label>
+                            <input type="text" id="cont-tel1" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-bold focus:border-[#143B62] outline-none bg-blue-50" placeholder="Ej: 04141234567">
+                        </div>
                         <div><label class="block param-label mb-1">Teléfono Alternativo</label><input type="text" id="cont-tel2" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none"></div>
                         <div><label class="block param-label mb-1">Correo Electrónico</label><input type="email" id="cont-email" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none"></div>
                     </div>
@@ -166,7 +169,6 @@
 
         async function cargarDatos() {
             try {
-                // Traemos los contactos y los parámetros (categorías)
                 const [resDir, resPar] = await Promise.all([
                     fetch(`${SUPABASE_URL}/rest/v1/directorio_maestro?select=*&order=nombre_razon_social.asc`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
                     fetch(`${SUPABASE_URL}/rest/v1/parametros_inventario?select=*&grupo=eq.CATEGORIA_CONTACTO&estatus=eq.ACTIVO`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } })
@@ -175,7 +177,6 @@
                 dbDirectorio = await resDir.json();
                 const categorias = await resPar.json();
                 
-                // Llenar el filtro y el formulario con las categorías
                 let optsHtml = '<option value="">SIN CATEGORIZAR</option>';
                 let filtroHtml = '<option value="TODAS">TODOS LOS RUBROS</option><option value="SIN_CATEGORIA">SIN CATEGORIZAR</option>';
                 categorias.forEach(c => { 
@@ -198,6 +199,18 @@
             document.getElementById('lbl-btn-nuevo').innerText = tipo === 'CLIENTE' ? 'NUEVO CLIENTE' : 'NUEVO PROVEEDOR';
             document.getElementById('buscador').value = '';
             document.getElementById('filtro-categoria').value = 'TODAS';
+
+            // LÓGICA DINÁMICA: Hace opcional el teléfono para los proveedores
+            const inputTel = document.getElementById('cont-tel1');
+            const lblTel = document.getElementById('lbl-tel1');
+            if (tipo === 'CLIENTE') {
+                inputTel.required = true;
+                if(lblTel) lblTel.innerHTML = 'Celular Principal *';
+            } else {
+                inputTel.required = false;
+                if(lblTel) lblTel.innerHTML = 'Teléfono Principal';
+            }
+
             renderizarPantalla();
         }
 
@@ -216,7 +229,6 @@
                 dataFiltrada = resultadosFuse.map(r => r.item).filter(p => p.tipo_persona === tipoActual);
             }
             
-            // Aplicar Filtro de Categoría
             if (categoria !== 'TODAS') {
                 if(categoria === 'SIN_CATEGORIA') dataFiltrada = dataFiltrada.filter(p => !p.categoria_contacto);
                 else dataFiltrada = dataFiltrada.filter(p => p.categoria_contacto === categoria);
