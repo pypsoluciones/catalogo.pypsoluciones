@@ -445,14 +445,18 @@
             const cedula = document.getElementById('input-cedula').value.trim(); 
             const msg = document.getElementById('msg-cliente');
             if(!cedula) return; 
+            
             msg.innerText = "Buscando..."; 
             msg.className = "text-xs mt-1.5 text-gray-500 font-semibold";
             
             try {
-                const docFull = document.getElementById('tipo-doc').value + cedula;
+                // Forzamos a que todo esté pegado, sin espacios y en mayúscula absoluta
+                const docFull = (document.getElementById('tipo-doc').value + cedula).replace(/\s/g, '').toUpperCase();
                 
-                // Busca específicamente en la tabla "directorio_maestro" y que sea "CLIENTE"
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/directorio_maestro?tipo_persona=eq.CLIENTE&documento_identidad=eq.${docFull}`, { 
+                // Usamos 'ilike' en lugar de 'eq' para que busque sin importar mayúsculas o minúsculas
+                const url = `${SUPABASE_URL}/rest/v1/directorio_maestro?tipo_persona=eq.CLIENTE&documento_identidad=ilike.${docFull}`;
+                
+                const res = await fetch(url, { 
                     headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } 
                 }); 
                 
@@ -461,11 +465,12 @@
                 if(datos.length > 0) { 
                     const d = datos[0]; 
                     document.getElementById('cliente-nombre').value = d.nombre_razon_social || ''; 
-                    document.getElementById('cliente-celular').value = d.telefono_principal || ''; 
-                    // Usa la dirección de entrega, si no tiene, usa la principal
+                    
+                    // Extraemos la información de las columnas de la NUEVA tabla
+                    document.getElementById('cliente-celular').value = d.telefono_principal || d.telefono_secundario || ''; 
                     document.getElementById('cliente-dir-entrega').value = d.direccion_secundaria || d.direccion_principal || ''; 
                     
-                    msg.innerHTML = '<i class="fa-solid fa-check-circle"></i> Encontrado en Directorio'; 
+                    msg.innerHTML = '<i class="fa-solid fa-check-circle"></i> Cliente frecuente'; 
                     msg.className = "text-xs mt-1.5 text-green-600 font-bold"; 
                 } else { 
                     document.getElementById('cliente-nombre').value = ''; 
@@ -474,7 +479,10 @@
                     msg.innerText = "Nuevo cliente."; 
                     msg.className = "text-xs mt-1.5 text-[#E67E22] font-bold"; 
                 }
-            } catch (e) { msg.innerText = "Error de red."; }
+            } catch (e) { 
+                msg.innerText = "Error de red. Reintente."; 
+                msg.className = "text-xs mt-1.5 text-red-500 font-bold";
+            }
         }
 
         function enviarPedidoWhatsApp() {
