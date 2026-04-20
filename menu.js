@@ -115,7 +115,7 @@ window.cargarBrandingGlobal = function() {
         if(imgSidebar) { imgSidebar.src = logoPc; imgSidebar.classList.remove('hidden'); }
         if(txtSidebar) txtSidebar.classList.add('hidden');
         
-        // 2. Mostrar en la cabecera superior (Móviles) usando el MISMO logo de PC
+        // 2. Mostrar en la cabecera superior (Móviles) usando el MISMO logo
         const imgHeader = document.getElementById('app-logo-header');
         const txtHeader = document.getElementById('app-text-header');
         const iconHeader = document.getElementById('app-icon-header');
@@ -126,22 +126,8 @@ window.cargarBrandingGlobal = function() {
             imgHeader.classList.add('block', 'md:hidden'); 
         }
         
-        // Ocultar texto e icono en móviles para que el logo tenga todo el espacio y no se atraviese
+        // Ocultar texto e icono en móviles para que el logo tenga todo el espacio
         if(txtHeader) txtHeader.classList.add('hidden', 'md:flex');
         if(iconHeader) iconHeader.classList.add('hidden');
-    }
-};
-    
-    const logoMovil = localStorage.getItem('pyp_logo_movil_url');
-    if(logoMovil) {
-        const imgHeader = document.getElementById('app-logo-header');
-        const iconHeader = document.getElementById('app-icon-header');
-        
-        if(imgHeader) { 
-            imgHeader.src = logoMovil; 
-            imgHeader.classList.remove('hidden'); 
-            imgHeader.classList.add('block', 'md:hidden'); 
-        }
-        if(iconHeader) iconHeader.classList.add('hidden'); // Oculta el iconito genérico para darle el protagonismo total al Logo.
     }
 };
