@@ -31,14 +31,12 @@
     <main class="flex-1 flex flex-col h-screen overflow-hidden bg-[#f4f6f8] w-full z-10 relative">
         
         <header class="bg-white shadow-sm px-4 md:px-6 py-3 flex justify-between items-center z-10 shrink-0 border-b border-gray-200">
-            <div class="flex items-center gap-2 min-w-0">
-                <button onclick="toggleMobileMenu()" class="md:hidden text-gray-600 hover:text-[#143B62] text-xl transition btn-press px-1 shrink-0"><i class="fa-solid fa-bars"></i></button>
-                <div class="flex items-center gap-2 overflow-hidden">
-                    <h1 class="text-base md:text-lg font-semibold text-[#143B62] flex items-center gap-2 truncate">
-                        <i class="fa-solid fa-address-book text-[#E67E22]"></i> 
-                        <span class="truncate">Directorio Maestro</span>
-                    </h1>
-                </div>
+            <div class="flex items-center gap-3 min-w-0">
+                <button onclick="toggleMobileMenu()" class="md:hidden text-gray-600 hover:text-[#143B62] text-xl transition btn-press shrink-0"><i class="fa-solid fa-bars"></i></button>
+                <h1 class="text-base md:text-lg font-semibold text-[#143B62] flex items-center gap-2 truncate">
+                    <i class="fa-solid fa-address-book text-[#E67E22] shrink-0"></i> 
+                    <span class="truncate">Directorio Maestro</span>
+                </h1>
             </div>
             <div class="flex items-center gap-3 shrink-0">
                 <button onclick="window.location.reload()" class="md:hidden text-blue-600 bg-blue-50 w-8 h-8 rounded-full flex items-center justify-center hover:bg-blue-100 transition shadow-sm btn-press"><i class="fa-solid fa-rotate-right"></i></button>
@@ -48,7 +46,7 @@
             </div>
         </header>
 
-        <div class="flex-1 overflow-auto p-2 md:p-4 custom-scroll pb-24 md:pb-6 flex flex-col">
+        <div class="flex-1 overflow-auto p-2 md:p-4 custom-scroll pb-10 flex flex-col">
             
             <div class="bg-white rounded-t-xl border border-gray-200 border-b-0 px-4 pt-3 flex gap-6 shrink-0">
                 <button onclick="cambiarPestana('clientes')" id="tab-clientes" class="tab-active pb-2 px-2 text-xs uppercase tracking-wider transition">Clientes</button>
@@ -117,7 +115,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                             <label class="block param-label mb-1" id="lbl-cel1">Celular Principal *</label>
-                            <p class="text-[8px] text-gray-400 mb-1 leading-none">Solo números (Ej: 584141234567)</p>
+                            <p class="text-[8px] text-gray-400 mb-1 leading-none">Solo números</p>
                             <input type="number" id="cont-cel1" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs focus:border-[#143B62] outline-none bg-blue-50">
                         </div>
                         <div>
@@ -179,7 +177,6 @@
             await cargarDatos();
         };
 
-        // RESTAURADA: Función para cerrar modales con ESC
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
                 const modal = document.getElementById('modal-contacto');
@@ -206,7 +203,6 @@
             document.getElementById('lbl-btn-nuevo').innerText = tipo === 'clientes' ? 'NUEVO CLIENTE' : 'NUEVO PROVEEDOR';
             document.getElementById('buscador').value = '';
             
-            // Ajustar visualmente los campos telefónicos según la tabla
             if(tipo === 'proveedores') {
                 document.getElementById('div-tel-fijo').classList.add('hidden');
                 document.getElementById('lbl-cel1').innerText = 'Teléfono 01 *';
@@ -235,58 +231,88 @@
             });
 
             const c = document.getElementById('contenedor-contactos');
-            if(datosFiltrados.length === 0) { c.innerHTML = `<div class="p-10 text-center text-gray-400 font-medium"><i class="fa-solid fa-folder-open text-3xl mb-2 block opacity-50"></i> No se encontraron ${pestanaActual}.</div>`; return; }
+            if(datosFiltrados.length === 0) { c.innerHTML = `<div class="p-10 text-center text-gray-400 font-medium"><i class="fa-solid fa-folder-open text-3xl mb-2 block opacity-50"></i> No se encontraron registros.</div>`; return; }
 
             if(vistaActual === 'tabla') {
-                // TABLA ACTUALIZADA CON COLUMNAS EXACTAS
-                let html = `<div class="overflow-x-auto flex-1 custom-scroll"><table class="w-full text-left text-xs whitespace-nowrap min-w-[900px]">
-                    <thead class="bg-[#143B62] text-white text-[10px] uppercase tracking-wider sticky top-0">
+                let html = `<div class="overflow-x-auto flex-1 custom-scroll"><table class="w-full text-left text-xs whitespace-nowrap min-w-[900px]">`;
+                
+                // CABECERAS DINÁMICAS DEPENDIENDO DE LA PESTAÑA
+                if (pestanaActual === 'clientes') {
+                    html += `<thead class="bg-[#143B62] text-white text-[10px] uppercase tracking-wider sticky top-0">
                         <tr><th class="py-3 px-4 w-[15%]">Doc / RIF</th><th class="py-3 px-4 w-[25%]">Razón Social</th><th class="py-3 px-4 w-[15%]">Celular</th><th class="py-3 px-4 w-[25%]">Dirección</th><th class="py-3 px-4 w-[15%]">Correo</th><th class="py-3 px-4 text-center w-[5%]">Acción</th></tr>
                     </thead><tbody class="divide-y divide-gray-100">`;
-                
-                datosFiltrados.forEach(item => {
-                    const doc = item.documento_identidad || item.rif || '-'; 
-                    const nom = item.nombre_razon_social || item.razon_social || '-'; 
-                    const cel = item.celular_01 || item.telefono_01 || '-'; 
-                    const dir = item.direccion_fiscal || '-'; 
-                    const correo = item.correo || '-';
-                    const itemStr = encodeURIComponent(JSON.stringify(item));
-                    
-                    html += `<tr class="hover:bg-gray-50 transition">
-                        <td class="py-2.5 px-4 font-mono text-[11px] font-semibold text-gray-500">${doc}</td>
-                        <td class="py-2.5 px-4 font-bold text-[#143B62] truncate max-w-[200px]">${nom}</td>
-                        <td class="py-2.5 px-4 text-gray-600 font-mono">${cel}</td>
-                        <td class="py-2.5 px-4 text-gray-500 truncate max-w-[250px]">${dir}</td>
-                        <td class="py-2.5 px-4 text-gray-500 truncate max-w-[150px]">${correo}</td>
-                        <td class="py-2.5 px-4 text-center"><button onclick="abrirModalContacto('${itemStr}')" class="text-blue-500 hover:bg-blue-50 px-2 py-1 rounded transition"><i class="fa-solid fa-pen-to-square"></i></button></td>
-                    </tr>`;
-                });
+                    datosFiltrados.forEach(item => {
+                        const itemStr = encodeURIComponent(JSON.stringify(item));
+                        html += `<tr class="hover:bg-gray-50 transition">
+                            <td class="py-2.5 px-4 font-mono text-[11px] font-semibold text-gray-500">${item.documento_identidad || '-'}</td>
+                            <td class="py-2.5 px-4 font-bold text-[#143B62] truncate max-w-[200px]">${item.nombre_razon_social || '-'}</td>
+                            <td class="py-2.5 px-4 text-gray-600 font-mono">${item.celular_01 || '-'}</td>
+                            <td class="py-2.5 px-4 text-gray-500 truncate max-w-[250px]">${item.direccion_fiscal || '-'}</td>
+                            <td class="py-2.5 px-4 text-gray-500 truncate max-w-[150px]">${item.correo || '-'}</td>
+                            <td class="py-2.5 px-4 text-center"><button onclick="abrirModalContacto('${itemStr}')" class="text-blue-500 hover:bg-blue-50 px-2 py-1 rounded transition"><i class="fa-solid fa-pen-to-square"></i></button></td>
+                        </tr>`;
+                    });
+                } else {
+                    html += `<thead class="bg-[#143B62] text-white text-[10px] uppercase tracking-wider sticky top-0">
+                        <tr><th class="py-3 px-4">Doc / RIF</th><th class="py-3 px-4">Razón Social</th><th class="py-3 px-4">Dirección</th><th class="py-3 px-4">Teléfono 1</th><th class="py-3 px-4">Vendedor Asignado</th><th class="py-3 px-4">Cel. Vendedor</th><th class="py-3 px-4 text-center">Acción</th></tr>
+                    </thead><tbody class="divide-y divide-gray-100">`;
+                    datosFiltrados.forEach(item => {
+                        const itemStr = encodeURIComponent(JSON.stringify(item));
+                        html += `<tr class="hover:bg-gray-50 transition">
+                            <td class="py-2.5 px-4 font-mono text-[11px] font-semibold text-gray-500">${item.rif || '-'}</td>
+                            <td class="py-2.5 px-4 font-bold text-[#143B62] truncate max-w-[200px]">${item.razon_social || '-'}</td>
+                            <td class="py-2.5 px-4 text-gray-500 truncate max-w-[200px]">${item.direccion_fiscal || '-'}</td>
+                            <td class="py-2.5 px-4 text-gray-600 font-mono">${item.telefono_01 || '-'}</td>
+                            <td class="py-2.5 px-4 text-gray-600 font-semibold truncate max-w-[150px]">${item.vendedor_asignado || 'NO ASIGNADO'}</td>
+                            <td class="py-2.5 px-4 text-gray-600 font-mono">${item.celular_vendedor || '-'}</td>
+                            <td class="py-2.5 px-4 text-center"><button onclick="abrirModalContacto('${itemStr}')" class="text-blue-500 hover:bg-blue-50 px-2 py-1 rounded transition"><i class="fa-solid fa-pen-to-square"></i></button></td>
+                        </tr>`;
+                    });
+                }
                 html += `</tbody></table></div>`; c.innerHTML = html;
             } else {
-                // TARJETAS ACTUALIZADAS
+                // VISTA DE TARJETAS DINÁMICAS
                 let html = `<div class="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 overflow-y-auto custom-scroll">`;
-                datosFiltrados.forEach(item => {
-                    const doc = item.documento_identidad || item.rif || '-'; 
-                    const nom = item.nombre_razon_social || item.razon_social || '-'; 
-                    const cel = item.celular_01 || item.telefono_01 || '-'; 
-                    const dir = item.direccion_fiscal || '-'; 
-                    const correo = item.correo || '-';
-                    const itemStr = encodeURIComponent(JSON.stringify(item));
-
-                    html += `
-                    <div class="bg-white border border-gray-200 rounded-lg p-4 flex flex-col shadow-sm relative hover:border-[#E67E22] transition">
-                        <div class="bg-gray-100 px-2 py-1 rounded font-mono text-[10px] font-bold text-gray-600 w-fit mb-2">${doc}</div>
-                        <h3 class="font-bold text-[#143B62] text-[13px] leading-tight mb-3 line-clamp-2">${nom}</h3>
-                        <div class="text-[11px] text-gray-500 space-y-1.5 mb-4 flex-1">
-                            <p><i class="fa-solid fa-mobile-screen w-4 text-gray-400"></i> ${cel}</p>
-                            <p class="truncate" title="${correo}"><i class="fa-solid fa-envelope w-4 text-gray-400"></i> ${correo}</p>
-                            <p class="line-clamp-2" title="${dir}"><i class="fa-solid fa-location-dot w-4 text-gray-400"></i> ${dir}</p>
-                        </div>
-                        <div class="border-t border-gray-100 pt-3 flex justify-end">
-                            <button onclick="abrirModalContacto('${itemStr}')" class="text-[11px] bg-blue-50 text-blue-700 font-bold px-3 py-1.5 rounded uppercase tracking-wider hover:bg-blue-100 transition"><i class="fa-solid fa-pen-to-square mr-1"></i> Editar</button>
-                        </div>
-                    </div>`;
-                });
+                
+                if (pestanaActual === 'clientes') {
+                    datosFiltrados.forEach(item => {
+                        const itemStr = encodeURIComponent(JSON.stringify(item));
+                        html += `
+                        <div class="bg-white border border-gray-200 rounded-lg p-4 flex flex-col shadow-sm relative hover:border-[#E67E22] transition">
+                            <div class="bg-gray-100 px-2 py-1 rounded font-mono text-[10px] font-bold text-gray-600 w-fit mb-2">${item.documento_identidad || '-'}</div>
+                            <h3 class="font-bold text-[#143B62] text-[13px] leading-tight mb-3 line-clamp-2">${item.nombre_razon_social || '-'}</h3>
+                            <div class="text-[11px] text-gray-500 space-y-1.5 mb-4 flex-1">
+                                <p><i class="fa-solid fa-mobile-screen w-4 text-gray-400"></i> ${item.celular_01 || '-'}</p>
+                                <p class="truncate" title="${item.correo || '-'}"><i class="fa-solid fa-envelope w-4 text-gray-400"></i> ${item.correo || '-'}</p>
+                                <p class="line-clamp-2" title="${item.direccion_fiscal || '-'}"><i class="fa-solid fa-location-dot w-4 text-gray-400"></i> ${item.direccion_fiscal || '-'}</p>
+                            </div>
+                            <div class="border-t border-gray-100 pt-3 flex justify-end">
+                                <button onclick="abrirModalContacto('${itemStr}')" class="text-[11px] bg-blue-50 text-blue-700 font-bold px-3 py-1.5 rounded uppercase tracking-wider hover:bg-blue-100 transition"><i class="fa-solid fa-pen-to-square mr-1"></i> Editar</button>
+                            </div>
+                        </div>`;
+                    });
+                } else {
+                    datosFiltrados.forEach(item => {
+                        const itemStr = encodeURIComponent(JSON.stringify(item));
+                        html += `
+                        <div class="bg-white border border-gray-200 rounded-lg p-4 flex flex-col shadow-sm relative hover:border-[#E67E22] transition">
+                            <div class="bg-gray-100 px-2 py-1 rounded font-mono text-[10px] font-bold text-gray-600 w-fit mb-2">${item.rif || '-'}</div>
+                            <h3 class="font-bold text-[#143B62] text-[13px] leading-tight mb-3 line-clamp-2">${item.razon_social || '-'}</h3>
+                            <div class="text-[11px] text-gray-500 space-y-1.5 mb-4 flex-1">
+                                <p class="line-clamp-2" title="${item.direccion_fiscal || '-'}"><i class="fa-solid fa-location-dot w-4 text-gray-400"></i> ${item.direccion_fiscal || '-'}</p>
+                                <p><i class="fa-solid fa-phone w-4 text-gray-400"></i> ${item.telefono_01 || '-'}</p>
+                                <div class="mt-2 pt-2 border-t border-gray-100">
+                                    <p class="text-[9px] font-bold text-purple-500 mb-1">VENDEDOR</p>
+                                    <p><i class="fa-solid fa-user-tie w-4 text-gray-400"></i> ${item.vendedor_asignado || 'NO ASIGNADO'}</p>
+                                    <p><i class="fa-solid fa-mobile-screen w-4 text-gray-400"></i> ${item.celular_vendedor || '-'}</p>
+                                </div>
+                            </div>
+                            <div class="border-t border-gray-100 pt-3 flex justify-end">
+                                <button onclick="abrirModalContacto('${itemStr}')" class="text-[11px] bg-blue-50 text-blue-700 font-bold px-3 py-1.5 rounded uppercase tracking-wider hover:bg-blue-100 transition"><i class="fa-solid fa-pen-to-square mr-1"></i> Editar</button>
+                            </div>
+                        </div>`;
+                    });
+                }
                 html += `</div>`; c.innerHTML = html;
             }
         }
@@ -358,7 +384,6 @@
 
                 let endpoint = ''; let payload = {}; let matchColumn = '';
 
-                // Mapeo EXACTO según las imágenes de la Base de Datos
                 if(pestanaActual === 'clientes') {
                     endpoint = 'clientes'; 
                     matchColumn = 'documento_identidad';
@@ -366,13 +391,13 @@
                         documento_identidad: doc, 
                         nombre_razon_social: nom, 
                         direccion_fiscal: dir, 
-                        direccion_entrega: document.getElementById('cli-dir-entrega').value.toUpperCase(),
+                        direccion_entrega: document.getElementById('cli-dir-entrega').value.toUpperCase() || null,
                         telefono: document.getElementById('cont-tel-fijo').value.trim() || null,
-                        celular_01: parseInt(document.getElementById('cont-cel1').value.replace(/\D/g, '')) || null, // Se envía como int8 a la BD
+                        celular_01: parseInt(document.getElementById('cont-cel1').value.replace(/\D/g, '')) || null, 
                         celular_02: document.getElementById('cont-cel2').value.trim() || null, 
-                        correo: em, 
-                        tipo_contribuyente: document.getElementById('cli-tipo-con').value, 
-                        nivel_precio: document.getElementById('cli-nivel').value, 
+                        correo: em || null, 
+                        tipo_contribuyente: document.getElementById('cli-tipo-con').value || null, 
+                        nivel_precio: document.getElementById('cli-nivel').value || null, 
                         id_empresa: miEmpresa 
                     };
                 } else {
@@ -382,13 +407,13 @@
                         rif: doc, 
                         razon_social: nom, 
                         direccion_fiscal: dir, 
-                        direccion_sucursal: document.getElementById('prov-dir-suc').value.toUpperCase(),
-                        clasificacion_fiscal: document.getElementById('prov-clas').value, 
+                        direccion_sucursal: document.getElementById('prov-dir-suc').value.toUpperCase() || null,
+                        clasificacion_fiscal: document.getElementById('prov-clas').value || null, 
                         telefono_01: document.getElementById('cont-cel1').value.trim() || null, 
-                        telefono_02: parseFloat(document.getElementById('cont-cel2').value.replace(/[^\d.-]/g, '')) || null, // Se envía como numeric a la BD
+                        telefono_02: parseFloat(document.getElementById('cont-cel2').value.replace(/[^\d.-]/g, '')) || null, 
                         vendedor_asignado: document.getElementById('prov-ven-nom').value.toUpperCase() || null, 
                         celular_vendedor: document.getElementById('prov-ven-cel').value.trim() || null, 
-                        correo: em, 
+                        correo: em || null, 
                         dias_credito: document.getElementById('prov-dias').value.trim() || null, 
                         id_empresa: miEmpresa 
                     };
@@ -405,7 +430,7 @@
                 
                 if (!res.ok) {
                     const errorData = await res.json();
-                    throw new Error(`Error en base de datos. Verifica que el Documento no esté duplicado. (${errorData.message})`);
+                    throw new Error(`Verifica que el Documento no esté duplicado. (${errorData.message})`);
                 }
                 
                 cerrarModalContacto(); 
