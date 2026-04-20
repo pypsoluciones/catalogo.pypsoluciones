@@ -58,6 +58,27 @@ document.addEventListener("DOMContentLoaded", () => {
             <button onclick="cerrarSesion()" class="w-full flex items-center justify-center gap-2 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white py-2 rounded-md font-medium transition text-xs shadow-sm btn-press"><i class="fa-solid fa-power-off"></i> Cerrar Sesión</button>
         </div>
     </aside>
+
+    <nav id="mobile-bottom-nav" class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40 flex justify-around items-center h-16 pb-safe shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+        <a href="admin_dashboard.html" class="flex flex-col items-center justify-center w-full h-full text-gray-500 hover:text-[#143B62] ${currentPage === 'admin_dashboard.html' ? 'text-[#E67E22]' : ''}">
+            <i class="fa-solid fa-house text-lg mb-1"></i>
+            <span class="text-[9px] font-bold uppercase tracking-wider">Inicio</span>
+        </a>
+        <a href="admin_productos.html" class="flex flex-col items-center justify-center w-full h-full text-gray-500 hover:text-[#143B62] ${currentPage === 'admin_productos.html' ? 'text-[#E67E22]' : ''}">
+            <i class="fa-solid fa-boxes-stacked text-lg mb-1"></i>
+            <span class="text-[9px] font-bold uppercase tracking-wider">Inventario</span>
+        </a>
+        <a href="admin_ventas.html" class="flex flex-col items-center justify-center w-full h-full text-gray-500 hover:text-[#143B62] ${currentPage === 'admin_ventas.html' ? 'text-[#E67E22]' : ''}">
+            <div class="bg-[#25D366] text-white w-10 h-10 rounded-full flex items-center justify-center shadow-md -mt-4 mb-0.5 border-4 border-[#f4f6f8] active:scale-95 transition">
+                <i class="fa-solid fa-cash-register text-sm"></i>
+            </div>
+            <span class="text-[9px] font-bold uppercase tracking-wider text-[#25D366]">Facturar</span>
+        </a>
+        <button onclick="toggleMobileMenu()" class="flex flex-col items-center justify-center w-full h-full text-gray-500 hover:text-[#143B62] btn-press">
+            <i class="fa-solid fa-bars text-lg mb-1"></i>
+            <span class="text-[9px] font-bold uppercase tracking-wider">Menú</span>
+        </button>
+    </nav>
     `;
 
     const errorModalsHTML = `
@@ -107,18 +128,10 @@ window.forzarCierreSesion = function() { localStorage.removeItem('pyp_sesion_act
 
 window.cargarBrandingGlobal = function() {
     const logoPc = localStorage.getItem('pyp_logo_pc_url');
-    
     if(logoPc) {
-        // Solo inyectamos el logo en la barra lateral oscura (PC)
         const imgSidebar = document.getElementById('app-logo-sidebar');
         const txtSidebar = document.getElementById('app-text-sidebar');
-        
-        if(imgSidebar) { 
-            imgSidebar.src = logoPc; 
-            imgSidebar.classList.remove('hidden'); 
-        }
-        if(txtSidebar) {
-            txtSidebar.classList.add('hidden');
-        }
+        if(imgSidebar) { imgSidebar.src = logoPc; imgSidebar.classList.remove('hidden'); }
+        if(txtSidebar) { txtSidebar.classList.add('hidden'); }
     }
 };
