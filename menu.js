@@ -46,13 +46,13 @@ document.addEventListener("DOMContentLoaded", () => {
             <a href="admin_taller.html" class="flex items-center rounded-md transition sidebar-link ${currentPage === 'admin_taller.html' ? 'bg-[#E67E22] text-white shadow-sm' : 'text-gray-300 hover:bg-white/10'}"><i class="fa-solid fa-screwdriver-wrench sidebar-icon"></i> Taller / RMA</a>
 
             <div class="space-y-1 pt-1">
-                <button type="button" onclick="document.getElementById('submenu-dir').classList.toggle('hidden')" class="w-full flex items-center justify-between rounded-md transition btn-press sidebar-link ${currentPage.includes('admin_contactos') || currentPage.includes('admin_directorio') ? 'bg-[#E67E22] text-white shadow-sm' : 'text-gray-300 hover:bg-white/10'}">
+                <button type="button" onclick="document.getElementById('submenu-dir').classList.toggle('hidden')" class="w-full flex items-center justify-between rounded-md transition btn-press sidebar-link ${currentPage.includes('admin_contactos') ? 'bg-[#E67E22] text-white shadow-sm' : 'text-gray-300 hover:bg-white/10'}">
                     <div class="flex items-center"><i class="fa-solid fa-address-book sidebar-icon"></i> Directorio</div>
                     <i class="fa-solid fa-chevron-down text-[10px]"></i>
                 </button>
-                <div id="submenu-dir" class="pl-9 space-y-1 mt-1 ${currentPage.includes('admin_contactos') || currentPage.includes('admin_directorio') ? '' : 'hidden'}">
+                <div id="submenu-dir" class="pl-9 space-y-1 mt-1 ${currentPage.includes('admin_contactos') ? '' : 'hidden'}">
                     <a href="admin_contactos.html" class="block py-1.5 text-xs pl-3 transition ${currentPage === 'admin_contactos.html' ? 'text-white font-bold border-l-2 border-[#E67E22]' : 'text-gray-400 hover:text-white font-medium'}">Contactos</a>
-                    <a href="admin_directorio_parametros.html" class="block py-1.5 text-xs pl-3 transition ${currentPage === 'admin_directorio_parametros.html' ? 'text-white font-bold border-l-2 border-[#E67E22]' : 'text-gray-400 hover:text-white font-medium'}">Parámetros</a>
+                    <a href="admin_contactos_parametros.html" class="block py-1.5 text-xs pl-3 transition ${currentPage === 'admin_contactos_parametros.html' ? 'text-white font-bold border-l-2 border-[#E67E22]' : 'text-gray-400 hover:text-white font-medium'}">Parámetros</a>
                 </div>
             </div>
             
