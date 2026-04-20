@@ -13,13 +13,14 @@
         .custom-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
     </style>
     
+    <script src="config.js"></script>
     <script>
         if (!localStorage.getItem('pyp_token_seguro')) window.location.href = 'login.html';
     </script>
 </head>
 <body class="bg-[#f4f6f8] flex h-screen overflow-hidden text-gray-800 relative">
 
-    <main class="flex-1 flex flex-col h-screen overflow-hidden bg-[#f4f6f8] w-full">
+    <main class="flex-1 flex flex-col h-screen overflow-hidden bg-[#f4f6f8] w-full z-10 relative">
         <header class="bg-white shadow-sm px-4 md:px-6 py-4 flex justify-between items-center z-10 shrink-0 border-b border-gray-200">
             <div class="flex items-center gap-3">
                 <button onclick="toggleMobileMenu()" class="md:hidden text-gray-600 hover:text-[#143B62] text-xl transition px-2"><i class="fa-solid fa-bars"></i></button>
@@ -80,7 +81,6 @@
     <script src="menu.js"></script>
     
     <script>
-      <script src="config.js"></script>)';
         const TOKEN_JWT = localStorage.getItem('pyp_token_seguro');
 
         window.onload = () => { 
@@ -95,19 +95,16 @@
             const btnGuardar = document.getElementById('btn-guardar');
             const msg = document.getElementById('msg-selecciona');
 
-            // Mostrar/Ocultar formulario de ingreso
             if(grupo === 'TODOS') {
                 cajaValor.style.display = 'none'; btnGuardar.style.display = 'none'; msg.style.display = 'block';
             } else {
                 cajaValor.style.display = 'block'; btnGuardar.style.display = 'flex'; msg.style.display = 'none';
             }
 
-            // Construir URL de búsqueda
             let urlFetch = `${SUPABASE_URL}/rest/v1/parametros_inventario?select=*&order=grupo.asc,valor.asc`;
             if(grupo !== 'TODOS') { urlFetch += `&grupo=eq.${grupo}`; }
 
             try {
-                // AQUI ESTÁ LA MAGIA DEL TOKEN VIP
                 const res = await fetch(urlFetch, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
                 if(!res.ok) throw new Error("Error cargando");
                 const data = await res.json();
@@ -146,7 +143,6 @@
             if(!valor) { alert("Debe escribir un valor."); btn.innerHTML = '<i class="fa-solid fa-plus"></i> Guardar Parámetro'; btn.disabled = false; return; }
 
             try {
-                // Obtenemos el ID de empresa para el Multi-Tenant
                 const resUser = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?select=id_empresa&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
                 const dataUser = await resUser.json();
                 const miEmpresa = dataUser.length > 0 ? dataUser[0].id_empresa : null;
