@@ -16,6 +16,7 @@
         .fade-in { animation: fadeIn 0.2s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         .btn-vista.active { background-color: #e2e8f0; color: #143B62; border-color: #cbd5e1; }
+        input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
     </style>
     <script src="config.js"></script>
     <script>if (!localStorage.getItem('pyp_token_seguro')) window.location.href = 'login.html';</script>
@@ -71,89 +72,125 @@
     </main>
 
     <div id="modal-producto" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4 fade-in">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-5xl max-h-[95vh] flex flex-col overflow-hidden border border-gray-200 relative">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-6xl max-h-[95vh] flex flex-col overflow-hidden border border-gray-200 relative">
             <div class="bg-[#143B62] text-white px-5 py-3 flex justify-between items-center shrink-0">
                 <h3 class="font-black text-sm tracking-widest uppercase flex items-center" id="modal-titulo"><i class="fa-solid fa-box mr-2 text-[#E67E22]"></i> FICHA DE PRODUCTO</h3>
                 <button onclick="cerrarModalProducto()" class="text-gray-300 hover:text-white text-xl transition"><i class="fa-solid fa-times"></i></button>
             </div>
             
-            <form id="form-producto" onsubmit="guardarProducto(event)" class="flex-1 overflow-y-auto custom-scroll p-5 bg-gray-50 flex flex-col gap-5">
+            <form id="form-producto" onsubmit="guardarProducto(event)" class="flex-1 overflow-y-auto custom-scroll p-4 bg-gray-50 flex flex-col gap-4">
                 <input type="hidden" id="prod-modo-edicion" value="false">
                 <input type="hidden" id="prod-sku-original" value="">
                 
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
                     
                     <div class="lg:col-span-1 space-y-4">
-                        <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-                            <h4 class="text-[10px] font-black text-gray-800 uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Imagen Principal</h4>
-                            <div class="border-2 border-dashed border-gray-300 rounded-lg p-2 flex flex-col items-center justify-center bg-gray-50 h-40 mb-3 relative group">
+                        <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
+                            <h4 class="text-[10px] font-black text-gray-800 uppercase border-b border-gray-100 pb-2 mb-2 tracking-wider">Imagen Principal</h4>
+                            <div class="border-2 border-dashed border-gray-300 rounded p-2 flex flex-col items-center justify-center bg-gray-50 h-32 mb-2 relative group">
                                 <img id="preview-img-principal" src="" class="max-h-full max-w-full object-contain hidden z-10 bg-white">
                                 <i class="fa-solid fa-image text-3xl text-gray-300" id="icon-img-principal"></i>
                             </div>
                             <input type="hidden" id="url-img-principal">
                             <input type="file" id="file-img-principal" accept="image/*" class="hidden" onchange="subirImagenUnica(event, 'url-img-principal', 'preview-img-principal', 'icon-img-principal')">
-                            <button type="button" onclick="document.getElementById('file-img-principal').click()" class="w-full bg-blue-50 text-blue-700 font-bold py-2 rounded text-[10px] uppercase tracking-wider hover:bg-blue-100 transition border border-blue-200"><i class="fa-solid fa-cloud-arrow-up mr-1"></i> Subir Principal</button>
+                            <button type="button" onclick="document.getElementById('file-img-principal').click()" class="w-full bg-blue-50 text-blue-700 font-bold py-1.5 rounded text-[10px] uppercase tracking-wider hover:bg-blue-100 transition border border-blue-200"><i class="fa-solid fa-cloud-arrow-up mr-1"></i> Subir Principal</button>
                         </div>
 
-                        <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-                            <h4 class="text-[10px] font-black text-[#E67E22] uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Galería Adicional</h4>
-                            <div id="contenedor-galeria" class="grid grid-cols-3 gap-2 mb-3"></div>
+                        <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
+                            <h4 class="text-[10px] font-black text-[#E67E22] uppercase border-b border-gray-100 pb-2 mb-2 tracking-wider">Galería Adicional</h4>
+                            <div id="contenedor-galeria" class="grid grid-cols-3 gap-1 mb-2"></div>
                             <input type="file" id="file-img-galeria" accept="image/*" multiple class="hidden" onchange="subirImagenesGaleria(event)">
-                            <button type="button" onclick="document.getElementById('file-img-galeria').click()" class="w-full bg-orange-50 text-[#E67E22] font-bold py-2 rounded text-[10px] uppercase tracking-wider hover:bg-orange-100 transition border border-orange-200"><i class="fa-solid fa-images mr-1"></i> Añadir Fotos</button>
+                            <button type="button" onclick="document.getElementById('file-img-galeria').click()" class="w-full bg-orange-50 text-[#E67E22] font-bold py-1.5 rounded text-[10px] uppercase tracking-wider hover:bg-orange-100 transition border border-orange-200"><i class="fa-solid fa-images mr-1"></i> Añadir Fotos</button>
                         </div>
                     </div>
 
-                    <div class="lg:col-span-2 space-y-4">
-                        <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-                            <h4 class="text-[10px] font-black text-[#143B62] uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Información Básica</h4>
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
-                                <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Código SKU *</label><input type="text" id="prod-sku" required class="w-full border border-gray-300 rounded px-3 py-1.5 text-xs font-black uppercase focus:border-[#143B62] outline-none bg-gray-50"></div>
-                                <div class="md:col-span-2"><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Nombre del Producto *</label><input type="text" id="prod-nombre" required class="w-full border border-gray-300 rounded px-3 py-1.5 text-xs font-bold uppercase focus:border-[#143B62] outline-none"></div>
+                    <div class="lg:col-span-3 space-y-4">
+                        
+                        <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                            <h4 class="text-[10px] font-black text-[#143B62] uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Identidad del Producto</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-3">
+                                <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Código SKU *</label><input type="text" id="prod-sku" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-black uppercase focus:border-[#143B62] outline-none"></div>
+                                <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Código Barra</label><input type="text" id="prod-cod-barra" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-mono uppercase focus:border-[#143B62] outline-none"></div>
+                                <div class="md:col-span-2"><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Nombre / Descripción *</label><input type="text" id="prod-nombre" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-bold uppercase focus:border-[#143B62] outline-none"></div>
                             </div>
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
-                                <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Categoría</label><select id="prod-categoria" class="w-full border border-gray-300 rounded px-3 py-1.5 text-xs font-bold uppercase outline-none"><option value="">Seleccione</option></select></div>
-                                <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Marca</label><select id="prod-marca" class="w-full border border-gray-300 rounded px-3 py-1.5 text-xs font-bold uppercase outline-none"><option value="">Seleccione</option></select></div>
-                                <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Estatus</label><select id="prod-estatus" class="w-full border border-gray-300 rounded px-3 py-1.5 text-xs font-bold uppercase outline-none"><option value="ACTIVO">ACTIVO</option><option value="INACTIVO">INACTIVO</option></select></div>
+                            <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+                                <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Tipo Producto</label><select id="prod-tipo" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] font-bold uppercase outline-none"></select></div>
+                                <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Categoría</label><select id="prod-categoria" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] font-bold uppercase outline-none"></select></div>
+                                <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Cat. Venta</label><select id="prod-cat-venta" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] font-bold uppercase outline-none"></select></div>
+                                <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Marca</label><select id="prod-marca" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] font-bold uppercase outline-none"></select></div>
+                                <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Condición</label><select id="prod-condicion" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] font-bold uppercase outline-none"></select></div>
                             </div>
-                            <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Descripción</label><textarea id="prod-desc" rows="2" class="w-full border border-gray-300 rounded px-3 py-2 text-xs font-medium focus:border-[#143B62] outline-none custom-scroll"></textarea></div>
                         </div>
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-                                <h4 class="text-[10px] font-black text-blue-600 uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Inventario Actual</h4>
-                                <div class="flex items-center gap-4">
-                                    <div class="flex-1"><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Stock Físico</label><input type="number" id="prod-stock" value="0" class="w-full border-2 border-gray-300 rounded px-3 py-2 text-lg font-black text-center text-[#143B62] outline-none bg-blue-50"></div>
-                                    <div class="flex-1"><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Alerta Stock Mínimo</label><input type="number" id="prod-stock-min" value="0" class="w-full border border-gray-300 rounded px-3 py-2 text-sm font-bold text-center outline-none"></div>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                            <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                                <h4 class="text-[10px] font-black text-blue-600 uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Atributos y Logística</h4>
+                                <div class="grid grid-cols-3 gap-2 mb-3">
+                                    <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Talla</label><select id="prod-talla" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] font-bold uppercase outline-none"></select></div>
+                                    <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Color</label><select id="prod-color" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] font-bold uppercase outline-none"></select></div>
+                                    <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Unidad</label><select id="prod-unidad" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] font-bold uppercase outline-none"></select></div>
+                                </div>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1 text-blue-600">Stock Actual</label><input type="number" id="prod-stock" value="0" class="w-full border border-gray-300 bg-blue-50 rounded px-2 py-1.5 text-xs font-black text-center outline-none"></div>
+                                    <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1 text-red-500">Min. Alerta</label><input type="number" id="prod-stock-min" value="0" class="w-full border border-gray-300 bg-red-50 rounded px-2 py-1.5 text-xs font-bold text-center outline-none"></div>
+                                    <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">P. Negativo</label><select id="prod-negativo" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] font-bold uppercase outline-none"><option value="FALSE">NO</option><option value="TRUE">SÍ</option></select></div>
                                 </div>
                             </div>
 
-                            <div class="bg-emerald-50 p-4 rounded-xl border border-emerald-200 shadow-sm">
-                                <h4 class="text-[10px] font-black text-emerald-700 uppercase border-b border-emerald-200 pb-2 mb-3 tracking-wider">Precio Venta (General)</h4>
-                                <div class="flex items-center gap-3">
-                                    <div class="flex-1 relative"><label class="block text-[9px] font-bold text-emerald-600 uppercase mb-1">Precio Divisas (USD) *</label><span class="absolute left-3 top-[26px] font-black text-gray-400">$</span><input type="number" id="prod-precio-usd" step="0.01" required class="w-full border-2 border-emerald-300 rounded pl-7 pr-3 py-2 text-lg font-black text-emerald-700 outline-none bg-white"></div>
-                                    <div class="flex-1"><label class="block text-[9px] font-bold text-emerald-600 uppercase mb-1">¿Precio Fijo Bs?</label><select id="prod-fijo-bs" onchange="togglePrecioBsFijo()" class="w-full border-2 border-emerald-300 rounded px-2 py-2 text-xs font-bold outline-none bg-white"><option value="NO">NO</option><option value="SI">SÍ</option></select></div>
+                            <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                                <h4 class="text-[10px] font-black text-gray-600 uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Reglas Sistema</h4>
+                                <div class="grid grid-cols-2 gap-3 mb-3">
+                                    <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Estado del Producto</label><select id="prod-estatus" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-bold uppercase outline-none"><option value="ACTIVO">ACTIVO</option><option value="INACTIVO">INACTIVO</option></select></div>
+                                    <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Tipo de Impuesto</label><select id="prod-impuesto" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-bold uppercase outline-none"></select></div>
                                 </div>
-                                <div id="caja-precio-bs-fijo" class="mt-2 hidden"><label class="block text-[9px] font-bold text-emerald-600 uppercase mb-1">Monto Fijo Bs</label><input type="number" id="prod-precio-bs" step="0.01" class="w-full border-2 border-emerald-300 rounded px-3 py-1.5 text-sm font-black text-gray-800 outline-none bg-white"></div>
+                                <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Descripción Interna</label><textarea id="prod-desc" rows="2" class="w-full border border-gray-300 rounded px-2 py-1 text-xs outline-none custom-scroll"></textarea></div>
                             </div>
                         </div>
+
+                        <div class="bg-emerald-50 p-4 rounded-lg border border-emerald-200 shadow-sm">
+                            <h4 class="text-[10px] font-black text-emerald-700 uppercase border-b border-emerald-200 pb-2 mb-3 tracking-wider">Estructura de Precios</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                <div class="bg-white p-2 rounded border border-emerald-100"><label class="block text-[9px] font-black text-emerald-600 uppercase mb-1">P. General (USD) *</label><input type="number" id="prod-precio-usd" step="0.01" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-base font-black text-emerald-700 outline-none"></div>
+                                <div class="bg-white p-2 rounded border border-emerald-100"><label class="block text-[9px] font-bold text-emerald-600 uppercase mb-1">Fijar Precio Bs?</label><select id="prod-fijo-bs" onchange="togglePrecioBsFijo()" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] font-bold outline-none"><option value="NO">NO (Automático)</option><option value="SI">SÍ (Congelar)</option></select></div>
+                                <div class="bg-white p-2 rounded border border-emerald-100 hidden" id="caja-precio-bs-fijo"><label class="block text-[9px] font-bold text-emerald-600 uppercase mb-1">Monto Fijo Bs</label><input type="number" id="prod-precio-bs" step="0.01" class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm font-black text-gray-800 outline-none"></div>
+                            </div>
+
+                            <h4 class="text-[9px] font-black text-emerald-700 uppercase border-b border-emerald-100 pb-1 mb-2">Descuentos por Volumen</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                <div class="flex gap-2">
+                                    <div class="w-1/2"><label class="block text-[8px] font-bold text-gray-500 uppercase mb-0.5">Min Und</label><input type="number" id="req-p1" value="0" class="w-full border border-gray-300 rounded px-2 py-1 text-xs text-center outline-none"></div>
+                                    <div class="w-1/2"><label class="block text-[8px] font-bold text-emerald-600 uppercase mb-0.5">Precio 1 ($)</label><input type="number" id="usd-p1" step="0.01" value="0" class="w-full border border-gray-300 rounded px-2 py-1 text-xs text-center font-bold text-emerald-700 outline-none"></div>
+                                </div>
+                                <div class="flex gap-2">
+                                    <div class="w-1/2"><label class="block text-[8px] font-bold text-gray-500 uppercase mb-0.5">Min Und</label><input type="number" id="req-p2" value="0" class="w-full border border-gray-300 rounded px-2 py-1 text-xs text-center outline-none"></div>
+                                    <div class="w-1/2"><label class="block text-[8px] font-bold text-emerald-600 uppercase mb-0.5">Precio 2 ($)</label><input type="number" id="usd-p2" step="0.01" value="0" class="w-full border border-gray-300 rounded px-2 py-1 text-xs text-center font-bold text-emerald-700 outline-none"></div>
+                                </div>
+                                <div class="flex gap-2">
+                                    <div class="w-1/2"><label class="block text-[8px] font-bold text-gray-500 uppercase mb-0.5">Min Und</label><input type="number" id="req-p3" value="0" class="w-full border border-gray-300 rounded px-2 py-1 text-xs text-center outline-none"></div>
+                                    <div class="w-1/2"><label class="block text-[8px] font-bold text-emerald-600 uppercase mb-0.5">Precio 3 ($)</label><input type="number" id="usd-p3" step="0.01" value="0" class="w-full border border-gray-300 rounded px-2 py-1 text-xs text-center font-bold text-emerald-700 outline-none"></div>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             </form>
 
             <div class="bg-gray-50 border-t border-gray-200 px-5 py-3 flex justify-between items-center shrink-0">
-                <button type="button" onclick="eliminarProducto()" id="btn-eliminar-prod" class="text-xs font-bold text-red-500 hover:text-red-700 uppercase tracking-wider hidden"><i class="fa-solid fa-trash mr-1"></i> Eliminar</button>
+                <button type="button" onclick="eliminarProducto()" id="btn-eliminar-prod" class="text-[10px] font-black text-red-500 hover:text-red-700 uppercase tracking-wider hidden bg-red-50 px-3 py-1.5 rounded border border-red-100"><i class="fa-solid fa-trash mr-1"></i> Eliminar</button>
                 <div class="flex gap-3 ml-auto">
-                    <button type="button" onclick="cerrarModalProducto()" class="px-6 py-2.5 bg-white border border-gray-300 text-gray-700 font-bold rounded-lg text-xs shadow-sm hover:bg-gray-100 transition btn-press uppercase tracking-wider">Cancelar</button>
-                    <button type="submit" form="form-producto" id="btn-guardar-prod" class="px-8 py-2.5 bg-[#143B62] text-white font-black rounded-lg text-xs shadow-md hover:bg-[#0f2d4a] transition uppercase tracking-widest btn-press"><i class="fa-solid fa-save mr-2"></i> Guardar Ficha</button>
+                    <button type="button" onclick="cerrarModalProducto()" class="px-6 py-2 bg-white border border-gray-300 text-gray-700 font-bold rounded text-xs shadow-sm hover:bg-gray-100 transition btn-press uppercase tracking-wider">Cancelar</button>
+                    <button type="submit" form="form-producto" id="btn-guardar-prod" class="px-8 py-2 bg-[#25D366] text-white font-black rounded text-xs shadow-md hover:bg-[#1ebd5c] transition uppercase tracking-widest btn-press"><i class="fa-solid fa-save mr-2"></i> Guardar</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="loading-overlay" class="fixed inset-0 bg-white/90 z-[999] hidden flex-col items-center justify-center p-6 text-center backdrop-blur-sm">
+    <div id="loading-overlay" class="fixed inset-0 bg-slate-900/90 z-[999] hidden flex-col items-center justify-center p-6 text-center backdrop-blur-sm">
         <i id="loading-icon" class="fa-solid fa-cloud-arrow-up text-5xl text-[#E67E22] mb-4 animate-bounce"></i>
-        <h2 id="loading-text" class="text-xl font-black text-[#143B62] uppercase mb-2 tracking-widest">Sincronizando...</h2>
-        <p class="text-xs text-gray-500 font-bold">Por favor no cierres esta ventana</p>
+        <h2 id="loading-text" class="text-xl font-black text-white uppercase mb-2 tracking-widest">Procesando...</h2>
+        <p id="loading-desc" class="text-xs text-gray-400 font-bold">Asegurando los datos en el servidor</p>
+        <button onclick="cerrarErrorCarga()" id="btn-cerrar-carga" class="hidden mt-6 bg-[#E67E22] text-white px-8 py-2.5 rounded font-bold uppercase text-xs btn-press tracking-widest">Entendido</button>
     </div>
 
     <script>
@@ -168,6 +205,14 @@
             }
             actualizarUIBotonesVista();
             await cargarBaseDatos();
+            
+            // CERRAR MODALES O ERRORES CON ESC
+            document.addEventListener('keydown', (e) => { 
+                if (e.key === 'Escape') { 
+                    cerrarModalProducto(); 
+                    if(!document.getElementById('btn-cerrar-carga').classList.contains('hidden')) cerrarErrorCarga();
+                } 
+            });
         };
 
         async function cargarBaseDatos() {
@@ -181,44 +226,38 @@
                     fetch(`${SUPABASE_URL}/rest/v1/parametros_inventario?select=*&estatus=eq.ACTIVO`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } })
                 ]);
 
-                const dataProd = await resProd.json();
-                const dataPre = await resPre.json();
-                
-                dbInventario = dataProd.map(p => {
-                    const pre = dataPre.find(pr => pr.id_producto_sku === p.id_producto_sku) || {};
-                    return { ...p, pre: pre };
-                });
-
-                fuseInventario = new Fuse(dbInventario, { keys: ['id_producto_sku', 'nombre'], threshold: 0.2 });
+                const dataProd = await resProd.json(); const dataPre = await resPre.json();
+                dbInventario = dataProd.map(p => { const pre = dataPre.find(pr => pr.id_producto_sku === p.id_producto_sku) || {}; return { ...p, pre: pre }; });
+                fuseInventario = new Fuse(dbInventario, { keys: ['id_producto_sku', 'codigo_barra', 'nombre'], threshold: 0.2 });
 
                 const pars = await resPar.json();
                 
-                // Llenar Filtro Top
                 const catArr = [...new Set(dbInventario.map(p => p.categoria_del_producto))];
                 let fCatHtml = '<option value="TODAS">TODAS LAS CATEGORÍAS</option>';
                 catArr.forEach(c => { if(c) fCatHtml += `<option value="${c}">${c}</option>` });
                 document.getElementById('filtro-cat-inv').innerHTML = fCatHtml;
 
-                // Llenar Selects Modal
-                llenarSelect(document.getElementById('prod-categoria'), pars.filter(p => p.grupo === 'CATEGORIA'));
-                llenarSelect(document.getElementById('prod-marca'), pars.filter(p => p.grupo === 'MARCA'));
+                const fil = g => pars.filter(p => p.grupo === g);
+                llenarSelect('prod-categoria', fil('CATEGORIA')); llenarSelect('prod-marca', fil('MARCA'));
+                llenarSelect('prod-tipo', fil('TIPO_PRODUCTO')); llenarSelect('prod-cat-venta', fil('CATEGORIA_VENTA'));
+                llenarSelect('prod-condicion', fil('CONDICION_PRODUCTO')); llenarSelect('prod-unidad', fil('UNIDAD_MEDIDA'));
+                llenarSelect('prod-impuesto', fil('TIPO_IMPUESTO')); llenarSelect('prod-talla', fil('TALLA'));
+                llenarSelect('prod-color', fil('COLOR'));
 
                 renderizarInventario();
-            } catch(e) { alert("Error cargando inventario"); }
+            } catch(e) { 
+                mostrarCarga("Error", "No se pudo sincronizar el inventario. Verifique su red.", true);
+            }
         }
 
-        function llenarSelect(element, array) {
-            let html = '<option value="">Seleccione</option>';
+        function llenarSelect(id, array) {
+            let html = '<option value="">Sel...</option>';
             array.forEach(item => html += `<option value="${item.valor}">${item.valor}</option>`);
-            element.innerHTML = html;
+            if(document.getElementById(id)) document.getElementById(id).innerHTML = html;
         }
 
         function cambiarVista(v) { vistaActual = v; localStorage.setItem('pyp_vista_inventario', v); actualizarUIBotonesVista(); renderizarInventario(); }
-        function actualizarUIBotonesVista() { 
-            document.getElementById('btn-vista-tabla').classList.toggle('active', vistaActual === 'tabla'); 
-            document.getElementById('btn-vista-grid').classList.toggle('active', vistaActual === 'grid'); 
-        }
-
+        function actualizarUIBotonesVista() { document.getElementById('btn-vista-tabla').classList.toggle('active', vistaActual === 'tabla'); document.getElementById('btn-vista-grid').classList.toggle('active', vistaActual === 'grid'); }
         function filtrarInventario() { renderizarInventario(); }
 
         function renderizarInventario() {
@@ -235,49 +274,49 @@
             if(data.length === 0) { c.innerHTML = `<div class="p-10 text-center text-gray-400 font-bold uppercase"><i class="fa-solid fa-box-open text-4xl mb-3 block opacity-50"></i> Sin Resultados</div>`; return; }
 
             if(vistaActual === 'tabla') {
-                let html = `<div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"><div class="overflow-x-auto custom-scroll"><table class="w-full text-left text-xs whitespace-nowrap"><thead class="bg-[#143B62] text-white text-[10px] uppercase tracking-wider sticky top-0"><tr><th class="py-3 px-4 w-12 text-center">Img</th><th class="py-3 px-4">SKU</th><th class="py-3 px-4">Producto</th><th class="py-3 px-4 text-center">Categoría</th><th class="py-3 px-4 text-center">Stock</th><th class="py-3 px-4 text-right">Precio (USD)</th><th class="py-3 px-4 text-center">Estatus</th><th class="py-3 px-4 text-center">Acción</th></tr></thead><tbody class="divide-y divide-gray-100">`;
+                let html = `<div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"><div class="overflow-x-auto custom-scroll"><table class="w-full text-left text-[10px] whitespace-nowrap"><thead class="bg-[#143B62] text-white text-[9px] uppercase tracking-wider sticky top-0"><tr><th class="py-2 px-3 text-center">Img</th><th class="py-2 px-3">SKU</th><th class="py-2 px-3">Producto</th><th class="py-2 px-3 text-center">Categoría</th><th class="py-2 px-3 text-center">Stock</th><th class="py-2 px-3 text-right">Precio (USD)</th><th class="py-2 px-3 text-center">Estado</th><th class="py-2 px-3 text-center">Acción</th></tr></thead><tbody class="divide-y divide-gray-100">`;
                 
                 data.slice(0, 150).forEach(p => {
                     const img = p.imagen_principal || 'https://via.placeholder.com/150?text=IMG';
                     const pUsd = p.pre.precio_general_usd || 0;
                     const pStr = encodeURIComponent(JSON.stringify(p));
-                    const bEst = p.estado_producto === 'ACTIVO' ? `<span class="bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded text-[9px] font-black border border-emerald-200">ACTIVO</span>` : `<span class="bg-red-50 text-red-600 px-2 py-0.5 rounded text-[9px] font-black border border-red-200">INACTIVO</span>`;
+                    const bEst = p.estado_producto === 'ACTIVO' ? `<span class="bg-emerald-50 text-emerald-600 px-1.5 py-0.5 rounded font-black border border-emerald-200">ACTIVO</span>` : `<span class="bg-red-50 text-red-600 px-1.5 py-0.5 rounded font-black border border-red-200">INACTIVO</span>`;
                     const bStk = p.stock_actual <= p.stock_minimo ? `<span class="text-red-500 font-black"><i class="fa-solid fa-triangle-exclamation"></i> ${p.stock_actual}</span>` : `<span class="text-gray-700 font-bold">${p.stock_actual}</span>`;
 
                     html += `<tr class="hover:bg-gray-50 transition border-b border-gray-50">
-                        <td class="py-2 px-4 text-center"><img src="${img}" class="w-8 h-8 rounded object-contain border bg-white"></td>
-                        <td class="py-2 px-4 font-mono font-bold text-gray-500">${p.id_producto_sku}</td>
-                        <td class="py-2 px-4 font-bold text-[#143B62] truncate max-w-[250px]">${p.nombre}</td>
-                        <td class="py-2 px-4 text-center"><span class="text-[9px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded uppercase font-bold">${p.categoria_del_producto || '-'}</span></td>
-                        <td class="py-2 px-4 text-center bg-gray-50/50">${bStk}</td>
-                        <td class="py-2 px-4 text-right font-black text-[#25D366] text-sm">$${pUsd.toFixed(2)}</td>
-                        <td class="py-2 px-4 text-center">${bEst}</td>
-                        <td class="py-2 px-4 text-center"><button onclick="abrirModalProducto('${pStr}')" class="text-blue-500 hover:bg-blue-50 px-2 py-1.5 rounded transition shadow-sm border border-transparent hover:border-blue-200"><i class="fa-solid fa-pen-to-square"></i></button></td>
+                        <td class="py-1.5 px-3 text-center"><img src="${img}" class="w-8 h-8 rounded object-contain border bg-white"></td>
+                        <td class="py-1.5 px-3 font-mono font-bold text-gray-500">${p.id_producto_sku}</td>
+                        <td class="py-1.5 px-3 font-bold text-[#143B62] truncate max-w-[200px]">${p.nombre}</td>
+                        <td class="py-1.5 px-3 text-center"><span class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded uppercase font-bold">${p.categoria_del_producto || '-'}</span></td>
+                        <td class="py-1.5 px-3 text-center bg-gray-50/50">${bStk}</td>
+                        <td class="py-1.5 px-3 text-right font-black text-[#25D366] text-xs">$${pUsd.toFixed(2)}</td>
+                        <td class="py-1.5 px-3 text-center">${bEst}</td>
+                        <td class="py-1.5 px-3 text-center"><button onclick="abrirModalProducto('${pStr}')" class="text-blue-500 hover:bg-blue-50 px-2 py-1 rounded transition shadow-sm border border-transparent hover:border-blue-200"><i class="fa-solid fa-pen-to-square"></i></button></td>
                     </tr>`;
                 });
                 html += `</tbody></table></div></div>`; c.innerHTML = html;
             } else {
-                let html = `<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 pb-10">`;
+                let html = `<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 pb-10">`;
                 data.slice(0, 150).forEach(p => {
                     const img = p.imagen_principal || 'https://via.placeholder.com/300?text=P%26P';
                     const pUsd = p.pre.precio_general_usd || 0;
                     const pStr = encodeURIComponent(JSON.stringify(p));
-                    const bEst = p.estado_producto === 'ACTIVO' ? `<span class="bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded text-[8px] font-black uppercase">Activo</span>` : `<span class="bg-red-100 text-red-700 px-1.5 py-0.5 rounded text-[8px] font-black uppercase">Inactivo</span>`;
+                    const bEst = p.estado_producto === 'ACTIVO' ? `<span class="bg-emerald-100 text-emerald-700 px-1 py-0.5 rounded text-[7px] font-black uppercase">Activo</span>` : `<span class="bg-red-100 text-red-700 px-1 py-0.5 rounded text-[7px] font-black uppercase">Inactivo</span>`;
                     const bStk = p.stock_actual <= p.stock_minimo ? `<span class="text-red-600 font-black"><i class="fa-solid fa-triangle-exclamation"></i> ${p.stock_actual}</span>` : `<span class="text-emerald-600 font-black">${p.stock_actual}</span>`;
 
                     html += `
-                    <div class="bg-white border border-gray-200 rounded-xl p-3 flex flex-col shadow-sm hover:shadow-lg transition cursor-pointer fade-in group" onclick="abrirModalProducto('${pStr}')">
-                        <div class="flex justify-between items-start mb-2">
-                            <span class="text-[9px] font-mono text-gray-400 bg-gray-50 px-1.5 rounded border border-gray-100">${p.id_producto_sku}</span>
+                    <div class="bg-white border border-gray-200 rounded-lg p-2.5 flex flex-col shadow-sm hover:shadow-lg transition cursor-pointer fade-in group" onclick="abrirModalProducto('${pStr}')">
+                        <div class="flex justify-between items-start mb-1.5">
+                            <span class="text-[8px] font-mono text-gray-400 bg-gray-50 px-1.5 rounded border border-gray-100">${p.id_producto_sku}</span>
                             ${bEst}
                         </div>
-                        <div class="h-28 w-full mb-3 bg-white flex items-center justify-center rounded">
+                        <div class="h-24 w-full mb-2 bg-white flex items-center justify-center rounded">
                             <img src="${img}" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300">
                         </div>
-                        <h3 class="text-[10px] font-black text-[#143B62] leading-tight line-clamp-2 mb-2 uppercase">${p.nombre}</h3>
-                        <div class="mt-auto border-t border-gray-50 pt-2 flex justify-between items-end">
-                            <div><p class="text-[8px] text-gray-400 font-bold uppercase mb-0.5">Precio (USD)</p><p class="text-xs font-black text-[#25D366]">$${pUsd.toFixed(2)}</p></div>
-                            <div class="text-right"><p class="text-[8px] text-gray-400 font-bold uppercase mb-0.5">Stock</p><p class="text-xs bg-gray-50 px-2 py-0.5 rounded border border-gray-100">${bStk}</p></div>
+                        <h3 class="text-[9px] font-black text-[#143B62] leading-tight line-clamp-2 mb-2 uppercase">${p.nombre}</h3>
+                        <div class="mt-auto border-t border-gray-50 pt-1.5 flex justify-between items-end">
+                            <div><p class="text-[7px] text-gray-400 font-bold uppercase mb-0.5">Precio</p><p class="text-[11px] font-black text-[#25D366]">$${pUsd.toFixed(2)}</p></div>
+                            <div class="text-right"><p class="text-[7px] text-gray-400 font-bold uppercase mb-0.5">Stock</p><p class="text-[10px] bg-gray-50 px-1.5 rounded border border-gray-100">${bStk}</p></div>
                         </div>
                     </div>`;
                 });
@@ -285,7 +324,26 @@
             }
         }
 
-        // --- SISTEMA DE IMÁGENES ---
+        // --- SISTEMA DE CARGA Y ERRORES ---
+        function mostrarCarga(titulo, desc, isError = false) {
+            const ol = document.getElementById('loading-overlay'); const ic = document.getElementById('loading-icon');
+            const tt = document.getElementById('loading-text'); const td = document.getElementById('loading-desc');
+            const bt = document.getElementById('btn-cerrar-carga');
+            ol.classList.remove('hidden'); ol.classList.add('flex');
+            tt.innerText = titulo; td.innerText = desc;
+            if(isError) {
+                ic.className = "fa-solid fa-circle-xmark text-5xl text-red-500 mb-4";
+                tt.classList.replace('text-white', 'text-red-400');
+                bt.classList.remove('hidden');
+            } else {
+                ic.className = "fa-solid fa-cloud-arrow-up text-5xl text-[#E67E22] mb-4 animate-bounce";
+                tt.classList.replace('text-red-400', 'text-white');
+                bt.classList.add('hidden');
+            }
+        }
+        function cerrarErrorCarga() { document.getElementById('loading-overlay').classList.add('hidden'); document.getElementById('loading-overlay').classList.remove('flex'); }
+
+        // --- IMÁGENES ---
         function actualizarPreview(url, previewId, iconId) {
             const preview = document.getElementById(previewId); const icon = document.getElementById(iconId);
             if(url) { preview.src = url; preview.classList.remove('hidden'); icon.classList.add('hidden'); } 
@@ -303,7 +361,7 @@
                         if (w > h && w > max) { h *= max / w; w = max; } else if (h > max) { w *= max / h; h = max; }
                         canvas.width = w; canvas.height = h; ctx.drawImage(img, 0, 0, w, h);
                         canvas.toBlob(async (blob) => {
-                            const ext = file.name.split('.').pop();
+                            const ext = file.name.split('.').pop() || 'jpg';
                             const fileName = `img_${Date.now()}_${Math.floor(Math.random()*1000)}.${ext}`;
                             try {
                                 const formData = new FormData(); formData.append('file', blob, fileName);
@@ -311,7 +369,7 @@
                                 if(!res.ok) throw new Error("Fallo upload");
                                 resolve(`${SUPABASE_URL}/storage/v1/object/public/inventario/${fileName}`);
                             } catch(err) { reject(err); }
-                        }, file.type, 0.8);
+                        }, 'image/webp', 0.8);
                     };
                 };
             });
@@ -319,157 +377,140 @@
 
         async function subirImagenUnica(event, urlInputId, previewId, iconId) {
             const file = event.target.files[0]; if(!file) return;
-            document.getElementById('loading-overlay').classList.remove('hidden'); document.getElementById('loading-overlay').classList.add('flex');
+            mostrarCarga("Subiendo...", "Optimizando y guardando imagen");
             try {
                 const url = await comprimirYSubir(file);
                 document.getElementById(urlInputId).value = url;
                 actualizarPreview(url, previewId, iconId);
-            } catch(e) { alert("Error subiendo imagen"); } 
-            finally { document.getElementById('loading-overlay').classList.add('hidden'); document.getElementById('loading-overlay').classList.remove('flex'); }
+                cerrarErrorCarga();
+            } catch(e) { mostrarCarga("Error de Subida", "No se pudo cargar la imagen principal.", true); }
         }
 
         async function subirImagenesGaleria(event) {
             const files = event.target.files; if(files.length === 0) return;
-            document.getElementById('loading-overlay').classList.remove('hidden'); document.getElementById('loading-overlay').classList.add('flex');
+            mostrarCarga("Subiendo Galería...", `Optimizando ${files.length} imágenes`);
             try {
                 for(let i = 0; i < files.length; i++) {
                     const url = await comprimirYSubir(files[i]);
                     arrayGaleriaLocal.push(url);
                 }
                 renderizarGaleriaLocal();
-            } catch(e) { alert("Error subiendo a la galería"); } 
-            finally { document.getElementById('loading-overlay').classList.add('hidden'); document.getElementById('loading-overlay').classList.remove('flex'); }
+                cerrarErrorCarga();
+            } catch(e) { mostrarCarga("Error de Galería", "Algunas imágenes no se subieron.", true); }
         }
 
         function renderizarGaleriaLocal() {
-            const container = document.getElementById('contenedor-galeria');
-            container.innerHTML = '';
+            const container = document.getElementById('contenedor-galeria'); container.innerHTML = '';
             arrayGaleriaLocal.forEach((url, index) => {
-                container.innerHTML += `
-                <div class="relative group h-20 bg-white border border-gray-200 rounded flex items-center justify-center fade-in">
-                    <img src="${url}" class="max-h-full max-w-full object-contain p-1">
-                    <button type="button" onclick="eliminarFotoGaleria(${index})" class="absolute -top-2 -right-2 bg-red-500 text-white w-5 h-5 rounded-full text-[10px] font-bold shadow-md hover:bg-red-600 hover:scale-110 transition opacity-0 group-hover:opacity-100 z-10"><i class="fa-solid fa-times"></i></button>
-                </div>`;
+                container.innerHTML += `<div class="relative group h-16 bg-white border border-gray-200 rounded flex items-center justify-center fade-in"><img src="${url}" class="max-h-full max-w-full object-contain p-1"><button type="button" onclick="eliminarFotoGaleria(${index})" class="absolute -top-1.5 -right-1.5 bg-red-500 text-white w-4 h-4 rounded-full text-[8px] font-bold shadow-md hover:bg-red-600 hover:scale-110 transition opacity-0 group-hover:opacity-100 z-10"><i class="fa-solid fa-times"></i></button></div>`;
             });
         }
+        function eliminarFotoGaleria(index) { arrayGaleriaLocal.splice(index, 1); renderizarGaleriaLocal(); }
 
-        function eliminarFotoGaleria(index) {
-            arrayGaleriaLocal.splice(index, 1);
-            renderizarGaleriaLocal();
-        }
-
-        // --- FORMULARIO ---
-        function togglePrecioBsFijo() {
-            const val = document.getElementById('prod-fijo-bs').value;
-            document.getElementById('caja-precio-bs-fijo').classList.toggle('hidden', val === 'NO');
-        }
+        // --- FORMULARIO RESTAURADO ---
+        function togglePrecioBsFijo() { document.getElementById('caja-precio-bs-fijo').classList.toggle('hidden', document.getElementById('prod-fijo-bs').value === 'NO'); }
+        function valNum(id) { return parseFloat(document.getElementById(id).value) || 0; }
 
         function abrirModalProducto(pStr = null) {
-            document.getElementById('form-producto').reset();
-            arrayGaleriaLocal = []; 
-            renderizarGaleriaLocal();
-            document.getElementById('url-img-principal').value = '';
-            actualizarPreview('', 'preview-img-principal', 'icon-img-principal');
-            document.getElementById('btn-eliminar-prod').classList.add('hidden');
+            document.getElementById('form-producto').reset(); arrayGaleriaLocal = []; renderizarGaleriaLocal();
+            document.getElementById('url-img-principal').value = ''; actualizarPreview('', 'preview-img-principal', 'icon-img-principal');
             togglePrecioBsFijo();
 
             if (pStr) {
                 const p = JSON.parse(decodeURIComponent(pStr));
-                document.getElementById('modal-titulo').innerHTML = `<i class="fa-solid fa-pen-to-square mr-2 text-[#E67E22]"></i> EDITAR PRODUCTO`;
-                document.getElementById('prod-modo-edicion').value = "true";
-                document.getElementById('prod-sku-original').value = p.id_producto_sku;
+                document.getElementById('modal-titulo').innerHTML = `<i class="fa-solid fa-pen-to-square mr-2 text-[#E67E22]"></i> EDITAR FICHA`;
+                document.getElementById('prod-modo-edicion').value = "true"; document.getElementById('prod-sku-original').value = p.id_producto_sku;
                 
-                document.getElementById('prod-sku').value = p.id_producto_sku;
-                document.getElementById('prod-nombre').value = p.nombre || '';
-                document.getElementById('prod-categoria').value = p.categoria_del_producto || '';
-                document.getElementById('prod-marca').value = p.marca || '';
-                document.getElementById('prod-estatus').value = p.estado_producto || 'ACTIVO';
-                document.getElementById('prod-desc').value = p.descripcion || '';
-                document.getElementById('prod-stock').value = p.stock_actual || 0;
-                document.getElementById('prod-stock-min').value = p.stock_minimo || 0;
+                document.getElementById('prod-sku').value = p.id_producto_sku; document.getElementById('prod-cod-barra').value = p.codigo_barra || '';
+                document.getElementById('prod-nombre').value = p.nombre || ''; document.getElementById('prod-desc').value = p.descripcion || '';
                 
-                document.getElementById('url-img-principal').value = p.imagen_principal || '';
-                actualizarPreview(p.imagen_principal, 'preview-img-principal', 'icon-img-principal');
+                const sV = (id, val) => { if(document.getElementById(id)) document.getElementById(id).value = val || ''; };
+                sV('prod-tipo', p.tipo_producto); sV('prod-categoria', p.categoria_del_producto); sV('prod-cat-venta', p.categoria_venta);
+                sV('prod-marca', p.marca); sV('prod-condicion', p.condicion_producto); sV('prod-talla', p.talla);
+                sV('prod-color', p.color); sV('prod-unidad', p.unidad_medida); sV('prod-estatus', p.estado_producto || 'ACTIVO');
+                sV('prod-impuesto', p.tipo_impuesto); sV('prod-negativo', p.permitir_negativo ? 'TRUE' : 'FALSE');
                 
-                if(p.galeria_imagenes) {
-                    try {
-                        let parsed = typeof p.galeria_imagenes === 'string' ? JSON.parse(p.galeria_imagenes) : p.galeria_imagenes;
-                        if(Array.isArray(parsed)) arrayGaleriaLocal = parsed;
-                    } catch(e) {}
-                }
+                document.getElementById('prod-stock').value = p.stock_actual || 0; document.getElementById('prod-stock-min').value = p.stock_minimo || 0;
+                document.getElementById('url-img-principal').value = p.imagen_principal || ''; actualizarPreview(p.imagen_principal, 'preview-img-principal', 'icon-img-principal');
+                
+                if(p.galeria_imagenes) { try { let parsed = typeof p.galeria_imagenes === 'string' ? JSON.parse(p.galeria_imagenes) : p.galeria_imagenes; if(Array.isArray(parsed)) arrayGaleriaLocal = parsed; } catch(e) {} }
                 renderizarGaleriaLocal();
 
                 document.getElementById('prod-precio-usd').value = p.pre.precio_general_usd || 0;
                 document.getElementById('prod-fijo-bs').value = p.pre.es_precio_fijo_bs ? 'SI' : 'NO';
                 document.getElementById('prod-precio-bs').value = p.pre.precio_fijo_bs || '';
-                togglePrecioBsFijo();
                 
-                document.getElementById('prod-sku').readOnly = true; document.getElementById('prod-sku').classList.add('bg-gray-200');
-                document.getElementById('btn-eliminar-prod').classList.remove('hidden');
+                sV('req-p1', p.pre.requerido_precio_1); sV('usd-p1', p.pre.precio_1_usd);
+                sV('req-p2', p.pre.requerido_precio_2); sV('usd-p2', p.pre.precio_2_usd);
+                sV('req-p3', p.pre.requerido_precio_3); sV('usd-p3', p.pre.precio_3_usd);
+
+                togglePrecioBsFijo(); document.getElementById('prod-sku').readOnly = true; document.getElementById('prod-sku').classList.add('bg-gray-200');
             } else {
-                document.getElementById('modal-titulo').innerHTML = `<i class="fa-solid fa-plus mr-2 text-[#25D366]"></i> NUEVO PRODUCTO`;
+                document.getElementById('modal-titulo').innerHTML = `<i class="fa-solid fa-plus mr-2 text-[#25D366]"></i> NUEVO REGISTRO`;
                 document.getElementById('prod-modo-edicion').value = "false";
                 document.getElementById('prod-sku').readOnly = false; document.getElementById('prod-sku').classList.remove('bg-gray-200');
             }
             document.getElementById('modal-producto').classList.remove('hidden'); document.getElementById('modal-producto').classList.add('flex');
         }
 
-        function cerrarModalProducto() { document.getElementById('modal-producto').classList.add('hidden'); }
+        function cerrarModalProducto() { document.getElementById('modal-producto').classList.add('hidden'); document.getElementById('modal-producto').classList.remove('flex'); }
 
         async function guardarProducto(e) {
             e.preventDefault();
             const btn = document.getElementById('btn-guardar-prod'); btn.innerHTML = `Guardando...`; btn.disabled = true;
-            document.getElementById('loading-overlay').classList.remove('hidden'); document.getElementById('loading-overlay').classList.add('flex');
+            mostrarCarga("Sincronizando", "Guardando datos en la base principal...");
 
             try {
                 const isEdit = document.getElementById('prod-modo-edicion').value === "true";
                 const sku = document.getElementById('prod-sku').value.trim().toUpperCase();
+                const skuOrig = document.getElementById('prod-sku-original').value;
                 
                 const pProd = {
-                    id_empresa: empresaActual,
-                    id_producto_sku: sku,
-                    nombre: document.getElementById('prod-nombre').value.trim().toUpperCase(),
-                    descripcion: document.getElementById('prod-desc').value.trim(),
-                    categoria_del_producto: document.getElementById('prod-categoria').value,
-                    marca: document.getElementById('prod-marca').value,
-                    stock_actual: parseInt(document.getElementById('prod-stock').value) || 0,
-                    stock_minimo: parseInt(document.getElementById('prod-stock-min').value) || 0,
-                    imagen_principal: document.getElementById('url-img-principal').value || null,
-                    galeria_imagenes: JSON.stringify(arrayGaleriaLocal),
-                    estado_producto: document.getElementById('prod-estatus').value
+                    id_empresa: empresaActual, id_producto_sku: sku, codigo_barra: document.getElementById('prod-cod-barra').value.trim() || null,
+                    nombre: document.getElementById('prod-nombre').value.trim().toUpperCase(), descripcion: document.getElementById('prod-desc').value.trim() || null,
+                    tipo_producto: document.getElementById('prod-tipo').value || null, categoria_del_producto: document.getElementById('prod-categoria').value || null,
+                    categoria_venta: document.getElementById('prod-cat-venta').value || null, marca: document.getElementById('prod-marca').value || null,
+                    condicion_producto: document.getElementById('prod-condicion').value || null, talla: document.getElementById('prod-talla').value || null,
+                    color: document.getElementById('prod-color').value || null, unidad_medida: document.getElementById('prod-unidad').value || null,
+                    estado_producto: document.getElementById('prod-estatus').value, tipo_impuesto: document.getElementById('prod-impuesto').value || null,
+                    permitir_negativo: document.getElementById('prod-negativo').value === 'TRUE', stock_actual: valNum('prod-stock'), stock_minimo: valNum('prod-stock-min'),
+                    imagen_principal: document.getElementById('url-img-principal').value || null, galeria_imagenes: JSON.stringify(arrayGaleriaLocal)
                 };
 
                 const isBsFijo = document.getElementById('prod-fijo-bs').value === 'SI';
                 const pPre = {
-                    id_empresa: empresaActual,
-                    id_producto_sku: sku,
-                    precio_general_usd: parseFloat(document.getElementById('prod-precio-usd').value) || 0,
-                    es_precio_fijo_bs: isBsFijo,
-                    precio_fijo_bs: isBsFijo ? (parseFloat(document.getElementById('prod-precio-bs').value) || 0) : 0
+                    id_empresa: empresaActual, id_producto_sku: sku, precio_general_usd: valNum('prod-precio-usd'),
+                    es_precio_fijo_bs: isBsFijo, precio_fijo_bs: isBsFijo ? valNum('prod-precio-bs') : 0,
+                    requerido_precio_1: valNum('req-p1'), precio_1_usd: valNum('usd-p1'), requerido_precio_2: valNum('req-p2'), precio_2_usd: valNum('usd-p2'),
+                    requerido_precio_3: valNum('req-p3'), precio_3_usd: valNum('usd-p3')
                 };
 
-                const uProd = isEdit ? `${SUPABASE_URL}/rest/v1/productos?id_producto_sku=eq.${document.getElementById('prod-sku-original').value}` : `${SUPABASE_URL}/rest/v1/productos`;
-                const uPre = isEdit ? `${SUPABASE_URL}/rest/v1/precios?id_producto_sku=eq.${document.getElementById('prod-sku-original').value}` : `${SUPABASE_URL}/rest/v1/precios`;
+                const uProd = isEdit ? `${SUPABASE_URL}/rest/v1/productos?id_producto_sku=eq.${skuOrig}` : `${SUPABASE_URL}/rest/v1/productos`;
+                const uPre = isEdit ? `${SUPABASE_URL}/rest/v1/precios?id_producto_sku=eq.${skuOrig}` : `${SUPABASE_URL}/rest/v1/precios`;
                 const mtd = isEdit ? 'PATCH' : 'POST';
 
-                const rProd = await fetch(uProd, { method: mtd, headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify(pProd) });
-                if(!rProd.ok) throw new Error("SKU duplicado o error");
-                await fetch(uPre, { method: mtd, headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify(pPre) });
+                const rProd = await fetch(uProd, { method: mtd, headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, body: JSON.stringify(pProd) });
+                if(!rProd.ok) { const err = await rProd.json(); throw new Error(err.message || "Error al guardar producto"); }
+                
+                // Validamos que exista en precios antes de hacer PATCH (o forzamos POST/UPSERT si no está)
+                const rPre = await fetch(uPre, { method: mtd, headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify(pPre) });
+                if(isEdit && rPre.status !== 200 && rPre.status !== 204) {
+                    await fetch(`${SUPABASE_URL}/rest/v1/precios`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify(pPre) });
+                }
 
-                cerrarModalProducto(); await cargarBaseDatos();
-            } catch(e) { alert("Error al guardar: " + e.message); } 
-            finally { btn.innerHTML = `<i class="fa-solid fa-save mr-2"></i> Guardar Ficha`; btn.disabled = false; document.getElementById('loading-overlay').classList.add('hidden'); }
+                cerrarErrorCarga(); cerrarModalProducto(); await cargarBaseDatos();
+            } catch(e) { mostrarCarga("Operación Rechazada", "Revisa que el SKU o Código de Barras no estén duplicados.\nDetalle: " + e.message, true); } 
+            finally { btn.innerHTML = `<i class="fa-solid fa-save mr-2"></i> Guardar`; btn.disabled = false; }
         }
 
         async function eliminarProducto() {
-            if(!confirm("¿Desea ELIMINAR este producto y todos sus precios/historial?")) return;
-            document.getElementById('loading-overlay').classList.remove('hidden'); document.getElementById('loading-overlay').classList.add('flex');
+            if(!confirm("¿CONFIRMAS ELIMINAR ESTE REGISTRO DEFINITIVAMENTE?")) return;
+            mostrarCarga("Eliminando...", "Borrando base y dependencias");
             try {
                 const sku = document.getElementById('prod-sku-original').value;
                 await fetch(`${SUPABASE_URL}/rest/v1/productos?id_producto_sku=eq.${sku}`, { method: 'DELETE', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
-                cerrarModalProducto(); await cargarBaseDatos();
-            } catch(e) { alert("No se pudo eliminar. Puede tener facturas asociadas."); }
-            finally { document.getElementById('loading-overlay').classList.add('hidden'); }
+                cerrarErrorCarga(); cerrarModalProducto(); await cargarBaseDatos();
+            } catch(e) { mostrarCarga("Fallo al Eliminar", "El producto tiene facturas asociadas y no puede borrarse.", true); }
         }
     </script>
 </body>
