@@ -15,6 +15,7 @@
         .btn-press:active { transform: scale(0.96); }
         .fade-in { animation: fadeIn 0.2s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        .btn-vista.active { background-color: #e2e8f0; color: #143B62; border-color: #cbd5e1; }
     </style>
     <script src="config.js"></script>
     <script>if (!localStorage.getItem('pyp_token_seguro')) window.location.href = 'login.html';</script>
@@ -36,18 +37,35 @@
 
         <div class="flex-1 overflow-auto p-4 custom-scroll pb-24 md:pb-6 flex flex-col">
             
-            <div class="bg-white p-3 border border-gray-200 rounded-xl shadow-sm flex flex-col sm:flex-row justify-between items-center gap-3 shrink-0 mb-4">
-                <div class="w-full sm:w-1/2 relative">
-                    <i class="fa-solid fa-search absolute left-3 top-2.5 text-gray-400"></i>
-                    <input type="text" id="buscador-inv" oninput="filtrarInventario()" placeholder="Buscar por código SKU o nombre..." class="w-full border border-gray-300 rounded-lg pl-9 pr-4 py-2 text-xs focus:outline-none focus:border-[#143B62] uppercase transition font-bold shadow-inner">
+            <div class="bg-white p-3 border border-gray-200 rounded-xl shadow-sm flex flex-col md:flex-row justify-between items-center gap-3 shrink-0 mb-4">
+                <div class="w-full md:w-2/3 flex flex-col sm:flex-row gap-2">
+                    <div class="relative flex-1">
+                        <i class="fa-solid fa-search absolute left-3 top-2.5 text-gray-400"></i>
+                        <input type="text" id="buscador-inv" oninput="filtrarInventario()" placeholder="Buscar SKU o nombre..." class="w-full border border-gray-300 rounded-lg pl-9 pr-4 py-2 text-xs focus:outline-none focus:border-[#143B62] uppercase transition font-bold shadow-inner">
+                    </div>
+                    <select id="filtro-cat-inv" onchange="filtrarInventario()" class="w-full sm:w-1/3 border border-gray-300 rounded-lg px-3 py-2 text-xs font-bold text-[#143B62] outline-none shadow-sm bg-gray-50">
+                        <option value="TODAS">TODAS LAS CATEGORÍAS</option>
+                    </select>
+                    <select id="filtro-estatus-inv" onchange="filtrarInventario()" class="w-full sm:w-1/4 border border-gray-300 rounded-lg px-3 py-2 text-xs font-bold text-[#143B62] outline-none shadow-sm bg-gray-50">
+                        <option value="TODOS">ESTATUS</option>
+                        <option value="ACTIVO">ACTIVOS</option>
+                        <option value="INACTIVO">INACTIVOS</option>
+                    </select>
                 </div>
-                <button onclick="abrirModalProducto()" class="w-full sm:w-auto bg-[#25D366] hover:bg-[#1ebd5c] text-white px-6 py-2 rounded-lg font-black text-xs shadow-sm transition btn-press uppercase tracking-wider flex justify-center items-center gap-2">
-                    <i class="fa-solid fa-plus"></i> Nuevo Producto
-                </button>
+                
+                <div class="flex gap-2 w-full md:w-auto justify-end">
+                    <div class="flex bg-gray-50 rounded-md border border-gray-300 p-0.5 shadow-inner">
+                        <button id="btn-vista-tabla" onclick="cambiarVista('tabla')" class="btn-vista active px-3 py-1 rounded text-gray-500 hover:text-[#143B62] transition text-sm"><i class="fa-solid fa-list"></i></button>
+                        <button id="btn-vista-grid" onclick="cambiarVista('grid')" class="btn-vista px-3 py-1 rounded text-gray-500 hover:text-[#143B62] transition text-sm"><i class="fa-solid fa-border-all"></i></button>
+                    </div>
+                    <button onclick="abrirModalProducto()" class="bg-[#25D366] hover:bg-[#1ebd5c] text-white px-5 py-2 rounded-lg font-black text-xs shadow-sm transition btn-press uppercase tracking-wider flex justify-center items-center gap-2">
+                        <i class="fa-solid fa-plus"></i> Nuevo Producto
+                    </button>
+                </div>
             </div>
 
-            <div id="grid-inventario" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 overflow-y-auto pb-10">
-                <div class="col-span-full p-10 text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin text-4xl mb-3 block text-[#143B62]"></i><p class="font-bold uppercase tracking-widest text-xs">Cargando Base de Datos...</p></div>
+            <div id="contenedor-inventario" class="flex-1 bg-transparent">
+                <div class="p-10 text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin text-4xl mb-3 block text-[#143B62]"></i><p class="font-bold uppercase tracking-widest text-xs">Cargando Base de Datos...</p></div>
             </div>
         </div>
     </main>
@@ -67,7 +85,7 @@
                     
                     <div class="lg:col-span-1 space-y-4">
                         <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-                            <h4 class="text-[10px] font-black text-gray-800 uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Imagen Principal (Catálogo)</h4>
+                            <h4 class="text-[10px] font-black text-gray-800 uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Imagen Principal</h4>
                             <div class="border-2 border-dashed border-gray-300 rounded-lg p-2 flex flex-col items-center justify-center bg-gray-50 h-40 mb-3 relative group">
                                 <img id="preview-img-principal" src="" class="max-h-full max-w-full object-contain hidden z-10 bg-white">
                                 <i class="fa-solid fa-image text-3xl text-gray-300" id="icon-img-principal"></i>
@@ -78,18 +96,14 @@
                         </div>
 
                         <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-                            <h4 class="text-[10px] font-black text-[#E67E22] uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Galería Adicional (Múltiples)</h4>
-                            
-                            <div id="contenedor-galeria" class="grid grid-cols-3 gap-2 mb-3">
-                                </div>
-
+                            <h4 class="text-[10px] font-black text-[#E67E22] uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Galería Adicional</h4>
+                            <div id="contenedor-galeria" class="grid grid-cols-3 gap-2 mb-3"></div>
                             <input type="file" id="file-img-galeria" accept="image/*" multiple class="hidden" onchange="subirImagenesGaleria(event)">
                             <button type="button" onclick="document.getElementById('file-img-galeria').click()" class="w-full bg-orange-50 text-[#E67E22] font-bold py-2 rounded text-[10px] uppercase tracking-wider hover:bg-orange-100 transition border border-orange-200"><i class="fa-solid fa-images mr-1"></i> Añadir Fotos</button>
                         </div>
                     </div>
 
                     <div class="lg:col-span-2 space-y-4">
-                        
                         <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
                             <h4 class="text-[10px] font-black text-[#143B62] uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Información Básica</h4>
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
@@ -108,40 +122,20 @@
                             <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
                                 <h4 class="text-[10px] font-black text-blue-600 uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Inventario Actual</h4>
                                 <div class="flex items-center gap-4">
-                                    <div class="flex-1">
-                                        <label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Stock Físico</label>
-                                        <input type="number" id="prod-stock" value="0" class="w-full border-2 border-gray-300 rounded px-3 py-2 text-lg font-black text-center text-[#143B62] outline-none bg-blue-50">
-                                    </div>
-                                    <div class="flex-1">
-                                        <label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Alerta Stock Mínimo</label>
-                                        <input type="number" id="prod-stock-min" value="0" class="w-full border border-gray-300 rounded px-3 py-2 text-sm font-bold text-center outline-none">
-                                    </div>
+                                    <div class="flex-1"><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Stock Físico</label><input type="number" id="prod-stock" value="0" class="w-full border-2 border-gray-300 rounded px-3 py-2 text-lg font-black text-center text-[#143B62] outline-none bg-blue-50"></div>
+                                    <div class="flex-1"><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Alerta Stock Mínimo</label><input type="number" id="prod-stock-min" value="0" class="w-full border border-gray-300 rounded px-3 py-2 text-sm font-bold text-center outline-none"></div>
                                 </div>
                             </div>
 
                             <div class="bg-emerald-50 p-4 rounded-xl border border-emerald-200 shadow-sm">
                                 <h4 class="text-[10px] font-black text-emerald-700 uppercase border-b border-emerald-200 pb-2 mb-3 tracking-wider">Precio Venta (General)</h4>
                                 <div class="flex items-center gap-3">
-                                    <div class="flex-1 relative">
-                                        <label class="block text-[9px] font-bold text-emerald-600 uppercase mb-1">Precio Divisas (USD) *</label>
-                                        <span class="absolute left-3 top-[26px] font-black text-gray-400">$</span>
-                                        <input type="number" id="prod-precio-usd" step="0.01" required class="w-full border-2 border-emerald-300 rounded pl-7 pr-3 py-2 text-lg font-black text-emerald-700 outline-none bg-white">
-                                    </div>
-                                    <div class="flex-1">
-                                        <label class="block text-[9px] font-bold text-emerald-600 uppercase mb-1">¿Precio Fijo en Bs?</label>
-                                        <select id="prod-fijo-bs" onchange="togglePrecioBsFijo()" class="w-full border-2 border-emerald-300 rounded px-2 py-2 text-xs font-bold outline-none bg-white">
-                                            <option value="NO">NO (Calcula auto)</option>
-                                            <option value="SI">SÍ (Congelado)</option>
-                                        </select>
-                                    </div>
+                                    <div class="flex-1 relative"><label class="block text-[9px] font-bold text-emerald-600 uppercase mb-1">Precio Divisas (USD) *</label><span class="absolute left-3 top-[26px] font-black text-gray-400">$</span><input type="number" id="prod-precio-usd" step="0.01" required class="w-full border-2 border-emerald-300 rounded pl-7 pr-3 py-2 text-lg font-black text-emerald-700 outline-none bg-white"></div>
+                                    <div class="flex-1"><label class="block text-[9px] font-bold text-emerald-600 uppercase mb-1">¿Precio Fijo Bs?</label><select id="prod-fijo-bs" onchange="togglePrecioBsFijo()" class="w-full border-2 border-emerald-300 rounded px-2 py-2 text-xs font-bold outline-none bg-white"><option value="NO">NO</option><option value="SI">SÍ</option></select></div>
                                 </div>
-                                <div id="caja-precio-bs-fijo" class="mt-2 hidden">
-                                    <label class="block text-[9px] font-bold text-emerald-600 uppercase mb-1">Monto Fijo en Bs</label>
-                                    <input type="number" id="prod-precio-bs" step="0.01" class="w-full border-2 border-emerald-300 rounded px-3 py-1.5 text-sm font-black text-gray-800 outline-none bg-white">
-                                </div>
+                                <div id="caja-precio-bs-fijo" class="mt-2 hidden"><label class="block text-[9px] font-bold text-emerald-600 uppercase mb-1">Monto Fijo Bs</label><input type="number" id="prod-precio-bs" step="0.01" class="w-full border-2 border-emerald-300 rounded px-3 py-1.5 text-sm font-black text-gray-800 outline-none bg-white"></div>
                             </div>
                         </div>
-
                     </div>
                 </div>
             </form>
@@ -166,12 +160,13 @@
         const TOKEN_JWT = localStorage.getItem('pyp_token_seguro');
         let dbInventario = [], fuseInventario = null, empresaActual = null;
         let arrayGaleriaLocal = []; 
+        let vistaActual = localStorage.getItem('pyp_vista_inventario') || 'tabla';
 
         window.onload = async () => {
-            // AQUI ESTA LA CORRECCIÓN DE LA LÍNEA QUE DABA ERROR DE INNER TEXT
             if(localStorage.getItem('pyp_usuario_nombre') && document.getElementById('nombre-usuario')) {
                 document.getElementById('nombre-usuario').innerText = localStorage.getItem('pyp_usuario_nombre').split(' ')[0];
             }
+            actualizarUIBotonesVista();
             await cargarBaseDatos();
         };
 
@@ -197,6 +192,14 @@
                 fuseInventario = new Fuse(dbInventario, { keys: ['id_producto_sku', 'nombre'], threshold: 0.2 });
 
                 const pars = await resPar.json();
+                
+                // Llenar Filtro Top
+                const catArr = [...new Set(dbInventario.map(p => p.categoria_del_producto))];
+                let fCatHtml = '<option value="TODAS">TODAS LAS CATEGORÍAS</option>';
+                catArr.forEach(c => { if(c) fCatHtml += `<option value="${c}">${c}</option>` });
+                document.getElementById('filtro-cat-inv').innerHTML = fCatHtml;
+
+                // Llenar Selects Modal
                 llenarSelect(document.getElementById('prod-categoria'), pars.filter(p => p.grupo === 'CATEGORIA'));
                 llenarSelect(document.getElementById('prod-marca'), pars.filter(p => p.grupo === 'MARCA'));
 
@@ -210,47 +213,76 @@
             element.innerHTML = html;
         }
 
+        function cambiarVista(v) { vistaActual = v; localStorage.setItem('pyp_vista_inventario', v); actualizarUIBotonesVista(); renderizarInventario(); }
+        function actualizarUIBotonesVista() { 
+            document.getElementById('btn-vista-tabla').classList.toggle('active', vistaActual === 'tabla'); 
+            document.getElementById('btn-vista-grid').classList.toggle('active', vistaActual === 'grid'); 
+        }
+
         function filtrarInventario() { renderizarInventario(); }
 
         function renderizarInventario() {
             const query = document.getElementById('buscador-inv').value.trim();
+            const cat = document.getElementById('filtro-cat-inv').value;
+            const estatus = document.getElementById('filtro-estatus-inv').value;
+            
             let data = dbInventario;
             if (query !== '') data = fuseInventario.search(query).map(r => r.item);
+            if (cat !== 'TODAS') data = data.filter(p => p.categoria_del_producto === cat);
+            if (estatus !== 'TODOS') data = data.filter(p => p.estado_producto === estatus);
 
-            const grid = document.getElementById('grid-inventario');
-            if(data.length === 0) { grid.innerHTML = `<div class="col-span-full p-10 text-center text-gray-400 font-bold uppercase"><i class="fa-solid fa-box-open text-4xl mb-3 block opacity-50"></i> Sin Resultados</div>`; return; }
+            const c = document.getElementById('contenedor-inventario');
+            if(data.length === 0) { c.innerHTML = `<div class="p-10 text-center text-gray-400 font-bold uppercase"><i class="fa-solid fa-box-open text-4xl mb-3 block opacity-50"></i> Sin Resultados</div>`; return; }
 
-            let html = '';
-            data.slice(0, 100).forEach(p => {
-                const img = p.imagen_principal || 'https://via.placeholder.com/300?text=P%26P';
-                const pUsd = p.pre.precio_general_usd || 0;
-                const pStr = encodeURIComponent(JSON.stringify(p));
-                const badgeEst = p.estado_producto === 'ACTIVO' ? `<span class="bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded text-[8px] font-black uppercase">Activo</span>` : `<span class="bg-red-100 text-red-700 px-1.5 py-0.5 rounded text-[8px] font-black uppercase">Inactivo</span>`;
-                const badgeStock = p.stock_actual <= p.stock_minimo ? `<span class="text-red-600 font-black"><i class="fa-solid fa-triangle-exclamation"></i> ${p.stock_actual}</span>` : `<span class="text-emerald-600 font-black">${p.stock_actual}</span>`;
+            if(vistaActual === 'tabla') {
+                let html = `<div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"><div class="overflow-x-auto custom-scroll"><table class="w-full text-left text-xs whitespace-nowrap"><thead class="bg-[#143B62] text-white text-[10px] uppercase tracking-wider sticky top-0"><tr><th class="py-3 px-4 w-12 text-center">Img</th><th class="py-3 px-4">SKU</th><th class="py-3 px-4">Producto</th><th class="py-3 px-4 text-center">Categoría</th><th class="py-3 px-4 text-center">Stock</th><th class="py-3 px-4 text-right">Precio (USD)</th><th class="py-3 px-4 text-center">Estatus</th><th class="py-3 px-4 text-center">Acción</th></tr></thead><tbody class="divide-y divide-gray-100">`;
+                
+                data.slice(0, 150).forEach(p => {
+                    const img = p.imagen_principal || 'https://via.placeholder.com/150?text=IMG';
+                    const pUsd = p.pre.precio_general_usd || 0;
+                    const pStr = encodeURIComponent(JSON.stringify(p));
+                    const bEst = p.estado_producto === 'ACTIVO' ? `<span class="bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded text-[9px] font-black border border-emerald-200">ACTIVO</span>` : `<span class="bg-red-50 text-red-600 px-2 py-0.5 rounded text-[9px] font-black border border-red-200">INACTIVO</span>`;
+                    const bStk = p.stock_actual <= p.stock_minimo ? `<span class="text-red-500 font-black"><i class="fa-solid fa-triangle-exclamation"></i> ${p.stock_actual}</span>` : `<span class="text-gray-700 font-bold">${p.stock_actual}</span>`;
 
-                html += `
-                <div class="bg-white border border-gray-200 rounded-xl p-3 flex flex-col shadow-sm hover:shadow-lg transition cursor-pointer fade-in group" onclick="abrirModalProducto('${pStr}')">
-                    <div class="flex justify-between items-start mb-2">
-                        <span class="text-[9px] font-mono text-gray-400 bg-gray-50 px-1.5 rounded border border-gray-100">${p.id_producto_sku}</span>
-                        ${badgeEst}
-                    </div>
-                    <div class="h-32 w-full mb-3 bg-white flex items-center justify-center rounded">
-                        <img src="${img}" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300">
-                    </div>
-                    <h3 class="text-xs font-black text-[#143B62] leading-tight line-clamp-2 mb-2 uppercase">${p.nombre}</h3>
-                    <div class="mt-auto border-t border-gray-50 pt-2 flex justify-between items-end">
-                        <div>
-                            <p class="text-[8px] text-gray-400 font-bold uppercase mb-0.5">Precio (USD)</p>
-                            <p class="text-sm font-black text-[#25D366]">$${pUsd.toFixed(2)}</p>
+                    html += `<tr class="hover:bg-gray-50 transition border-b border-gray-50">
+                        <td class="py-2 px-4 text-center"><img src="${img}" class="w-8 h-8 rounded object-contain border bg-white"></td>
+                        <td class="py-2 px-4 font-mono font-bold text-gray-500">${p.id_producto_sku}</td>
+                        <td class="py-2 px-4 font-bold text-[#143B62] truncate max-w-[250px]">${p.nombre}</td>
+                        <td class="py-2 px-4 text-center"><span class="text-[9px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded uppercase font-bold">${p.categoria_del_producto || '-'}</span></td>
+                        <td class="py-2 px-4 text-center bg-gray-50/50">${bStk}</td>
+                        <td class="py-2 px-4 text-right font-black text-[#25D366] text-sm">$${pUsd.toFixed(2)}</td>
+                        <td class="py-2 px-4 text-center">${bEst}</td>
+                        <td class="py-2 px-4 text-center"><button onclick="abrirModalProducto('${pStr}')" class="text-blue-500 hover:bg-blue-50 px-2 py-1.5 rounded transition shadow-sm border border-transparent hover:border-blue-200"><i class="fa-solid fa-pen-to-square"></i></button></td>
+                    </tr>`;
+                });
+                html += `</tbody></table></div></div>`; c.innerHTML = html;
+            } else {
+                let html = `<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 pb-10">`;
+                data.slice(0, 150).forEach(p => {
+                    const img = p.imagen_principal || 'https://via.placeholder.com/300?text=P%26P';
+                    const pUsd = p.pre.precio_general_usd || 0;
+                    const pStr = encodeURIComponent(JSON.stringify(p));
+                    const bEst = p.estado_producto === 'ACTIVO' ? `<span class="bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded text-[8px] font-black uppercase">Activo</span>` : `<span class="bg-red-100 text-red-700 px-1.5 py-0.5 rounded text-[8px] font-black uppercase">Inactivo</span>`;
+                    const bStk = p.stock_actual <= p.stock_minimo ? `<span class="text-red-600 font-black"><i class="fa-solid fa-triangle-exclamation"></i> ${p.stock_actual}</span>` : `<span class="text-emerald-600 font-black">${p.stock_actual}</span>`;
+
+                    html += `
+                    <div class="bg-white border border-gray-200 rounded-xl p-3 flex flex-col shadow-sm hover:shadow-lg transition cursor-pointer fade-in group" onclick="abrirModalProducto('${pStr}')">
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="text-[9px] font-mono text-gray-400 bg-gray-50 px-1.5 rounded border border-gray-100">${p.id_producto_sku}</span>
+                            ${bEst}
                         </div>
-                        <div class="text-right">
-                            <p class="text-[8px] text-gray-400 font-bold uppercase mb-0.5">Stock</p>
-                            <p class="text-xs bg-gray-50 px-2 py-0.5 rounded border border-gray-100">${badgeStock}</p>
+                        <div class="h-28 w-full mb-3 bg-white flex items-center justify-center rounded">
+                            <img src="${img}" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300">
                         </div>
-                    </div>
-                </div>`;
-            });
-            grid.innerHTML = html;
+                        <h3 class="text-[10px] font-black text-[#143B62] leading-tight line-clamp-2 mb-2 uppercase">${p.nombre}</h3>
+                        <div class="mt-auto border-t border-gray-50 pt-2 flex justify-between items-end">
+                            <div><p class="text-[8px] text-gray-400 font-bold uppercase mb-0.5">Precio (USD)</p><p class="text-xs font-black text-[#25D366]">$${pUsd.toFixed(2)}</p></div>
+                            <div class="text-right"><p class="text-[8px] text-gray-400 font-bold uppercase mb-0.5">Stock</p><p class="text-xs bg-gray-50 px-2 py-0.5 rounded border border-gray-100">${bStk}</p></div>
+                        </div>
+                    </div>`;
+                });
+                html += `</div>`; c.innerHTML = html;
+            }
         }
 
         // --- SISTEMA DE IMÁGENES ---
