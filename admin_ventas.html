@@ -18,7 +18,13 @@
         input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
     </style>
     <script src="config.js"></script>
-    <script>if (!localStorage.getItem('pyp_token_seguro')) window.location.href = 'login.html';</script>
+    <script>
+        if (!localStorage.getItem('pyp_token_seguro')) window.location.href = 'login.html';
+        
+        // Configuración inicial por defecto si no hay parámetros guardados
+        if (!localStorage.getItem('pyp_pos_vista_inventario')) localStorage.setItem('pyp_pos_vista_inventario', 'grid');
+        if (!localStorage.getItem('pyp_pos_filtro_stock_default')) localStorage.setItem('pyp_pos_filtro_stock_default', 'DISPONIBLE');
+    </script>
 </head>
 <body class="bg-[#f4f6f8] flex h-screen overflow-hidden text-gray-800" onclick="cerrarDropdownCliente(event)">
 
@@ -111,6 +117,7 @@
         <div class="flex-1 flex flex-col md:flex-row overflow-hidden">
             
             <div class="w-full md:w-3/5 lg:w-2/3 h-full flex flex-col border-r border-gray-200 bg-white relative z-0">
+                
                 <div class="p-1.5 px-3 border-b border-gray-200 bg-gray-50 flex gap-2 shrink-0 overflow-x-auto no-scrollbar">
                     <div class="relative flex-1 min-w-[150px]">
                         <i class="fa-solid fa-search absolute left-2.5 top-1.5 text-gray-400 text-[10px]"></i>
@@ -119,14 +126,20 @@
                     <select id="filtro-cat-pos" onchange="buscarProductos()" class="w-auto max-w-[130px] border border-gray-300 rounded px-2 py-1 text-[9px] font-bold text-[#143B62] outline-none shadow-sm hidden sm:block bg-gray-100 uppercase">
                         <option value="TODAS">TODAS LAS CATEGORÍAS</option>
                     </select>
+                    
                     <select id="filtro-stock-pos" onchange="buscarProductos()" class="w-auto border border-gray-300 rounded px-2 py-1 text-[9px] font-bold text-[#143B62] outline-none shadow-sm hidden sm:block bg-white uppercase">
-                        <option value="DISPONIBLE" selected>CON DISPONIBILIDAD</option>
+                        <option value="DISPONIBLE">CON DISPONIBILIDAD</option>
                         <option value="TODOS">MOSTRAR TODOS</option>
                     </select>
+
+                    <div class="flex bg-gray-100 rounded border border-gray-300 p-0.5 shadow-inner">
+                        <button id="btn-vista-tabla-pos" onclick="cambiarVistaPos('tabla')" class="px-2 py-0.5 rounded text-gray-500 hover:text-[#143B62] transition text-xs"><i class="fa-solid fa-list"></i></button>
+                        <button id="btn-vista-grid-pos" onclick="cambiarVistaPos('grid')" class="px-2 py-0.5 rounded text-gray-500 hover:text-[#143B62] transition text-xs"><i class="fa-solid fa-border-all"></i></button>
+                    </div>
                 </div>
 
                 <div class="flex-1 overflow-y-auto p-1.5 custom-scroll bg-slate-100">
-                    <div id="grid-productos" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-1.5">
+                    <div id="grid-productos" class="grid gap-1.5">
                         <div class="col-span-full p-10 text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin text-2xl mb-2 block text-[#143B62]"></i> Cargando inventario...</div>
                     </div>
                 </div>
@@ -315,14 +328,19 @@
         let dbInventario = [], carrito = [], dbClientes = [], tasaBCV = 1, fuseInventario = null, fuseClientes = null, empresaActual = null;
         let pypIva = 0.16, pypIgtf = 0.03;
         let imgDefecto = 'https://via.placeholder.com/150/f8fafc/94a3b8?text=P%26P';
+        let posVistaActual = localStorage.getItem('pyp_pos_vista_inventario');
 
         window.onload = async () => {
             if(document.getElementById('nombre-usuario')) document.getElementById('nombre-usuario').innerText = localStorage.getItem('pyp_usuario_nombre').split(' ')[0];
+            
+            // Aplicar configuraciones iniciales
+            document.getElementById('filtro-stock-pos').value = localStorage.getItem('pyp_pos_filtro_stock_default');
+            actualizarBotonesVistaPos();
+
             await iniciarPuntoVenta();
             document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { cerrarCobro(); cerrarModalNuevoCliente(); cerrarModalFichaCompleta(); cerrarVisor(); cerrarInfoProducto(); } });
         };
 
-        // --- SISTEMA DE MANEJO DE ERRORES PROACTIVO ---
         function mostrarErrorConexion(msg = "Error de conexión detectado. Para resolver este problema y recargar la base de datos, por favor cierra la sesión y vuelve a entrar. Tu trabajo no se ha perdido.") {
             const ol = document.getElementById('loading-overlay');
             document.getElementById('loading-text').innerText = "Fallo de Conexión";
@@ -383,10 +401,26 @@
                 let catHtml = '<option value="TODAS">TODAS LAS CATEGORÍAS</option>';
                 catArr.forEach(c => { if(c) catHtml += `<option value="${c}">${c}</option>`});
                 document.getElementById('filtro-cat-pos').innerHTML = catHtml;
+                
                 buscarProductos(); 
             } catch(e) { 
                 mostrarErrorConexion(); 
             }
+        }
+
+        // MANEJO DE VISTAS (TARJETA VS EXCEL)
+        function cambiarVistaPos(v) { 
+            posVistaActual = v; 
+            localStorage.setItem('pyp_pos_vista_inventario', v); 
+            actualizarBotonesVistaPos(); 
+            buscarProductos(); 
+        }
+
+        function actualizarBotonesVistaPos() { 
+            document.getElementById('btn-vista-tabla-pos').classList.toggle('bg-white', posVistaActual === 'tabla'); 
+            document.getElementById('btn-vista-tabla-pos').classList.toggle('shadow-sm', posVistaActual === 'tabla'); 
+            document.getElementById('btn-vista-grid-pos').classList.toggle('bg-white', posVistaActual === 'grid'); 
+            document.getElementById('btn-vista-grid-pos').classList.toggle('shadow-sm', posVistaActual === 'grid'); 
         }
 
         function buscarProductos() {
@@ -398,50 +432,73 @@
             if (query !== '') data = fuseInventario.search(query).map(r => r.item);
             if (cat !== 'TODAS') data = data.filter(p => p.categoria_del_producto === cat);
             
-            // NUEVO FILTRO DE STOCK POR DEFECTO
             if (stockFilter === 'DISPONIBLE') {
                 data = data.filter(p => p.stock_actual > 0 || p.permitir_negativo);
             }
 
             const grid = document.getElementById('grid-productos');
             let html = '';
-            data.slice(0, 40).forEach(p => {
-                const img = p.imagen_principal || imgDefecto;
-                const pUsd = p.pre.es_precio_fijo_bs ? p.pre.precio_fijo_bs / tasaBCV : p.pre.precio_general_usd || 0;
-                const pBs = pUsd * tasaBCV;
-                const prodStr = encodeURIComponent(JSON.stringify({...p, pUsd: pUsd}));
+
+            if (data.length === 0) {
+                grid.innerHTML = `<div class="col-span-full p-10 text-center text-gray-400 font-medium text-xs">Sin resultados con los filtros actuales.</div>`;
+                return;
+            }
+
+            if (posVistaActual === 'tabla') {
+                grid.className = "flex flex-col gap-1"; // Reseteamos la grilla para la tabla
+                html = `<div class="bg-white rounded shadow-sm border border-gray-200 overflow-hidden"><table class="w-full text-left text-[9px] whitespace-nowrap"><thead class="bg-[#143B62] text-white uppercase tracking-wider sticky top-0"><tr><th class="py-1.5 px-2">Info</th><th class="py-1.5 px-2">SKU</th><th class="py-1.5 px-2">Producto</th><th class="py-1.5 px-2 text-center">Stock</th><th class="py-1.5 px-2 text-right">Precio ($)</th><th class="py-1.5 px-2 text-center">Acción</th></tr></thead><tbody class="divide-y divide-gray-100">`;
                 
-                let btnInfo = `<button onclick="event.stopPropagation(); abrirInfoProducto('${prodStr}')" class="absolute top-1 left-1 bg-blue-500 text-white w-5 h-5 rounded flex items-center justify-center transition shadow hover:bg-blue-600 z-10"><i class="fa-solid fa-info text-[8px]"></i></button>`;
+                data.slice(0, 50).forEach(p => {
+                    const pUsd = p.pre.es_precio_fijo_bs ? p.pre.precio_fijo_bs / tasaBCV : p.pre.precio_general_usd || 0;
+                    const prodStr = encodeURIComponent(JSON.stringify({...p, pUsd: pUsd}));
+                    const bStkColor = p.stock_actual > 0 ? "text-emerald-600 font-bold" : "text-red-600 font-bold";
 
-                // LOGICA VISUAL DE STOCK ROJO O VERDE
-                const bStkColor = p.stock_actual > 0 ? "text-emerald-600 bg-emerald-50" : "text-red-600 bg-red-50";
+                    html += `<tr class="hover:bg-blue-50 transition cursor-pointer" onclick="agregarAlCarrito('${prodStr}')">
+                        <td class="py-1 px-2 text-center"><button onclick="event.stopPropagation(); abrirInfoProducto('${prodStr}')" class="text-blue-500 hover:text-blue-700 transition"><i class="fa-solid fa-info-circle text-xs"></i></button></td>
+                        <td class="py-1 px-2 font-mono text-gray-500">${p.id_producto_sku}</td>
+                        <td class="py-1 px-2 font-bold text-[#143B62] truncate max-w-[150px]">${p.nombre}</td>
+                        <td class="py-1 px-2 text-center ${bStkColor}">${p.stock_actual}</td>
+                        <td class="py-1 px-2 text-right font-black text-[#25D366]">$${pUsd.toFixed(2)}</td>
+                        <td class="py-1 px-2 text-center"><button class="bg-[#25D366] text-white px-2 py-0.5 rounded text-[8px] font-bold">Agregar</button></td>
+                    </tr>`;
+                });
+                html += `</tbody></table></div>`;
+            } else {
+                grid.className = "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-1.5"; // Grid de tarjetas
+                data.slice(0, 40).forEach(p => {
+                    const img = p.imagen_principal || imgDefecto;
+                    const pUsd = p.pre.es_precio_fijo_bs ? p.pre.precio_fijo_bs / tasaBCV : p.pre.precio_general_usd || 0;
+                    const pBs = pUsd * tasaBCV;
+                    const prodStr = encodeURIComponent(JSON.stringify({...p, pUsd: pUsd}));
+                    
+                    let btnInfo = `<button onclick="event.stopPropagation(); abrirInfoProducto('${prodStr}')" class="absolute top-1 left-1 bg-blue-500 text-white w-5 h-5 rounded flex items-center justify-center transition shadow hover:bg-blue-600 z-10"><i class="fa-solid fa-info text-[8px]"></i></button>`;
+                    const bStkColor = p.stock_actual > 0 ? "text-emerald-600 bg-emerald-50" : "text-red-600 bg-red-50";
 
-                html += `
-                <div class="bg-white border border-gray-200 rounded-lg p-1.5 flex flex-col shadow-sm hover:shadow-md transition cursor-pointer active:scale-95 fade-in relative" onclick="agregarAlCarrito('${prodStr}')">
-                    ${btnInfo}
-                    <div class="h-16 w-full mb-1 bg-white flex items-center justify-center rounded">
-                        <img src="${img}" class="max-h-full max-w-full object-contain">
-                    </div>
-                    <div class="flex-1 flex flex-col justify-between min-w-0">
-                        <h4 class="text-[9px] font-bold text-[#143B62] leading-tight line-clamp-2 mb-1 uppercase">${p.nombre}</h4>
-                        <div class="mt-auto pt-1 border-t border-gray-100">
-                            <div class="flex items-baseline mb-0.5"><span class="text-[8px] font-bold text-gray-900 mr-0.5">Bs.</span><span class="text-sm font-black text-gray-900 leading-none">${pBs.toFixed(2)}</span></div>
-                            <div class="text-[8px] font-bold text-[#25D366]">US$ ${pUsd.toFixed(2)}</div>
-                            <div class="text-right text-[7px] font-bold ${bStkColor} px-1 rounded w-fit ml-auto mt-0.5">${p.stock_actual} und</div>
+                    html += `
+                    <div class="bg-white border border-gray-200 rounded-lg p-1.5 flex flex-col shadow-sm hover:shadow-md transition cursor-pointer active:scale-95 fade-in relative" onclick="agregarAlCarrito('${prodStr}')">
+                        ${btnInfo}
+                        <div class="h-16 w-full mb-1 bg-white flex items-center justify-center rounded">
+                            <img src="${img}" class="max-h-full max-w-full object-contain">
                         </div>
-                    </div>
-                </div>`;
-            });
-            grid.innerHTML = html || `<div class="col-span-full p-10 text-center text-gray-400 font-medium text-xs">Sin resultados con los filtros actuales.</div>`;
+                        <div class="flex-1 flex flex-col justify-between min-w-0">
+                            <h4 class="text-[9px] font-bold text-[#143B62] leading-tight line-clamp-2 mb-1 uppercase">${p.nombre}</h4>
+                            <div class="mt-auto pt-1 border-t border-gray-100">
+                                <div class="flex items-baseline mb-0.5"><span class="text-[8px] font-bold text-gray-900 mr-0.5">Bs.</span><span class="text-sm font-black text-gray-900 leading-none">${pBs.toFixed(2)}</span></div>
+                                <div class="text-[8px] font-bold text-[#25D366]">US$ ${pUsd.toFixed(2)}</div>
+                                <div class="text-right text-[7px] font-bold ${bStkColor} px-1 rounded w-fit ml-auto mt-0.5">${p.stock_actual} und</div>
+                            </div>
+                        </div>
+                    </div>`;
+                });
+            }
+            grid.innerHTML = html;
         }
 
         function abrirInfoProducto(prodStr) {
             const p = JSON.parse(decodeURIComponent(prodStr));
             
-            // Imagenes
             const mainImg = document.getElementById('info-prod-img-main');
             const contGal = document.getElementById('info-prod-galeria');
-            const contGalContainer = document.getElementById('info-prod-galeria-container');
             mainImg.src = p.imagen_principal || imgDefecto;
             contGal.innerHTML = '';
             
@@ -449,44 +506,27 @@
             if(p.galeria_imagenes) { try { let parsed = typeof p.galeria_imagenes === 'string' ? JSON.parse(p.galeria_imagenes) : p.galeria_imagenes; if(Array.isArray(parsed)) arrayGaleria = [...new Set([...arrayGaleria, ...parsed])]; } catch(e) {} }
             
             if(arrayGaleria.length > 1) {
-                contGalContainer.classList.remove('hidden');
                 arrayGaleria.forEach(url => {
                     contGal.innerHTML += `<div class="h-10 bg-white rounded border border-gray-200 p-0.5 cursor-pointer flex items-center justify-center hover:border-[#E67E22]" onclick="document.getElementById('info-prod-img-main').src='${url}'"><img src="${url}" class="max-h-full max-w-full object-contain"></div>`;
                 });
-            } else {
-                contGalContainer.classList.add('hidden');
             }
 
-            // Video
-            const videoUrl = p.video_url || '';
-            const videoContainer = document.getElementById('info-prod-video-container');
-            const videoIframe = document.getElementById('info-prod-video');
-            if(videoUrl) {
-                let videoId = '';
-                if(videoUrl.includes('youtube.com/watch?v=')) videoId = videoUrl.split('v=')[1].split('&')[0];
-                else if(videoUrl.includes('youtu.be/')) videoId = videoUrl.split('youtu.be/')[1].split('?')[0];
-                else if(videoUrl.includes('youtube.com/shorts/')) videoId = videoUrl.split('shorts/')[1].split('?')[0];
-                
-                if(videoId) { videoIframe.src = `https://www.youtube.com/embed/${videoId}`; videoContainer.classList.remove('hidden'); } 
-                else { videoContainer.classList.add('hidden'); videoIframe.src = ''; }
-            } else { videoContainer.classList.add('hidden'); videoIframe.src = ''; }
-
-            // Datos Técnicos Básicos
-            const sT = (id, val) => { const el = document.getElementById(id); el.innerText = val ? val.toString().toUpperCase() : 'N/A'; };
-            sT('info-prod-nom', p.nombre); sT('info-prod-sku', p.id_producto_sku); sT('info-prod-barra', p.codigo_barras);
-            sT('info-prod-marca', p.marca); sT('info-prod-cat', p.categoria_del_producto); sT('info-prod-catventa', p.categoria_venta);
-            sT('info-prod-tipo', p.tipo_producto); sT('info-prod-condicion', p.condicion_producto); sT('info-prod-impuesto', p.tipo_impuesto);
-            sT('info-prod-talla', p.talla); sT('info-prod-color', p.color); sT('info-prod-unidad', p.unidad_medida);
-            sT('info-prod-negativo', p.permitir_negativo ? 'SÍ' : 'NO');
-            sT('info-prod-stock', p.stock_actual); sT('info-prod-min', p.stock_minimo || 0);
-            
-            const estatusEl = document.getElementById('info-prod-estatus');
-            estatusEl.innerText = p.estado_producto || 'ACTIVO';
-            estatusEl.className = p.estado_producto === 'ACTIVO' ? 'text-[10px] font-black uppercase text-emerald-600' : 'text-[10px] font-black uppercase text-red-600';
-
+            const setText = (id, val) => { const el = document.getElementById(id); el.innerText = val ? val.toString().toUpperCase() : 'N/A'; };
+            setText('info-prod-nom', p.nombre);
+            setText('info-prod-sku', p.id_producto_sku);
+            setText('info-prod-barra', p.codigo_barras);
+            setText('info-prod-marca', p.marca);
+            setText('info-prod-cat', p.categoria_del_producto);
+            setText('info-prod-catventa', p.categoria_venta);
+            setText('info-prod-tipo', p.tipo_producto);
+            setText('info-prod-condicion', p.condicion_producto);
+            setText('info-prod-impuesto', p.tipo_impuesto);
+            setText('info-prod-talla', p.talla);
+            setText('info-prod-color', p.color);
+            setText('info-prod-negativo', p.permitir_negativo ? 'SÍ' : 'NO');
+            setText('info-prod-stock', p.stock_actual);
             document.getElementById('info-prod-desc').innerText = p.descripcion || 'SIN DESCRIPCIÓN TÉCNICA.';
 
-            // Estructura de Precios
             const contTiers = document.getElementById('info-prod-tiers'); contTiers.innerHTML = '';
             const genUsd = p.pre.es_precio_fijo_bs ? p.pre.precio_fijo_bs / tasaBCV : p.pre.precio_general_usd || 0;
             
@@ -527,15 +567,12 @@
             document.getElementById('modal-info-producto').classList.add('flex');
         }
         
-        function cerrarInfoProducto() { 
-            document.getElementById('modal-info-producto').classList.add('hidden'); 
-            document.getElementById('info-prod-video').src = ''; // Detener el video al cerrar
-        }
+        function cerrarInfoProducto() { document.getElementById('modal-info-producto').classList.add('hidden'); }
         
         function abrirVisorEnPOS(imgUrl) {
             const main = document.getElementById('viewer-img-main');
             main.src = imgUrl; 
-            document.getElementById('viewer-thumbnails').innerHTML = ''; // Limpiamos thumbs para visualización rápida
+            document.getElementById('viewer-thumbnails').innerHTML = ''; 
             document.getElementById('media-viewer').classList.remove('hidden');
             document.getElementById('media-viewer').classList.add('flex');
         }
