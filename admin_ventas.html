@@ -13,7 +13,7 @@
         .custom-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
         .custom-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
         .btn-press:active { transform: scale(0.96); }
-        .fade-in { animation: fadeIn 0.1s ease-in-out; }
+        .fade-in { animation: fadeIn 0.15s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(2px); } to { opacity: 1; transform: translateY(0); } }
         input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
     </style>
@@ -31,7 +31,7 @@
             <div class="p-5 bg-gray-50 flex-1 overflow-y-auto custom-scroll grid grid-cols-1 md:grid-cols-3 gap-5">
                 
                 <div class="md:col-span-1 space-y-3">
-                    <div class="bg-white p-3 rounded-lg border flex flex-col items-center justify-center h-48 relative shadow-sm">
+                    <div class="bg-white p-3 rounded-lg border flex flex-col items-center justify-center h-48 relative shadow-sm cursor-pointer" onclick="abrirVisorEnPOS(document.getElementById('info-prod-img-main').src)">
                         <img id="info-prod-img-main" src="" class="max-h-full max-w-full object-contain">
                     </div>
                     <div id="info-prod-galeria" class="grid grid-cols-4 gap-1.5 p-1 bg-gray-100 rounded border"></div>
@@ -39,16 +39,19 @@
 
                 <div class="md:col-span-2 space-y-4">
                     <div class="bg-white p-4 rounded-lg border shadow-sm">
-                        <h4 class="text-lg font-black text-[#143B62] uppercase leading-tight mb-1" id="info-prod-nom">NOMBRE</h4>
-                        <div class="flex gap-4 text-[10px] text-gray-500 font-mono"><span>SKU: <span id="info-prod-sku" class="font-bold text-gray-700"></span></span> <span>BARRA: <span id="info-prod-barra" class="font-bold text-gray-700"></span></span></div>
+                        <h4 class="text-lg font-black text-[#143B62] uppercase leading-tight mb-1" id="info-prod-nom">NOMBRE DEL PRODUCTO</h4>
+                        <div class="flex gap-4 text-[10px] text-gray-500 font-mono">
+                            <span>SKU: <span id="info-prod-sku" class="font-bold text-gray-700">N/A</span></span> 
+                            <span>BARRA: <span id="info-prod-barra" class="font-bold text-gray-700">N/A</span></span>
+                        </div>
                         
                         <div class="grid grid-cols-3 gap-3 mt-4 border-t pt-3 border-gray-100">
-                            <div><label class="text-[9px] font-bold text-gray-400 uppercase">Marca</label><p class="text-[11px] font-black uppercase text-[#143B62]" id="info-prod-marca"></p></div>
-                            <div><label class="text-[9px] font-bold text-gray-400 uppercase">Categoría</label><p class="text-[11px] font-black uppercase text-[#143B62]" id="info-prod-cat"></p></div>
-                            <div><label class="text-[9px] font-bold text-gray-400 uppercase">Cat Venta</label><p class="text-[11px] font-black uppercase text-[#143B62]" id="info-prod-catventa"></p></div>
-                            <div><label class="text-[9px] font-bold text-gray-400 uppercase">Tipo Prod.</label><p class="text-[11px] font-black uppercase text-[#143B62]" id="info-prod-tipo"></p></div>
-                            <div><label class="text-[9px] font-bold text-gray-400 uppercase">Condición</label><p class="text-[11px] font-black uppercase text-[#143B62]" id="info-prod-condicion"></p></div>
-                            <div><label class="text-[9px] font-bold text-gray-400 uppercase">Impuesto</label><p class="text-[11px] font-black uppercase text-[#143B62]" id="info-prod-impuesto"></p></div>
+                            <div><label class="text-[9px] font-bold text-gray-400 uppercase">Marca</label><p class="text-[11px] font-black uppercase text-[#143B62]" id="info-prod-marca">N/A</p></div>
+                            <div><label class="text-[9px] font-bold text-gray-400 uppercase">Categoría</label><p class="text-[11px] font-black uppercase text-[#143B62]" id="info-prod-cat">N/A</p></div>
+                            <div><label class="text-[9px] font-bold text-gray-400 uppercase">Cat. Venta</label><p class="text-[11px] font-black uppercase text-[#143B62]" id="info-prod-catventa">N/A</p></div>
+                            <div><label class="text-[9px] font-bold text-gray-400 uppercase">Tipo Prod.</label><p class="text-[11px] font-black uppercase text-[#143B62]" id="info-prod-tipo">N/A</p></div>
+                            <div><label class="text-[9px] font-bold text-gray-400 uppercase">Condición</label><p class="text-[11px] font-black uppercase text-[#143B62]" id="info-prod-condicion">N/A</p></div>
+                            <div><label class="text-[9px] font-bold text-gray-400 uppercase">Impuesto</label><p class="text-[11px] font-black uppercase text-[#143B62]" id="info-prod-impuesto">N/A</p></div>
                         </div>
                     </div>
 
@@ -56,24 +59,25 @@
                         <div class="bg-white p-4 rounded-lg border shadow-sm">
                             <h5 class="text-[9px] font-black text-gray-500 uppercase mb-3">Variantes y Stock</h5>
                             <div class="flex flex-wrap gap-x-4 gap-y-1 mb-3 text-xs">
-                                <p><span class="font-bold text-gray-400">Talla:</span> <span class="font-black uppercase" id="info-prod-talla"></span></p> 
-                                <p><span class="font-bold text-gray-400">Color:</span> <span class="font-black uppercase" id="info-prod-color"></span></p>
-                                <p class="w-full text-[9px] mt-1"><span class="font-bold text-gray-400">Permite Negativo:</span> <span class="font-black uppercase" id="info-prod-negativo"></span></p>
+                                <p><span class="font-bold text-gray-400">Talla:</span> <span class="font-black uppercase" id="info-prod-talla">N/A</span></p> 
+                                <p><span class="font-bold text-gray-400">Color:</span> <span class="font-black uppercase" id="info-prod-color">N/A</span></p>
+                                <p class="w-full text-[9px] mt-1"><span class="font-bold text-gray-400">Permite Negativo:</span> <span class="font-black uppercase" id="info-prod-negativo">NO</span></p>
                             </div>
                             <div class="bg-blue-50 p-2 rounded border border-blue-100 flex items-center justify-between">
                                 <span class="text-[10px] font-black text-blue-800 uppercase">Existencia Actual</span>
-                                <span class="text-2xl font-black text-[#143B62] leading-none" id="info-prod-stock"></span>
+                                <span class="text-2xl font-black text-[#143B62] leading-none" id="info-prod-stock">0</span>
                             </div>
                         </div>
                         <div class="bg-white p-4 rounded-lg border shadow-sm overflow-hidden">
                             <h5 class="text-[9px] font-black text-gray-500 uppercase mb-2">Descripción</h5>
-                            <p class="text-[10px] text-gray-600 custom-scroll overflow-y-auto h-20 uppercase" id="info-prod-desc"></p>
+                            <p class="text-[10px] text-gray-600 custom-scroll overflow-y-auto h-20 uppercase" id="info-prod-desc">SIN DESCRIPCIÓN.</p>
                         </div>
                     </div>
 
                     <div class="bg-emerald-50 p-4 rounded-lg border border-emerald-100 shadow-sm">
                         <h5 class="text-[10px] font-black text-emerald-800 uppercase mb-3">Escalas de Precios ($) y Requisitos</h5>
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3" id="info-prod-tiers"></div>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3" id="info-prod-tiers">
+                            </div>
                     </div>
                 </div>
             </div>
@@ -255,7 +259,11 @@
         <i id="loading-icon" class="fa-solid fa-circle-notch fa-spin text-5xl text-[#25D366] mb-4"></i>
         <h2 id="loading-text" class="text-xl font-black text-[#143B62] uppercase mb-2">Procesando...</h2>
         <p id="loading-error" class="text-xs text-gray-500 font-medium max-w-sm hidden"></p>
-        <button onclick="cerrarErrorCarga()" id="btn-cerrar-carga" class="hidden mt-6 bg-[#143B62] text-white px-8 py-2.5 rounded font-bold uppercase text-xs btn-press">Entendido</button>
+        
+        <div id="error-actions" class="hidden mt-6 flex gap-3">
+            <button onclick="cerrarErrorCarga()" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2.5 rounded font-bold uppercase text-xs btn-press transition shadow">Ignorar</button>
+            <button onclick="forzarCierreSesion()" class="bg-[#E67E22] hover:bg-orange-600 text-white px-6 py-2.5 rounded font-bold uppercase text-xs btn-press transition shadow-md"><i class="fa-solid fa-power-off mr-2"></i> Cerrar Sesión</button>
+        </div>
     </div>
 
     <div id="modal-nuevo-cliente" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[110] hidden flex items-center justify-center p-4 fade-in">
@@ -310,9 +318,34 @@
             document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { cerrarCobro(); cerrarModalNuevoCliente(); cerrarModalFichaCompleta(); cerrarVisor(); cerrarInfoProducto(); } });
         };
 
+        // --- MANEJO DE ERRORES PROACTIVOS ---
+        function mostrarErrorConexion(msg = "Error de conexión detectado. Para resolver este problema y sincronizar la base de datos, por favor cierra la sesión y vuelve a entrar. Tu trabajo no se ha perdido.") {
+            const ol = document.getElementById('loading-overlay');
+            document.getElementById('loading-text').innerText = "Fallo de Conexión";
+            document.getElementById('loading-text').classList.replace('text-[#143B62]', 'text-red-600');
+            document.getElementById('loading-icon').className = "fa-solid fa-wifi text-5xl text-red-500 mb-4"; 
+            
+            const errEl = document.getElementById('loading-error');
+            errEl.innerText = msg;
+            errEl.classList.remove('hidden');
+            
+            document.getElementById('error-actions').classList.remove('hidden');
+            document.getElementById('btn-cerrar-carga').classList.add('hidden'); // Ocultar el viejo boton
+            
+            ol.classList.remove('hidden');
+            ol.classList.add('flex');
+        }
+
+        function forzarCierreSesion() {
+            localStorage.removeItem('pyp_token_seguro');
+            localStorage.removeItem('pyp_usuario_nombre');
+            window.location.href = 'login.html';
+        }
+
         async function iniciarPuntoVenta() {
             try {
                 const resUser = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?select=id_empresa&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                if (!resUser.ok) throw new Error();
                 empresaActual = (await resUser.json())[0].id_empresa;
 
                 const [resTasa, resProd, resPre, resCli, resConf] = await Promise.all([
@@ -323,7 +356,7 @@
                     fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } })
                 ]);
 
-                if (!resProd.ok) throw new Error("Fallo de conexión al inventario.");
+                if (!resProd.ok) throw new Error();
 
                 const dataTasa = await resTasa.json(); if(dataTasa.length > 0) { tasaBCV = dataTasa[0].tasa; document.getElementById('tasa-display').innerText = tasaBCV.toFixed(2); }
                 
@@ -347,7 +380,9 @@
                 catArr.forEach(c => { if(c) catHtml += `<option value="${c}">${c}</option>`});
                 document.getElementById('filtro-cat-pos').innerHTML = catHtml;
                 buscarProductos(); 
-            } catch(e) { mostrarCarga("Error", "No se pudo sincronizar la BD.", true); }
+            } catch(e) { 
+                mostrarErrorConexion(); 
+            }
         }
 
         function buscarProductos() {
@@ -383,10 +418,10 @@
                     </div>
                 </div>`;
             });
-            grid.innerHTML = html || `<div class="col-span-full p-10 text-center text-gray-400 font-medium text-xs">Sin resultados en esta categoría.</div>`;
+            grid.innerHTML = html || `<div class="col-span-full p-10 text-center text-gray-400 font-medium text-xs">Sin resultados.</div>`;
         }
 
-        // --- ENHANCED INFO PRODUCTO (READ ONLY, INVENTORY-LIKE) ---
+        // --- ENHANCED INFO PRODUCTO (FICHA TÉCNICA DE SOLO LECTURA) ---
         function abrirInfoProducto(prodStr) {
             const p = JSON.parse(decodeURIComponent(prodStr));
             
@@ -432,7 +467,15 @@
             document.getElementById('modal-info-producto').classList.add('flex');
         }
         function cerrarInfoProducto() { document.getElementById('modal-info-producto').classList.add('hidden'); }
-        function cerrarVisor() { document.getElementById('media-viewer').classList.add('hidden'); }
+        
+        function abrirVisorEnPOS(imgUrl) {
+            const main = document.getElementById('viewer-img-main');
+            main.src = imgUrl; 
+            document.getElementById('viewer-thumbnails').innerHTML = ''; // Limpiamos thumbs para visualización rápida
+            document.getElementById('media-viewer').classList.remove('hidden');
+            document.getElementById('media-viewer').classList.add('flex');
+        }
+        function cerrarVisor() { document.getElementById('media-viewer').classList.add('hidden'); document.getElementById('media-viewer').classList.remove('flex'); }
 
         // --- CLIENTES ---
         function buscarPredictivoCliente() {
@@ -462,7 +505,6 @@
             document.getElementById('pos-id-cliente').value = c.id;
             document.getElementById('pos-nivel-precio-cliente').value = c.nivel_precio || 'GENERAL';
             
-            // LA CORRECCIÓN: CERRAR EL DROPDOWN Y LIMPIAR LA CAJA AL SELECCIONAR
             document.getElementById('dropdown-clientes').classList.add('hidden');
             document.getElementById('pos-buscador-cliente').value = '';
             
@@ -488,7 +530,7 @@
         async function guardarClienteRapido(e) { e.preventDefault(); const btn = document.getElementById('btn-guardar-cli-rap'); btn.innerHTML = `...`; btn.disabled = true; try { const payload = { id_empresa: empresaActual, tipo_persona: 'CLIENTE', documento_identidad: document.getElementById('cli-rap-doc').value.trim().toUpperCase(), nombre_razon_social: document.getElementById('cli-rap-nom').value.trim().toUpperCase(), direccion_principal: document.getElementById('cli-rap-dir').value.trim().toUpperCase(), telefono_principal: document.getElementById('cli-rap-tel').value.trim(), tipo_contribuyente: document.getElementById('cli-rap-tipo').value, estatus: 'ACTIVO' }; const res = await fetch(`${SUPABASE_URL}/rest/v1/directorio_maestro`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, body: JSON.stringify(payload) }); if(!res.ok) throw new Error("Doc duplicado"); const data = await res.json(); dbClientes.push(data[0]); fuseClientes = new Fuse(dbClientes, { keys: ['documento_identidad', 'nombre_razon_social'] }); seleccionarCliente(encodeURIComponent(JSON.stringify(data[0]))); cerrarModalNuevoCliente(); } catch(e) { alert(e.message); } finally { btn.innerHTML = `<i class="fa-solid fa-save mr-1"></i> Guardar y Usar`; btn.disabled = false; } }
         async function guardarFichaCompleta(e) { e.preventDefault(); const btn = document.getElementById('btn-guardar-fc'); btn.innerHTML = `...`; btn.disabled = true; try { const payload = { id_empresa: empresaActual, tipo_persona: 'CLIENTE', documento_identidad: document.getElementById('fc-doc').value.trim().toUpperCase(), nombre_razon_social: document.getElementById('fc-nombre').value.trim().toUpperCase(), direccion_principal: document.getElementById('fc-dir-p').value.trim().toUpperCase(), telefono_principal: document.getElementById('fc-tel1').value.trim(), correo_electronico: document.getElementById('fc-email').value.trim(), tipo_contribuyente: document.getElementById('fc-tipo').value, nivel_precio: document.getElementById('fc-precio').value, estatus: 'ACTIVO' }; const res = await fetch(`${SUPABASE_URL}/rest/v1/directorio_maestro`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, body: JSON.stringify(payload) }); if(!res.ok) throw new Error("Doc duplicado"); const data = await res.json(); dbClientes.push(data[0]); fuseClientes = new Fuse(dbClientes, { keys: ['documento_identidad', 'nombre_razon_social'] }); seleccionarCliente(encodeURIComponent(JSON.stringify(data[0]))); cerrarModalFichaCompleta(); } catch(e) { alert(e.message); } finally { btn.innerHTML = `Guardar`; btn.disabled = false; } }
 
-        // --- CARRITO MATEMÁTICO BLINDADO ---
+        // --- CARRITO MATEMÁTICO ---
         function agregarAlCarrito(prodStr) {
             const p = JSON.parse(decodeURIComponent(prodStr));
             const idx = carrito.findIndex(i => i.id_producto_sku === p.id_producto_sku);
@@ -663,8 +705,26 @@
             document.getElementById('modal-cobro').classList.remove('hidden'); document.getElementById('modal-cobro').classList.add('flex'); 
         }
         function cerrarCobro() { document.getElementById('modal-cobro').classList.add('hidden'); }
-        function mostrarCarga(t,d,e=false) { const ol=document.getElementById('loading-overlay'); document.getElementById('loading-text').innerText=t;ol.querySelector('p').innerText=d;ol.classList.toggle('bg-white',!e);ol.classList.toggle('bg-red-900',e);ol.classList.remove('hidden');ol.classList.add('flex'); if(e) setTimeout(()=>ol.classList.add('hidden'), 3000); }
-        function cerrarCarga() { document.getElementById('loading-overlay').classList.add('hidden'); }
+        
+        function mostrarCarga(t,d,e=false) { 
+            const ol=document.getElementById('loading-overlay'); 
+            document.getElementById('loading-text').innerText=t;
+            document.getElementById('loading-error').innerText=d;
+            if(e) {
+                document.getElementById('loading-error').classList.remove('hidden');
+                document.getElementById('btn-cerrar-carga').classList.remove('hidden');
+            } else {
+                document.getElementById('loading-error').classList.add('hidden');
+                document.getElementById('btn-cerrar-carga').classList.add('hidden');
+            }
+            ol.classList.remove('hidden');ol.classList.add('flex'); 
+        }
+        
+        function cerrarErrorCarga() { 
+            document.getElementById('loading-overlay').classList.add('hidden'); 
+            document.getElementById('error-actions').classList.add('hidden');
+            document.getElementById('btn-cerrar-carga').classList.add('hidden');
+        }
 
         async function procesarVenta() {
             const btn = document.getElementById('btn-confirmar'); btn.disabled = true;
