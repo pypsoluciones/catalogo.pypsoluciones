@@ -67,7 +67,7 @@
                 <div class="p-1 px-3 border-b border-gray-200 bg-gray-50 flex gap-2 shrink-0">
                     <div class="relative flex-1">
                         <i class="fa-solid fa-search absolute left-2.5 top-1.5 text-gray-400 text-[10px]"></i>
-                        <input type="text" id="buscador-pos" oninput="buscarProductos()" placeholder="Buscar producto..." class="w-full border border-gray-300 rounded px-2 pl-7 py-1 text-[10px] focus:outline-none focus:border-[#25D366] uppercase shadow-inner font-bold">
+                        <input type="text" id="buscador-pos" oninput="buscarProductos()" placeholder="Buscar por SKU, Nombre o Código de Barras..." class="w-full border border-gray-300 rounded px-2 pl-7 py-1 text-[10px] focus:outline-none focus:border-[#25D366] uppercase shadow-inner font-bold">
                     </div>
                     <select id="filtro-cat-pos" onchange="buscarProductos()" class="w-1/3 border border-gray-300 rounded px-2 py-1 text-[10px] font-bold text-[#143B62] outline-none shadow-sm hidden sm:block">
                         <option value="TODAS">TODAS LAS CATEGORÍAS</option>
@@ -122,18 +122,21 @@
                 </div>
 
                 <div class="p-2 bg-white border-t border-gray-200 shrink-0 shadow-[0_-10px_20px_rgba(0,0,0,0.03)] flex flex-col gap-0.5">
-                    <div class="flex justify-between items-center text-[9px] text-gray-500 font-bold uppercase"><span>Subtotal Base</span><span id="pos-subtotal">Bs. 0.00</span></div>
                     
-                    <div class="flex justify-between items-center text-[9px] text-red-500 font-bold uppercase mt-0.5">
+                    <div class="flex justify-between items-center text-[9px] text-gray-500 font-bold uppercase mt-0.5">
                         <div class="flex items-center gap-1">
-                            <span>Desc. General</span>
+                            <span>Desc. Gral</span>
                             <input type="number" id="pos-input-desc-general" placeholder="%" class="border rounded text-center w-8 py-0.5 text-[8px] text-gray-700 outline-none" oninput="actualizarUI_Carrito()">
                             <span>%</span>
                         </div>
-                        <span id="pos-descuento-general-val">- Bs. 0.00</span>
+                        <span id="pos-descuento-general-val" class="text-red-500">- Bs. 0.00</span>
                     </div>
 
-                    <div class="flex justify-between items-center text-[9px] text-gray-500 font-bold uppercase mt-0.5"><span>IVA (<span id="lbl-iva">16</span>%)</span><span id="pos-iva">Bs. 0.00</span></div>
+                    <div class="border-t border-gray-100 my-0.5"></div>
+
+                    <div class="flex justify-between items-center text-[9px] text-gray-500 font-bold uppercase"><span>Monto Exento</span><span id="pos-exento">Bs. 0.00</span></div>
+                    <div class="flex justify-between items-center text-[9px] text-gray-500 font-bold uppercase"><span>Base Imponible</span><span id="pos-base-imponible">Bs. 0.00</span></div>
+                    <div class="flex justify-between items-center text-[9px] text-gray-500 font-bold uppercase"><span>IVA (<span id="lbl-iva">16</span>%)</span><span id="pos-iva">Bs. 0.00</span></div>
                     
                     <div class="border-t border-gray-100 my-1"></div>
                     
@@ -212,11 +215,22 @@
                     <h2 class="text-3xl font-black text-[#25D366] leading-none mb-1" id="modal-total-bs">Bs. 0.00</h2>
                     <p class="text-white font-bold text-[10px]" id="modal-total-usd">US$ 0.00</p>
                 </div>
+
                 <div class="grid grid-cols-2 gap-2 mb-3">
                     <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-0.5">Condición</label><select id="cobro-condicion" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[11px] font-bold text-[#143B62] outline-none shadow-sm"><option value="CONTADO">CONTADO</option><option value="CREDITO">CRÉDITO</option></select></div>
                     <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-0.5">Método Pago</label><select id="cobro-metodo" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[11px] font-bold text-[#143B62] outline-none shadow-sm" onchange="verificarIGTF()"><option value="EFECTIVO_BS">🇻🇪 Efectivo Bs</option><option value="PAGO_MOVIL">📱 Pago Móvil</option><option value="PUNTO_VENTA">💳 Punto de Venta</option><option value="EFECTIVO_USD">💵 Divisas (IGTF)</option><option value="ZELLE">🟣 Zelle (IGTF)</option></select></div>
                 </div>
+
+                <div class="bg-gray-100 p-2 rounded border border-gray-200 mb-3">
+                    <p class="text-[8px] font-black text-gray-500 uppercase mb-1.5 tracking-wider"><i class="fa-solid fa-receipt"></i> Datos Fiscales (Opcional)</p>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div><input type="text" id="cobro-nro-factura" placeholder="N° Factura (Ej: 00030072)" class="w-full border border-gray-300 rounded px-2 py-1 text-[9px] uppercase outline-none font-mono"></div>
+                        <div><input type="text" id="cobro-nro-control" placeholder="N° Control (Ej: 00-141033)" class="w-full border border-gray-300 rounded px-2 py-1 text-[9px] uppercase outline-none font-mono"></div>
+                    </div>
+                </div>
+
                 <div id="caja-igtf" class="hidden bg-yellow-50 border border-yellow-200 p-2 rounded mb-3"><p class="text-[9px] text-yellow-700 font-bold uppercase"><i class="fa-solid fa-triangle-exclamation"></i> Aplica 3% IGTF por pago en divisas</p></div>
+                
                 <button onclick="procesarVenta()" id="btn-confirmar" class="w-full bg-[#143B62] text-white font-black py-2.5 rounded shadow-md transition-all text-xs uppercase tracking-wider btn-press">Procesar e Imprimir</button>
             </div>
         </div>
@@ -233,7 +247,7 @@
         const TOKEN_JWT = localStorage.getItem('pyp_token_seguro');
         let dbInventario = [], carrito = [], dbClientes = [], tasaBCV = 1, fuseInventario = null, fuseClientes = null, empresaActual = null;
         let pypIva = 0.16, pypIgtf = 0.03;
-        let imagenGlobalDefecto = 'https://via.placeholder.com/150/f8fafc/94a3b8?text=P%26P';
+        let imgDefecto = 'https://via.placeholder.com/150/f8fafc/94a3b8?text=P%26P';
 
         window.onload = async () => {
             if(document.getElementById('nombre-usuario')) document.getElementById('nombre-usuario').innerText = localStorage.getItem('pyp_usuario_nombre').split(' ')[0];
@@ -246,7 +260,6 @@
                 const resUser = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?select=id_empresa&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
                 empresaActual = (await resUser.json())[0].id_empresa;
 
-                // El "select=*" nos blinda contra nombres de columnas de imágenes cambiados
                 const [resTasa, resProd, resPre, resCli, resConf] = await Promise.all([
                     fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?select=tasa&order=fecha_actualizacion.desc&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
                     fetch(`${SUPABASE_URL}/rest/v1/productos?select=*&estado_producto=eq.ACTIVO&stock_actual=gt.0`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
@@ -255,7 +268,7 @@
                     fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } })
                 ]);
 
-                if (!resProd.ok) throw new Error("No se pudo cargar la tabla de productos. Verifica que exista y no tenga candado (RLS).");
+                if (!resProd.ok) throw new Error("No se pudo cargar la tabla de productos.");
 
                 const dataTasa = await resTasa.json(); if(dataTasa.length > 0) { tasaBCV = dataTasa[0].tasa; document.getElementById('tasa-display').innerText = tasaBCV.toFixed(2); }
                 
@@ -271,7 +284,9 @@
                     const pre = dataPre.find(pr => pr.id_producto_sku === p.id_producto_sku) || {};
                     return { ...p, pre: pre };
                 });
-                fuseInventario = new Fuse(dbInventario, { keys: ['nombre', 'id_producto_sku'], threshold: 0.2 });
+                
+                // Reconoce "codigo_barras" en plural
+                fuseInventario = new Fuse(dbInventario, { keys: ['id_producto_sku', 'codigo_barras', 'nombre'], threshold: 0.2 });
 
                 const catArr = [...new Set(dbInventario.map(p => p.categoria_del_producto))];
                 let catHtml = '<option value="TODAS">TODAS LAS CATEGORÍAS</option>';
@@ -293,10 +308,10 @@
             const grid = document.getElementById('grid-productos');
             let html = '';
             data.slice(0, 40).forEach(p => {
-                const img = p.imagen_principal || imagenGlobalDefecto;
-                // Busca dinámicamente cualquier columna que parezca imagen adicional
-                const imgs = [p.imagen_principal, p.imagen_02, p.imagen_2, p.imagen_dos, p.imagen_03, p.imagen_3, p.imagen_tres].filter(i => i);
-                
+                const img = p.imagen_principal || imgDefecto;
+                let imgs = [p.imagen_principal].filter(i => i);
+                if (p.galeria_imagenes) { try { let parsed = typeof p.galeria_imagenes === 'string' ? JSON.parse(p.galeria_imagenes) : p.galeria_imagenes; if(Array.isArray(parsed)) imgs = imgs.concat(parsed); } catch(e) {} }
+
                 const pUsd = p.pre.es_precio_fijo_bs ? p.pre.precio_fijo_bs / tasaBCV : p.pre.precio_general_usd || 0;
                 const pBs = pUsd * tasaBCV;
                 const prodStr = encodeURIComponent(JSON.stringify({...p, pUsd: pUsd}));
@@ -327,7 +342,7 @@
         // --- PRECIOS POR VOLUMEN ---
         function abrirInfoProducto(prodStr) {
             const p = JSON.parse(decodeURIComponent(prodStr));
-            document.getElementById('info-prod-img').src = p.imagen_principal || imagenGlobalDefecto;
+            document.getElementById('info-prod-img').src = p.imagen_principal || imgDefecto;
             document.getElementById('info-prod-nom').innerText = p.nombre;
             document.getElementById('info-prod-sku').innerText = `SKU: ${p.id_producto_sku}`;
             
@@ -428,7 +443,7 @@
             } catch(e) { alert(e.message); } finally { btn.innerHTML = `Guardar`; btn.disabled = false; }
         }
 
-        // --- CARRITO MATEMÁTICO ---
+        // --- CARRITO MATEMÁTICO (AHORA SEPARA BASE IMPONIBLE Y EXENTO COMO EL SENIAT) ---
         function agregarAlCarrito(prodStr) {
             const p = JSON.parse(decodeURIComponent(prodStr));
             const idx = carrito.findIndex(i => i.id_producto_sku === p.id_producto_sku);
@@ -467,12 +482,17 @@
             
             if (carrito.length === 0) {
                 lista.innerHTML = `<div class="h-full flex flex-col items-center justify-center text-gray-300 opacity-50"><i class="fa-solid fa-cart-arrow-down text-5xl mb-2"></i><p class="font-bold text-[10px] uppercase">Venta Vacía</p></div>`;
-                document.getElementById('pos-subtotal').innerText = 'Bs. 0.00'; document.getElementById('pos-iva').innerText = 'Bs. 0.00'; document.getElementById('pos-descuento-general-val').innerText = '- Bs. 0.00';
+                document.getElementById('pos-exento').innerText = 'Bs. 0.00'; document.getElementById('pos-base-imponible').innerText = 'Bs. 0.00'; 
+                document.getElementById('pos-iva').innerText = 'Bs. 0.00'; document.getElementById('pos-descuento-general-val').innerText = '- Bs. 0.00';
                 document.getElementById('pos-total-bs').innerText = 'Bs. 0.00'; document.getElementById('pos-total-usd').innerText = 'US$ 0.00'; document.getElementById('pos-items').innerText = '0'; document.getElementById('btn-cobrar').disabled = true; return;
             }
 
             let html = '', sumSubLineaUsd = 0, itemsTotal = 0;
             
+            // Variables para el Motor Fiscal
+            let baseImponibleUsd = 0;
+            let montoExentoUsd = 0;
+
             carrito.forEach(item => {
                 let baseUsd = item.pUsd;
                 if (nivelCli === 'P1' && item.pre.precio_1_usd) baseUsd = item.pre.precio_1_usd;
@@ -493,6 +513,13 @@
                 
                 sumSubLineaUsd += totalLineaUsd; 
                 itemsTotal += item.cantidad;
+
+                // MOTOR FISCAL: Separar si paga IVA o es Exento
+                if (item.tipo_impuesto === 'EXENTO') {
+                    montoExentoUsd += totalLineaUsd;
+                } else {
+                    baseImponibleUsd += totalLineaUsd;
+                }
                 
                 const tieneDesc = descUsd > 0;
                 const txtOriginal = tieneDesc ? `<span class="line-through text-gray-400 mr-1">$${baseUsd.toFixed(2)}</span>` : '';
@@ -501,7 +528,7 @@
                 <div class="bg-white border border-gray-200 rounded p-1.5 mb-1.5 flex items-center shadow-sm relative fade-in">
                     <button onclick="eliminarDelCarrito('${item.id_producto_sku}')" class="absolute top-1 right-1 text-red-300 hover:text-red-500 transition"><i class="fa-solid fa-trash-can text-[10px]"></i></button>
                     
-                    <img src="${item.imagen_principal || imagenGlobalDefecto}" class="w-10 h-10 object-contain rounded border mr-2 shrink-0">
+                    <img src="${item.imagen_principal || imgDefecto}" class="w-10 h-10 object-contain rounded border mr-2 shrink-0">
                     <div class="flex-1 min-w-0 pr-4">
                         <h4 class="text-[9px] font-bold text-[#143B62] truncate mb-0.5">${item.nombre}</h4>
                         
@@ -532,21 +559,32 @@
             });
             lista.innerHTML = html;
             
+            // CÁLCULOS FISCALES (Proporcionalizando el descuento general)
             const descGeneralInput = parseFloat(document.getElementById('pos-input-desc-general').value) || 0;
-            const descGeneralUsd = sumSubLineaUsd * (descGeneralInput / 100);
-            const subtotalPosDescUsd = sumSubLineaUsd - descGeneralUsd;
+            const factorDescuento = 1 - (descGeneralInput / 100);
             
-            const ivaUsd = subtotalPosDescUsd * pypIva;
-            const granTotalUsd = subtotalPosDescUsd + ivaUsd;
+            const baseImponiblePostDescUsd = baseImponibleUsd * factorDescuento;
+            const montoExentoPostDescUsd = montoExentoUsd * factorDescuento;
+            const descGeneralTotalUsd = sumSubLineaUsd * (descGeneralInput / 100);
             
-            document.getElementById('pos-subtotal').innerText = `Bs. ${(sumSubLineaUsd * tasaBCV).toFixed(2)}`;
-            document.getElementById('pos-descuento-general-val').innerText = `- Bs. ${(descGeneralUsd * tasaBCV).toFixed(2)}`;
+            // El IVA se cobra SOLO a la Base Imponible
+            const ivaUsd = baseImponiblePostDescUsd * pypIva;
+            const granTotalUsd = baseImponiblePostDescUsd + montoExentoPostDescUsd + ivaUsd;
+            
+            // Actualizar Vista 
+            document.getElementById('pos-exento').innerText = `Bs. ${(montoExentoPostDescUsd * tasaBCV).toFixed(2)}`;
+            document.getElementById('pos-base-imponible').innerText = `Bs. ${(baseImponiblePostDescUsd * tasaBCV).toFixed(2)}`;
+            document.getElementById('pos-descuento-general-val').innerText = `- Bs. ${(descGeneralTotalUsd * tasaBCV).toFixed(2)}`;
             document.getElementById('pos-iva').innerText = `Bs. ${(ivaUsd * tasaBCV).toFixed(2)}`;
             
             document.getElementById('pos-items').innerText = itemsTotal;
             document.getElementById('pos-total-bs').innerText = `Bs. ${(granTotalUsd * tasaBCV).toFixed(2)}`;
             document.getElementById('pos-total-usd').innerText = `US$ ${granTotalUsd.toFixed(2)}`;
             document.getElementById('btn-cobrar').disabled = false;
+
+            // Guardamos ocultos los valores para enviarlos a la DB al cobrar
+            document.getElementById('pos-base-imponible').dataset.valUsd = baseImponiblePostDescUsd;
+            document.getElementById('pos-exento').dataset.valUsd = montoExentoPostDescUsd;
         }
 
         // --- COBRO ---
@@ -562,11 +600,16 @@
             document.getElementById('modal-total-usd').innerText = `US$ ${((tBs + igtfBs)/tasaBCV).toFixed(2)}`;
         }
 
-        function abrirCobro() { verificarIGTF(); document.getElementById('modal-cobro').classList.remove('hidden'); document.getElementById('modal-cobro').classList.add('flex'); }
+        function abrirCobro() { 
+            document.getElementById('cobro-nro-factura').value = '';
+            document.getElementById('cobro-nro-control').value = '';
+            verificarIGTF(); 
+            document.getElementById('modal-cobro').classList.remove('hidden'); document.getElementById('modal-cobro').classList.add('flex'); 
+        }
         function cerrarCobro() { document.getElementById('modal-cobro').classList.add('hidden'); }
 
         function mostrarErrorCarga(msg) {
-            document.getElementById('loading-text').innerText = "Rechazado"; document.getElementById('loading-text').classList.replace('text-[#143B62]', 'text-red-600');
+            document.getElementById('loading-text').innerText = "Venta Rechazada"; document.getElementById('loading-text').classList.replace('text-[#143B62]', 'text-red-600');
             document.querySelector('#loading-overlay i').className = "fa-solid fa-circle-xmark text-4xl text-red-500 mb-3";
             document.getElementById('loading-error').innerText = msg; document.getElementById('loading-error').classList.remove('hidden'); document.getElementById('btn-cerrar-carga').classList.remove('hidden');
         }
@@ -582,16 +625,34 @@
                 const metodo = document.getElementById('cobro-metodo').value;
                 const totalBsFinal = parseFloat(document.getElementById('modal-total-bs').innerText.replace('Bs. ',''));
                 
+                // Extraer montos fiscales
+                const baseImpUsd = parseFloat(document.getElementById('pos-base-imponible').dataset.valUsd) || 0;
+                const exentoUsd = parseFloat(document.getElementById('pos-exento').dataset.valUsd) || 0;
+                
+                const nroFac = document.getElementById('cobro-nro-factura').value.trim() || null;
+                const nroCtrl = document.getElementById('cobro-nro-control').value.trim() || null;
+                const nomCajero = localStorage.getItem('pyp_usuario_nombre') || 'Sistema';
+
                 const payload = { 
-                    id_empresa: empresaActual, id_cliente: document.getElementById('pos-id-cliente').value || null, 
-                    total_bs: totalBsFinal, total_usd: totalBsFinal/tasaBCV, tasa_bcv: tasaBCV, 
-                    metodo_pago: metodo, condicion_pago: document.getElementById('cobro-condicion').value, 
-                    iva_porcentaje: pypIva * 100, igtf_porcentaje: (metodo === 'EFECTIVO_USD' || metodo === 'ZELLE') ? pypIgtf * 100 : 0,
+                    id_empresa: empresaActual, 
+                    id_cliente: document.getElementById('pos-id-cliente').value || null, 
+                    total_bs: totalBsFinal, 
+                    total_usd: totalBsFinal/tasaBCV, 
+                    tasa_bcv: tasaBCV, 
+                    metodo_pago: metodo, 
+                    condicion_pago: document.getElementById('cobro-condicion').value, 
+                    iva_porcentaje: pypIva * 100, 
+                    igtf_porcentaje: (metodo === 'EFECTIVO_USD' || metodo === 'ZELLE') ? pypIgtf * 100 : 0,
+                    base_imponible: baseImpUsd * tasaBCV,
+                    monto_exento: exentoUsd * tasaBCV,
+                    numero_factura: nroFac,
+                    numero_control: nroCtrl,
+                    nombre_cajero: nomCajero,
                     estatus: 'PAGADA' 
                 };
                 
                 const resF = await fetch(`${SUPABASE_URL}/rest/v1/facturas`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, body: JSON.stringify(payload) });
-                if(!resF.ok) throw new Error("Fallo al guardar factura");
+                if(!resF.ok) throw new Error("Fallo al guardar factura. Verifica estructura de base de datos.");
                 const fId = (await resF.json())[0].id;
                 
                 const promesas = [];
@@ -612,7 +673,7 @@
                 
                 carrito = []; document.getElementById('pos-input-desc-general').value = ''; limpiarCliente(); cerrarCobro(); actualizarUI_Carrito(); await iniciarPuntoVenta();
                 document.getElementById('loading-overlay').classList.add('hidden');
-                setTimeout(()=>alert("✅ VENTA GUARDADA"), 200);
+                setTimeout(()=>alert("✅ VENTA REGISTRADA"), 200);
             } catch(e) { mostrarErrorCarga(e.message); } finally { btn.disabled = false; }
         }
     </script>
