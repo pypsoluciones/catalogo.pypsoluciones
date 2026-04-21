@@ -10,11 +10,11 @@
     <script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.js"></script>
     <style>
         body { font-family: 'Inter', sans-serif; }
-        .custom-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
+        .custom-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
         .custom-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
-        .btn-press:active { transform: scale(0.95); }
+        .btn-press:active { transform: scale(0.96); }
         .fade-in { animation: fadeIn 0.2s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
         input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
     </style>
     <script src="config.js"></script>
@@ -30,17 +30,17 @@
     <script src="menu.js"></script>
 
     <main class="flex-1 flex flex-col h-screen overflow-hidden bg-[#f4f6f8] w-full z-10 relative">
-        <header class="bg-white shadow-sm px-4 py-2 flex justify-between items-center z-10 shrink-0 border-b border-gray-200 h-14">
+        <header class="bg-white shadow-sm px-4 py-2 flex justify-between items-center z-10 shrink-0 border-b border-gray-200 h-12">
             <div class="flex items-center gap-3">
                 <button onclick="toggleMobileMenu()" class="md:hidden text-gray-600 hover:text-[#143B62] text-xl transition px-2"><i class="fa-solid fa-bars"></i></button>
-                <h1 class="text-base font-bold text-[#143B62] flex items-center gap-2"><i class="fa-solid fa-cash-register text-[#25D366]"></i> Punto de Venta (POS)</h1>
+                <h1 class="text-sm font-black text-[#143B62] flex items-center gap-2"><i class="fa-solid fa-cash-register text-[#25D366]"></i> Punto de Venta (POS)</h1>
             </div>
             <div class="flex items-center gap-3 shrink-0">
-                <div class="bg-blue-50 border border-blue-200 px-3 py-1 rounded hidden sm:flex items-center gap-2">
-                    <span class="text-[10px] font-bold text-blue-800 uppercase tracking-wider">Tasa BCV:</span>
+                <div class="bg-blue-50 border border-blue-200 px-3 py-1 rounded hidden sm:flex items-center gap-2 shadow-sm">
+                    <span class="text-[9px] font-bold text-blue-800 uppercase tracking-wider">Tasa BCV:</span>
                     <span class="text-sm font-black text-[#143B62]" id="tasa-display">Bs. 0.00</span>
                 </div>
-                <div class="text-[11px] font-semibold text-gray-500 bg-gray-100 px-3 py-1 rounded border border-gray-200 uppercase tracking-wide hidden md:block">
+                <div class="text-[10px] font-bold text-gray-500 bg-gray-100 px-3 py-1 rounded border border-gray-200 uppercase tracking-wide hidden md:block">
                     <i class="fa-solid fa-user-tie text-[#143B62] mr-1"></i> <span id="nombre-usuario">Admin</span>
                 </div>
             </div>
@@ -49,18 +49,18 @@
         <div class="flex-1 flex flex-col md:flex-row overflow-hidden">
             
             <div class="w-full md:w-3/5 lg:w-2/3 h-full flex flex-col border-r border-gray-200 bg-white relative z-0">
-                <div class="p-3 border-b border-gray-100 bg-gray-50 flex gap-2 shrink-0">
+                <div class="p-1.5 px-3 border-b border-gray-200 bg-gray-50 flex gap-2 shrink-0">
                     <div class="relative flex-1">
-                        <i class="fa-solid fa-search absolute left-3 top-2.5 text-gray-400"></i>
-                        <input type="text" id="buscador-pos" oninput="buscarProductos()" placeholder="Buscar producto..." class="w-full border border-gray-300 rounded-lg pl-9 pr-4 py-2 text-sm focus:outline-none focus:border-[#25D366] uppercase transition shadow-sm font-medium">
+                        <i class="fa-solid fa-search absolute left-3 top-2 text-gray-400 text-xs"></i>
+                        <input type="text" id="buscador-pos" oninput="buscarProductos()" placeholder="Buscar producto..." class="w-full border border-gray-300 rounded px-2 pl-8 py-1 text-xs focus:outline-none focus:border-[#25D366] uppercase shadow-inner font-bold">
                     </div>
-                    <select id="filtro-cat-pos" onchange="buscarProductos()" class="w-1/3 border border-gray-300 rounded-lg px-3 py-2 text-sm font-bold text-[#143B62] outline-none shadow-sm hidden sm:block">
+                    <select id="filtro-cat-pos" onchange="buscarProductos()" class="w-1/3 border border-gray-300 rounded px-2 py-1 text-xs font-bold text-[#143B62] outline-none shadow-sm hidden sm:block">
                         <option value="TODAS">TODAS LAS CATEGORÍAS</option>
                     </select>
                 </div>
 
-                <div class="flex-1 overflow-y-auto p-3 custom-scroll bg-slate-50">
-                    <div id="grid-productos" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                <div class="flex-1 overflow-y-auto p-2 custom-scroll bg-slate-100">
+                    <div id="grid-productos" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
                         <div class="col-span-full p-10 text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin text-3xl mb-3 block"></i> Cargando inventario...</div>
                     </div>
                 </div>
@@ -68,61 +68,65 @@
 
             <div class="w-full md:w-2/5 lg:w-1/3 h-full flex flex-col bg-white shadow-[-5px_0_15px_rgba(0,0,0,0.03)] z-10">
                 
-                <div class="p-3 border-b border-gray-200 bg-white shrink-0 relative z-20">
-                    <div class="flex justify-between items-end mb-1.5">
-                        <label class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Identificar Cliente</label>
-                        <div>
-                            <button onclick="abrirModalNuevoCliente()" class="text-[9px] text-[#E67E22] font-bold uppercase hover:underline mr-3">Registro Rápido</button>
-                            <button onclick="abrirModalFichaCompleta()" class="text-[9px] text-[#143B62] font-bold uppercase hover:underline">Ficha Completa</button>
+                <div class="p-2 border-b border-gray-200 bg-white shrink-0 relative z-20">
+                    <div class="flex justify-between items-center mb-1">
+                        <label class="text-[9px] font-black text-[#143B62] uppercase tracking-wider">Identificar Cliente</label>
+                        <div class="flex gap-2">
+                            <button onclick="abrirModalNuevoCliente()" class="text-[8px] text-[#E67E22] font-bold uppercase hover:underline">Rápido</button>
+                            <button onclick="abrirModalFichaCompleta()" class="text-[8px] text-blue-600 font-bold uppercase hover:underline">Completo</button>
                         </div>
                     </div>
                     
-                    <div class="relative mb-2" onclick="event.stopPropagation()">
-                        <input type="text" id="pos-buscador-cliente" oninput="buscarPredictivoCliente()" placeholder="Cédula o Nombre..." class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-bold uppercase outline-none focus:border-[#143B62] transition shadow-inner">
+                    <div class="relative mb-1.5" onclick="event.stopPropagation()">
+                        <input type="text" id="pos-buscador-cliente" oninput="buscarPredictivoCliente()" placeholder="Cédula o Nombre..." class="w-full border border-gray-300 rounded px-2 py-1 text-[11px] font-bold uppercase outline-none focus:border-[#143B62] transition shadow-inner">
                         <div id="dropdown-clientes" class="absolute w-full bg-white border border-gray-200 shadow-xl rounded-b mt-0.5 hidden z-50 max-h-48 overflow-y-auto custom-scroll"></div>
                     </div>
 
-                    <div id="info-cliente-seleccionado" class="bg-blue-50/50 border border-blue-100 rounded-lg p-2 text-[10px] space-y-1">
-                        <div class="flex justify-between">
-                            <span class="font-bold text-[#143B62]" id="txt-cli-nom">PÚBLICO GENERAL</span>
-                            <button onclick="limpiarCliente()" class="text-red-400 hover:text-red-600 transition"><i class="fa-solid fa-times"></i></button>
+                    <div id="info-cliente-seleccionado" class="bg-blue-50/80 border border-blue-100 rounded p-1.5 text-[9px] flex justify-between items-center">
+                        <div class="flex-1 min-w-0">
+                            <div class="font-black text-[#143B62] truncate" id="txt-cli-nom">PÚBLICO GENERAL</div>
+                            <div class="flex gap-2 text-gray-500 font-semibold mt-0.5">
+                                <span id="txt-cli-doc">-</span> | <span id="txt-cli-tel" class="truncate">-</span>
+                            </div>
                         </div>
-                        <div class="flex gap-4 text-gray-500 font-medium">
-                            <span><i class="fa-solid fa-id-card mr-1"></i> <span id="txt-cli-doc">-</span></span>
-                            <span><i class="fa-solid fa-phone mr-1"></i> <span id="txt-cli-tel">-</span></span>
-                        </div>
-                        <div class="truncate text-gray-400"><i class="fa-solid fa-location-dot mr-1"></i> <span id="txt-cli-dir">-</span></div>
+                        <button onclick="limpiarCliente()" class="text-red-400 hover:text-red-600 px-2 transition"><i class="fa-solid fa-times"></i></button>
                         <input type="hidden" id="pos-id-cliente" value="">
                     </div>
                 </div>
 
-                <div class="flex-1 overflow-y-auto p-3 bg-gray-50 custom-scroll" id="lista-carrito">
+                <div class="flex-1 overflow-y-auto p-2 bg-gray-50 custom-scroll" id="lista-carrito">
                     <div class="h-full flex flex-col items-center justify-center text-gray-300 opacity-50">
-                        <i class="fa-solid fa-cart-arrow-down text-6xl mb-3"></i>
-                        <p class="font-bold text-sm">El carrito está vacío</p>
+                        <i class="fa-solid fa-cart-arrow-down text-5xl mb-2"></i>
+                        <p class="font-bold text-xs uppercase tracking-widest">Carrito Vacío</p>
                     </div>
                 </div>
 
-                <div class="p-4 bg-white border-t border-gray-200 shrink-0 shadow-[0_-10px_20px_rgba(0,0,0,0.03)] space-y-1.5">
-                    <div class="flex justify-between items-center text-xs text-gray-500 font-bold uppercase"><span>Subtotal</span><span id="pos-subtotal">Bs. 0.00</span></div>
-                    <div class="flex justify-between items-center text-xs text-gray-500 font-bold uppercase"><span>Artículos</span><span class="text-[#143B62] bg-blue-50 px-2 py-0.5 rounded" id="pos-items">0</span></div>
-                    <div class="flex justify-between items-center text-xs text-red-400 font-bold uppercase"><span>Descuento</span><span id="pos-descuento">Bs. 0.00</span></div>
-                    <div class="flex justify-between items-center text-xs text-gray-500 font-bold uppercase"><span>IVA (16%)</span><span id="pos-iva">Bs. 0.00</span></div>
+                <div class="p-3 bg-white border-t border-gray-200 shrink-0 shadow-[0_-10px_20px_rgba(0,0,0,0.03)] flex flex-col gap-1">
+                    <div class="flex justify-between items-center text-[10px] text-gray-500 font-bold uppercase"><span>Subtotal Base</span><span id="pos-subtotal">Bs. 0.00</span></div>
+                    <div class="flex justify-between items-center text-[10px] text-red-400 font-bold uppercase"><span>Descuento</span><span id="pos-descuento">Bs. 0.00</span></div>
+                    <div class="flex justify-between items-center text-[10px] text-gray-500 font-bold uppercase"><span>IVA (16%)</span><span id="pos-iva">Bs. 0.00</span></div>
+                    <div class="flex justify-between items-center text-[10px] text-gray-500 font-bold uppercase"><span>IGTF (3%)</span><span id="pos-igtf">Bs. 0.00</span></div>
                     
-                    <div class="border-t border-gray-100 my-3 pt-3"></div>
+                    <div class="border-t border-gray-100 my-1"></div>
                     
-                    <div class="flex justify-between items-end mb-1">
-                        <span class="text-sm font-black text-[#143B62] uppercase tracking-wider">Total Bolívares</span>
-                        <span class="text-3xl font-black text-gray-900 leading-none" id="pos-total-bs">Bs. 0.00</span>
+                    <div class="flex justify-between items-end">
+                        <span class="text-xs font-black text-[#143B62] uppercase tracking-wider">Total Bs</span>
+                        <span class="text-2xl font-black text-gray-900 leading-none" id="pos-total-bs">Bs. 0.00</span>
                     </div>
-                    <div class="flex justify-between items-center mb-4">
-                        <span class="text-xs font-bold text-gray-400 uppercase">Total en Divisas</span>
-                        <span class="text-lg font-black text-[#25D366]" id="pos-total-usd">US$ 0.00</span>
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-[9px] font-bold text-gray-400 uppercase">Total Divisas</span>
+                        <span class="text-sm font-black text-[#25D366]" id="pos-total-usd">US$ 0.00</span>
                     </div>
                     
-                    <button onclick="abrirCobro()" id="btn-cobrar" disabled class="w-full bg-[#25D366] hover:bg-[#1ebd5c] disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-black py-4 rounded-xl shadow-lg transition-all text-xl uppercase tracking-widest flex justify-center items-center gap-3 btn-press">
-                        <i class="fa-solid fa-hand-holding-dollar"></i> Procesar Pago
-                    </button>
+                    <div class="grid grid-cols-3 gap-2 h-10">
+                        <div class="col-span-1 bg-blue-50 rounded-lg flex flex-col items-center justify-center border border-blue-100 shadow-inner">
+                            <span class="text-[8px] font-bold text-gray-500 uppercase leading-none mb-0.5">Artículos</span>
+                            <span class="text-base font-black text-[#143B62] leading-none" id="pos-items">0</span>
+                        </div>
+                        <button onclick="abrirCobro()" id="btn-cobrar" disabled class="col-span-2 bg-[#25D366] hover:bg-[#1ebd5c] disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-black rounded-lg shadow-sm transition-all text-sm uppercase tracking-widest flex justify-center items-center gap-2 btn-press">
+                            <i class="fa-solid fa-hand-holding-dollar"></i> Cobrar
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -135,10 +139,14 @@
                 <button onclick="cerrarModalNuevoCliente()" class="text-gray-300 hover:text-white transition"><i class="fa-solid fa-times"></i></button>
             </div>
             <form id="form-cliente-rapido" onsubmit="guardarClienteRapido(event)" class="p-5 bg-gray-50 space-y-3">
-                <div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Doc. Identidad / RIF *</label><input type="text" id="cli-rap-doc" required class="w-full border border-gray-300 rounded px-3 py-2 text-xs font-bold uppercase focus:border-[#143B62] outline-none"></div>
-                <div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Nombre / Razón Social *</label><input type="text" id="cli-rap-nom" required class="w-full border border-gray-300 rounded px-3 py-2 text-xs font-bold uppercase focus:border-[#143B62] outline-none"></div>
-                <div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Celular *</label><input type="text" id="cli-rap-tel" required class="w-full border border-gray-300 rounded px-3 py-2 text-xs font-bold focus:border-[#143B62] outline-none"></div>
-                <button type="submit" class="w-full bg-[#25D366] text-white font-bold py-3 rounded shadow mt-4 btn-press uppercase text-xs">Guardar y Seleccionar</button>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="col-span-2"><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Doc. Identidad / RIF *</label><input type="text" id="cli-rap-doc" required class="w-full border border-gray-300 rounded px-3 py-1.5 text-xs font-bold uppercase focus:border-[#143B62] outline-none"></div>
+                    <div class="col-span-2"><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Nombre / Razón Social *</label><input type="text" id="cli-rap-nom" required class="w-full border border-gray-300 rounded px-3 py-1.5 text-xs font-bold uppercase focus:border-[#143B62] outline-none"></div>
+                    <div class="col-span-2"><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Dirección Exacta *</label><input type="text" id="cli-rap-dir" required class="w-full border border-gray-300 rounded px-3 py-1.5 text-xs font-bold uppercase focus:border-[#143B62] outline-none"></div>
+                    <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Celular</label><input type="text" id="cli-rap-tel" class="w-full border border-gray-300 rounded px-3 py-1.5 text-xs font-bold focus:border-[#143B62] outline-none"></div>
+                    <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Contribuyente *</label><select id="cli-rap-tipo" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-bold outline-none"><option value="NATURAL">NATURAL</option><option value="JURIDICA">JURÍDICA</option></select></div>
+                </div>
+                <button type="submit" id="btn-guardar-cli-rap" class="w-full bg-[#25D366] text-white font-bold py-2.5 rounded shadow mt-2 btn-press uppercase text-xs"><i class="fa-solid fa-save mr-1"></i> Guardar y Usar</button>
             </form>
         </div>
     </div>
@@ -146,53 +154,60 @@
     <div id="modal-ficha-completa" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[110] hidden flex items-center justify-center p-4 fade-in">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col border border-gray-200 relative max-h-[90vh]">
             <div class="bg-[#143B62] text-white px-5 py-4 flex justify-between items-center shrink-0">
-                <h3 class="font-black text-lg tracking-wide uppercase"><i class="fa-solid fa-address-book mr-2 text-[#E67E22]"></i> Ficha de Cliente Completa</h3>
+                <h3 class="font-black text-lg tracking-wide uppercase"><i class="fa-solid fa-address-book mr-2 text-[#E67E22]"></i> Ficha Completa</h3>
                 <button onclick="cerrarModalFichaCompleta()" class="text-gray-300 hover:text-white text-xl transition"><i class="fa-solid fa-times"></i></button>
             </div>
             <form id="form-ficha-completa" onsubmit="guardarFichaCompleta(event)" class="p-6 bg-gray-50 overflow-y-auto custom-scroll space-y-4">
                 <div class="grid grid-cols-2 gap-4">
                     <div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Doc. Identidad / RIF *</label><input type="text" id="fc-doc" required class="w-full border border-gray-300 rounded px-3 py-2 text-xs font-bold uppercase outline-none"></div>
                     <div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Razón Social *</label><input type="text" id="fc-nombre" required class="w-full border border-gray-300 rounded px-3 py-2 text-xs font-bold uppercase outline-none"></div>
-                    <div class="col-span-2"><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Dirección Fiscal</label><input type="text" id="fc-dir-p" class="w-full border border-gray-300 rounded px-3 py-2 text-xs outline-none uppercase"></div>
-                    <div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Celular Principal *</label><input type="text" id="fc-tel1" required class="w-full border border-gray-300 rounded px-3 py-2 text-xs outline-none"></div>
-                    <div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Correo Electrónico</label><input type="email" id="fc-email" class="w-full border border-gray-300 rounded px-3 py-2 text-xs outline-none"></div>
+                    <div class="col-span-2"><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Dirección Fiscal *</label><input type="text" id="fc-dir-p" required class="w-full border border-gray-300 rounded px-3 py-2 text-xs outline-none uppercase"></div>
+                    <div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Celular</label><input type="text" id="fc-tel1" class="w-full border border-gray-300 rounded px-3 py-2 text-xs outline-none"></div>
+                    <div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Contribuyente *</label><select id="fc-tipo" required class="w-full border border-gray-300 rounded px-3 py-2 text-xs outline-none"><option value="NATURAL">NATURAL</option><option value="JURIDICA">JURÍDICA</option></select></div>
                 </div>
-                <div class="flex gap-3 justify-end pt-4"><button type="button" onclick="cerrarModalFichaCompleta()" class="px-5 py-2 bg-gray-200 rounded text-xs font-bold">Cancelar</button><button type="submit" class="px-5 py-2 bg-[#25D366] text-white rounded text-xs font-bold uppercase">Guardar Registro</button></div>
+                <div class="flex gap-3 justify-end pt-4"><button type="button" onclick="cerrarModalFichaCompleta()" class="px-5 py-2 bg-gray-200 rounded text-xs font-bold hover:bg-gray-300 btn-press">Cancelar</button><button type="submit" id="btn-guardar-fc" class="px-5 py-2 bg-[#25D366] text-white rounded text-xs font-bold uppercase hover:bg-[#1ebd5c] btn-press">Guardar Registro</button></div>
             </form>
         </div>
     </div>
 
     <div id="modal-cobro" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4 fade-in">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col">
-            <div class="bg-[#143B62] px-5 py-4 flex justify-between items-center">
-                <h3 class="font-black text-white text-lg tracking-wide uppercase">Liquidar Venta</h3>
-                <button onclick="cerrarCobro()" class="text-gray-300 hover:text-white text-xl transition"><i class="fa-solid fa-times"></i></button>
+            <div class="bg-[#143B62] px-5 py-3 flex justify-between items-center">
+                <h3 class="font-black text-white text-base tracking-wide uppercase">Liquidar Venta</h3>
+                <button onclick="cerrarCobro()" class="text-gray-300 hover:text-white text-lg transition"><i class="fa-solid fa-times"></i></button>
             </div>
-            <div class="p-6 bg-gray-50">
-                <div class="bg-[#143B62] rounded-xl p-4 mb-5 text-center shadow-inner">
+            <div class="p-5 bg-gray-50">
+                <div class="bg-[#143B62] rounded-xl p-4 mb-4 text-center shadow-inner">
                     <h2 class="text-4xl font-black text-[#25D366] leading-none mb-1" id="modal-total-bs">Bs. 0.00</h2>
-                    <p class="text-white font-bold text-sm" id="modal-total-usd">US$ 0.00</p>
+                    <p class="text-white font-bold text-xs" id="modal-total-usd">US$ 0.00</p>
                 </div>
-                <div class="space-y-4">
+                <div class="grid grid-cols-2 gap-3 mb-4">
                     <div>
-                        <label class="block text-[11px] font-bold text-gray-500 uppercase mb-1">Método de Pago</label>
-                        <select id="cobro-metodo" class="w-full border-2 border-gray-300 rounded-lg px-3 py-2.5 text-sm font-bold text-[#143B62] outline-none">
-                            <option value="EFECTIVO_USD">💵 Efectivo Divisas</option>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Condición</label>
+                        <select id="cobro-condicion" class="w-full border border-gray-300 rounded px-2 py-2 text-xs font-bold text-[#143B62] outline-none shadow-sm">
+                            <option value="CONTADO">Contado</option>
+                            <option value="CREDITO">Crédito</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Método de Pago</label>
+                        <select id="cobro-metodo" class="w-full border border-gray-300 rounded px-2 py-2 text-xs font-bold text-[#143B62] outline-none shadow-sm">
+                            <option value="EFECTIVO_BS">🇻🇪 Efectivo Bs</option>
                             <option value="PAGO_MOVIL">📱 Pago Móvil</option>
                             <option value="PUNTO_VENTA">💳 Punto de Venta</option>
+                            <option value="EFECTIVO_USD">💵 Efectivo Divisas</option>
                             <option value="ZELLE">🟣 Zelle</option>
-                            <option value="EFECTIVO_BS">🇻🇪 Efectivo Bolívares</option>
                         </select>
                     </div>
                 </div>
-                <button onclick="procesarVenta()" id="btn-confirmar" class="w-full bg-[#143B62] text-white font-black py-4 rounded-xl shadow-lg transition-all text-lg uppercase tracking-wider mt-6 btn-press">Confirmar Venta</button>
+                <button onclick="procesarVenta()" id="btn-confirmar" class="w-full bg-[#143B62] text-white font-black py-3 rounded-lg shadow-md transition-all text-sm uppercase tracking-wider btn-press">Confirmar Venta</button>
             </div>
         </div>
     </div>
 
     <div id="loading-overlay" class="fixed inset-0 bg-white/90 z-[999] hidden flex-col items-center justify-center">
         <i class="fa-solid fa-circle-notch fa-spin text-5xl text-[#25D366] mb-4"></i>
-        <h2 class="text-2xl font-black text-[#143B62] uppercase">Procesando...</h2>
+        <h2 class="text-xl font-black text-[#143B62] uppercase">Procesando...</h2>
     </div>
 
     <script>
@@ -206,11 +221,9 @@
             await iniciarPuntoVenta();
         };
 
-        // TECLA ESC PARA CERRAR TODO
+        // TECLA ESC PARA CERRAR MODALES
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                cerrarCobro(); cerrarModalNuevoCliente(); cerrarModalFichaCompleta(); cerrarVisor();
-            }
+            if (e.key === 'Escape') { cerrarCobro(); cerrarModalNuevoCliente(); cerrarModalFichaCompleta(); cerrarVisor(); }
         });
 
         async function iniciarPuntoVenta() {
@@ -246,7 +259,9 @@
                 categorias.forEach(c => catHtml += `<option value="${c.valor}">${c.valor}</option>`);
                 document.getElementById('filtro-cat-pos').innerHTML = catHtml;
                 buscarProductos(); 
-            } catch(e) { document.getElementById('grid-productos').innerHTML = `<div class="col-span-full p-10 text-center text-red-500 font-bold uppercase">Error de servidor.</div>`; }
+            } catch(e) { 
+                document.getElementById('grid-productos').innerHTML = `<div class="col-span-full p-10 text-center text-red-500 font-bold uppercase"><i class="fa-solid fa-shield-halved text-4xl mb-3 block"></i> Sesión expirada o sin conexión.<br><a href="login.html" class="text-blue-600 underline text-sm mt-2 block">Haz clic aquí para volver a ingresar</a></div>`; 
+            }
         }
 
         function buscarProductos() {
@@ -263,17 +278,17 @@
                 const img = p.imagen_principal || imagenGlobalDefecto;
                 const pBs = p.precio_usd * tasaBCV;
                 html += `
-                <div class="bg-white border border-gray-200 rounded-xl p-2.5 flex flex-col shadow-sm hover:shadow-md transition cursor-pointer active:scale-95 fade-in" onclick="agregarAlCarrito('${prodStr}')">
-                    <div class="h-24 w-full mb-2 bg-white flex items-center justify-center rounded relative group">
+                <div class="bg-white border border-gray-200 rounded-xl p-2 flex flex-col shadow-sm hover:shadow-md transition cursor-pointer active:scale-95 fade-in" onclick="agregarAlCarrito('${prodStr}')">
+                    <div class="h-20 w-full mb-1.5 bg-white flex items-center justify-center rounded relative group">
                         <img src="${img}" class="max-h-full max-w-full object-contain">
                         <button onclick="event.stopPropagation(); abrirVisorImagen('${img}')" class="absolute top-1 right-1 bg-black/50 text-white w-6 h-6 rounded flex items-center justify-center opacity-0 group-hover:opacity-100 transition"><i class="fa-solid fa-expand text-[10px]"></i></button>
                     </div>
                     <div class="flex-1 flex flex-col justify-between">
-                        <h4 class="text-[11px] font-bold text-gray-700 leading-tight line-clamp-2 mb-2">${p.nombre}</h4>
+                        <h4 class="text-[10px] font-bold text-gray-700 leading-tight line-clamp-2 mb-1">${p.nombre}</h4>
                         <div class="mt-auto">
-                            <div class="flex items-baseline mb-0.5"><span class="text-[10px] font-bold text-gray-900 mr-1">Bs.</span><span class="text-xl font-black text-gray-900 leading-none">${pBs.toFixed(2)}</span></div>
-                            <div class="text-[10px] font-bold text-[#25D366]">US$ ${p.precio_usd.toFixed(2)}</div>
-                            <div class="text-right text-[9px] font-medium text-emerald-600 bg-emerald-50 px-1.5 rounded w-fit ml-auto mt-1">${p.stock_actual} und</div>
+                            <div class="flex items-baseline mb-0.5"><span class="text-[9px] font-bold text-gray-900 mr-1">Bs.</span><span class="text-lg font-black text-gray-900 leading-none">${pBs.toFixed(2)}</span></div>
+                            <div class="text-[9px] font-bold text-[#25D366]">US$ ${p.precio_usd.toFixed(2)}</div>
+                            <div class="text-right text-[8px] font-bold text-emerald-600 bg-emerald-50 px-1.5 rounded w-fit ml-auto mt-1">${p.stock_actual} und</div>
                         </div>
                     </div>
                 </div>`;
@@ -288,12 +303,12 @@
             if(query === '') { drop.classList.add('hidden'); return; }
             const resultados = fuseClientes.search(query).slice(0, 6);
             drop.innerHTML = '';
-            if(resultados.length === 0) { drop.innerHTML = `<div class="p-3 text-[11px] text-gray-500 text-center">No existe. Presiona "Nuevo" arriba.</div>`; } 
+            if(resultados.length === 0) { drop.innerHTML = `<div class="p-3 text-[10px] text-gray-500 text-center">No existe. Presiona "Rápido" arriba.</div>`; } 
             else {
                 resultados.forEach(r => {
                     const c = r.item;
                     const cStr = encodeURIComponent(JSON.stringify(c));
-                    drop.innerHTML += `<div class="p-2.5 border-b border-gray-100 hover:bg-blue-50 cursor-pointer" onclick="seleccionarCliente('${cStr}')"><div class="font-bold text-[#143B62] text-[11px] truncate">${c.nombre_razon_social}</div><div class="text-[9px] text-gray-500 font-mono">${c.documento_identidad}</div></div>`;
+                    drop.innerHTML += `<div class="p-2 border-b border-gray-100 hover:bg-blue-50 cursor-pointer" onclick="seleccionarCliente('${cStr}')"><div class="font-bold text-[#143B62] text-[10px] truncate">${c.nombre_razon_social}</div><div class="text-[8px] text-gray-500 font-mono">${c.documento_identidad}</div></div>`;
                 });
             }
             drop.classList.remove('hidden');
@@ -304,7 +319,6 @@
             document.getElementById('txt-cli-nom').innerText = c.nombre_razon_social;
             document.getElementById('txt-cli-doc').innerText = c.documento_identidad;
             document.getElementById('txt-cli-tel').innerText = c.telefono_principal || '-';
-            document.getElementById('txt-cli-dir').innerText = c.direccion_principal || '-';
             document.getElementById('pos-id-cliente').value = c.id;
             document.getElementById('pos-buscador-cliente').value = '';
             document.getElementById('dropdown-clientes').classList.add('hidden');
@@ -314,7 +328,6 @@
             document.getElementById('txt-cli-nom').innerText = 'PÚBLICO GENERAL';
             document.getElementById('txt-cli-doc').innerText = '-';
             document.getElementById('txt-cli-tel').innerText = '-';
-            document.getElementById('txt-cli-dir').innerText = '-';
             document.getElementById('pos-id-cliente').value = '';
         }
 
@@ -327,24 +340,24 @@
         function cerrarDropdownCliente(e) { if(e.target.id !== 'pos-buscador-cliente') document.getElementById('dropdown-clientes').classList.add('hidden'); }
 
         async function guardarClienteRapido(e) {
-            e.preventDefault();
+            e.preventDefault(); const btn = document.getElementById('btn-guardar-cli-rap'); btn.innerHTML = `Guardando...`; btn.disabled = true;
             try {
-                const payload = { id_empresa: empresaActual, tipo_persona: 'CLIENTE', documento_identidad: document.getElementById('cli-rap-doc').value.trim().toUpperCase(), nombre_razon_social: document.getElementById('cli-rap-nom').value.trim().toUpperCase(), telefono_principal: document.getElementById('cli-rap-tel').value.trim(), estatus: 'ACTIVO' };
+                const payload = { id_empresa: empresaActual, tipo_persona: 'CLIENTE', documento_identidad: document.getElementById('cli-rap-doc').value.trim().toUpperCase(), nombre_razon_social: document.getElementById('cli-rap-nom').value.trim().toUpperCase(), direccion_principal: document.getElementById('cli-rap-dir').value.trim().toUpperCase(), telefono_principal: document.getElementById('cli-rap-tel').value.trim(), tipo_contribuyente: document.getElementById('cli-rap-tipo').value, estatus: 'ACTIVO' };
                 const res = await fetch(`${SUPABASE_URL}/rest/v1/directorio_maestro`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, body: JSON.stringify(payload) });
-                const data = await res.json(); seleccionarCliente(encodeURIComponent(JSON.stringify(data[0]))); cerrarModalNuevoCliente(); await iniciarPuntoVenta();
-            } catch(error) { alert("Error al guardar cliente rápido."); }
+                const data = await res.json(); dbClientes.push(data[0]); fuseClientes = new Fuse(dbClientes, { keys: ['documento_identidad', 'nombre_razon_social'], threshold: 0.3, ignoreLocation: true }); seleccionarCliente(encodeURIComponent(JSON.stringify(data[0]))); cerrarModalNuevoCliente();
+            } catch(e) { alert("Error al guardar."); } finally { btn.innerHTML = `Guardar y Usar`; btn.disabled = false; }
         }
 
         async function guardarFichaCompleta(e) {
-            e.preventDefault();
+            e.preventDefault(); const btn = document.getElementById('btn-guardar-fc'); btn.innerHTML = `Guardando...`; btn.disabled = true;
             try {
-                const payload = { id_empresa: empresaActual, tipo_persona: 'CLIENTE', documento_identidad: document.getElementById('fc-doc').value.trim().toUpperCase(), nombre_razon_social: document.getElementById('fc-nombre').value.trim().toUpperCase(), direccion_principal: document.getElementById('fc-dir-p').value.trim().toUpperCase(), telefono_principal: document.getElementById('fc-tel1').value.trim(), correo_electronico: document.getElementById('fc-email').value.trim(), estatus: document.getElementById('fc-estatus').value };
+                const payload = { id_empresa: empresaActual, tipo_persona: 'CLIENTE', documento_identidad: document.getElementById('fc-doc').value.trim().toUpperCase(), nombre_razon_social: document.getElementById('fc-nombre').value.trim().toUpperCase(), direccion_principal: document.getElementById('fc-dir-p').value.trim().toUpperCase(), telefono_principal: document.getElementById('fc-tel1').value.trim(), correo_electronico: document.getElementById('fc-email').value.trim(), tipo_contribuyente: document.getElementById('fc-tipo').value, estatus: 'ACTIVO' };
                 const res = await fetch(`${SUPABASE_URL}/rest/v1/directorio_maestro`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, body: JSON.stringify(payload) });
-                const data = await res.json(); seleccionarCliente(encodeURIComponent(JSON.stringify(data[0]))); cerrarModalFichaCompleta(); await iniciarPuntoVenta();
-            } catch(error) { alert("Error al guardar ficha completa."); }
+                const data = await res.json(); dbClientes.push(data[0]); fuseClientes = new Fuse(dbClientes, { keys: ['documento_identidad', 'nombre_razon_social'], threshold: 0.3, ignoreLocation: true }); seleccionarCliente(encodeURIComponent(JSON.stringify(data[0]))); cerrarModalFichaCompleta();
+            } catch(e) { alert("Error al guardar."); } finally { btn.innerHTML = `Guardar Registro`; btn.disabled = false; }
         }
 
-        // --- CARRITO ---
+        // --- CARRITO Y TOTALES CON IVA/IGTF VISUAL ---
         function agregarAlCarrito(prodStr) {
             const prod = JSON.parse(decodeURIComponent(prodStr));
             const idx = carrito.findIndex(item => item.id_producto_sku === prod.id_producto_sku);
@@ -365,8 +378,8 @@
             const lista = document.getElementById('lista-carrito');
             const btnCobrar = document.getElementById('btn-cobrar');
             if (carrito.length === 0) {
-                lista.innerHTML = `<div class="h-full flex flex-col items-center justify-center text-gray-300 opacity-50"><i class="fa-solid fa-cart-arrow-down text-6xl mb-3"></i><p class="font-bold text-sm">Vacío</p></div>`;
-                document.getElementById('pos-total-bs').innerText = 'Bs. 0.00'; document.getElementById('pos-total-usd').innerText = 'US$ 0.00'; btnCobrar.disabled = true; return;
+                lista.innerHTML = `<div class="h-full flex flex-col items-center justify-center text-gray-300 opacity-50"><i class="fa-solid fa-cart-arrow-down text-5xl mb-2"></i><p class="font-bold text-xs uppercase">Carrito Vacío</p></div>`;
+                document.getElementById('pos-total-bs').innerText = 'Bs. 0.00'; document.getElementById('pos-total-usd').innerText = 'US$ 0.00'; document.getElementById('pos-items').innerText = '0'; btnCobrar.disabled = true; return;
             }
 
             let html = ''; let subtotalUsd = 0; let itemsTotal = 0;
@@ -374,28 +387,34 @@
                 const totalLineaUsd = item.precio_usd * item.cantidad;
                 subtotalUsd += totalLineaUsd; itemsTotal += item.cantidad;
                 html += `
-                <div class="bg-white border border-gray-200 rounded-lg p-2.5 mb-2 flex items-center shadow-sm relative fade-in">
-                    <img src="${item.imagen_principal || imagenGlobalDefecto}" class="w-10 h-10 object-contain rounded border mr-3">
+                <div class="bg-white border border-gray-200 rounded-lg p-2 mb-1.5 flex items-center shadow-sm relative fade-in">
+                    <img src="${item.imagen_principal || imagenGlobalDefecto}" class="w-10 h-10 object-contain rounded border mr-2">
                     <div class="flex-1 min-w-0">
-                        <h4 class="text-[10px] font-bold text-[#143B62] truncate pr-5">${item.nombre}</h4>
-                        <div class="text-[10px] font-bold text-[#25D366]">$${item.precio_usd.toFixed(2)}</div>
+                        <h4 class="text-[9px] font-bold text-[#143B62] truncate pr-5">${item.nombre}</h4>
+                        <div class="text-[9px] font-bold text-gray-500">Bs. ${(item.precio_usd * tasaBCV).toFixed(2)} <span class="text-[#25D366] ml-1">($${item.precio_usd.toFixed(2)})</span></div>
                     </div>
                     <div class="flex flex-col items-end">
                         <div class="font-black text-xs text-gray-900 mb-1">Bs. ${(totalLineaUsd * tasaBCV).toFixed(2)}</div>
                         <div class="flex items-center border border-gray-200 rounded overflow-hidden">
-                            <button onclick="modificarCantidad('${item.id_producto_sku}', -1)" class="bg-gray-50 px-2 py-0.5 text-gray-600 font-bold transition"><i class="fa-solid fa-minus text-[8px]"></i></button>
-                            <span class="px-2 py-0.5 text-[10px] font-black bg-white w-6 text-center">${item.cantidad}</span>
-                            <button onclick="modificarCantidad('${item.id_producto_sku}', 1)" class="bg-gray-50 px-2 py-0.5 text-gray-600 font-bold transition"><i class="fa-solid fa-plus text-[8px]"></i></button>
+                            <button onclick="modificarCantidad('${item.id_producto_sku}', -1)" class="bg-gray-50 px-1.5 py-0.5 text-gray-600 font-bold transition"><i class="fa-solid fa-minus text-[8px]"></i></button>
+                            <span class="px-2 py-0.5 text-[9px] font-black bg-white w-5 text-center">${item.cantidad}</span>
+                            <button onclick="modificarCantidad('${item.id_producto_sku}', 1)" class="bg-gray-50 px-1.5 py-0.5 text-gray-600 font-bold transition"><i class="fa-solid fa-plus text-[8px]"></i></button>
                         </div>
                     </div>
                 </div>`;
             });
             lista.innerHTML = html;
-            const iva = (subtotalUsd * 0.16) * tasaBCV;
-            const totalBs = (subtotalUsd * tasaBCV) + iva;
-            document.getElementById('pos-subtotal').innerText = `Bs. ${(subtotalUsd * tasaBCV).toFixed(2)}`;
+            
+            // LÓGICA DE IMPUESTOS (Por ahora visual, 16% IVA base)
+            const subtotalBs = subtotalUsd * tasaBCV;
+            const ivaBs = subtotalBs * 0.16;
+            const igtfBs = 0; // Se aplicará en futuras versiones según método de pago
+            const totalBs = subtotalBs + ivaBs + igtfBs;
+            
+            document.getElementById('pos-subtotal').innerText = `Bs. ${subtotalBs.toFixed(2)}`;
+            document.getElementById('pos-iva').innerText = `Bs. ${ivaBs.toFixed(2)}`;
+            document.getElementById('pos-igtf').innerText = `Bs. ${igtfBs.toFixed(2)}`;
             document.getElementById('pos-items').innerText = itemsTotal;
-            document.getElementById('pos-iva').innerText = `Bs. ${iva.toFixed(2)}`;
             document.getElementById('pos-total-bs').innerText = `Bs. ${totalBs.toFixed(2)}`;
             document.getElementById('pos-total-usd').innerText = `US$ ${(totalBs / tasaBCV).toFixed(2)}`;
             btnCobrar.disabled = false;
@@ -413,7 +432,8 @@
             document.getElementById('loading-overlay').classList.remove('hidden'); document.getElementById('loading-overlay').classList.add('flex');
             try {
                 let tUsd = 0; carrito.forEach(i => tUsd += (i.precio_usd * i.cantidad));
-                const payloadFactura = { id_empresa: empresaActual, id_cliente: document.getElementById('pos-id-cliente').value || null, total_usd: tUsd, tasa_bcv: tasaBCV, total_bs: tUsd * tasaBCV, metodo_pago: document.getElementById('cobro-metodo').value, estatus: 'PAGADA' };
+                const totalBs = (tUsd * tasaBCV) * 1.16; // Sumando 16% IVA
+                const payloadFactura = { id_empresa: empresaActual, id_cliente: document.getElementById('pos-id-cliente').value || null, total_usd: totalBs / tasaBCV, tasa_bcv: tasaBCV, total_bs: totalBs, metodo_pago: document.getElementById('cobro-metodo').value, estatus: 'PAGADA' };
                 const resF = await fetch(`${SUPABASE_URL}/rest/v1/facturas`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, body: JSON.stringify(payloadFactura) });
                 const fData = await resF.json(); const idF = fData[0].id;
                 
@@ -421,10 +441,10 @@
                 carrito.forEach(item => {
                     const nStock = item.stock_actual - item.cantidad;
                     promesas.push(fetch(`${SUPABASE_URL}/rest/v1/productos?id_producto_sku=eq.${item.id_producto_sku}`, { method: 'PATCH', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ stock_actual: nStock }) }));
+                    promesas.push(fetch(`${SUPABASE_URL}/rest/v1/detalles_factura`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ id_factura: idF, id_producto_sku: item.id_producto_sku, nombre_producto: item.nombre, cantidad: item.cantidad, precio_unitario_usd: item.precio_usd, total_linea_usd: item.precio_usd * item.cantidad }) }));
                 });
                 await Promise.all(promesas);
                 carrito = []; limpiarCliente(); cerrarCobro(); actualizarUI_Carrito(); await iniciarPuntoVenta();
-                alert("¡VENTA EXITOSA!");
             } catch(e) { alert("Error al procesar venta."); } finally { btn.disabled = false; document.getElementById('loading-overlay').classList.add('hidden'); }
         }
     </script>
