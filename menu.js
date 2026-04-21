@@ -17,7 +17,17 @@ document.addEventListener("DOMContentLoaded", () => {
         
         <nav class="flex-1 p-2 space-y-1 overflow-y-auto custom-scroll pb-6">
             <a href="admin_dashboard.html" class="flex items-center p-2 rounded-md transition text-sm ${currentPage === 'admin_dashboard.html' ? 'bg-[#E67E22] text-white font-bold' : 'text-gray-300 hover:bg-white/10'}"><i class="fa-solid fa-chart-pie mr-3 w-4"></i> Dashboard</a>
-            <a href="admin_ventas.html" class="flex items-center p-2 rounded-md transition text-sm ${currentPage === 'admin_ventas.html' ? 'bg-[#E67E22] text-white font-bold' : 'text-gray-300 hover:bg-white/10'}"><i class="fa-solid fa-cash-register mr-3 w-4"></i> Ventas (POS)</a>
+            
+            <div class="space-y-1 pt-1">
+                <button type="button" onclick="document.getElementById('submenu-ven').classList.toggle('hidden')" class="w-full flex items-center justify-between p-2 rounded-md transition text-sm ${currentPage.includes('admin_ventas') ? 'bg-white/10 text-white font-bold' : 'text-gray-300 hover:bg-white/10'}">
+                    <div class="flex items-center"><i class="fa-solid fa-cash-register mr-3 w-4"></i> Ventas (POS)</div>
+                    <i class="fa-solid fa-chevron-down text-[10px]"></i>
+                </button>
+                <div id="submenu-ven" class="pl-8 space-y-0.5 mt-1 ${currentPage.includes('admin_ventas') ? '' : 'hidden'}">
+                    <a href="admin_ventas.html" class="block py-1.5 text-xs ${currentPage === 'admin_ventas.html' ? 'text-white font-bold' : 'text-gray-400 hover:text-white'}">Terminal POS</a>
+                    <a href="admin_ventas_parametros.html" class="block py-1.5 text-xs ${currentPage === 'admin_ventas_parametros.html' ? 'text-white font-bold' : 'text-gray-400 hover:text-white'}">Parámetros</a>
+                </div>
+            </div>
             
             <div class="space-y-1 pt-1">
                 <button type="button" onclick="document.getElementById('submenu-inv').classList.toggle('hidden')" class="w-full flex items-center justify-between p-2 rounded-md transition text-sm ${currentPage.includes('admin_productos') ? 'bg-white/10 text-white font-bold' : 'text-gray-300 hover:bg-white/10'}">
