@@ -33,8 +33,7 @@
                 <h4 id="info-prod-nom" class="font-black text-[#143B62] text-xs text-center uppercase">NOMBRE</h4>
                 <p id="info-prod-sku" class="text-[9px] text-gray-500 font-mono mt-0.5">SKU</p>
             </div>
-            <div class="p-4 bg-white space-y-2" id="info-prod-tiers">
-                </div>
+            <div class="p-4 bg-white space-y-2" id="info-prod-tiers"></div>
         </div>
     </div>
 
@@ -76,7 +75,9 @@
                 </div>
 
                 <div class="flex-1 overflow-y-auto p-1.5 custom-scroll bg-slate-100">
-                    <div id="grid-productos" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-1.5"></div>
+                    <div id="grid-productos" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-1.5">
+                        <div class="col-span-full p-10 text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin text-2xl mb-2 block"></i> Cargando inventario...</div>
+                    </div>
                 </div>
             </div>
 
@@ -221,11 +222,11 @@
         </div>
     </div>
 
-    <div id="loading-overlay" class="fixed inset-0 bg-white/90 z-[999] hidden flex-col items-center justify-center">
-        <i class="fa-solid fa-circle-notch fa-spin text-4xl text-[#25D366] mb-3"></i>
-        <h2 class="text-base font-black text-[#143B62] uppercase" id="loading-text">Procesando...</h2>
-        <p class="text-[10px] text-red-500 font-bold mt-2 max-w-xs text-center hidden" id="loading-error"></p>
-        <button onclick="cerrarErrorCarga()" id="btn-cerrar-carga" class="hidden mt-4 bg-red-100 text-red-700 px-4 py-1 rounded text-xs font-bold">Cerrar</button>
+    <div id="loading-overlay" class="fixed inset-0 bg-white/95 z-[999] hidden flex-col items-center justify-center p-6 text-center backdrop-blur-sm">
+        <i id="loading-icon" class="fa-solid fa-circle-notch fa-spin text-5xl text-[#25D366] mb-4"></i>
+        <h2 id="loading-text" class="text-xl font-black text-[#143B62] uppercase mb-2">Procesando...</h2>
+        <p id="loading-error" class="text-xs text-gray-500 font-medium max-w-sm hidden"></p>
+        <button onclick="cerrarErrorCarga()" id="btn-cerrar-carga" class="hidden mt-6 bg-[#143B62] text-white px-8 py-2.5 rounded font-bold uppercase text-xs btn-press">Entendido</button>
     </div>
 
     <script>
@@ -245,16 +246,20 @@
                 const resUser = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?select=id_empresa&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
                 empresaActual = (await resUser.json())[0].id_empresa;
 
+                // El "select=*" nos blinda contra nombres de columnas de imágenes cambiados
                 const [resTasa, resProd, resPre, resCli, resConf] = await Promise.all([
                     fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?select=tasa&order=fecha_actualizacion.desc&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
-                    fetch(`${SUPABASE_URL}/rest/v1/productos?select=id_producto_sku,nombre,imagen_principal,imagen_02,imagen_03,stock_actual,categoria_del_producto&estado_producto=eq.ACTIVO&stock_actual=gt.0`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
+                    fetch(`${SUPABASE_URL}/rest/v1/productos?select=*&estado_producto=eq.ACTIVO&stock_actual=gt.0`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
                     fetch(`${SUPABASE_URL}/rest/v1/precios?select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
                     fetch(`${SUPABASE_URL}/rest/v1/directorio_maestro?select=*&tipo_persona=eq.CLIENTE&estatus=eq.ACTIVO`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
                     fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } })
                 ]);
 
+                if (!resProd.ok) throw new Error("No se pudo cargar la tabla de productos. Verifica que exista y no tenga candado (RLS).");
+
                 const dataTasa = await resTasa.json(); if(dataTasa.length > 0) { tasaBCV = dataTasa[0].tasa; document.getElementById('tasa-display').innerText = tasaBCV.toFixed(2); }
-                const dConf = await resConf.json();
+                
+                let dConf = []; if(resConf.ok) dConf = await resConf.json();
                 const ivaConf = dConf.find(c => c.parametro === 'IVA_GENERAL'); if(ivaConf) { pypIva = parseFloat(ivaConf.valor) / 100; document.getElementById('lbl-iva').innerText = ivaConf.valor; }
                 const igtfConf = dConf.find(c => c.parametro === 'IGTF'); if(igtfConf) pypIgtf = parseFloat(igtfConf.valor) / 100;
 
@@ -273,7 +278,9 @@
                 catArr.forEach(c => { if(c) catHtml += `<option value="${c}">${c}</option>`});
                 document.getElementById('filtro-cat-pos').innerHTML = catHtml;
                 buscarProductos(); 
-            } catch(e) { document.getElementById('grid-productos').innerHTML = `<div class="col-span-full p-10 text-center text-red-500 font-bold uppercase"><i class="fa-solid fa-wifi text-2xl mb-2 block"></i> Error de servidor.</div>`; }
+            } catch(e) { 
+                mostrarErrorCarga("SISTEMA DETENIDO: " + e.message); 
+            }
         }
 
         function buscarProductos() {
@@ -287,19 +294,22 @@
             let html = '';
             data.slice(0, 40).forEach(p => {
                 const img = p.imagen_principal || imagenGlobalDefecto;
-                const imgs = [p.imagen_principal, p.imagen_02, p.imagen_03].filter(i => i);
-                const pUsd = p.pre.es_precio_fijo_bs ? p.pre.precio_fijo_bs / tasaBCV : p.pre.precio_general_usd;
+                // Busca dinámicamente cualquier columna que parezca imagen adicional
+                const imgs = [p.imagen_principal, p.imagen_02, p.imagen_2, p.imagen_dos, p.imagen_03, p.imagen_3, p.imagen_tres].filter(i => i);
+                
+                const pUsd = p.pre.es_precio_fijo_bs ? p.pre.precio_fijo_bs / tasaBCV : p.pre.precio_general_usd || 0;
                 const pBs = pUsd * tasaBCV;
                 const prodStr = encodeURIComponent(JSON.stringify({...p, pUsd: pUsd}));
                 
                 let btnInfo = `<button onclick="event.stopPropagation(); abrirInfoProducto('${prodStr}')" class="absolute top-1 left-1 bg-blue-500/80 text-white w-5 h-5 rounded flex items-center justify-center transition shadow-sm hover:bg-blue-600"><i class="fa-solid fa-info text-[8px]"></i></button>`;
+                let btnGaleria = imgs.length > 1 ? `<button onclick="event.stopPropagation(); abrirVisorGaleria('${imgs.join('|')}')" class="absolute top-1 right-1 bg-black/50 text-white w-5 h-5 rounded flex items-center justify-center opacity-0 group-hover:opacity-100 transition"><i class="fa-solid fa-expand text-[8px]"></i></button>` : '';
 
                 html += `
                 <div class="bg-white border border-gray-200 rounded-lg p-1.5 flex flex-col shadow-sm hover:shadow-md transition cursor-pointer active:scale-95 fade-in" onclick="agregarAlCarrito('${prodStr}')">
                     <div class="h-16 w-full mb-1 bg-white flex items-center justify-center rounded relative group">
                         <img src="${img}" class="max-h-full max-w-full object-contain">
                         ${btnInfo}
-                        <button onclick="event.stopPropagation(); abrirVisorGaleria('${imgs.join('|')}')" class="absolute top-1 right-1 bg-black/50 text-white w-5 h-5 rounded flex items-center justify-center opacity-0 group-hover:opacity-100 transition"><i class="fa-solid fa-expand text-[8px]"></i></button>
+                        ${btnGaleria}
                     </div>
                     <div class="flex-1 flex flex-col justify-between">
                         <h4 class="text-[9px] font-bold text-gray-700 leading-tight line-clamp-2 mb-1">${p.nombre}</h4>
@@ -322,7 +332,7 @@
             document.getElementById('info-prod-sku').innerText = `SKU: ${p.id_producto_sku}`;
             
             let htmlTiers = '';
-            const genUsd = p.pre.es_precio_fijo_bs ? p.pre.precio_fijo_bs / tasaBCV : p.pre.precio_general_usd;
+            const genUsd = p.pre.es_precio_fijo_bs ? p.pre.precio_fijo_bs / tasaBCV : p.pre.precio_general_usd || 0;
             htmlTiers += `<div class="flex justify-between items-center text-xs border-b border-gray-100 pb-1 mb-1"><span class="font-bold text-gray-500">P. General</span><span class="font-black text-[#143B62]">$${genUsd.toFixed(2)}</span></div>`;
             
             if(p.pre.requerido_precio_1 > 0) htmlTiers += `<div class="flex justify-between items-center text-[10px]"><span class="font-semibold text-emerald-600"><i class="fa-solid fa-tag"></i> Mayorista (> ${p.pre.requerido_precio_1} und)</span><span class="font-black text-emerald-700">$${(p.pre.precio_1_usd).toFixed(2)}</span></div>`;
@@ -381,7 +391,7 @@
             document.getElementById('pos-nivel-precio-cliente').value = c.nivel_precio || 'GENERAL';
             document.getElementById('info-cliente-seleccionado').classList.remove('hidden');
             document.getElementById('pos-buscador-cliente').classList.add('hidden');
-            actualizarUI_Carrito(); // Recalcular todo en base al nuevo nivel de precio
+            actualizarUI_Carrito();
         }
 
         function limpiarCliente() {
@@ -403,9 +413,9 @@
             try {
                 const payload = { id_empresa: empresaActual, tipo_persona: 'CLIENTE', documento_identidad: document.getElementById('cli-rap-doc').value.trim().toUpperCase(), nombre_razon_social: document.getElementById('cli-rap-nom').value.trim().toUpperCase(), direccion_principal: document.getElementById('cli-rap-dir').value.trim().toUpperCase(), telefono_principal: document.getElementById('cli-rap-tel').value.trim(), tipo_contribuyente: document.getElementById('cli-rap-tipo').value, estatus: 'ACTIVO' };
                 const res = await fetch(`${SUPABASE_URL}/rest/v1/directorio_maestro`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, body: JSON.stringify(payload) });
-                if(!res.ok) throw new Error("Posible duplicado");
+                if(!res.ok) throw new Error("Cédula duplicada o error");
                 const data = await res.json(); dbClientes.push(data[0]); fuseClientes = new Fuse(dbClientes, { keys: ['documento_identidad', 'nombre_razon_social'], threshold: 0.3, ignoreLocation: true }); seleccionarCliente(encodeURIComponent(JSON.stringify(data[0]))); cerrarModalNuevoCliente();
-            } catch(e) { alert("Error al guardar cliente"); } finally { btn.innerHTML = `<i class="fa-solid fa-save mr-1"></i> Guardar y Usar`; btn.disabled = false; }
+            } catch(e) { alert(e.message); } finally { btn.innerHTML = `<i class="fa-solid fa-save mr-1"></i> Guardar y Usar`; btn.disabled = false; }
         }
 
         async function guardarFichaCompleta(e) {
@@ -413,12 +423,12 @@
             try {
                 const payload = { id_empresa: empresaActual, tipo_persona: 'CLIENTE', documento_identidad: document.getElementById('fc-doc').value.trim().toUpperCase(), nombre_razon_social: document.getElementById('fc-nombre').value.trim().toUpperCase(), direccion_principal: document.getElementById('fc-dir-p').value.trim().toUpperCase(), telefono_principal: document.getElementById('fc-tel1').value.trim(), correo_electronico: document.getElementById('fc-email').value.trim(), tipo_contribuyente: document.getElementById('fc-tipo').value, nivel_precio: document.getElementById('fc-precio').value, estatus: 'ACTIVO' };
                 const res = await fetch(`${SUPABASE_URL}/rest/v1/directorio_maestro`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, body: JSON.stringify(payload) });
-                if(!res.ok) throw new Error("Posible duplicado");
+                if(!res.ok) throw new Error("Cédula duplicada o error");
                 const data = await res.json(); dbClientes.push(data[0]); fuseClientes = new Fuse(dbClientes, { keys: ['documento_identidad', 'nombre_razon_social'], threshold: 0.3, ignoreLocation: true }); seleccionarCliente(encodeURIComponent(JSON.stringify(data[0]))); cerrarModalFichaCompleta();
-            } catch(e) { alert("Error al guardar cliente"); } finally { btn.innerHTML = `Guardar`; btn.disabled = false; }
+            } catch(e) { alert(e.message); } finally { btn.innerHTML = `Guardar`; btn.disabled = false; }
         }
 
-        // --- CARRITO MATEMÁTICO 100% PRECISO ---
+        // --- CARRITO MATEMÁTICO ---
         function agregarAlCarrito(prodStr) {
             const p = JSON.parse(decodeURIComponent(prodStr));
             const idx = carrito.findIndex(i => i.id_producto_sku === p.id_producto_sku);
@@ -464,22 +474,19 @@
             let html = '', sumSubLineaUsd = 0, itemsTotal = 0;
             
             carrito.forEach(item => {
-                // 1. Determinar Precio Base según Nivel del Cliente y Volumen
                 let baseUsd = item.pUsd;
                 if (nivelCli === 'P1' && item.pre.precio_1_usd) baseUsd = item.pre.precio_1_usd;
                 if (nivelCli === 'P2' && item.pre.precio_2_usd) baseUsd = item.pre.precio_2_usd;
                 if (nivelCli === 'P3' && item.pre.precio_3_usd) baseUsd = item.pre.precio_3_usd;
 
-                // Auto-descuento por volumen pisa al de cliente si aplica
                 if (item.pre.requerido_precio_3 > 0 && item.cantidad >= item.pre.requerido_precio_3) { baseUsd = item.pre.precio_3_usd; }
                 else if (item.pre.requerido_precio_2 > 0 && item.cantidad >= item.pre.requerido_precio_2) { baseUsd = item.pre.precio_2_usd; }
                 else if (item.pre.requerido_precio_1 > 0 && item.cantidad >= item.pre.requerido_precio_1) { baseUsd = item.pre.precio_1_usd; }
 
-                // 2. Aplicar Descuento Manual del Vendedor
                 let descUsd = 0;
                 if(item.desc_tipo === 'PORCENTAJE') { descUsd = baseUsd * (item.desc_val / 100); } 
                 else { descUsd = item.desc_val; }
-                if(descUsd > baseUsd) descUsd = baseUsd; // Evitar precios negativos
+                if(descUsd > baseUsd) descUsd = baseUsd; 
 
                 const finalUnitUsd = baseUsd - descUsd;
                 const totalLineaUsd = finalUnitUsd * item.cantidad;
@@ -525,7 +532,6 @@
             });
             lista.innerHTML = html;
             
-            // 3. CÁLCULOS TOTALES DE FACTURA
             const descGeneralInput = parseFloat(document.getElementById('pos-input-desc-general').value) || 0;
             const descGeneralUsd = sumSubLineaUsd * (descGeneralInput / 100);
             const subtotalPosDescUsd = sumSubLineaUsd - descGeneralUsd;
@@ -533,7 +539,6 @@
             const ivaUsd = subtotalPosDescUsd * pypIva;
             const granTotalUsd = subtotalPosDescUsd + ivaUsd;
             
-            // Actualizar Vista (Todo en Bs por defecto)
             document.getElementById('pos-subtotal').innerText = `Bs. ${(sumSubLineaUsd * tasaBCV).toFixed(2)}`;
             document.getElementById('pos-descuento-general-val').innerText = `- Bs. ${(descGeneralUsd * tasaBCV).toFixed(2)}`;
             document.getElementById('pos-iva').innerText = `Bs. ${(ivaUsd * tasaBCV).toFixed(2)}`;
@@ -544,13 +549,12 @@
             document.getElementById('btn-cobrar').disabled = false;
         }
 
-        // --- FLUJO DE COBRO ---
+        // --- COBRO ---
         function verificarIGTF() {
             const metodo = document.getElementById('cobro-metodo').value;
             const aplica = (metodo === 'EFECTIVO_USD' || metodo === 'ZELLE');
             document.getElementById('caja-igtf').classList.toggle('hidden', !aplica);
             
-            // Tomar el gran total calculado previamente
             const tBs = parseFloat(document.getElementById('pos-total-bs').innerText.replace('Bs. ',''));
             const igtfBs = aplica ? tBs * pypIgtf : 0;
             
@@ -562,7 +566,7 @@
         function cerrarCobro() { document.getElementById('modal-cobro').classList.add('hidden'); }
 
         function mostrarErrorCarga(msg) {
-            document.getElementById('loading-text').innerText = "Venta Rechazada"; document.getElementById('loading-text').classList.replace('text-[#143B62]', 'text-red-600');
+            document.getElementById('loading-text').innerText = "Rechazado"; document.getElementById('loading-text').classList.replace('text-[#143B62]', 'text-red-600');
             document.querySelector('#loading-overlay i').className = "fa-solid fa-circle-xmark text-4xl text-red-500 mb-3";
             document.getElementById('loading-error').innerText = msg; document.getElementById('loading-error').classList.remove('hidden'); document.getElementById('btn-cerrar-carga').classList.remove('hidden');
         }
@@ -579,15 +583,10 @@
                 const totalBsFinal = parseFloat(document.getElementById('modal-total-bs').innerText.replace('Bs. ',''));
                 
                 const payload = { 
-                    id_empresa: empresaActual, 
-                    id_cliente: document.getElementById('pos-id-cliente').value || null, 
-                    total_bs: totalBsFinal, 
-                    total_usd: totalBsFinal/tasaBCV, 
-                    tasa_bcv: tasaBCV, 
-                    metodo_pago: metodo, 
-                    condicion_pago: document.getElementById('cobro-condicion').value, 
-                    iva_porcentaje: pypIva * 100,
-                    igtf_porcentaje: (metodo === 'EFECTIVO_USD' || metodo === 'ZELLE') ? pypIgtf * 100 : 0,
+                    id_empresa: empresaActual, id_cliente: document.getElementById('pos-id-cliente').value || null, 
+                    total_bs: totalBsFinal, total_usd: totalBsFinal/tasaBCV, tasa_bcv: tasaBCV, 
+                    metodo_pago: metodo, condicion_pago: document.getElementById('cobro-condicion').value, 
+                    iva_porcentaje: pypIva * 100, igtf_porcentaje: (metodo === 'EFECTIVO_USD' || metodo === 'ZELLE') ? pypIgtf * 100 : 0,
                     estatus: 'PAGADA' 
                 };
                 
@@ -597,10 +596,9 @@
                 
                 const promesas = [];
                 carrito.forEach(i => {
-                    // Calcular el unitario final de este ítem (tras todos los descuentos aplicados) para la BD
                     let bUsd = i.pUsd;
-                    const nivelCli = document.getElementById('pos-nivel-precio-cliente').value;
-                    if(nivelCli==='P1' && i.pre.precio_1_usd) bUsd=i.pre.precio_1_usd; if(nivelCli==='P2' && i.pre.precio_2_usd) bUsd=i.pre.precio_2_usd; if(nivelCli==='P3' && i.pre.precio_3_usd) bUsd=i.pre.precio_3_usd;
+                    const nC = document.getElementById('pos-nivel-precio-cliente').value;
+                    if(nC==='P1' && i.pre.precio_1_usd) bUsd=i.pre.precio_1_usd; if(nC==='P2' && i.pre.precio_2_usd) bUsd=i.pre.precio_2_usd; if(nC==='P3' && i.pre.precio_3_usd) bUsd=i.pre.precio_3_usd;
                     if (i.pre.requerido_precio_3 > 0 && i.cantidad >= i.pre.requerido_precio_3) bUsd = i.pre.precio_3_usd;
                     else if (i.pre.requerido_precio_2 > 0 && i.cantidad >= i.pre.requerido_precio_2) bUsd = i.pre.precio_2_usd;
                     else if (i.pre.requerido_precio_1 > 0 && i.cantidad >= i.pre.requerido_precio_1) bUsd = i.pre.precio_1_usd;
@@ -614,7 +612,7 @@
                 
                 carrito = []; document.getElementById('pos-input-desc-general').value = ''; limpiarCliente(); cerrarCobro(); actualizarUI_Carrito(); await iniciarPuntoVenta();
                 document.getElementById('loading-overlay').classList.add('hidden');
-                setTimeout(()=>alert("✅ VENTA REGISTRADA"), 200);
+                setTimeout(()=>alert("✅ VENTA GUARDADA"), 200);
             } catch(e) { mostrarErrorCarga(e.message); } finally { btn.disabled = false; }
         }
     </script>
