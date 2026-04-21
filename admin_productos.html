@@ -46,24 +46,30 @@
 
         <div class="flex-1 overflow-auto p-4 custom-scroll pb-24 md:pb-6 flex flex-col">
             
-            <div class="bg-white p-3 border border-gray-200 rounded-xl shadow-sm flex flex-col md:flex-row justify-between items-center gap-3 shrink-0 mb-4">
-                <div class="w-full md:w-2/3 flex flex-col sm:flex-row gap-2">
-                    <div class="relative flex-1">
-                        <i class="fa-solid fa-search absolute left-3 top-2.5 text-gray-400"></i>
-                        <input type="text" id="buscador-inv" oninput="filtrarInventario()" placeholder="Buscar SKU, Barras o nombre..." class="w-full border border-gray-300 rounded-lg pl-9 pr-4 py-1.5 text-xs focus:outline-none focus:border-[#143B62] uppercase transition font-bold shadow-inner">
+            <div class="bg-white p-3 border border-gray-200 rounded-xl shadow-sm flex flex-col gap-3 shrink-0 mb-4">
+                <div class="flex flex-col xl:flex-row justify-between items-center gap-3 w-full">
+                    <div class="w-full xl:w-4/5 grid grid-cols-1 md:grid-cols-5 gap-2">
+                        <div class="relative md:col-span-2">
+                            <i class="fa-solid fa-search absolute left-3 top-2.5 text-gray-400"></i>
+                            <input type="text" id="buscador-inv" oninput="filtrarInventario()" placeholder="Buscar SKU, Barras o nombre..." class="w-full border border-gray-300 rounded-lg pl-9 pr-4 py-1.5 text-xs focus:outline-none focus:border-[#143B62] uppercase transition font-bold shadow-inner">
+                        </div>
+                        <select id="filtro-cat-inv" onchange="filtrarInventario()" class="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-[10px] font-bold text-[#143B62] outline-none bg-gray-50 uppercase"><option value="TODAS">CATEGORÍA: TODAS</option></select>
+                        <select id="filtro-marca-inv" onchange="filtrarInventario()" class="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-[10px] font-bold text-[#143B62] outline-none bg-gray-50 uppercase"><option value="TODAS">MARCA: TODAS</option></select>
+                        <select id="filtro-estatus-inv" onchange="filtrarInventario()" class="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-[10px] font-bold text-[#143B62] outline-none bg-gray-50 uppercase"><option value="TODOS">ESTATUS: TODOS</option><option value="ACTIVO">ACTIVOS</option><option value="INACTIVO">INACTIVOS</option></select>
                     </div>
-                    <select id="filtro-cat-inv" onchange="filtrarInventario()" class="w-full sm:w-1/3 border border-gray-300 rounded-lg px-3 py-2 text-xs font-bold text-[#143B62] outline-none shadow-sm bg-gray-50 uppercase"><option value="TODAS">TODAS LAS CATEGORÍAS</option></select>
-                    <select id="filtro-estatus-inv" onchange="filtrarInventario()" class="w-full sm:w-1/4 border border-gray-300 rounded-lg px-3 py-2 text-xs font-bold text-[#143B62] outline-none shadow-sm bg-gray-50 uppercase"><option value="TODOS">ESTATUS</option><option value="ACTIVO">ACTIVOS</option><option value="INACTIVO">INACTIVOS</option></select>
-                </div>
-                
-                <div class="flex gap-2 w-full md:w-auto justify-end">
-                    <div class="flex bg-gray-50 rounded-md border border-gray-300 p-0.5 shadow-inner">
-                        <button id="btn-vista-tabla" onclick="cambiarVista('tabla')" class="btn-vista active px-3 py-1 rounded text-gray-500 hover:text-[#143B62] transition text-sm"><i class="fa-solid fa-list"></i></button>
-                        <button id="btn-vista-grid" onclick="cambiarVista('grid')" class="btn-vista px-3 py-1 rounded text-gray-500 hover:text-[#143B62] transition text-sm"><i class="fa-solid fa-border-all"></i></button>
+                    
+                    <div class="flex gap-2 w-full xl:w-auto justify-end shrink-0">
+                        <select id="filtro-stock-inv" onchange="filtrarInventario()" class="border border-red-300 text-red-700 rounded-lg px-2 py-1.5 text-[10px] font-bold outline-none bg-red-50 uppercase">
+                            <option value="TODOS">STOCK: TODOS</option><option value="CRITICO">STOCK CRÍTICO</option><option value="DISPONIBLE">CON DISPONIBILIDAD</option>
+                        </select>
+                        <div class="flex bg-gray-50 rounded-lg border border-gray-300 p-0.5 shadow-inner">
+                            <button id="btn-vista-tabla" onclick="cambiarVista('tabla')" class="btn-vista active px-3 py-1 rounded text-gray-500 hover:text-[#143B62] transition text-sm"><i class="fa-solid fa-list"></i></button>
+                            <button id="btn-vista-grid" onclick="cambiarVista('grid')" class="btn-vista px-3 py-1 rounded text-gray-500 hover:text-[#143B62] transition text-sm"><i class="fa-solid fa-border-all"></i></button>
+                        </div>
+                        <button onclick="abrirModalProducto()" class="bg-[#25D366] hover:bg-[#1ebd5c] text-white px-4 py-1.5 rounded-lg font-black text-[11px] shadow-sm transition btn-press uppercase tracking-wider flex justify-center items-center gap-2 whitespace-nowrap">
+                            <i class="fa-solid fa-plus"></i> Nuevo
+                        </button>
                     </div>
-                    <button onclick="abrirModalProducto()" class="bg-[#25D366] hover:bg-[#1ebd5c] text-white px-5 py-2 rounded-lg font-black text-xs shadow-sm transition btn-press uppercase tracking-wider flex justify-center items-center gap-2 whitespace-nowrap">
-                        <i class="fa-solid fa-plus"></i> Nuevo
-                    </button>
                 </div>
             </div>
 
@@ -196,7 +202,7 @@
         </div>
     </div>
 
-    <div id="loading-overlay" class="fixed inset-0 bg-slate-900/95 z-[999] hidden flex-col items-center justify-center p-6 text-center backdrop-blur-sm">
+    <div id="loading-overlay" class="fixed inset-0 bg-slate-900/90 z-[999] hidden flex-col items-center justify-center p-6 text-center backdrop-blur-sm">
         <i id="loading-icon" class="fa-solid fa-cloud-arrow-up text-5xl text-[#E67E22] mb-4 animate-bounce"></i>
         <h2 id="loading-text" class="text-xl font-black text-white uppercase mb-2 tracking-widest">Sincronizando...</h2>
         <p id="loading-desc" class="text-xs text-gray-400 font-bold max-w-lg mb-6">Asegurando los datos en el servidor</p>
@@ -265,7 +271,6 @@
 
                 renderizarInventario();
             } catch(e) { 
-                document.getElementById('contenedor-inventario').innerHTML = `<div class="p-10 text-center text-red-500 font-bold uppercase"><i class="fa-solid fa-triangle-exclamation text-4xl mb-3 block"></i>Error de conexión:<br><span class="text-xs text-gray-500 mt-2 block lowercase">${e.message}</span></div>`;
                 mostrarCarga("Error de Red", e.message, true); 
             }
         }
@@ -282,11 +287,12 @@
         function filtrarInventario() { renderizarInventario(); }
 
         function renderizarInventario() {
-            const query = document.getElementById('buscador-inv').value.trim();
-            const cat = document.getElementById('filtro-cat-inv').value;
+            // SEGURIDAD: Prevenir fallo si falta un selector en la UI
+            const query = document.getElementById('buscador-inv') ? document.getElementById('buscador-inv').value.trim() : '';
+            const cat = document.getElementById('filtro-cat-inv') ? document.getElementById('filtro-cat-inv').value : 'TODAS';
             const marca = document.getElementById('filtro-marca-inv') ? document.getElementById('filtro-marca-inv').value : 'TODAS';
-            const estatus = document.getElementById('filtro-estatus-inv').value;
-            const stock = document.getElementById('filtro-stock-inv').value;
+            const estatus = document.getElementById('filtro-estatus-inv') ? document.getElementById('filtro-estatus-inv').value : 'TODOS';
+            const stock = document.getElementById('filtro-stock-inv') ? document.getElementById('filtro-stock-inv').value : 'TODOS';
             
             let data = dbInventario;
             if (query !== '') data = fuseInventario.search(query).map(r => r.item);
@@ -350,6 +356,27 @@
             }
         }
 
+        function mostrarCarga(titulo, desc, isError = false) {
+            const ol = document.getElementById('loading-overlay'); const ic = document.getElementById('loading-icon');
+            const tt = document.getElementById('loading-text'); const td = document.getElementById('loading-desc');
+            const bt = document.getElementById('btn-cerrar-carga');
+            ol.classList.remove('hidden'); ol.classList.add('flex');
+            tt.innerText = titulo; td.innerText = desc;
+            if(isError) {
+                ic.className = "fa-solid fa-triangle-exclamation text-6xl text-red-500 mb-4";
+                tt.classList.replace('text-white', 'text-red-400');
+                bt.classList.remove('hidden');
+            } else {
+                ic.className = "fa-solid fa-cloud-arrow-up text-5xl text-[#E67E22] mb-4 animate-bounce";
+                tt.classList.replace('text-red-400', 'text-white');
+                bt.classList.add('hidden');
+            }
+        }
+        function cerrarErrorCarga() { 
+            const ol = document.getElementById('loading-overlay');
+            ol.classList.add('hidden'); ol.classList.remove('flex'); 
+        }
+
         // --- SISTEMA MULTIMEDIA (GALERÍA Y YOUTUBE) ---
         function actualizarVideo(url) {
             const container = document.getElementById('video-container');
@@ -387,25 +414,6 @@
         }
 
         function cerrarVisor() { document.getElementById('media-viewer').classList.add('hidden'); document.getElementById('media-viewer').classList.remove('flex'); }
-
-        // --- SISTEMA DE CARGA Y ERRORES ---
-        function mostrarCarga(titulo, desc, isError = false) {
-            const ol = document.getElementById('loading-overlay'); const ic = document.getElementById('loading-icon');
-            const tt = document.getElementById('loading-text'); const td = document.getElementById('loading-desc');
-            const bt = document.getElementById('btn-cerrar-carga');
-            ol.classList.remove('hidden'); ol.classList.add('flex');
-            tt.innerText = titulo; td.innerText = desc;
-            if(isError) {
-                ic.className = "fa-solid fa-circle-xmark text-5xl text-red-500 mb-4";
-                tt.classList.replace('text-white', 'text-red-400');
-                bt.classList.remove('hidden');
-            } else {
-                ic.className = "fa-solid fa-cloud-arrow-up text-5xl text-[#E67E22] mb-4 animate-bounce";
-                tt.classList.replace('text-red-400', 'text-white');
-                bt.classList.add('hidden');
-            }
-        }
-        function cerrarErrorCarga() { document.getElementById('loading-overlay').classList.add('hidden'); document.getElementById('loading-overlay').classList.remove('flex'); }
 
         function actualizarPreview(url, previewId, iconId) {
             const preview = document.getElementById(previewId); const icon = document.getElementById(iconId);
@@ -474,7 +482,7 @@
         function togglePrecioBsFijo() { document.getElementById('caja-precio-bs-fijo').classList.toggle('hidden', document.getElementById('prod-fijo-bs').value === 'NO'); }
         function valNum(id) { return parseFloat(document.getElementById(id).value) || 0; }
         
-        // LA FUNCIÓN EXACTA QUE CORRIGE EL BUG DEL 0 DESAPARECIDO
+        // LÓGICA SEGURA PARA ASIGNAR VALORES INCLUSO SI SON 0
         const sV = (id, val) => { 
             if(document.getElementById(id)) {
                 document.getElementById(id).value = (val !== null && val !== undefined) ? val : ''; 
@@ -484,7 +492,7 @@
         function abrirModalProducto(pStr = null) {
             document.getElementById('form-producto').reset(); arrayGaleriaLocal = []; renderizarGaleriaLocal();
             document.getElementById('url-img-principal').value = ''; actualizarPreview('', 'preview-img-principal', 'icon-img-principal');
-            actualizarVideo(''); // Resetea el iframe
+            actualizarVideo('');
             togglePrecioBsFijo();
 
             if (pStr) {
@@ -497,7 +505,6 @@
                 document.getElementById('prod-nombre').value = p.nombre || ''; 
                 document.getElementById('prod-desc').value = p.descripcion || '';
                 
-                // Set video URL and update iframe
                 document.getElementById('prod-video').value = p.video_url || '';
                 actualizarVideo(p.video_url);
                 
@@ -516,7 +523,6 @@
                 document.getElementById('prod-fijo-bs').value = p.pre.es_precio_fijo_bs ? 'SI' : 'NO';
                 document.getElementById('prod-precio-bs').value = p.pre.precio_fijo_bs || '';
                 
-                // Mapeo perfecto que respeta los ceros de la base de datos
                 sV('req-p1', p.pre.requerido_precio_1); sV('usd-p1', p.pre.precio_1_usd);
                 sV('req-p2', p.pre.requerido_precio_2); sV('usd-p2', p.pre.precio_2_usd);
                 sV('req-p3', p.pre.requerido_precio_3); sV('usd-p3', p.pre.precio_3_usd);
