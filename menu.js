@@ -15,7 +15,7 @@ document.addEventListener("DOMContentLoaded", () => {
             <button onclick="toggleMobileMenu()" class="md:hidden text-gray-300 hover:text-white text-xl ml-2"><i class="fa-solid fa-times"></i></button>
         </div>
         
-        <nav class="flex-1 p-3 space-y-1 overflow-y-auto custom-scroll pb-20 md:pb-3">
+        <nav class="flex-1 p-3 space-y-1 overflow-y-auto custom-scroll pb-6">
             <a href="admin_dashboard.html" class="flex items-center p-2 rounded-md transition ${currentPage === 'admin_dashboard.html' ? 'bg-[#E67E22] text-white' : 'text-gray-300 hover:bg-white/10'}"><i class="fa-solid fa-chart-pie mr-3 w-5"></i> Dashboard</a>
             <a href="admin_ventas.html" class="flex items-center p-2 rounded-md transition ${currentPage === 'admin_ventas.html' ? 'bg-[#E67E22] text-white' : 'text-gray-300 hover:bg-white/10'}"><i class="fa-solid fa-cash-register mr-3 w-5"></i> Ventas (POS)</a>
             
@@ -43,20 +43,40 @@ document.addEventListener("DOMContentLoaded", () => {
 
             <a href="admin_configuracion.html" class="flex items-center p-2 rounded-md transition ${currentPage === 'admin_configuracion.html' ? 'bg-[#E67E22] text-white' : 'text-gray-300 hover:bg-white/10'}"><i class="fa-solid fa-gear mr-3 w-5"></i> Configuración</a>
         </nav>
+        
+        <div class="p-3 border-t border-white/10 shrink-0 bg-[#0f2d4a]">
+            <button onclick="cerrarSesion()" class="w-full flex items-center justify-center gap-2 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white py-2 rounded-md font-bold transition text-xs shadow-sm"><i class="fa-solid fa-power-off"></i> Cerrar Sesión</button>
+        </div>
     </aside>
     `;
+    
+    const errorModalsHTML = `
+    <div id="pyp-modal-401" class="fixed inset-0 bg-slate-900/95 z-[99999] hidden flex-col items-center justify-center p-6 text-center backdrop-blur-sm">
+        <div class="bg-white p-8 rounded-2xl shadow-2xl max-w-sm w-full"><i class="fa-solid fa-shield-halved text-6xl text-[#E67E22] mb-4"></i><h2 class="text-xl font-black text-[#143B62] mb-2">Sesión Expirada</h2><p class="text-gray-500 mb-6 text-sm">Por seguridad, tu sesión se ha cerrado. Vuelve a ingresar.</p><button onclick="forzarCierreSesion()" class="w-full bg-[#E67E22] text-white py-3 rounded-lg font-bold uppercase">Ingresar</button></div>
+    </div>
+    <div id="pyp-modal-offline" class="fixed inset-0 bg-slate-900/95 z-[99999] hidden flex-col items-center justify-center p-6 text-center backdrop-blur-sm">
+        <div class="bg-white p-8 rounded-2xl shadow-2xl max-w-sm w-full"><i class="fa-solid fa-wifi text-6xl text-red-500 mb-4"></i><h2 class="text-xl font-black text-[#143B62] mb-2">Sin Conexión</h2><p class="text-gray-500 mb-6 text-sm">Revisa tu internet para continuar.</p><button onclick="window.location.reload()" class="w-full bg-[#143B62] text-white py-3 rounded-lg font-bold uppercase">Reintentar</button></div>
+    </div>
+    `;
+
     document.body.insertAdjacentHTML('afterbegin', menuHTML);
+    document.body.insertAdjacentHTML('beforeend', errorModalsHTML);
     cargarBrandingGlobal();
 });
 
-window.toggleMobileMenu = function() { document.getElementById('sidebar').classList.toggle('-translate-x-full'); document.getElementById('mobile-overlay').classList.toggle('hidden'); };
-
-window.cargarBrandingGlobal = function() {
-    const logoPc = localStorage.getItem('pyp_logo_pc_url');
-    if(logoPc) {
-        const imgSidebar = document.getElementById('app-logo-sidebar');
-        const txtSidebar = document.getElementById('app-text-sidebar');
-        if(imgSidebar) { imgSidebar.src = logoPc; imgSidebar.classList.remove('hidden'); }
-        if(txtSidebar) txtSidebar.classList.add('hidden');
+const { fetch: originalFetch } = window;
+window.fetch = async (...args) => {
+    try {
+        const response = await originalFetch(...args);
+        if (response.status === 401) { document.getElementById('pyp-modal-401').classList.remove('hidden'); document.getElementById('pyp-modal-401').classList.add('flex'); return response; }
+        return response;
+    } catch (error) {
+        if (!navigator.onLine) { document.getElementById('pyp-modal-offline').classList.remove('hidden'); document.getElementById('pyp-modal-offline').classList.add('flex'); }
+        throw error;
     }
 };
+
+window.toggleMobileMenu = function() { document.getElementById('sidebar').classList.toggle('-translate-x-full'); document.getElementById('mobile-overlay').classList.toggle('hidden'); };
+window.cerrarSesion = function() { if(confirm("¿Seguro que deseas salir?")) forzarCierreSesion(); };
+window.forzarCierreSesion = function() { localStorage.removeItem('pyp_sesion_activa'); localStorage.removeItem('pyp_token_seguro'); window.location.href = 'login.html'; };
+window.cargarBrandingGlobal = function() { const logoPc = localStorage.getItem('pyp_logo_pc_url'); if(logoPc) { const imgSidebar = document.getElementById('app-logo-sidebar'); const txtSidebar = document.getElementById('app-text-sidebar'); if(imgSidebar) { imgSidebar.src = logoPc; imgSidebar.classList.remove('hidden'); } if(txtSidebar) txtSidebar.classList.add('hidden'); } };
