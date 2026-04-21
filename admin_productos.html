@@ -220,13 +220,19 @@
                 const resUser = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?select=id_empresa&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
                 empresaActual = (await resUser.json())[0].id_empresa;
 
-                const [resProd, resPre, resPar] = await Promise.all([
-                    fetch(`${SUPABASE_URL}/rest/v1/productos?select=*&order=fecha_creacion.desc`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
-                    fetch(`${SUPABASE_URL}/rest/v1/precios?select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
-                    fetch(`${SUPABASE_URL}/rest/v1/parametros_inventario?select=*&estatus=eq.ACTIVO`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } })
-                ]);
+                // Consulta limpia y sin order by que daba problemas
+                const resProd = await fetch(`${SUPABASE_URL}/rest/v1/productos?select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                
+                if(!resProd.ok) {
+                    const e = await resProd.json();
+                    throw new Error("Supabase rechazó la conexión. Detalle: " + e.message);
+                }
 
-                const dataProd = await resProd.json(); const dataPre = await resPre.json();
+                const resPre = await fetch(`${SUPABASE_URL}/rest/v1/precios?select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                const resPar = await fetch(`${SUPABASE_URL}/rest/v1/parametros_inventario?select=*&estatus=eq.ACTIVO`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+
+                const dataProd = await resProd.json(); 
+                const dataPre = await resPre.json();
                 dbInventario = dataProd.map(p => { const pre = dataPre.find(pr => pr.id_producto_sku === p.id_producto_sku) || {}; return { ...p, pre: pre }; });
                 
                 fuseInventario = new Fuse(dbInventario, { keys: ['id_producto_sku', 'codigo_barras', 'nombre'], threshold: 0.2 });
@@ -251,7 +257,7 @@
                 llenarSelect('prod-color', fil('COLOR'));
 
                 renderizarInventario();
-            } catch(e) { mostrarCarga("Error de Red", "No se pudo conectar a la base de datos.", true); }
+            } catch(e) { mostrarCarga("Error de Red", e.message, true); }
         }
 
         function llenarSelect(id, array) {
@@ -334,6 +340,7 @@
             }
         }
 
+        // --- SISTEMA DE CARGA Y ERRORES ---
         function mostrarCarga(titulo, desc, isError = false) {
             const ol = document.getElementById('loading-overlay'); const ic = document.getElementById('loading-icon');
             const tt = document.getElementById('loading-text'); const td = document.getElementById('loading-desc');
@@ -352,6 +359,7 @@
         }
         function cerrarErrorCarga() { document.getElementById('loading-overlay').classList.add('hidden'); document.getElementById('loading-overlay').classList.remove('flex'); }
 
+        // --- IMÁGENES ---
         function actualizarPreview(url, previewId, iconId) {
             const preview = document.getElementById(previewId); const icon = document.getElementById(iconId);
             if(url) { preview.src = url; preview.classList.remove('hidden'); icon.classList.add('hidden'); } 
@@ -415,6 +423,7 @@
         }
         function eliminarFotoGaleria(index) { arrayGaleriaLocal.splice(index, 1); renderizarGaleriaLocal(); }
 
+        // --- FORMULARIO RESTAURADO ---
         function togglePrecioBsFijo() { document.getElementById('caja-precio-bs-fijo').classList.toggle('hidden', document.getElementById('prod-fijo-bs').value === 'NO'); }
         function valNum(id) { return parseFloat(document.getElementById(id).value) || 0; }
 
