@@ -15,43 +15,52 @@
     <script src="menu.js"></script>
     <main class="flex-1 flex flex-col h-screen overflow-hidden bg-[#f4f6f8] w-full z-10 relative">
         <header class="bg-white shadow-sm px-4 md:px-6 py-4 flex justify-between items-center z-10 shrink-0 border-b border-gray-200 h-14">
-            <h1 class="text-lg font-bold text-[#143B62]"><i class="fa-solid fa-gear text-[#E67E22]"></i> Configuración</h1>
+            <h1 class="text-lg font-bold text-[#143B62]"><i class="fa-solid fa-gear text-[#E67E22]"></i> Configuración General</h1>
         </header>
 
         <div class="flex-1 overflow-y-auto p-4 md:p-6 custom-scroll relative">
-            <div id="loading-overlay" class="absolute inset-0 bg-white/80 z-50 flex flex-col items-center justify-center hidden"><i class="fa-solid fa-spinner fa-spin text-4xl text-[#E67E22] mb-3"></i><p class="font-bold">Comprimiendo Logo...</p></div>
             <div class="max-w-4xl mx-auto space-y-6">
+                
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div class="bg-[#143B62] px-5 py-3 text-white font-bold text-sm">BRANDING / MARCA BLANCA</div>
-                    <div class="p-5 grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="bg-emerald-600 px-5 py-3 text-white font-bold text-sm flex justify-between items-center">
+                        <span><i class="fa-solid fa-money-bill-trend-up mr-2"></i> TASA DE CAMBIO BCV</span>
+                        <span class="text-[9px] bg-white/20 px-2 py-0.5 rounded">* El script automático requiere API. Usa modo manual temporal.</span>
+                    </div>
+                    <div class="p-5 flex items-end gap-4">
+                        <div class="w-1/2">
+                            <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Tasa Oficial Dólar (USD)</label>
+                            <input type="number" id="tasa-usd" step="0.0001" placeholder="Ej: 36.45" class="w-full border-2 border-gray-300 rounded px-3 py-2 text-xl font-black text-emerald-600 outline-none focus:border-emerald-500">
+                        </div>
+                        <button onclick="guardarTasa()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded font-bold transition shadow-sm h-11"><i class="fa-solid fa-rotate mr-2"></i> Actualizar Sistema</button>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="bg-[#143B62] px-5 py-3 text-white font-bold text-sm"><i class="fa-solid fa-file-invoice-dollar mr-2"></i> IMPUESTOS Y TRIBUTOS</div>
+                    <div class="p-5 grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">IVA General (%)</label><input type="number" id="conf-iva" class="w-full border border-gray-300 rounded px-3 py-2 text-sm font-bold outline-none"></div>
+                        <div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">IGTF Divisas (%)</label><input type="number" id="conf-igtf" class="w-full border border-gray-300 rounded px-3 py-2 text-sm font-bold outline-none"></div>
+                        <div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">IVA Reducido 1 (%)</label><input type="number" id="conf-iva-r1" class="w-full border border-gray-300 rounded px-3 py-2 text-sm font-bold outline-none"></div>
+                        <div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">IVA Reducido 2 (%)</label><input type="number" id="conf-iva-r2" class="w-full border border-gray-300 rounded px-3 py-2 text-sm font-bold outline-none"></div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="bg-gray-800 px-5 py-3 text-white font-bold text-sm"><i class="fa-solid fa-palette mr-2"></i> BRANDING / MARCA BLANCA</div>
+                    <div class="p-5 grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label class="block text-[10px] font-bold text-gray-500 uppercase mb-2">Logo Principal (WebP)</label>
-                            <div class="border-2 border-dashed border-gray-300 rounded-lg p-2 flex flex-col items-center justify-center bg-[#143B62] h-28 mb-3 relative">
-                                <img id="preview-logo-pc" src="" class="max-h-full max-w-full object-contain hidden z-10">
-                                <span id="txt-logo-pc" class="text-xs text-gray-400">Sin Logo</span>
-                            </div>
-                            <div class="flex gap-2">
-                                <input type="url" id="url-logo-pc" placeholder="URL o Sube Foto ➔" class="flex-1 border border-gray-300 rounded px-2 py-1.5 text-xs outline-none">
-                                <input type="file" id="file-logo-pc" accept="image/*" class="hidden" onchange="subirImagenBranding(event, 'url-logo-pc', 'preview-logo-pc', 'txt-logo-pc')">
-                                <button type="button" onclick="document.getElementById('file-logo-pc').click()" class="bg-blue-50 text-blue-600 border border-blue-200 px-3 py-1.5 rounded"><i class="fa-solid fa-upload"></i></button>
-                            </div>
+                            <label class="block text-[10px] font-bold text-gray-500 uppercase mb-2">Logo Principal (Catálogo)</label>
+                            <input type="url" id="url-logo-pc" placeholder="Pega el Link aquí..." class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none">
                         </div>
                         <div>
                             <label class="block text-[10px] font-bold text-gray-500 uppercase mb-2">Marca de Agua / Fondo</label>
-                            <div class="border-2 border-dashed border-gray-300 rounded-lg p-2 flex flex-col items-center justify-center bg-gray-50 h-28 mb-3 relative">
-                                <img id="preview-fondo" src="" class="max-h-full max-w-full object-contain hidden z-10 opacity-30">
-                                <span id="txt-fondo" class="text-xs text-gray-400">Sin Fondo</span>
-                            </div>
-                            <div class="flex gap-2">
-                                <input type="url" id="url-fondo" placeholder="URL o Sube Foto ➔" class="flex-1 border border-gray-300 rounded px-2 py-1.5 text-xs outline-none">
-                                <input type="file" id="file-fondo" accept="image/*" class="hidden" onchange="subirImagenBranding(event, 'url-fondo', 'preview-fondo', 'txt-fondo')">
-                                <button type="button" onclick="document.getElementById('file-fondo').click()" class="bg-blue-50 text-blue-600 border border-blue-200 px-3 py-1.5 rounded"><i class="fa-solid fa-upload"></i></button>
-                            </div>
+                            <input type="url" id="url-fondo" placeholder="Pega el Link aquí..." class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none">
                         </div>
                     </div>
-                    <div class="bg-gray-50 p-4 border-t flex justify-end">
-                        <button onclick="guardarConfiguracion()" class="bg-[#143B62] text-white px-6 py-2 rounded font-bold text-xs"><i class="fa-solid fa-save mr-2"></i> APLICAR CAMBIOS</button>
-                    </div>
+                </div>
+
+                <div class="flex justify-end mt-4">
+                    <button onclick="guardarConfiguracion()" class="bg-[#143B62] hover:bg-[#0f2d4a] text-white px-8 py-3 rounded shadow-md font-bold transition uppercase tracking-wider"><i class="fa-solid fa-save mr-2"></i> Guardar Ajustes</button>
                 </div>
             </div>
         </div>
@@ -59,54 +68,59 @@
 
     <script>
         const TOKEN_JWT = localStorage.getItem('pyp_token_seguro');
+        let empActual = null;
         window.onload = async () => { await cargarConfigActual(); };
 
         async function cargarConfigActual() {
             try {
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
-                const data = await res.json();
-                const logo = data.find(c => c.parametro === 'LOGO_URL')?.valor;
-                const fondo = data.find(c => c.parametro === 'FONDO_URL')?.valor;
-                if(logo) { document.getElementById('url-logo-pc').value = logo; document.getElementById('preview-logo-pc').src = logo; document.getElementById('preview-logo-pc').classList.remove('hidden'); document.getElementById('txt-logo-pc').classList.add('hidden'); }
-                if(fondo) { document.getElementById('url-fondo').value = fondo; document.getElementById('preview-fondo').src = fondo; document.getElementById('preview-fondo').classList.remove('hidden'); document.getElementById('txt-fondo').classList.add('hidden'); }
+                const resUser = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?select=id_empresa&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                empActual = (await resUser.json())[0].id_empresa;
+
+                const [resTasa, resConf] = await Promise.all([
+                    fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?select=tasa&order=fecha_actualizacion.desc&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
+                    fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } })
+                ]);
+                
+                const dataTasa = await resTasa.json();
+                if(dataTasa.length > 0) document.getElementById('tasa-usd').value = dataTasa[0].tasa;
+
+                const dataConf = await resConf.json();
+                const setVal = (id, param, def) => { const obj = dataConf.find(c => c.parametro === param); document.getElementById(id).value = obj ? obj.valor : def; };
+                
+                setVal('conf-iva', 'IVA_GENERAL', '16');
+                setVal('conf-igtf', 'IGTF', '3');
+                setVal('conf-iva-r1', 'IVA_REDUCIDO_1', '8');
+                setVal('conf-iva-r2', 'IVA_REDUCIDO_2', '0');
+                setVal('url-logo-pc', 'LOGO_URL', '');
+                setVal('url-fondo', 'FONDO_URL', '');
             } catch(e) {}
         }
 
-        async function comprimirWebP(file) {
-            return new Promise((resolve) => {
-                const reader = new FileReader(); reader.readAsDataURL(file);
-                reader.onload = e => {
-                    const img = new Image(); img.src = e.target.result;
-                    img.onload = () => {
-                        const canvas = document.createElement('canvas'); canvas.width = img.width; canvas.height = img.height;
-                        canvas.getContext('2d').drawImage(img, 0, 0);
-                        canvas.toBlob(blob => resolve(new File([blob], "img.webp", {type:"image/webp"})), 'image/webp', 0.8);
-                    };
-                };
-            });
-        }
-
-        async function subirImagenBranding(event, inputUrlId, imgPreviewId, textId) {
-            const file = event.target.files[0]; if(!file) return;
-            document.getElementById('loading-overlay').classList.remove('hidden');
+        async function guardarTasa() {
+            const tasa = parseFloat(document.getElementById('tasa-usd').value);
+            if(!tasa || tasa <= 0) return alert("Ingrese tasa válida");
             try {
-                const webpFile = await comprimirWebP(file);
-                const name = `brand_${Date.now()}.webp`;
-                const res = await fetch(`${SUPABASE_URL}/storage/v1/object/inventario/${name}`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'image/webp' }, body: webpFile });
-                const url = `${SUPABASE_URL}/storage/v1/object/public/inventario/${name}`;
-                document.getElementById(inputUrlId).value = url; document.getElementById(imgPreviewId).src = url; document.getElementById(imgPreviewId).classList.remove('hidden'); document.getElementById(textId).classList.add('hidden');
-            } catch(e) { alert("Error al subir"); } finally { document.getElementById('loading-overlay').classList.add('hidden'); }
+                await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ tasa: tasa }) });
+                alert("Tasa actualizada para todo el sistema.");
+            } catch(e) { alert("Error al guardar tasa."); }
         }
 
         async function guardarConfiguracion() {
             try {
-                const resUser = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?select=id_empresa&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
-                const empId = (await resUser.json())[0].id_empresa;
-                const configs = [{ parametro: 'LOGO_URL', valor: document.getElementById('url-logo-pc').value, id_empresa: empId }, { parametro: 'FONDO_URL', valor: document.getElementById('url-fondo').value, id_empresa: empId }];
-                for (let c of configs) { await fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?on_conflict=parametro`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' }, body: JSON.stringify(c) }); }
-                localStorage.setItem('pyp_logo_pc_url', configs[0].valor);
-                alert("¡Configuración actualizada!"); window.location.reload();
-            } catch(e) { alert("Error al guardar"); }
+                const configs = [
+                    { parametro: 'IVA_GENERAL', valor: document.getElementById('conf-iva').value, id_empresa: empActual },
+                    { parametro: 'IGTF', valor: document.getElementById('conf-igtf').value, id_empresa: empActual },
+                    { parametro: 'IVA_REDUCIDO_1', valor: document.getElementById('conf-iva-r1').value, id_empresa: empActual },
+                    { parametro: 'IVA_REDUCIDO_2', valor: document.getElementById('conf-iva-r2').value, id_empresa: empActual },
+                    { parametro: 'LOGO_URL', valor: document.getElementById('url-logo-pc').value, id_empresa: empActual },
+                    { parametro: 'FONDO_URL', valor: document.getElementById('url-fondo').value, id_empresa: empActual }
+                ];
+                for (let c of configs) { 
+                    await fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?on_conflict=parametro`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' }, body: JSON.stringify(c) }); 
+                }
+                localStorage.setItem('pyp_logo_pc_url', configs[4].valor);
+                alert("¡Configuración de Impuestos y Marca guardada!");
+            } catch(e) { alert("Error al guardar configuración"); }
         }
     </script>
 </body>
