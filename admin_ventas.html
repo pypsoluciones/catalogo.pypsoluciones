@@ -13,7 +13,7 @@
         .custom-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
         .custom-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
         .btn-press:active { transform: scale(0.96); }
-        .fade-in { animation: fadeIn 0.1s ease-in-out; }
+        .fade-in { animation: fadeIn 0.15s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(2px); } to { opacity: 1; transform: translateY(0); } }
         input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
     </style>
@@ -31,16 +31,16 @@
             <div class="p-5 bg-gray-50 flex-1 overflow-y-auto custom-scroll grid grid-cols-1 md:grid-cols-3 gap-5">
                 
                 <div class="md:col-span-1 space-y-3">
-                    <div class="bg-white p-3 rounded-lg border flex flex-col items-center justify-center h-48 relative">
+                    <div class="bg-white p-3 rounded-lg border flex flex-col items-center justify-center h-48 relative shadow-sm">
                         <img id="info-prod-img-main" src="" class="max-h-full max-w-full object-contain">
                     </div>
                     <div id="info-prod-galeria" class="grid grid-cols-4 gap-1.5 p-1 bg-gray-100 rounded border"></div>
                 </div>
 
                 <div class="md:col-span-2 space-y-4">
-                    <div class="bg-white p-4 rounded-lg border">
+                    <div class="bg-white p-4 rounded-lg border shadow-sm">
                         <h4 class="text-lg font-black text-[#143B62] uppercase leading-tight mb-1" id="info-prod-nom">NOMBRE</h4>
-                        <div class="flex gap-4 text-[10px] text-gray-500 font-mono"><span>SKU: <span id="info-prod-sku" class="font-bold"></span></span> <span>BARRA: <span id="info-prod-barra" class="font-bold"></span></span></div>
+                        <div class="flex gap-4 text-[10px] text-gray-500 font-mono"><span>SKU: <span id="info-prod-sku" class="font-bold text-gray-700"></span></span> <span>BARRA: <span id="info-prod-barra" class="font-bold text-gray-700"></span></span></div>
                         
                         <div class="grid grid-cols-3 gap-3 mt-4 border-t pt-3 border-gray-100">
                             <div><label class="text-[9px] font-bold text-gray-400 uppercase">Marca</label><p class="text-[11px] font-black uppercase text-[#143B62]" id="info-prod-marca"></p></div>
@@ -53,7 +53,7 @@
                     </div>
 
                     <div class="grid grid-cols-2 gap-4">
-                        <div class="bg-white p-4 rounded-lg border">
+                        <div class="bg-white p-4 rounded-lg border shadow-sm">
                             <h5 class="text-[9px] font-black text-gray-500 uppercase mb-3">Variantes y Stock</h5>
                             <div class="flex flex-wrap gap-x-4 gap-y-1 mb-3 text-xs">
                                 <p><span class="font-bold text-gray-400">Talla:</span> <span class="font-black uppercase" id="info-prod-talla"></span></p> 
@@ -65,18 +65,26 @@
                                 <span class="text-2xl font-black text-[#143B62] leading-none" id="info-prod-stock"></span>
                             </div>
                         </div>
-                        <div class="bg-white p-4 rounded-lg border overflow-hidden">
+                        <div class="bg-white p-4 rounded-lg border shadow-sm overflow-hidden">
                             <h5 class="text-[9px] font-black text-gray-500 uppercase mb-2">Descripción</h5>
                             <p class="text-[10px] text-gray-600 custom-scroll overflow-y-auto h-20 uppercase" id="info-prod-desc"></p>
                         </div>
                     </div>
 
-                    <div class="bg-emerald-50 p-4 rounded-lg border border-emerald-100">
-                        <h5 class="text-[10px] font-black text-emerald-800 uppercase mb-3">Escalas de Precios ($)</h5>
-                        <div class="grid grid-cols-4 gap-3" id="info-prod-tiers"></div>
+                    <div class="bg-emerald-50 p-4 rounded-lg border border-emerald-100 shadow-sm">
+                        <h5 class="text-[10px] font-black text-emerald-800 uppercase mb-3">Escalas de Precios ($) y Requisitos</h5>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3" id="info-prod-tiers"></div>
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <div id="media-viewer" class="fixed inset-0 bg-black/95 z-[9999] hidden flex-col items-center justify-center p-4 fade-in" onclick="cerrarVisor()">
+        <button class="absolute top-4 right-4 text-white text-3xl hover:text-gray-300 z-10 transition"><i class="fa-solid fa-times"></i></button>
+        <div class="flex flex-col items-center gap-4 max-w-4xl w-full" onclick="event.stopPropagation()">
+            <img id="viewer-img-main" src="" class="max-w-full max-h-[70vh] object-contain rounded shadow-2xl border-4 border-white/10 bg-white">
+            <div id="viewer-thumbnails" class="flex gap-2 overflow-x-auto p-2 no-scrollbar bg-white/5 rounded-xl"></div>
         </div>
     </div>
 
@@ -99,7 +107,7 @@
         <div class="flex-1 flex flex-col md:flex-row overflow-hidden">
             
             <div class="w-full md:w-3/5 lg:w-2/3 h-full flex flex-col border-r border-gray-200 bg-white relative z-0">
-                <div class="p-1 px-3 border-b border-gray-200 bg-gray-50 flex gap-2 shrink-0">
+                <div class="p-1.5 px-3 border-b border-gray-200 bg-gray-50 flex gap-2 shrink-0">
                     <div class="relative flex-1">
                         <i class="fa-solid fa-search absolute left-2.5 top-1.5 text-gray-400 text-[10px]"></i>
                         <input type="text" id="buscador-pos" oninput="buscarProductos()" placeholder="Buscar por SKU, Nombre o Código de Barras..." class="w-full border border-gray-300 rounded px-2 pl-7 py-1 text-[10px] focus:outline-none focus:border-[#25D366] uppercase shadow-inner font-bold">
@@ -143,25 +151,30 @@
                             <span><i class="fa-solid fa-id-card mr-0.5"></i> <span id="txt-cli-doc">-</span></span>
                             <span><i class="fa-solid fa-phone mr-0.5"></i> <span id="txt-cli-tel" class="truncate">-</span></span>
                         </div>
-                        <div class="text-[8px] text-gray-400 truncate leading-tight mt-0.5 border-t border-blue-100 pt-0.5 uppercase italic"><i class="fa-solid fa-location-dot mr-0.5"></i> <span id="txt-cli-dir">SIN DIRECCIÓN</span></div>
+                        <div class="text-[8px] text-gray-400 truncate leading-tight mt-0.5 border-t border-blue-100 pt-0.5 uppercase italic"><i class="fa-solid fa-location-dot mr-0.5"></i> <span id="txt-cli-dir">SIN DIRECCIÓN FISCAL</span></div>
                         <input type="hidden" id="pos-id-cliente" value="">
                         <input type="hidden" id="pos-nivel-precio-cliente" value="GENERAL">
                     </div>
                 </div>
 
-                <div class="flex-1 overflow-y-auto p-1.5 bg-gray-50 custom-scroll" id="lista-carrito"></div>
+                <div class="flex-1 overflow-y-auto p-1.5 bg-gray-50 custom-scroll" id="lista-carrito">
+                    <div class="h-full flex flex-col items-center justify-center text-gray-300 opacity-50">
+                        <i class="fa-solid fa-cart-arrow-down text-4xl mb-2"></i>
+                        <p class="font-bold text-[10px] uppercase tracking-widest">Venta Vacía</p>
+                    </div>
+                </div>
 
-                <div class="p-2 bg-white border-t border-gray-200 shrink-0 shadow-[0_-10px_20px_rgba(0,0,0,0.03)] flex flex-col gap-0.5">
+                <div class="p-2.5 bg-white border-t border-gray-200 shrink-0 shadow-[0_-10px_20px_rgba(0,0,0,0.03)] flex flex-col gap-0.5">
                     
                     <div class="flex justify-between items-center text-[9px] text-gray-500 font-bold uppercase mt-0.5">
                         <div class="flex items-center gap-1">
-                            <span>Desc. General</span>
-                            <select id="pos-type-desc-general" class="border rounded text-[8px] p-0.5 outline-none bg-gray-50 font-bold" onchange="actualizarUI_Carrito()">
+                            <span>Desc. Gral</span>
+                            <select id="pos-type-desc-general" class="border border-gray-200 rounded text-[8px] p-0.5 outline-none bg-gray-50 font-bold text-[#143B62]" onchange="actualizarUI_Carrito()">
                                 <option value="PORCENTAJE">%</option>
-                                <option value="MONTO_BS">Bs</option>
+                                <option value="MONTO_BS">Bs.</option>
                                 <option value="MONTO">$</option>
                             </select>
-                            <input type="number" id="pos-input-desc-general" placeholder="0" class="border rounded text-center w-12 py-0.5 text-[8px] text-gray-700 outline-none shadow-inner" oninput="actualizarUI_Carrito()">
+                            <input type="number" id="pos-input-desc-general" placeholder="0" class="border border-gray-200 rounded text-center w-14 py-0.5 text-[9px] font-bold text-gray-700 outline-none shadow-inner" onchange="actualizarUI_Carrito()">
                         </div>
                         <span id="pos-descuento-general-val" class="text-red-500 font-black">- Bs. 0.00</span>
                     </div>
@@ -174,21 +187,29 @@
                     
                     <div class="border-t border-gray-100 my-1"></div>
                     
-                    <div class="flex justify-between items-end mb-0.5">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-[9px] font-black text-[#143B62] uppercase tracking-wider">Condición Venta</span>
+                        <select id="pos-condicion" class="border border-gray-300 rounded px-2 py-0.5 text-[9px] font-black text-[#143B62] outline-none shadow-sm bg-gray-50">
+                            <option value="CONTADO">AL CONTADO</option>
+                            <option value="CREDITO">A CRÉDITO</option>
+                        </select>
+                    </div>
+
+                    <div class="flex justify-between items-end mb-0.5 mt-1">
                         <span class="text-[10px] font-black text-[#143B62] uppercase tracking-wider">Total a Pagar Bs</span>
-                        <span class="text-xl font-black text-gray-900 leading-none" id="pos-total-bs">Bs. 0.00</span>
+                        <span class="text-2xl font-black text-gray-900 leading-none" id="pos-total-bs">Bs. 0.00</span>
                     </div>
                     <div class="flex justify-between items-center mb-1.5">
                         <span class="text-[8px] font-bold text-gray-400 uppercase">Total Divisas</span>
                         <span class="text-xs font-black text-[#25D366]" id="pos-total-usd">US$ 0.00</span>
                     </div>
                     
-                    <div class="flex gap-2 h-9 mt-1">
+                    <div class="flex gap-2 h-10 mt-1">
                         <div class="bg-blue-50 rounded flex items-center justify-center border border-blue-100 px-3 shrink-0 shadow-inner">
-                            <span class="text-sm font-black text-[#143B62]" id="pos-items">0</span>
+                            <span class="text-base font-black text-[#143B62]" id="pos-items">0</span>
                             <span class="text-[8px] font-bold text-gray-500 uppercase ml-1">Art</span>
                         </div>
-                        <button onclick="abrirCobro()" id="btn-cobrar" disabled class="flex-1 bg-[#25D366] hover:bg-[#1ebd5c] disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-black rounded shadow-sm transition-all text-xs uppercase tracking-widest flex justify-center items-center gap-2 btn-press">
+                        <button onclick="abrirCobro()" id="btn-cobrar" disabled class="flex-1 bg-[#25D366] hover:bg-[#1ebd5c] disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-black rounded-lg shadow-sm transition-all text-xs uppercase tracking-widest flex justify-center items-center gap-2 btn-press">
                             <i class="fa-solid fa-hand-holding-dollar"></i> Cobrar
                         </button>
                     </div>
@@ -200,7 +221,7 @@
     <div id="modal-cobro" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4 fade-in">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden flex flex-col border border-gray-200 relative">
             <div class="bg-[#143B62] px-4 py-3 flex justify-between items-center shrink-0">
-                <h3 class="font-black text-white text-[12px] tracking-wide uppercase">Finalizar Venta</h3>
+                <h3 class="font-black text-white text-[12px] tracking-wide uppercase">Finalizar Transacción</h3>
                 <button onclick="cerrarCobro()" class="text-gray-300 hover:text-white text-lg transition"><i class="fa-solid fa-times"></i></button>
             </div>
             <div class="p-5 bg-gray-50 space-y-3">
@@ -208,14 +229,21 @@
                     <p class="text-blue-200 text-[8px] font-bold uppercase tracking-widest mb-0.5 z-10 relative">Monto a Liquidar</p>
                     <h2 class="text-3xl font-black text-[#25D366] leading-none mb-1 z-10 relative" id="modal-total-bs-final">Bs. 0.00</h2>
                     <p class="text-white font-bold text-[10px] z-10 relative" id="modal-total-usd-final">US$ 0.00</p>
-                    <i class="fa-solid fa-money-bill-transfer absolute -bottom-2 -left-2 text-5xl text-black/10"></i>
                 </div>
-                <div class="grid grid-cols-2 gap-2 mb-3">
-                    <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-0.5">Condición de Venta</label><select id="cobro-condicion" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[11px] font-bold text-[#143B62] outline-none shadow-sm bg-white"><option value="CONTADO">CONTADO</option><option value="CREDITO">CRÉDITO</option></select></div>
-                    <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-0.5">Método Principal</label><select id="cobro-metodo" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[11px] font-bold text-[#143B62] outline-none shadow-sm bg-white" onchange="verificarIGTF()"><option value="EFECTIVO_BS">🇻🇪 Efectivo Bs</option><option value="PAGO_MOVIL">📱 Pago Móvil</option><option value="PUNTO_VENTA">💳 Punto de Venta</option><option value="EFECTIVO_USD">💵 Divisas (IGTF)</option><option value="ZELLE">🟣 Zelle (IGTF)</option></select></div>
+                
+                <div>
+                    <label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Método de Pago Principal</label>
+                    <select id="cobro-metodo" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[11px] font-bold text-[#143B62] outline-none shadow-sm bg-white" onchange="verificarIGTF()">
+                        <option value="EFECTIVO_BS">🇻🇪 Efectivo Bolívares</option>
+                        <option value="PAGO_MOVIL">📱 Pago Móvil</option>
+                        <option value="PUNTO_VENTA">💳 Punto de Venta</option>
+                        <option value="EFECTIVO_USD">💵 Divisas (Aplica IGTF)</option>
+                        <option value="ZELLE">🟣 Zelle (Aplica IGTF)</option>
+                    </select>
                 </div>
-                <div id="caja-igtf" class="hidden bg-yellow-50 border border-yellow-200 p-2 rounded mb-3"><p class="text-[9px] text-yellow-700 font-bold uppercase"><i class="fa-solid fa-triangle-exclamation"></i> Aplica 3% IGTF por pago en divisas</p></div>
-                <button onclick="procesarVenta()" id="btn-confirmar" class="w-full bg-[#143B62] text-white font-black py-2.5 rounded shadow-md transition-all text-xs uppercase tracking-wider btn-press h-10 flex justify-center items-center gap-2"><i class="fa-solid fa-save mr-2"></i> Procesar Venta</button>
+                <div id="caja-igtf" class="hidden bg-yellow-50 border border-yellow-200 p-2 rounded mb-3"><p class="text-[9px] text-yellow-700 font-bold uppercase"><i class="fa-solid fa-triangle-exclamation"></i> Se aplicará 3% de IGTF al monto final</p></div>
+                
+                <button onclick="procesarVenta()" id="btn-confirmar" class="w-full bg-[#143B62] hover:bg-[#0f2d4a] text-white font-black py-3 rounded-lg shadow-md transition-all text-xs uppercase tracking-wider btn-press flex justify-center items-center gap-2"><i class="fa-solid fa-check"></i> Confirmar Venta</button>
             </div>
         </div>
     </div>
@@ -224,7 +252,7 @@
         <i id="loading-icon" class="fa-solid fa-circle-notch fa-spin text-5xl text-[#25D366] mb-4"></i>
         <h2 id="loading-text" class="text-xl font-black text-[#143B62] uppercase mb-2">Procesando...</h2>
         <p id="loading-error" class="text-xs text-gray-500 font-medium max-w-sm hidden"></p>
-        <button onclick="cerrarErrorCarga()" id="btn-cerrar-carga" class="hidden mt-6 bg-[#143B62] text-white px-8 py-2.5 rounded font-bold uppercase text-xs btn-press">Entendido</button>
+        <button onclick="cerrarErrorCarga()" id="btn-cerrar-carga" class="hidden mt-6 bg-[#143B62] text-white px-8 py-2.5 rounded font-bold uppercase text-xs btn-press">Cerrar</button>
     </div>
 
     <div id="modal-nuevo-cliente" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[110] hidden flex items-center justify-center p-4 fade-in">
@@ -241,7 +269,28 @@
                     <div><label class="block text-[8px] font-bold text-gray-500 uppercase mb-0.5">Celular</label><input type="text" id="cli-rap-tel" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] font-bold focus:border-[#143B62] outline-none bg-white"></div>
                     <div><label class="block text-[8px] font-bold text-gray-500 uppercase mb-0.5">Contribuyente *</label><select id="cli-rap-tipo" required class="w-full border border-gray-300 rounded px-1.5 py-1.5 text-[10px] font-bold outline-none bg-white"><option value="NATURAL">NATURAL</option><option value="JURIDICA">JURÍDICA</option><option value="RETENCION">CONT. ESPECIAL</option></select></div>
                 </div>
-                <button type="submit" id="btn-guardar-cli-rap" class="w-full bg-[#25D366] text-white font-bold py-2 rounded shadow mt-2 btn-press uppercase text-[10px]"><i class="fa-solid fa-save mr-1"></i> Guardar</button>
+                <button type="submit" id="btn-guardar-cli-rap" class="w-full bg-[#25D366] text-white font-bold py-2 rounded shadow mt-2 btn-press uppercase text-[10px]"><i class="fa-solid fa-save mr-1"></i> Guardar y Usar</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-ficha-completa" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[110] hidden flex items-center justify-center p-4 fade-in">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col border border-gray-200 relative max-h-[90vh]">
+            <div class="bg-[#143B62] text-white px-4 py-3 flex justify-between items-center shrink-0">
+                <h3 class="font-black text-[12px] tracking-wide uppercase"><i class="fa-solid fa-address-book mr-2 text-[#E67E22]"></i> Ficha Completa de Cliente</h3>
+                <button onclick="cerrarModalFichaCompleta()" class="text-gray-300 hover:text-white text-lg transition"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <form id="form-ficha-completa" onsubmit="guardarFichaCompleta(event)" class="p-5 bg-gray-50 overflow-y-auto custom-scroll space-y-3">
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-0.5">Cédula / RIF *</label><input type="text" id="fc-doc" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] font-bold uppercase outline-none bg-white"></div>
+                    <div class="md:col-span-2"><label class="block text-[9px] font-bold text-gray-500 uppercase mb-0.5">Razón Social *</label><input type="text" id="fc-nombre" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] font-bold uppercase outline-none bg-white"></div>
+                    <div class="col-span-2 md:col-span-3"><label class="block text-[9px] font-bold text-gray-500 uppercase mb-0.5">Dirección Fiscal *</label><input type="text" id="fc-dir-p" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] outline-none uppercase bg-white"></div>
+                    <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-0.5">Celular Principal</label><input type="text" id="fc-tel1" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] outline-none bg-white"></div>
+                    <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-0.5">Correo</label><input type="email" id="fc-email" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] outline-none bg-white"></div>
+                    <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-0.5">Tipo Contribuyente *</label><select id="fc-tipo" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] outline-none bg-white"><option value="NATURAL">NATURAL</option><option value="JURIDICA">JURÍDICA</option><option value="RETENCION">AGENTE RETENCIÓN</option></select></div>
+                    <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-0.5">Nivel de Precio *</label><select id="fc-precio" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] outline-none bg-white"><option value="GENERAL">P. GENERAL</option><option value="P1">MAYORISTA</option><option value="P2">DISTRIBUIDOR</option></select></div>
+                </div>
+                <div class="flex gap-2 justify-end pt-2 mt-2 border-t"><button type="button" onclick="cerrarModalFichaCompleta()" class="px-4 py-1.5 bg-gray-200 rounded text-[10px] font-bold hover:bg-gray-300 btn-press">Cancelar</button><button type="submit" id="btn-guardar-fc" class="px-4 py-1.5 bg-[#143B62] text-white rounded text-[10px] font-bold uppercase btn-press">Guardar</button></div>
             </form>
         </div>
     </div>
@@ -255,7 +304,7 @@
         window.onload = async () => {
             if(document.getElementById('nombre-usuario')) document.getElementById('nombre-usuario').innerText = localStorage.getItem('pyp_usuario_nombre').split(' ')[0];
             await iniciarPuntoVenta();
-            document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { cerrarCobro(); cerrarModalNuevoCliente(); cerrarInfoProducto(); } });
+            document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { cerrarCobro(); cerrarModalNuevoCliente(); cerrarModalFichaCompleta(); cerrarVisor(); cerrarInfoProducto(); } });
         };
 
         async function iniciarPuntoVenta() {
@@ -271,7 +320,7 @@
                     fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } })
                 ]);
 
-                if (!resProd.ok) throw new Error("Fallo al cargar inventario.");
+                if (!resProd.ok) throw new Error("Fallo de conexión.");
 
                 const dataTasa = await resTasa.json(); if(dataTasa.length > 0) { tasaBCV = dataTasa[0].tasa; document.getElementById('tasa-display').innerText = tasaBCV.toFixed(2); }
                 
@@ -287,6 +336,7 @@
                     const pre = dataPre.find(pr => pr.id_producto_sku === p.id_producto_sku) || {};
                     return { ...p, pre: pre };
                 });
+                
                 fuseInventario = new Fuse(dbInventario, { keys: ['id_producto_sku', 'codigo_barras', 'nombre'], threshold: 0.2 });
 
                 const catArr = [...new Set(dbInventario.map(p => p.categoria_del_producto))];
@@ -294,7 +344,7 @@
                 catArr.forEach(c => { if(c) catHtml += `<option value="${c}">${c}</option>`});
                 document.getElementById('filtro-cat-pos').innerHTML = catHtml;
                 buscarProductos(); 
-            } catch(e) { mostrarCarga("Error", "No se pudo sincronizar BD.", true); }
+            } catch(e) { mostrarCarga("Error", "No se pudo sincronizar la BD.", true); }
         }
 
         function buscarProductos() {
@@ -312,9 +362,11 @@
                 const pBs = pUsd * tasaBCV;
                 const prodStr = encodeURIComponent(JSON.stringify({...p, pUsd: pUsd}));
                 
+                let btnInfo = `<button onclick="event.stopPropagation(); abrirInfoProducto('${prodStr}')" class="absolute top-1 left-1 bg-blue-500 text-white w-5 h-5 rounded flex items-center justify-center transition shadow hover:bg-blue-600 z-10"><i class="fa-solid fa-info text-[8px]"></i></button>`;
+
                 html += `
                 <div class="bg-white border border-gray-200 rounded-lg p-1.5 flex flex-col shadow-sm hover:shadow-md transition cursor-pointer active:scale-95 fade-in relative" onclick="agregarAlCarrito('${prodStr}')">
-                    <button onclick="event.stopPropagation(); abrirInfoProducto('${prodStr}')" class="absolute top-2 left-2 bg-[#143B62]/80 text-white w-5 h-5 rounded flex items-center justify-center transition shadow hover:bg-[#143B62] z-10"><i class="fa-solid fa-info text-[8px]"></i></button>
+                    ${btnInfo}
                     <div class="h-16 w-full mb-1 bg-white flex items-center justify-center rounded">
                         <img src="${img}" class="max-h-full max-w-full object-contain">
                     </div>
@@ -328,10 +380,10 @@
                     </div>
                 </div>`;
             });
-            grid.innerHTML = html || `<div class="col-span-full p-10 text-center text-gray-400 font-medium text-xs">Sin resultados.</div>`;
+            grid.innerHTML = html || `<div class="col-span-full p-10 text-center text-gray-400 font-medium text-xs">Sin resultados en esta categoría.</div>`;
         }
 
-        // --- ENHANCED INFO PRODUCTO ---
+        // --- ENHANCED INFO PRODUCTO (READ ONLY, INVENTORY-LIKE) ---
         function abrirInfoProducto(prodStr) {
             const p = JSON.parse(decodeURIComponent(prodStr));
             
@@ -345,26 +397,37 @@
             
             if(arrayGaleria.length > 0) {
                 arrayGaleria.forEach(url => {
-                    contGal.innerHTML += `<div class="h-10 bg-white rounded border border-gray-200 p-0.5 cursor-pointer flex items-center justify-center hover:border-[#E67E22]" onclick="document.getElementById('info-prod-img-main').src='${url}'"><img src="${url}" class="max-h-full max-w-full object-contain"></div>`;
+                    contGal.innerHTML += `<div class="h-12 bg-white rounded border border-gray-200 p-0.5 cursor-pointer flex items-center justify-center hover:border-[#E67E22]" onclick="document.getElementById('info-prod-img-main').src='${url}'"><img src="${url}" class="max-h-full max-w-full object-contain"></div>`;
                 });
             }
 
-            const sT = (id, val) => document.getElementById(id).innerText = val ? val.toString().toUpperCase() : 'N/A';
-            sT('info-prod-nom', p.nombre); sT('info-prod-sku', p.id_producto_sku); sT('info-prod-barra', p.codigo_barras);
-            sT('info-prod-marca', p.marca); sT('info-prod-cat', p.categoria_del_producto); sT('info-prod-catventa', p.categoria_venta);
-            sT('info-prod-tipo', p.tipo_producto); sT('info-prod-condicion', p.condicion_producto); sT('info-prod-impuesto', p.tipo_impuesto);
-            sT('info-prod-talla', p.talla); sT('info-prod-color', p.color); sT('info-prod-negativo', p.permitir_negativo ? 'SÍ' : 'NO');
-            sT('info-prod-stock', p.stock_actual);
-            document.getElementById('info-prod-desc').innerText = p.descripcion || 'SIN DESCRIPCIÓN.';
+            const setText = (id, val) => { const el = document.getElementById(id); el.innerText = val ? val.toString().toUpperCase() : 'N/A'; };
+            setText('info-prod-nom', p.nombre);
+            setText('info-prod-sku', p.id_producto_sku);
+            setText('info-prod-barra', p.codigo_barras);
+            setText('info-prod-marca', p.marca);
+            setText('info-prod-cat', p.categoria_del_producto);
+            setText('info-prod-catventa', p.categoria_venta);
+            setText('info-prod-tipo', p.tipo_producto);
+            setText('info-prod-talla', p.talla);
+            setText('info-prod-color', p.color);
+            setText('info-prod-condicion', p.condicion_producto);
+            setText('info-prod-impuesto', p.tipo_impuesto);
+            setText('info-prod-negativo', p.permitir_negativo ? 'SÍ' : 'NO');
+            setText('info-prod-stock', p.stock_actual);
+            document.getElementById('info-prod-desc').innerText = p.descripcion || 'SIN DESCRIPCIÓN TÉCNICA.';
 
+            // Niveles de Precio (Restaurado y Corregido con Quantities)
             const contTiers = document.getElementById('info-prod-tiers'); contTiers.innerHTML = '';
             const genUsd = p.pre.es_precio_fijo_bs ? p.pre.precio_fijo_bs / tasaBCV : p.pre.precio_general_usd || 0;
-            contTiers.innerHTML = `<div class="bg-white p-2 rounded border text-center"><label class="text-[8px] font-bold text-gray-500 uppercase">General</label><p class="text-[11px] font-black text-emerald-800">$${genUsd.toFixed(2)}</p></div>`;
-            if(p.pre.requerido_precio_1 > 0) contTiers.innerHTML += `<div class="bg-white p-2 rounded border text-center"><label class="text-[8px] font-bold text-gray-500 uppercase">Mayor (${p.pre.requerido_precio_1} u)</label><p class="text-[11px] font-black text-emerald-800">$${(p.pre.precio_1_usd).toFixed(2)}</p></div>`;
-            if(p.pre.requerido_precio_2 > 0) contTiers.innerHTML += `<div class="bg-white p-2 rounded border text-center"><label class="text-[8px] font-bold text-gray-500 uppercase">Dist (${p.pre.requerido_precio_2} u)</label><p class="text-[11px] font-black text-emerald-800">$${(p.pre.precio_2_usd).toFixed(2)}</p></div>`;
-            if(p.pre.requerido_precio_3 > 0) contTiers.innerHTML += `<div class="bg-white p-2 rounded border text-center"><label class="text-[8px] font-bold text-gray-500 uppercase">Espec (${p.pre.requerido_precio_3} u)</label><p class="text-[11px] font-black text-emerald-800">$${(p.pre.precio_3_usd).toFixed(2)}</p></div>`;
+            contTiers.innerHTML = `<div class="bg-white p-2 rounded border border-emerald-100 text-center"><label class="text-[8px] font-bold text-gray-400 uppercase">General</label><p class="text-[13px] font-black text-emerald-800">$${genUsd.toFixed(2)}</p></div>`;
+            
+            if(p.pre.precio_1_usd > 0) contTiers.innerHTML += `<div class="bg-white p-2 rounded border border-emerald-100 text-center"><label class="text-[8px] font-bold text-emerald-600 uppercase">Mayor (≥ ${p.pre.requerido_precio_1 || 1} u)</label><p class="text-[13px] font-black text-emerald-800">$${(p.pre.precio_1_usd).toFixed(2)}</p></div>`;
+            if(p.pre.precio_2_usd > 0) contTiers.innerHTML += `<div class="bg-white p-2 rounded border border-emerald-100 text-center"><label class="text-[8px] font-bold text-emerald-600 uppercase">Dist (≥ ${p.pre.requerido_precio_2 || 1} u)</label><p class="text-[13px] font-black text-emerald-800">$${(p.pre.precio_2_usd).toFixed(2)}</p></div>`;
+            if(p.pre.precio_3_usd > 0) contTiers.innerHTML += `<div class="bg-white p-2 rounded border border-emerald-100 text-center"><label class="text-[8px] font-bold text-emerald-600 uppercase">Espec (≥ ${p.pre.requerido_precio_3 || 1} u)</label><p class="text-[13px] font-black text-emerald-800">$${(p.pre.precio_3_usd).toFixed(2)}</p></div>`;
 
-            document.getElementById('modal-info-producto').classList.remove('hidden'); document.getElementById('modal-info-producto').classList.add('flex');
+            document.getElementById('modal-info-producto').classList.remove('hidden');
+            document.getElementById('modal-info-producto').classList.add('flex');
         }
         function cerrarInfoProducto() { document.getElementById('modal-info-producto').classList.add('hidden'); }
 
@@ -399,29 +462,18 @@
             document.getElementById('pos-buscador-cliente').classList.add('hidden');
             actualizarUI_Carrito();
         }
-
-        function limpiarCliente() {
-            document.getElementById('info-cliente-seleccionado').classList.add('hidden');
-            document.getElementById('pos-buscador-cliente').classList.remove('hidden');
-            document.getElementById('pos-id-cliente').value = '';
-            document.getElementById('pos-nivel-precio-cliente').value = 'GENERAL';
-            actualizarUI_Carrito();
-        }
-
+        function limpiarCliente() { document.getElementById('info-cliente-seleccionado').classList.add('hidden'); document.getElementById('pos-buscador-cliente').classList.remove('hidden'); document.getElementById('pos-id-cliente').value = ''; document.getElementById('pos-nivel-precio-cliente').value = 'GENERAL'; actualizarUI_Carrito(); }
         function abrirModalNuevoCliente() { document.getElementById('form-cliente-rapido').reset(); document.getElementById('modal-nuevo-cliente').classList.remove('hidden'); document.getElementById('modal-nuevo-cliente').classList.add('flex'); }
         function cerrarModalNuevoCliente() { document.getElementById('modal-nuevo-cliente').classList.add('hidden'); }
+        function abrirModalFichaCompleta() { document.getElementById('form-ficha-completa').reset(); document.getElementById('modal-ficha-completa').classList.remove('hidden'); document.getElementById('modal-ficha-completa').classList.add('flex'); }
+        function cerrarModalFichaCompleta() { document.getElementById('modal-ficha-completa').classList.add('hidden'); }
         function cerrarDropdownCliente(e) { if(e.target.id !== 'pos-buscador-cliente') document.getElementById('dropdown-clientes').classList.add('hidden'); }
+        function cerrarVisor() { document.getElementById('media-viewer').classList.add('hidden'); }
 
-        async function guardarClienteRapido(e) {
-            e.preventDefault(); const btn = document.getElementById('btn-guardar-cli-rap'); btn.innerHTML = `...`; btn.disabled = true;
-            try {
-                const payload = { id_empresa: empresaActual, tipo_persona: 'CLIENTE', documento_identidad: document.getElementById('cli-rap-doc').value.trim().toUpperCase(), nombre_razon_social: document.getElementById('cli-rap-nom').value.trim().toUpperCase(), direccion_principal: document.getElementById('cli-rap-dir').value.trim().toUpperCase(), telefono_principal: document.getElementById('cli-rap-tel').value.trim(), tipo_contribuyente: document.getElementById('cli-rap-tipo').value, estatus: 'ACTIVO' };
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/directorio_maestro`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, body: JSON.stringify(payload) });
-                const data = await res.json(); dbClientes.push(data[0]); fuseClientes = new Fuse(dbClientes, { keys: ['documento_identidad', 'nombre_razon_social'] }); seleccionarCliente(encodeURIComponent(JSON.stringify(data[0]))); cerrarModalNuevoCliente();
-            } catch(e) { alert("Error"); } finally { btn.innerHTML = `Guardar`; btn.disabled = false; }
-        }
+        async function guardarClienteRapido(e) { e.preventDefault(); const btn = document.getElementById('btn-guardar-cli-rap'); btn.innerHTML = `...`; btn.disabled = true; try { const payload = { id_empresa: empresaActual, tipo_persona: 'CLIENTE', documento_identidad: document.getElementById('cli-rap-doc').value.trim().toUpperCase(), nombre_razon_social: document.getElementById('cli-rap-nom').value.trim().toUpperCase(), direccion_principal: document.getElementById('cli-rap-dir').value.trim().toUpperCase(), telefono_principal: document.getElementById('cli-rap-tel').value.trim(), tipo_contribuyente: document.getElementById('cli-rap-tipo').value, estatus: 'ACTIVO' }; const res = await fetch(`${SUPABASE_URL}/rest/v1/directorio_maestro`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, body: JSON.stringify(payload) }); if(!res.ok) throw new Error("Doc duplicado"); const data = await res.json(); dbClientes.push(data[0]); fuseClientes = new Fuse(dbClientes, { keys: ['documento_identidad', 'nombre_razon_social'] }); seleccionarCliente(encodeURIComponent(JSON.stringify(data[0]))); cerrarModalNuevoCliente(); } catch(e) { alert(e.message); } finally { btn.innerHTML = `<i class="fa-solid fa-save mr-1"></i> Guardar y Usar`; btn.disabled = false; } }
+        async function guardarFichaCompleta(e) { e.preventDefault(); const btn = document.getElementById('btn-guardar-fc'); btn.innerHTML = `...`; btn.disabled = true; try { const payload = { id_empresa: empresaActual, tipo_persona: 'CLIENTE', documento_identidad: document.getElementById('fc-doc').value.trim().toUpperCase(), nombre_razon_social: document.getElementById('fc-nombre').value.trim().toUpperCase(), direccion_principal: document.getElementById('fc-dir-p').value.trim().toUpperCase(), telefono_principal: document.getElementById('fc-tel1').value.trim(), correo_electronico: document.getElementById('fc-email').value.trim(), tipo_contribuyente: document.getElementById('fc-tipo').value, nivel_precio: document.getElementById('fc-precio').value, estatus: 'ACTIVO' }; const res = await fetch(`${SUPABASE_URL}/rest/v1/directorio_maestro`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, body: JSON.stringify(payload) }); if(!res.ok) throw new Error("Doc duplicado"); const data = await res.json(); dbClientes.push(data[0]); fuseClientes = new Fuse(dbClientes, { keys: ['documento_identidad', 'nombre_razon_social'] }); seleccionarCliente(encodeURIComponent(JSON.stringify(data[0]))); cerrarModalFichaCompleta(); } catch(e) { alert(e.message); } finally { btn.innerHTML = `Guardar`; btn.disabled = false; } }
 
-        // --- CARRITO MATEMÁTICO (UI REDISEÑADA Y LÓGICA FISCAL) ---
+        // --- CARRITO MATEMÁTICO (MOTOR FISCAL & UI FIX) ---
         function agregarAlCarrito(prodStr) {
             const p = JSON.parse(decodeURIComponent(prodStr));
             const idx = carrito.findIndex(i => i.id_producto_sku === p.id_producto_sku);
@@ -448,8 +500,8 @@
             const nivelCli = document.getElementById('pos-nivel-precio-cliente').value || 'GENERAL';
             
             if (carrito.length === 0) {
-                lista.innerHTML = `<div class="h-full flex flex-col items-center justify-center text-gray-300 opacity-50"><i class="fa-solid fa-cart-arrow-down text-5xl mb-2"></i><p class="font-bold text-[10px] uppercase">Venta Vacía</p></div>`;
-                document.getElementById('pos-subtotal').innerText = 'Bs. 0.00'; document.getElementById('pos-iva').innerText = 'Bs. 0.00'; document.getElementById('pos-exento').innerText = 'Bs. 0.00'; document.getElementById('pos-base-imponible').innerText = 'Bs. 0.00'; document.getElementById('pos-descuento-general-val').innerText = '- Bs. 0.00'; document.getElementById('pos-total-bs').innerText = 'Bs. 0.00'; document.getElementById('pos-total-usd').innerText = 'US$ 0.00'; document.getElementById('pos-items').innerText = '0'; document.getElementById('btn-cobrar').disabled = true; return;
+                lista.innerHTML = `<div class="h-full flex flex-col items-center justify-center text-gray-300 opacity-50"><i class="fa-solid fa-cart-arrow-down text-4xl mb-2"></i><p class="font-bold text-[10px] uppercase tracking-widest">Venta Vacía</p></div>`;
+                document.getElementById('pos-total-bs').innerText = 'Bs. 0.00'; document.getElementById('pos-total-usd').innerText = 'US$ 0.00'; document.getElementById('pos-items').innerText = '0'; document.getElementById('btn-cobrar').disabled = true; document.getElementById('pos-base-imponible').innerText = 'Bs. 0.00'; document.getElementById('pos-iva').innerText = 'Bs. 0.00'; document.getElementById('pos-exento').innerText = 'Bs. 0.00'; document.getElementById('pos-descuento-general-val').innerText = '- Bs. 0.00'; return;
             }
 
             let html = '', itemsTotal = 0;
@@ -464,6 +516,7 @@
                 if (nivelCli === 'P2' && item.pre.precio_2_usd) baseUsd = item.pre.precio_2_usd;
                 if (nivelCli === 'P3' && item.pre.precio_3_usd) baseUsd = item.pre.precio_3_usd;
 
+                // Auto Descuento por Volumen
                 if (item.pre.requerido_precio_3 > 0 && item.cantidad >= item.pre.requerido_precio_3) { baseUsd = item.pre.precio_3_usd; }
                 else if (item.pre.requerido_precio_2 > 0 && item.cantidad >= item.pre.requerido_precio_2) { baseUsd = item.pre.precio_2_usd; }
                 else if (item.pre.requerido_precio_1 > 0 && item.cantidad >= item.pre.requerido_precio_1) { baseUsd = item.pre.precio_1_usd; }
@@ -471,7 +524,7 @@
                 const lineaBaseUsd = baseUsd * item.cantidad;
                 sumSubtotalBasePuroUsd += lineaBaseUsd;
 
-                // LÓGICA DE DESCUENTO EXACTO PARA EL ÍTEM
+                // LÓGICA DE DESCUENTO EXACTO POR ÍTEM
                 let descLineaUsd = 0;
                 if(item.desc_tipo === 'PORCENTAJE') { descLineaUsd = lineaBaseUsd * (item.desc_val / 100); } 
                 else if(item.desc_tipo === 'MONTO') { descLineaUsd = item.desc_val; } 
@@ -482,52 +535,61 @@
                 const totalLineaNetaUsd = lineaBaseUsd - descLineaUsd;
                 sumTotalDescItemUsd += descLineaUsd;
                 
-                if(item.tipo_impuesto === 'EXENTO') { sumMontoExentoUsd += totalLineaNetaUsd; } 
+                // Aseguramos que si el tipo de impuesto no está definido, se asume que PAGA IVA para evitar error 0.00
+                const impItem = item.tipo_impuesto || 'GENERAL';
+                if(impItem === 'EXENTO') { sumMontoExentoUsd += totalLineaNetaUsd; } 
                 else { sumBaseImponibleUsd += totalLineaNetaUsd; }
+                
                 itemsTotal += item.cantidad;
+                const tieneDesc = descLineaUsd > 0;
+                const precioUnidadFinalUsd = item.cantidad > 0 ? (totalLineaNetaUsd / item.cantidad) : 0;
 
-                // UI FIX: Mini Factura en cada row
+                // UI FIX: Nuevo diseño flex anti-overlap y botones gruesos
                 html += `
-                <div class="bg-white border border-gray-200 rounded p-1 mb-1 shadow-sm flex flex-col fade-in">
+                <div class="bg-white border border-gray-200 rounded p-1 mb-1.5 shadow-sm flex flex-col fade-in relative group min-h-[50px]">
                     <div class="flex gap-2">
                         <div class="flex-1 min-w-0 pr-2 border-r border-gray-100 flex flex-col justify-between">
-                            <h4 class="text-[9px] font-black text-[#143B62] truncate uppercase leading-tight mb-1">${item.nombre}</h4>
+                            <h4 class="text-[9px] font-black text-[#143B62] truncate uppercase leading-tight mb-1 pr-4">${item.nombre}</h4>
                             
-                            <div class="flex items-center gap-1 mt-auto">
-                                <span class="text-[7px] text-gray-500 font-bold">DESC:</span>
-                                <select class="border border-gray-200 rounded text-[7px] p-0.5 outline-none font-bold" onchange="actualizarDescItem('${item.id_producto_sku}', 'tipo', this.value)">
+                            <div class="flex items-center gap-1.5 text-[8px] font-bold">
+                                ${tieneDesc ? `<span class="line-through text-gray-400 mr-1 font-mono text-[7px]">$${baseUsd.toFixed(2)}</span>` : ''}
+                                <span class="text-[#25D366] font-extrabold text-[10px]">$${precioUnidadFinalUsd.toFixed(2)}</span>
+                                <span class="text-gray-500 font-bold ml-1">Bs. ${(precioUnidadFinalUsd * tasaBCV).toFixed(2)}</span>
+                            </div>
+                            
+                            <div class="flex items-center gap-1 mt-1 pt-1 border-t border-gray-100">
+                                <span class="text-[7px] text-red-500 font-bold uppercase">Desc:</span>
+                                <select class="border border-red-200 rounded text-[8px] p-0.5 outline-none bg-red-50 text-red-700 font-bold" onchange="actualizarDescItem('${item.id_producto_sku}', 'tipo', this.value)">
                                     <option value="PORCENTAJE" ${item.desc_tipo === 'PORCENTAJE'?'selected':''}>%</option>
-                                    <option value="MONTO_BS" ${item.desc_tipo === 'MONTO_BS'?'selected':''}>Bs</option>
+                                    <option value="MONTO_BS" ${item.desc_tipo === 'MONTO_BS'?'selected':''}>Bs.</option>
                                     <option value="MONTO" ${item.desc_tipo === 'MONTO'?'selected':''}>$</option>
                                 </select>
-                                <input type="number" min="0" class="border border-gray-200 rounded text-[8px] p-0.5 w-10 text-center outline-none font-bold bg-gray-50" value="${item.desc_val}" oninput="actualizarDescItem('${item.id_producto_sku}', 'val', this.value)">
+                                <input type="number" min="0" class="border border-red-200 rounded text-[9px] p-0.5 w-12 text-center outline-none bg-white font-black" value="${item.desc_val}" onchange="actualizarDescItem('${item.id_producto_sku}', 'val', this.value)">
                             </div>
                         </div>
 
-                        <div class="shrink-0 flex flex-col items-center justify-center border border-gray-200 rounded overflow-hidden shadow-inner h-[40px]">
-                            <button onclick="modificarCantidad('${item.id_producto_sku}', 1)" class="bg-gray-100 text-gray-600 font-black h-1/3 w-6 hover:bg-gray-200"><i class="fa-solid fa-caret-up text-[8px]"></i></button>
-                            <span class="text-[10px] font-black bg-white w-full text-center h-1/3 text-[#143B62]">${item.cantidad}</span>
-                            <button onclick="modificarCantidad('${item.id_producto_sku}', -1)" class="bg-gray-100 text-gray-600 font-black h-1/3 w-6 hover:bg-gray-200"><i class="fa-solid fa-caret-down text-[8px]"></i></button>
+                        <div class="shrink-0 flex flex-col items-center justify-center border border-gray-200 rounded overflow-hidden shadow-inner h-[44px]">
+                            <button onclick="modificarCantidad('${item.id_producto_sku}', 1)" class="bg-gray-100 text-gray-600 font-black h-1/3 w-6 hover:bg-gray-200 flex items-center justify-center"><i class="fa-solid fa-plus text-[10px]"></i></button>
+                            <span class="text-[10px] font-black bg-white w-full text-center h-1/3 flex items-center justify-center text-[#143B62] border-y border-gray-200">${item.cantidad}</span>
+                            <button onclick="modificarCantidad('${item.id_producto_sku}', -1)" class="bg-gray-100 text-gray-600 font-black h-1/3 w-6 hover:bg-gray-200 flex items-center justify-center"><i class="fa-solid fa-minus text-[10px]"></i></button>
                         </div>
 
-                        <div class="shrink-0 w-[85px] flex flex-col items-end justify-center text-[8px] font-mono leading-tight pl-2 relative">
-                            <button onclick="eliminarDelCarrito('${item.id_producto_sku}')" class="absolute -top-1 -right-1 text-red-300 hover:text-red-500"><i class="fa-solid fa-times"></i></button>
+                        <div class="shrink-0 w-[85px] flex flex-col items-end justify-center text-[8px] font-mono leading-tight pl-2">
                             <div class="flex justify-between w-full text-gray-400"><span>Base:</span> <span>${(lineaBaseUsd*tasaBCV).toFixed(2)}</span></div>
                             ${descLineaUsd > 0 ? `<div class="flex justify-between w-full text-red-500"><span>Desc:</span> <span>-${(descLineaUsd*tasaBCV).toFixed(2)}</span></div>` : ''}
                             <div class="flex justify-between w-full text-gray-800 font-bold border-t border-gray-200 mt-0.5 pt-0.5"><span>Neto:</span> <span>${(totalLineaNetaUsd*tasaBCV).toFixed(2)}</span></div>
                         </div>
                     </div>
+                    <button onclick="eliminarDelCarrito('${item.id_producto_sku}')" class="absolute -top-1.5 -right-1.5 bg-red-500 text-white w-4 h-4 rounded-full text-[8px] flex items-center justify-center shadow-md hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity"><i class="fa-solid fa-times"></i></button>
                 </div>`;
             });
             lista.innerHTML = html;
             
-            // LÓGICA DE DESCUENTO GENERAL
+            // LÓGICA DE DESCUENTO GENERAL Y TOTALES
             const typeDescGeneral = document.getElementById('pos-type-desc-general').value;
             const inputDescGeneral = parseFloat(document.getElementById('pos-input-desc-general').value) || 0;
             
             let descGeneralTotalUsd = 0;
-            let finalBaseImponibleUsd = sumBaseImponibleUsd;
-            let finalMontoExentoUsd = sumMontoExentoUsd;
             const sumNetoItemsUsd = sumBaseImponibleUsd + sumMontoExentoUsd;
 
             if (typeDescGeneral === 'PORCENTAJE' && inputDescGeneral > 0) { descGeneralTotalUsd = sumNetoItemsUsd * (inputDescGeneral / 100); } 
@@ -536,7 +598,11 @@
 
             if (descGeneralTotalUsd > sumNetoItemsUsd) descGeneralTotalUsd = sumNetoItemsUsd;
 
-            if(sumNetoItemsUsd > 0) {
+            let finalBaseImponibleUsd = sumBaseImponibleUsd;
+            let finalMontoExentoUsd = sumMontoExentoUsd;
+
+            // Factorizamos el descuento general a las bases
+            if(sumNetoItemsUsd > 0 && descGeneralTotalUsd > 0) {
                 const factor = 1 - (descGeneralTotalUsd / sumNetoItemsUsd);
                 finalBaseImponibleUsd = sumBaseImponibleUsd * factor;
                 finalMontoExentoUsd = sumMontoExentoUsd * factor;
@@ -546,7 +612,6 @@
             const granTotalUsd = finalBaseImponibleUsd + finalMontoExentoUsd + ivaUsd;
             
             document.getElementById('pos-subtotal').innerText = `Bs. ${(sumSubtotalBasePuroUsd * tasaBCV).toFixed(2)}`;
-            const descTotalPrintUsd = sumTotalDescItemUsd + descGeneralTotalUsd;
             document.getElementById('pos-descuento-general-val').innerText = `- Bs. ${(descGeneralTotalUsd * tasaBCV).toFixed(2)}`;
             
             document.getElementById('pos-exento').innerText = `Bs. ${(finalMontoExentoUsd * tasaBCV).toFixed(2)}`;
@@ -575,7 +640,12 @@
             document.getElementById('modal-total-usd-final').innerText = `US$ ${((tBs + igtfBs)/tasaBCV).toFixed(2)}`;
         }
 
-        function abrirCobro() { verificarIGTF(); document.getElementById('modal-cobro').classList.remove('hidden'); document.getElementById('modal-cobro').classList.add('flex'); }
+        function abrirCobro() { 
+            // Copiar condición del screen principal al modal
+            document.getElementById('cobro-condicion').value = document.getElementById('pos-condicion').value;
+            verificarIGTF(); 
+            document.getElementById('modal-cobro').classList.remove('hidden'); document.getElementById('modal-cobro').classList.add('flex'); 
+        }
         function cerrarCobro() { document.getElementById('modal-cobro').classList.add('hidden'); }
         function mostrarCarga(t,d,e=false) { const ol=document.getElementById('loading-overlay'); document.getElementById('loading-text').innerText=t;ol.querySelector('p').innerText=d;ol.classList.toggle('bg-white',!e);ol.classList.toggle('bg-red-900',e);ol.classList.remove('hidden');ol.classList.add('flex'); if(e) setTimeout(()=>ol.classList.add('hidden'), 3000); }
         function cerrarCarga() { document.getElementById('loading-overlay').classList.add('hidden'); }
@@ -591,12 +661,19 @@
                 const exentoUsd = parseFloat(document.getElementById('pos-exento').dataset.valUsd) || 0;
                 
                 const payload = { 
-                    id_empresa: empresaActual, id_cliente: document.getElementById('pos-id-cliente').value || null, 
-                    total_bs: totalBsFinal, total_usd: totalBsFinal/tasaBCV, tasa_bcv: tasaBCV, 
-                    metodo_pago: metodo, condicion_pago: document.getElementById('cobro-condicion').value, 
-                    iva_porcentaje: pypIva * 100, igtf_porcentaje: (metodo === 'EFECTIVO_USD' || metodo === 'ZELLE') ? pypIgtf * 100 : 0,
-                    base_imponible: baseImpUsd * tasaBCV, monto_exento: exentoUsd * tasaBCV,
-                    nombre_cajero: localStorage.getItem('pyp_usuario_nombre') || 'Sistema', estatus: 'PAGADA' 
+                    id_empresa: empresaActual, 
+                    id_cliente: document.getElementById('pos-id-cliente').value || null, 
+                    total_bs: totalBsFinal, 
+                    total_usd: totalBsFinal/tasaBCV, 
+                    tasa_bcv: tasaBCV, 
+                    metodo_pago: metodo, 
+                    condicion_pago: document.getElementById('cobro-condicion').value, 
+                    iva_porcentaje: pypIva * 100, 
+                    igtf_porcentaje: (metodo === 'EFECTIVO_USD' || metodo === 'ZELLE') ? pypIgtf * 100 : 0,
+                    base_imponible: baseImpUsd * tasaBCV, 
+                    monto_exento: exentoUsd * tasaBCV,
+                    nombre_cajero: localStorage.getItem('pyp_usuario_nombre') || 'Sistema', 
+                    estatus: 'PAGADA' 
                 };
                 
                 const resF = await fetch(`${SUPABASE_URL}/rest/v1/facturas`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, body: JSON.stringify(payload) });
