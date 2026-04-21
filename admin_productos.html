@@ -23,6 +23,14 @@
 </head>
 <body class="bg-[#f4f6f8] flex h-screen overflow-hidden text-gray-800 relative">
 
+    <div id="media-viewer" class="fixed inset-0 bg-black/95 z-[9999] hidden flex-col items-center justify-center p-4 fade-in" onclick="cerrarVisor()">
+        <button class="absolute top-4 right-4 text-white text-3xl hover:text-gray-300 z-10 transition"><i class="fa-solid fa-times"></i></button>
+        <div class="flex flex-col items-center gap-4 max-w-4xl w-full" onclick="event.stopPropagation()">
+            <img id="viewer-img-main" src="" class="max-w-full max-h-[70vh] object-contain rounded shadow-2xl border-4 border-white/10 bg-white">
+            <div id="viewer-thumbnails" class="flex gap-2 overflow-x-auto p-2 no-scrollbar bg-white/5 rounded-xl"></div>
+        </div>
+    </div>
+
     <script src="menu.js"></script>
 
     <main class="flex-1 flex flex-col h-screen overflow-hidden bg-[#f4f6f8] w-full z-10 relative">
@@ -38,35 +46,29 @@
 
         <div class="flex-1 overflow-auto p-4 custom-scroll pb-24 md:pb-6 flex flex-col">
             
-            <div class="bg-white p-3 border border-gray-200 rounded-xl shadow-sm flex flex-col gap-3 shrink-0 mb-4">
-                <div class="flex flex-col xl:flex-row justify-between items-center gap-3 w-full">
-                    <div class="w-full xl:w-4/5 grid grid-cols-1 md:grid-cols-5 gap-2">
-                        <div class="relative md:col-span-2">
-                            <i class="fa-solid fa-search absolute left-3 top-2.5 text-gray-400"></i>
-                            <input type="text" id="buscador-inv" oninput="filtrarInventario()" placeholder="Buscar SKU, Barras o nombre..." class="w-full border border-gray-300 rounded-lg pl-9 pr-4 py-1.5 text-xs focus:outline-none focus:border-[#143B62] uppercase transition font-bold shadow-inner">
-                        </div>
-                        <select id="filtro-cat-inv" onchange="filtrarInventario()" class="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-[10px] font-bold text-[#143B62] outline-none bg-gray-50 uppercase"><option value="TODAS">CATEGORÍA: TODAS</option></select>
-                        <select id="filtro-marca-inv" onchange="filtrarInventario()" class="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-[10px] font-bold text-[#143B62] outline-none bg-gray-50 uppercase"><option value="TODAS">MARCA: TODAS</option></select>
-                        <select id="filtro-estatus-inv" onchange="filtrarInventario()" class="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-[10px] font-bold text-[#143B62] outline-none bg-gray-50 uppercase"><option value="TODOS">ESTATUS: TODOS</option><option value="ACTIVO">SOLO ACTIVOS</option><option value="INACTIVO">SOLO INACTIVOS</option></select>
+            <div class="bg-white p-3 border border-gray-200 rounded-xl shadow-sm flex flex-col md:flex-row justify-between items-center gap-3 shrink-0 mb-4">
+                <div class="w-full md:w-2/3 flex flex-col sm:flex-row gap-2">
+                    <div class="relative flex-1">
+                        <i class="fa-solid fa-search absolute left-3 top-2.5 text-gray-400"></i>
+                        <input type="text" id="buscador-inv" oninput="filtrarInventario()" placeholder="Buscar SKU, Barras o nombre..." class="w-full border border-gray-300 rounded-lg pl-9 pr-4 py-1.5 text-xs focus:outline-none focus:border-[#143B62] uppercase transition font-bold shadow-inner">
                     </div>
-                    
-                    <div class="flex gap-2 w-full xl:w-auto justify-end shrink-0">
-                        <select id="filtro-stock-inv" onchange="filtrarInventario()" class="border border-red-300 text-red-700 rounded-lg px-2 py-1.5 text-[10px] font-bold outline-none bg-red-50 uppercase hidden md:block">
-                            <option value="TODOS">STOCK: TODOS</option><option value="CRITICO">STOCK CRÍTICO</option><option value="DISPONIBLE">CON DISPONIBILIDAD</option>
-                        </select>
-                        <div class="flex bg-gray-50 rounded-lg border border-gray-300 p-0.5 shadow-inner">
-                            <button id="btn-vista-tabla" onclick="cambiarVista('tabla')" class="btn-vista active px-3 py-1 rounded text-gray-500 hover:text-[#143B62] transition text-sm"><i class="fa-solid fa-list"></i></button>
-                            <button id="btn-vista-grid" onclick="cambiarVista('grid')" class="btn-vista px-3 py-1 rounded text-gray-500 hover:text-[#143B62] transition text-sm"><i class="fa-solid fa-border-all"></i></button>
-                        </div>
-                        <button onclick="abrirModalProducto()" class="bg-[#25D366] hover:bg-[#1ebd5c] text-white px-4 py-1.5 rounded-lg font-black text-[11px] shadow-sm transition btn-press uppercase tracking-wider flex justify-center items-center gap-2 whitespace-nowrap">
-                            <i class="fa-solid fa-plus"></i> Nuevo
-                        </button>
+                    <select id="filtro-cat-inv" onchange="filtrarInventario()" class="w-full sm:w-1/3 border border-gray-300 rounded-lg px-3 py-2 text-xs font-bold text-[#143B62] outline-none shadow-sm bg-gray-50 uppercase"><option value="TODAS">TODAS LAS CATEGORÍAS</option></select>
+                    <select id="filtro-estatus-inv" onchange="filtrarInventario()" class="w-full sm:w-1/4 border border-gray-300 rounded-lg px-3 py-2 text-xs font-bold text-[#143B62] outline-none shadow-sm bg-gray-50 uppercase"><option value="TODOS">ESTATUS</option><option value="ACTIVO">ACTIVOS</option><option value="INACTIVO">INACTIVOS</option></select>
+                </div>
+                
+                <div class="flex gap-2 w-full md:w-auto justify-end">
+                    <div class="flex bg-gray-50 rounded-md border border-gray-300 p-0.5 shadow-inner">
+                        <button id="btn-vista-tabla" onclick="cambiarVista('tabla')" class="btn-vista active px-3 py-1 rounded text-gray-500 hover:text-[#143B62] transition text-sm"><i class="fa-solid fa-list"></i></button>
+                        <button id="btn-vista-grid" onclick="cambiarVista('grid')" class="btn-vista px-3 py-1 rounded text-gray-500 hover:text-[#143B62] transition text-sm"><i class="fa-solid fa-border-all"></i></button>
                     </div>
+                    <button onclick="abrirModalProducto()" class="bg-[#25D366] hover:bg-[#1ebd5c] text-white px-5 py-2 rounded-lg font-black text-xs shadow-sm transition btn-press uppercase tracking-wider flex justify-center items-center gap-2 whitespace-nowrap">
+                        <i class="fa-solid fa-plus"></i> Nuevo
+                    </button>
                 </div>
             </div>
 
             <div id="contenedor-inventario" class="flex-1 bg-transparent">
-                <div class="p-10 text-center text-gray-400" id="loading-main-indicator"><i class="fa-solid fa-spinner fa-spin text-4xl mb-3 block text-[#143B62]"></i><p class="font-bold uppercase tracking-widest text-xs">Cargando Base de Datos...</p></div>
+                <div class="p-10 text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin text-4xl mb-3 block text-[#143B62]"></i><p class="font-bold uppercase tracking-widest text-xs">Cargando Base de Datos...</p></div>
             </div>
         </div>
     </main>
@@ -87,7 +89,7 @@
                     <div class="lg:col-span-1 space-y-4">
                         <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
                             <h4 class="text-[10px] font-black text-gray-800 uppercase border-b border-gray-100 pb-2 mb-2 tracking-wider">Imagen Principal</h4>
-                            <div class="border-2 border-dashed border-gray-300 rounded p-2 flex flex-col items-center justify-center bg-gray-50 h-32 mb-2 relative group">
+                            <div class="border-2 border-dashed border-gray-300 rounded p-2 flex flex-col items-center justify-center bg-gray-50 h-32 mb-2 relative group cursor-pointer" onclick="if(document.getElementById('url-img-principal').value) abrirVisorInventario(document.getElementById('url-img-principal').value)">
                                 <img id="preview-img-principal" src="" class="max-h-full max-w-full object-contain hidden z-10 bg-white">
                                 <i class="fa-solid fa-image text-3xl text-gray-300" id="icon-img-principal"></i>
                             </div>
@@ -105,7 +107,10 @@
 
                         <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
                             <h4 class="text-[10px] font-black text-red-600 uppercase border-b border-gray-100 pb-2 mb-2 tracking-wider"><i class="fa-brands fa-youtube"></i> Video Promocional</h4>
-                            <input type="url" id="prod-video" placeholder="Link de YouTube..." class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] outline-none focus:border-red-400">
+                            <input type="url" id="prod-video" placeholder="Link de YouTube (ej: youtu.be/xxx)" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] outline-none focus:border-red-400 mb-2" oninput="actualizarVideo(this.value)">
+                            <div id="video-container" class="hidden w-full aspect-video rounded border border-gray-200 overflow-hidden bg-black">
+                                <iframe id="video-iframe" class="w-full h-full" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                            </div>
                         </div>
                     </div>
 
@@ -216,7 +221,7 @@
                 if (e.key === 'Escape') { 
                     if(!document.getElementById('loading-overlay').classList.contains('hidden')) {
                         if(!document.getElementById('btn-cerrar-carga').classList.contains('hidden')) cerrarErrorCarga();
-                    } else { cerrarModalProducto(); }
+                    } else { cerrarModalProducto(); cerrarVisor(); }
                 } 
             });
         };
@@ -226,13 +231,8 @@
                 const resUser = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?select=id_empresa&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
                 empresaActual = (await resUser.json())[0].id_empresa;
 
-                // Consulta con fecha_creacion restaurada ya que validamos que SÍ existe
                 const resProd = await fetch(`${SUPABASE_URL}/rest/v1/productos?select=*&order=fecha_creacion.desc`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
-                
-                if(!resProd.ok) {
-                    const e = await resProd.json();
-                    throw new Error(e.message || "Error al descargar productos");
-                }
+                if(!resProd.ok) { const e = await resProd.json(); throw new Error(e.message || "Error al descargar productos"); }
 
                 const resPre = await fetch(`${SUPABASE_URL}/rest/v1/precios?select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
                 const resPar = await fetch(`${SUPABASE_URL}/rest/v1/parametros_inventario?select=*&estatus=eq.ACTIVO`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
@@ -253,8 +253,6 @@
                 const marcaArr = [...new Set(dbInventario.map(p => p.marca))];
                 let fMarHtml = '<option value="TODAS">MARCA: TODAS</option>';
                 marcaArr.forEach(m => { if(m) fMarHtml += `<option value="${m}">${m}</option>` });
-                
-                // SEGURIDAD: Evitar error si el select de marca no existe en el DOM por alguna razón
                 const selectMarcaFiltro = document.getElementById('filtro-marca-inv');
                 if(selectMarcaFiltro) selectMarcaFiltro.innerHTML = fMarHtml;
 
@@ -267,8 +265,6 @@
 
                 renderizarInventario();
             } catch(e) { 
-                console.error("Error crítico:", e);
-                // Si la base de datos falla al cargar, quitamos el loading infinito y mostramos error en pantalla
                 document.getElementById('contenedor-inventario').innerHTML = `<div class="p-10 text-center text-red-500 font-bold uppercase"><i class="fa-solid fa-triangle-exclamation text-4xl mb-3 block"></i>Error de conexión:<br><span class="text-xs text-gray-500 mt-2 block lowercase">${e.message}</span></div>`;
                 mostrarCarga("Error de Red", e.message, true); 
             }
@@ -354,6 +350,45 @@
             }
         }
 
+        // --- SISTEMA MULTIMEDIA (GALERÍA Y YOUTUBE) ---
+        function actualizarVideo(url) {
+            const container = document.getElementById('video-container');
+            const iframe = document.getElementById('video-iframe');
+            if(!url) { container.classList.add('hidden'); iframe.src = ''; return; }
+            
+            let videoId = '';
+            if(url.includes('youtube.com/watch?v=')) videoId = url.split('v=')[1].split('&')[0];
+            else if(url.includes('youtu.be/')) videoId = url.split('youtu.be/')[1].split('?')[0];
+            else if(url.includes('youtube.com/shorts/')) videoId = url.split('shorts/')[1].split('?')[0];
+            
+            if(videoId) {
+                iframe.src = `https://www.youtube.com/embed/${videoId}`;
+                container.classList.remove('hidden');
+            } else {
+                container.classList.add('hidden'); iframe.src = '';
+            }
+        }
+
+        function abrirVisorInventario(imgUrl) {
+            const main = document.getElementById('viewer-img-main');
+            const thumbs = document.getElementById('viewer-thumbnails');
+            main.src = imgUrl; 
+            thumbs.innerHTML = '';
+            
+            let allImgs = [document.getElementById('url-img-principal').value, ...arrayGaleriaLocal].filter(u=>u);
+            
+            if(allImgs.length > 1) {
+                allImgs.forEach(u => {
+                    thumbs.innerHTML += `<img src="${u}" class="w-12 h-12 rounded border-2 border-transparent hover:border-[#E67E22] cursor-pointer object-contain bg-white/10" onclick="document.getElementById('viewer-img-main').src='${u}'">`;
+                });
+            }
+            document.getElementById('media-viewer').classList.remove('hidden');
+            document.getElementById('media-viewer').classList.add('flex');
+        }
+
+        function cerrarVisor() { document.getElementById('media-viewer').classList.add('hidden'); document.getElementById('media-viewer').classList.remove('flex'); }
+
+        // --- SISTEMA DE CARGA Y ERRORES ---
         function mostrarCarga(titulo, desc, isError = false) {
             const ol = document.getElementById('loading-overlay'); const ic = document.getElementById('loading-icon');
             const tt = document.getElementById('loading-text'); const td = document.getElementById('loading-desc');
@@ -361,7 +396,7 @@
             ol.classList.remove('hidden'); ol.classList.add('flex');
             tt.innerText = titulo; td.innerText = desc;
             if(isError) {
-                ic.className = "fa-solid fa-triangle-exclamation text-6xl text-red-500 mb-4";
+                ic.className = "fa-solid fa-circle-xmark text-5xl text-red-500 mb-4";
                 tt.classList.replace('text-white', 'text-red-400');
                 bt.classList.remove('hidden');
             } else {
@@ -370,10 +405,7 @@
                 bt.classList.add('hidden');
             }
         }
-        function cerrarErrorCarga() { 
-            const ol = document.getElementById('loading-overlay');
-            ol.classList.add('hidden'); ol.classList.remove('flex'); 
-        }
+        function cerrarErrorCarga() { document.getElementById('loading-overlay').classList.add('hidden'); document.getElementById('loading-overlay').classList.remove('flex'); }
 
         function actualizarPreview(url, previewId, iconId) {
             const preview = document.getElementById(previewId); const icon = document.getElementById(iconId);
@@ -433,17 +465,26 @@
         function renderizarGaleriaLocal() {
             const container = document.getElementById('contenedor-galeria'); container.innerHTML = '';
             arrayGaleriaLocal.forEach((url, index) => {
-                container.innerHTML += `<div class="relative group h-16 bg-white border border-gray-200 rounded flex items-center justify-center fade-in"><img src="${url}" class="max-h-full max-w-full object-contain p-1"><button type="button" onclick="eliminarFotoGaleria(${index})" class="absolute -top-1.5 -right-1.5 bg-red-500 text-white w-4 h-4 rounded-full text-[8px] font-bold shadow-md hover:bg-red-600 hover:scale-110 transition opacity-0 group-hover:opacity-100 z-10"><i class="fa-solid fa-times"></i></button></div>`;
+                container.innerHTML += `<div class="relative group h-16 bg-white border border-gray-200 rounded flex items-center justify-center fade-in cursor-pointer" onclick="abrirVisorInventario('${url}')"><img src="${url}" class="max-h-full max-w-full object-contain p-1"><button type="button" onclick="event.stopPropagation(); eliminarFotoGaleria(${index})" class="absolute -top-1.5 -right-1.5 bg-red-500 text-white w-4 h-4 rounded-full text-[8px] font-bold shadow-md hover:bg-red-600 hover:scale-110 transition opacity-0 group-hover:opacity-100 z-10"><i class="fa-solid fa-times"></i></button></div>`;
             });
         }
         function eliminarFotoGaleria(index) { arrayGaleriaLocal.splice(index, 1); renderizarGaleriaLocal(); }
 
+        // --- FORMULARIO RESTAURADO ---
         function togglePrecioBsFijo() { document.getElementById('caja-precio-bs-fijo').classList.toggle('hidden', document.getElementById('prod-fijo-bs').value === 'NO'); }
         function valNum(id) { return parseFloat(document.getElementById(id).value) || 0; }
+        
+        // LA FUNCIÓN EXACTA QUE CORRIGE EL BUG DEL 0 DESAPARECIDO
+        const sV = (id, val) => { 
+            if(document.getElementById(id)) {
+                document.getElementById(id).value = (val !== null && val !== undefined) ? val : ''; 
+            }
+        };
 
         function abrirModalProducto(pStr = null) {
             document.getElementById('form-producto').reset(); arrayGaleriaLocal = []; renderizarGaleriaLocal();
             document.getElementById('url-img-principal').value = ''; actualizarPreview('', 'preview-img-principal', 'icon-img-principal');
+            actualizarVideo(''); // Resetea el iframe
             togglePrecioBsFijo();
 
             if (pStr) {
@@ -455,9 +496,11 @@
                 document.getElementById('prod-cod-barra').value = p.codigo_barras || '';
                 document.getElementById('prod-nombre').value = p.nombre || ''; 
                 document.getElementById('prod-desc').value = p.descripcion || '';
-                document.getElementById('prod-video').value = p.video_url || '';
                 
-                const sV = (id, val) => { if(document.getElementById(id)) document.getElementById(id).value = val || ''; };
+                // Set video URL and update iframe
+                document.getElementById('prod-video').value = p.video_url || '';
+                actualizarVideo(p.video_url);
+                
                 sV('prod-tipo', p.tipo_producto); sV('prod-categoria', p.categoria_del_producto); sV('prod-cat-venta', p.categoria_venta);
                 sV('prod-marca', p.marca); sV('prod-condicion', p.condicion_producto); sV('prod-talla', p.talla);
                 sV('prod-color', p.color); sV('prod-unidad', p.unidad_medida); sV('prod-estatus', p.estado_producto || 'ACTIVO');
@@ -473,6 +516,7 @@
                 document.getElementById('prod-fijo-bs').value = p.pre.es_precio_fijo_bs ? 'SI' : 'NO';
                 document.getElementById('prod-precio-bs').value = p.pre.precio_fijo_bs || '';
                 
+                // Mapeo perfecto que respeta los ceros de la base de datos
                 sV('req-p1', p.pre.requerido_precio_1); sV('usd-p1', p.pre.precio_1_usd);
                 sV('req-p2', p.pre.requerido_precio_2); sV('usd-p2', p.pre.precio_2_usd);
                 sV('req-p3', p.pre.requerido_precio_3); sV('usd-p3', p.pre.precio_3_usd);
@@ -526,15 +570,13 @@
                 const mtd = isEdit ? 'PATCH' : 'POST';
 
                 const rProd = await fetch(uProd, { method: mtd, headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, body: JSON.stringify(pProd) });
-                if(!rProd.ok) { const err = await rProd.json(); throw new Error(err.message || "Error al guardar en productos"); }
+                if(!rProd.ok) { const err = await rProd.json(); throw new Error(err.message || "Error al guardar"); }
                 
                 const rPre = await fetch(uPre, { method: mtd, headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify(pPre) });
                 if(isEdit && rPre.status !== 200 && rPre.status !== 204) { await fetch(`${SUPABASE_URL}/rest/v1/precios`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify(pPre) }); }
 
                 cerrarErrorCarga(); cerrarModalProducto(); await cargarBaseDatos();
-            } catch(e) { 
-                mostrarCarga("Error al Guardar", e.message, true); 
-            } 
+            } catch(e) { mostrarCarga("Rechazado", "Verifica SKU y Barras. \n" + e.message, true); } 
             finally { btn.innerHTML = `<i class="fa-solid fa-save mr-2"></i> Guardar Ficha`; btn.disabled = false; }
         }
 
@@ -543,10 +585,9 @@
             mostrarCarga("Eliminando...", "Borrando base y dependencias");
             try {
                 const sku = document.getElementById('prod-sku-original').value;
-                const r = await fetch(`${SUPABASE_URL}/rest/v1/productos?id_producto_sku=eq.${sku}`, { method: 'DELETE', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
-                if(!r.ok) throw new Error("Dependencias activas.");
+                await fetch(`${SUPABASE_URL}/rest/v1/productos?id_producto_sku=eq.${sku}`, { method: 'DELETE', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
                 cerrarErrorCarga(); cerrarModalProducto(); await cargarBaseDatos();
-            } catch(e) { mostrarCarga("Fallo al Eliminar", "El producto tiene facturas asociadas y no puede borrarse.", true); }
+            } catch(e) { mostrarCarga("Fallo", "El producto tiene dependencias.", true); }
         }
     </script>
 </body>
