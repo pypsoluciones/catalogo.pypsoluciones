@@ -29,6 +29,9 @@
                 <button onclick="toggleMobileMenu()" class="md:hidden text-gray-600 hover:text-[#143B62] text-xl transition px-2"><i class="fa-solid fa-bars"></i></button>
                 <h1 class="text-base font-black text-[#143B62] uppercase flex items-center gap-2"><i class="fa-solid fa-boxes-stacked text-[#E67E22]"></i> Gestión de Inventario</h1>
             </div>
+            <div class="text-[11px] font-semibold text-gray-500 bg-gray-100 px-3 py-1 rounded border border-gray-200 uppercase tracking-wide hidden md:block">
+                <i class="fa-solid fa-user-tie text-[#143B62] mr-1"></i> <span id="nombre-usuario">Admin</span>
+            </div>
         </header>
 
         <div class="flex-1 overflow-auto p-4 custom-scroll pb-24 md:pb-6 flex flex-col">
@@ -162,10 +165,13 @@
     <script>
         const TOKEN_JWT = localStorage.getItem('pyp_token_seguro');
         let dbInventario = [], fuseInventario = null, empresaActual = null;
-        let arrayGaleriaLocal = []; // El cerebro de nuestra nueva galería JSONB
+        let arrayGaleriaLocal = []; 
 
         window.onload = async () => {
-            if(localStorage.getItem('pyp_usuario_nombre')) document.getElementById('nombre-usuario').innerText = localStorage.getItem('pyp_usuario_nombre').split(' ')[0];
+            // AQUI ESTA LA CORRECCIÓN DE LA LÍNEA QUE DABA ERROR DE INNER TEXT
+            if(localStorage.getItem('pyp_usuario_nombre') && document.getElementById('nombre-usuario')) {
+                document.getElementById('nombre-usuario').innerText = localStorage.getItem('pyp_usuario_nombre').split(' ')[0];
+            }
             await cargarBaseDatos();
         };
 
@@ -247,7 +253,7 @@
             grid.innerHTML = html;
         }
 
-        // --- SISTEMA DE IMÁGENES Y GALERÍA JSONB ---
+        // --- SISTEMA DE IMÁGENES ---
         function actualizarPreview(url, previewId, iconId) {
             const preview = document.getElementById(previewId); const icon = document.getElementById(iconId);
             if(url) { preview.src = url; preview.classList.remove('hidden'); icon.classList.add('hidden'); } 
@@ -290,14 +296,13 @@
             finally { document.getElementById('loading-overlay').classList.add('hidden'); document.getElementById('loading-overlay').classList.remove('flex'); }
         }
 
-        // MOTOR DE GALERÍA MÚLTIPLE (Manejo del Array Local)
         async function subirImagenesGaleria(event) {
             const files = event.target.files; if(files.length === 0) return;
             document.getElementById('loading-overlay').classList.remove('hidden'); document.getElementById('loading-overlay').classList.add('flex');
             try {
                 for(let i = 0; i < files.length; i++) {
                     const url = await comprimirYSubir(files[i]);
-                    arrayGaleriaLocal.push(url); // Añadimos la URL al cerebro local
+                    arrayGaleriaLocal.push(url);
                 }
                 renderizarGaleriaLocal();
             } catch(e) { alert("Error subiendo a la galería"); } 
@@ -321,7 +326,7 @@
             renderizarGaleriaLocal();
         }
 
-        // --- FORMULARIO PRODUCTO ---
+        // --- FORMULARIO ---
         function togglePrecioBsFijo() {
             const val = document.getElementById('prod-fijo-bs').value;
             document.getElementById('caja-precio-bs-fijo').classList.toggle('hidden', val === 'NO');
@@ -329,7 +334,7 @@
 
         function abrirModalProducto(pStr = null) {
             document.getElementById('form-producto').reset();
-            arrayGaleriaLocal = []; // Limpiamos el cerebro de la galería
+            arrayGaleriaLocal = []; 
             renderizarGaleriaLocal();
             document.getElementById('url-img-principal').value = '';
             actualizarPreview('', 'preview-img-principal', 'icon-img-principal');
@@ -354,7 +359,6 @@
                 document.getElementById('url-img-principal').value = p.imagen_principal || '';
                 actualizarPreview(p.imagen_principal, 'preview-img-principal', 'icon-img-principal');
                 
-                // CARGAR GALERÍA JSONB
                 if(p.galeria_imagenes) {
                     try {
                         let parsed = typeof p.galeria_imagenes === 'string' ? JSON.parse(p.galeria_imagenes) : p.galeria_imagenes;
@@ -389,7 +393,6 @@
                 const isEdit = document.getElementById('prod-modo-edicion').value === "true";
                 const sku = document.getElementById('prod-sku').value.trim().toUpperCase();
                 
-                // PAYLOAD PRODUCTO (AQUÍ GUARDAMOS LA GALERÍA JSONB)
                 const pProd = {
                     id_empresa: empresaActual,
                     id_producto_sku: sku,
@@ -400,7 +403,7 @@
                     stock_actual: parseInt(document.getElementById('prod-stock').value) || 0,
                     stock_minimo: parseInt(document.getElementById('prod-stock-min').value) || 0,
                     imagen_principal: document.getElementById('url-img-principal').value || null,
-                    galeria_imagenes: JSON.stringify(arrayGaleriaLocal), // MAGIA: Array guardado como JSON Text
+                    galeria_imagenes: JSON.stringify(arrayGaleriaLocal),
                     estado_producto: document.getElementById('prod-estatus').value
                 };
 
