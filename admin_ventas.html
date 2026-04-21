@@ -13,7 +13,7 @@
         .custom-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
         .custom-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
         .btn-press:active { transform: scale(0.96); }
-        .fade-in { animation: fadeIn 0.15s ease-in-out; }
+        .fade-in { animation: fadeIn 0.1s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(2px); } to { opacity: 1; transform: translateY(0); } }
         input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
     </style>
@@ -126,8 +126,8 @@
 
             <div class="w-full md:w-2/5 lg:w-1/3 h-full flex flex-col bg-white shadow-[-5px_0_15px_rgba(0,0,0,0.03)] z-10">
                 
-                <div class="p-2 border-b border-gray-200 bg-white shrink-0 relative z-20">
-                    <div class="flex justify-between items-center mb-1">
+                <div class="p-2 border-b border-gray-200 bg-white shrink-0 relative z-20 flex flex-col gap-1">
+                    <div class="flex justify-between items-center mb-0.5">
                         <label class="text-[9px] font-black text-[#143B62] uppercase tracking-wider">Cliente a Facturar</label>
                         <div class="flex gap-2">
                             <button onclick="abrirModalNuevoCliente()" class="text-[8px] text-[#E67E22] font-bold uppercase hover:underline">Rápido</button>
@@ -135,12 +135,18 @@
                         </div>
                     </div>
                     
-                    <div class="relative mb-1" onclick="event.stopPropagation()">
-                        <input type="text" id="pos-buscador-cliente" oninput="buscarPredictivoCliente()" placeholder="Cédula o Nombre..." class="w-full border border-gray-300 rounded px-2 py-1 text-[10px] font-bold uppercase outline-none focus:border-[#143B62] transition shadow-inner bg-gray-50">
-                        <div id="dropdown-clientes" class="absolute w-full bg-white border border-gray-200 shadow-xl rounded-b mt-0.5 hidden z-50 max-h-48 overflow-y-auto custom-scroll"></div>
+                    <div class="flex gap-1 items-center relative z-30">
+                        <div class="relative flex-1" onclick="event.stopPropagation()">
+                            <input type="text" id="pos-buscador-cliente" oninput="buscarPredictivoCliente()" placeholder="Cédula o Nombre..." class="w-full border border-gray-300 rounded px-2 py-1 text-[10px] font-bold uppercase outline-none focus:border-[#143B62] transition shadow-inner bg-gray-50">
+                            <div id="dropdown-clientes" class="absolute w-full bg-white border border-gray-200 shadow-xl rounded-b mt-0.5 hidden z-50 max-h-48 overflow-y-auto custom-scroll"></div>
+                        </div>
+                        <select id="pos-condicion" class="w-1/3 border border-gray-300 rounded px-1.5 py-1 text-[9px] font-black text-[#143B62] outline-none shadow-sm bg-white cursor-pointer h-[26px]">
+                            <option value="CONTADO">CONTADO</option>
+                            <option value="CREDITO">CRÉDITO</option>
+                        </select>
                     </div>
 
-                    <div id="info-cliente-seleccionado" class="bg-blue-50 border border-blue-100 rounded p-1.5 flex flex-col hidden relative">
+                    <div id="info-cliente-seleccionado" class="bg-blue-50 border border-blue-100 rounded p-1.5 flex flex-col hidden relative mt-1">
                         <button onclick="limpiarCliente()" class="absolute top-1 right-1.5 text-red-400 hover:text-red-600 transition"><i class="fa-solid fa-times text-[10px]"></i></button>
                         <div class="flex items-center gap-1.5 mb-0.5">
                             <span class="font-black text-[10px] text-[#143B62] truncate max-w-[70%]" id="txt-cli-nom">PÚBLICO GENERAL</span>
@@ -166,12 +172,17 @@
 
                 <div class="p-2.5 bg-white border-t border-gray-200 shrink-0 shadow-[0_-10px_20px_rgba(0,0,0,0.03)] flex flex-col gap-0.5">
                     
+                    <div class="flex justify-between items-center text-[9px] text-gray-500 font-bold uppercase">
+                        <span>Subtotal Base</span>
+                        <span id="pos-subtotal">Bs. 0.00</span>
+                    </div>
+                    
                     <div class="flex justify-between items-center text-[9px] text-gray-500 font-bold uppercase mt-0.5">
                         <div class="flex items-center gap-1">
                             <span>Desc. Gral</span>
                             <select id="pos-type-desc-general" class="border border-gray-200 rounded text-[8px] p-0.5 outline-none bg-gray-50 font-bold text-[#143B62]" onchange="actualizarUI_Carrito()">
+                                <option value="MONTO_BS" selected>Bs.</option>
                                 <option value="PORCENTAJE">%</option>
-                                <option value="MONTO_BS">Bs.</option>
                                 <option value="MONTO">$</option>
                             </select>
                             <input type="number" id="pos-input-desc-general" placeholder="0" class="border border-gray-200 rounded text-center w-14 py-0.5 text-[9px] font-bold text-gray-700 outline-none shadow-inner" onchange="actualizarUI_Carrito()">
@@ -187,14 +198,6 @@
                     
                     <div class="border-t border-gray-100 my-1"></div>
                     
-                    <div class="flex justify-between items-center mb-1">
-                        <span class="text-[9px] font-black text-[#143B62] uppercase tracking-wider">Condición Venta</span>
-                        <select id="pos-condicion" class="border border-gray-300 rounded px-2 py-0.5 text-[9px] font-black text-[#143B62] outline-none shadow-sm bg-gray-50">
-                            <option value="CONTADO">AL CONTADO</option>
-                            <option value="CREDITO">A CRÉDITO</option>
-                        </select>
-                    </div>
-
                     <div class="flex justify-between items-end mb-0.5 mt-1">
                         <span class="text-[10px] font-black text-[#143B62] uppercase tracking-wider">Total a Pagar Bs</span>
                         <span class="text-2xl font-black text-gray-900 leading-none" id="pos-total-bs">Bs. 0.00</span>
@@ -204,12 +207,12 @@
                         <span class="text-xs font-black text-[#25D366]" id="pos-total-usd">US$ 0.00</span>
                     </div>
                     
-                    <div class="flex gap-2 h-10 mt-1">
+                    <div class="flex gap-2 h-7 mt-1">
                         <div class="bg-blue-50 rounded flex items-center justify-center border border-blue-100 px-3 shrink-0 shadow-inner">
-                            <span class="text-base font-black text-[#143B62]" id="pos-items">0</span>
-                            <span class="text-[8px] font-bold text-gray-500 uppercase ml-1">Art</span>
+                            <span class="text-xs font-black text-[#143B62]" id="pos-items">0</span>
+                            <span class="text-[7px] font-bold text-gray-500 uppercase ml-1">Art</span>
                         </div>
-                        <button onclick="abrirCobro()" id="btn-cobrar" disabled class="flex-1 bg-[#25D366] hover:bg-[#1ebd5c] disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-black rounded-lg shadow-sm transition-all text-xs uppercase tracking-widest flex justify-center items-center gap-2 btn-press">
+                        <button onclick="abrirCobro()" id="btn-cobrar" disabled class="flex-1 bg-[#25D366] hover:bg-[#1ebd5c] disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-black rounded shadow-sm transition-all text-[10px] uppercase tracking-widest flex justify-center items-center gap-1.5 btn-press">
                             <i class="fa-solid fa-hand-holding-dollar"></i> Cobrar
                         </button>
                     </div>
@@ -252,7 +255,7 @@
         <i id="loading-icon" class="fa-solid fa-circle-notch fa-spin text-5xl text-[#25D366] mb-4"></i>
         <h2 id="loading-text" class="text-xl font-black text-[#143B62] uppercase mb-2">Procesando...</h2>
         <p id="loading-error" class="text-xs text-gray-500 font-medium max-w-sm hidden"></p>
-        <button onclick="cerrarErrorCarga()" id="btn-cerrar-carga" class="hidden mt-6 bg-[#143B62] text-white px-8 py-2.5 rounded font-bold uppercase text-xs btn-press">Cerrar</button>
+        <button onclick="cerrarErrorCarga()" id="btn-cerrar-carga" class="hidden mt-6 bg-[#143B62] text-white px-8 py-2.5 rounded font-bold uppercase text-xs btn-press">Entendido</button>
     </div>
 
     <div id="modal-nuevo-cliente" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[110] hidden flex items-center justify-center p-4 fade-in">
@@ -320,7 +323,7 @@
                     fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } })
                 ]);
 
-                if (!resProd.ok) throw new Error("Fallo de conexión.");
+                if (!resProd.ok) throw new Error("Fallo de conexión al inventario.");
 
                 const dataTasa = await resTasa.json(); if(dataTasa.length > 0) { tasaBCV = dataTasa[0].tasa; document.getElementById('tasa-display').innerText = tasaBCV.toFixed(2); }
                 
@@ -383,7 +386,6 @@
             grid.innerHTML = html || `<div class="col-span-full p-10 text-center text-gray-400 font-medium text-xs">Sin resultados en esta categoría.</div>`;
         }
 
-        // --- ENHANCED INFO PRODUCTO (READ ONLY, INVENTORY-LIKE) ---
         function abrirInfoProducto(prodStr) {
             const p = JSON.parse(decodeURIComponent(prodStr));
             
@@ -409,27 +411,27 @@
             setText('info-prod-cat', p.categoria_del_producto);
             setText('info-prod-catventa', p.categoria_venta);
             setText('info-prod-tipo', p.tipo_producto);
-            setText('info-prod-talla', p.talla);
-            setText('info-prod-color', p.color);
             setText('info-prod-condicion', p.condicion_producto);
             setText('info-prod-impuesto', p.tipo_impuesto);
+            setText('info-prod-talla', p.talla);
+            setText('info-prod-color', p.color);
             setText('info-prod-negativo', p.permitir_negativo ? 'SÍ' : 'NO');
             setText('info-prod-stock', p.stock_actual);
             document.getElementById('info-prod-desc').innerText = p.descripcion || 'SIN DESCRIPCIÓN TÉCNICA.';
 
-            // Niveles de Precio (Restaurado y Corregido con Quantities)
             const contTiers = document.getElementById('info-prod-tiers'); contTiers.innerHTML = '';
             const genUsd = p.pre.es_precio_fijo_bs ? p.pre.precio_fijo_bs / tasaBCV : p.pre.precio_general_usd || 0;
-            contTiers.innerHTML = `<div class="bg-white p-2 rounded border border-emerald-100 text-center"><label class="text-[8px] font-bold text-gray-400 uppercase">General</label><p class="text-[13px] font-black text-emerald-800">$${genUsd.toFixed(2)}</p></div>`;
+            contTiers.innerHTML = `<div class="bg-white p-2 rounded border border-emerald-100 text-center"><label class="text-[8px] font-bold text-gray-400 uppercase">General</label><p class="text-[11px] font-black text-emerald-800">$${genUsd.toFixed(2)}</p></div>`;
             
-            if(p.pre.precio_1_usd > 0) contTiers.innerHTML += `<div class="bg-white p-2 rounded border border-emerald-100 text-center"><label class="text-[8px] font-bold text-emerald-600 uppercase">Mayor (≥ ${p.pre.requerido_precio_1 || 1} u)</label><p class="text-[13px] font-black text-emerald-800">$${(p.pre.precio_1_usd).toFixed(2)}</p></div>`;
-            if(p.pre.precio_2_usd > 0) contTiers.innerHTML += `<div class="bg-white p-2 rounded border border-emerald-100 text-center"><label class="text-[8px] font-bold text-emerald-600 uppercase">Dist (≥ ${p.pre.requerido_precio_2 || 1} u)</label><p class="text-[13px] font-black text-emerald-800">$${(p.pre.precio_2_usd).toFixed(2)}</p></div>`;
-            if(p.pre.precio_3_usd > 0) contTiers.innerHTML += `<div class="bg-white p-2 rounded border border-emerald-100 text-center"><label class="text-[8px] font-bold text-emerald-600 uppercase">Espec (≥ ${p.pre.requerido_precio_3 || 1} u)</label><p class="text-[13px] font-black text-emerald-800">$${(p.pre.precio_3_usd).toFixed(2)}</p></div>`;
+            if(p.pre.precio_1_usd > 0) contTiers.innerHTML += `<div class="bg-white p-2 rounded border border-emerald-100 text-center"><label class="text-[8px] font-bold text-emerald-600 uppercase">Mayor (≥ ${p.pre.requerido_precio_1 || 1} u)</label><p class="text-[11px] font-black text-emerald-800">$${(p.pre.precio_1_usd).toFixed(2)}</p></div>`;
+            if(p.pre.precio_2_usd > 0) contTiers.innerHTML += `<div class="bg-white p-2 rounded border border-emerald-100 text-center"><label class="text-[8px] font-bold text-emerald-600 uppercase">Dist (≥ ${p.pre.requerido_precio_2 || 1} u)</label><p class="text-[11px] font-black text-emerald-800">$${(p.pre.precio_2_usd).toFixed(2)}</p></div>`;
+            if(p.pre.precio_3_usd > 0) contTiers.innerHTML += `<div class="bg-white p-2 rounded border border-emerald-100 text-center"><label class="text-[8px] font-bold text-emerald-600 uppercase">Espec (≥ ${p.pre.requerido_precio_3 || 1} u)</label><p class="text-[11px] font-black text-emerald-800">$${(p.pre.precio_3_usd).toFixed(2)}</p></div>`;
 
             document.getElementById('modal-info-producto').classList.remove('hidden');
             document.getElementById('modal-info-producto').classList.add('flex');
         }
         function cerrarInfoProducto() { document.getElementById('modal-info-producto').classList.add('hidden'); }
+        function cerrarVisor() { document.getElementById('media-viewer').classList.add('hidden'); }
 
         // --- CLIENTES ---
         function buscarPredictivoCliente() {
@@ -468,17 +470,17 @@
         function abrirModalFichaCompleta() { document.getElementById('form-ficha-completa').reset(); document.getElementById('modal-ficha-completa').classList.remove('hidden'); document.getElementById('modal-ficha-completa').classList.add('flex'); }
         function cerrarModalFichaCompleta() { document.getElementById('modal-ficha-completa').classList.add('hidden'); }
         function cerrarDropdownCliente(e) { if(e.target.id !== 'pos-buscador-cliente') document.getElementById('dropdown-clientes').classList.add('hidden'); }
-        function cerrarVisor() { document.getElementById('media-viewer').classList.add('hidden'); }
 
         async function guardarClienteRapido(e) { e.preventDefault(); const btn = document.getElementById('btn-guardar-cli-rap'); btn.innerHTML = `...`; btn.disabled = true; try { const payload = { id_empresa: empresaActual, tipo_persona: 'CLIENTE', documento_identidad: document.getElementById('cli-rap-doc').value.trim().toUpperCase(), nombre_razon_social: document.getElementById('cli-rap-nom').value.trim().toUpperCase(), direccion_principal: document.getElementById('cli-rap-dir').value.trim().toUpperCase(), telefono_principal: document.getElementById('cli-rap-tel').value.trim(), tipo_contribuyente: document.getElementById('cli-rap-tipo').value, estatus: 'ACTIVO' }; const res = await fetch(`${SUPABASE_URL}/rest/v1/directorio_maestro`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, body: JSON.stringify(payload) }); if(!res.ok) throw new Error("Doc duplicado"); const data = await res.json(); dbClientes.push(data[0]); fuseClientes = new Fuse(dbClientes, { keys: ['documento_identidad', 'nombre_razon_social'] }); seleccionarCliente(encodeURIComponent(JSON.stringify(data[0]))); cerrarModalNuevoCliente(); } catch(e) { alert(e.message); } finally { btn.innerHTML = `<i class="fa-solid fa-save mr-1"></i> Guardar y Usar`; btn.disabled = false; } }
         async function guardarFichaCompleta(e) { e.preventDefault(); const btn = document.getElementById('btn-guardar-fc'); btn.innerHTML = `...`; btn.disabled = true; try { const payload = { id_empresa: empresaActual, tipo_persona: 'CLIENTE', documento_identidad: document.getElementById('fc-doc').value.trim().toUpperCase(), nombre_razon_social: document.getElementById('fc-nombre').value.trim().toUpperCase(), direccion_principal: document.getElementById('fc-dir-p').value.trim().toUpperCase(), telefono_principal: document.getElementById('fc-tel1').value.trim(), correo_electronico: document.getElementById('fc-email').value.trim(), tipo_contribuyente: document.getElementById('fc-tipo').value, nivel_precio: document.getElementById('fc-precio').value, estatus: 'ACTIVO' }; const res = await fetch(`${SUPABASE_URL}/rest/v1/directorio_maestro`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, body: JSON.stringify(payload) }); if(!res.ok) throw new Error("Doc duplicado"); const data = await res.json(); dbClientes.push(data[0]); fuseClientes = new Fuse(dbClientes, { keys: ['documento_identidad', 'nombre_razon_social'] }); seleccionarCliente(encodeURIComponent(JSON.stringify(data[0]))); cerrarModalFichaCompleta(); } catch(e) { alert(e.message); } finally { btn.innerHTML = `Guardar`; btn.disabled = false; } }
 
-        // --- CARRITO MATEMÁTICO (MOTOR FISCAL & UI FIX) ---
+        // --- CARRITO MATEMÁTICO BLINDADO ---
         function agregarAlCarrito(prodStr) {
             const p = JSON.parse(decodeURIComponent(prodStr));
             const idx = carrito.findIndex(i => i.id_producto_sku === p.id_producto_sku);
+            // POR DEFECTO MONTO EN BS (MONTO_BS)
             if (idx !== -1) { if(carrito[idx].cantidad < p.stock_actual || p.permitir_negativo) carrito[idx].cantidad++; } 
-            else { carrito.push({ ...p, cantidad: 1, desc_tipo: 'PORCENTAJE', desc_val: 0 }); }
+            else { carrito.push({ ...p, cantidad: 1, desc_tipo: 'MONTO_BS', desc_val: 0 }); }
             actualizarUI_Carrito();
         }
 
@@ -493,7 +495,14 @@
         }
 
         function eliminarDelCarrito(sku) { carrito = carrito.filter(i => i.id_producto_sku !== sku); actualizarUI_Carrito(); }
-        function actualizarDescItem(sku, campo, valor) { const idx = carrito.findIndex(i => i.id_producto_sku === sku); if (idx === -1) return; if(campo === 'tipo') carrito[idx].desc_tipo = valor; if(campo === 'val') carrito[idx].desc_val = parseFloat(valor) || 0; actualizarUI_Carrito(); }
+        
+        function actualizarDescItem(sku, campo, valor) { 
+            const idx = carrito.findIndex(i => i.id_producto_sku === sku); 
+            if (idx === -1) return; 
+            if(campo === 'tipo') carrito[idx].desc_tipo = valor; 
+            if(campo === 'val') carrito[idx].desc_val = parseFloat(valor) || 0; 
+            actualizarUI_Carrito(); 
+        }
 
         function actualizarUI_Carrito() {
             const lista = document.getElementById('lista-carrito');
@@ -501,7 +510,7 @@
             
             if (carrito.length === 0) {
                 lista.innerHTML = `<div class="h-full flex flex-col items-center justify-center text-gray-300 opacity-50"><i class="fa-solid fa-cart-arrow-down text-4xl mb-2"></i><p class="font-bold text-[10px] uppercase tracking-widest">Venta Vacía</p></div>`;
-                document.getElementById('pos-total-bs').innerText = 'Bs. 0.00'; document.getElementById('pos-total-usd').innerText = 'US$ 0.00'; document.getElementById('pos-items').innerText = '0'; document.getElementById('btn-cobrar').disabled = true; document.getElementById('pos-base-imponible').innerText = 'Bs. 0.00'; document.getElementById('pos-iva').innerText = 'Bs. 0.00'; document.getElementById('pos-exento').innerText = 'Bs. 0.00'; document.getElementById('pos-descuento-general-val').innerText = '- Bs. 0.00'; return;
+                document.getElementById('pos-subtotal').innerText = 'Bs. 0.00'; document.getElementById('pos-iva').innerText = 'Bs. 0.00'; document.getElementById('pos-exento').innerText = 'Bs. 0.00'; document.getElementById('pos-base-imponible').innerText = 'Bs. 0.00'; document.getElementById('pos-descuento-general-val').innerText = '- Bs. 0.00'; document.getElementById('pos-total-bs').innerText = 'Bs. 0.00'; document.getElementById('pos-total-usd').innerText = 'US$ 0.00'; document.getElementById('pos-items').innerText = '0'; document.getElementById('btn-cobrar').disabled = true; return;
             }
 
             let html = '', itemsTotal = 0;
@@ -516,7 +525,6 @@
                 if (nivelCli === 'P2' && item.pre.precio_2_usd) baseUsd = item.pre.precio_2_usd;
                 if (nivelCli === 'P3' && item.pre.precio_3_usd) baseUsd = item.pre.precio_3_usd;
 
-                // Auto Descuento por Volumen
                 if (item.pre.requerido_precio_3 > 0 && item.cantidad >= item.pre.requerido_precio_3) { baseUsd = item.pre.precio_3_usd; }
                 else if (item.pre.requerido_precio_2 > 0 && item.cantidad >= item.pre.requerido_precio_2) { baseUsd = item.pre.precio_2_usd; }
                 else if (item.pre.requerido_precio_1 > 0 && item.cantidad >= item.pre.requerido_precio_1) { baseUsd = item.pre.precio_1_usd; }
@@ -524,7 +532,6 @@
                 const lineaBaseUsd = baseUsd * item.cantidad;
                 sumSubtotalBasePuroUsd += lineaBaseUsd;
 
-                // LÓGICA DE DESCUENTO EXACTO POR ÍTEM
                 let descLineaUsd = 0;
                 if(item.desc_tipo === 'PORCENTAJE') { descLineaUsd = lineaBaseUsd * (item.desc_val / 100); } 
                 else if(item.desc_tipo === 'MONTO') { descLineaUsd = item.desc_val; } 
@@ -535,7 +542,6 @@
                 const totalLineaNetaUsd = lineaBaseUsd - descLineaUsd;
                 sumTotalDescItemUsd += descLineaUsd;
                 
-                // Aseguramos que si el tipo de impuesto no está definido, se asume que PAGA IVA para evitar error 0.00
                 const impItem = item.tipo_impuesto || 'GENERAL';
                 if(impItem === 'EXENTO') { sumMontoExentoUsd += totalLineaNetaUsd; } 
                 else { sumBaseImponibleUsd += totalLineaNetaUsd; }
@@ -544,7 +550,6 @@
                 const tieneDesc = descLineaUsd > 0;
                 const precioUnidadFinalUsd = item.cantidad > 0 ? (totalLineaNetaUsd / item.cantidad) : 0;
 
-                // UI FIX: Nuevo diseño flex anti-overlap y botones gruesos
                 html += `
                 <div class="bg-white border border-gray-200 rounded p-1 mb-1.5 shadow-sm flex flex-col fade-in relative group min-h-[50px]">
                     <div class="flex gap-2">
@@ -560,8 +565,8 @@
                             <div class="flex items-center gap-1 mt-1 pt-1 border-t border-gray-100">
                                 <span class="text-[7px] text-red-500 font-bold uppercase">Desc:</span>
                                 <select class="border border-red-200 rounded text-[8px] p-0.5 outline-none bg-red-50 text-red-700 font-bold" onchange="actualizarDescItem('${item.id_producto_sku}', 'tipo', this.value)">
-                                    <option value="PORCENTAJE" ${item.desc_tipo === 'PORCENTAJE'?'selected':''}>%</option>
                                     <option value="MONTO_BS" ${item.desc_tipo === 'MONTO_BS'?'selected':''}>Bs.</option>
+                                    <option value="PORCENTAJE" ${item.desc_tipo === 'PORCENTAJE'?'selected':''}>%</option>
                                     <option value="MONTO" ${item.desc_tipo === 'MONTO'?'selected':''}>$</option>
                                 </select>
                                 <input type="number" min="0" class="border border-red-200 rounded text-[9px] p-0.5 w-12 text-center outline-none bg-white font-black" value="${item.desc_val}" onchange="actualizarDescItem('${item.id_producto_sku}', 'val', this.value)">
@@ -585,7 +590,6 @@
             });
             lista.innerHTML = html;
             
-            // LÓGICA DE DESCUENTO GENERAL Y TOTALES
             const typeDescGeneral = document.getElementById('pos-type-desc-general').value;
             const inputDescGeneral = parseFloat(document.getElementById('pos-input-desc-general').value) || 0;
             
@@ -601,7 +605,6 @@
             let finalBaseImponibleUsd = sumBaseImponibleUsd;
             let finalMontoExentoUsd = sumMontoExentoUsd;
 
-            // Factorizamos el descuento general a las bases
             if(sumNetoItemsUsd > 0 && descGeneralTotalUsd > 0) {
                 const factor = 1 - (descGeneralTotalUsd / sumNetoItemsUsd);
                 finalBaseImponibleUsd = sumBaseImponibleUsd * factor;
@@ -627,7 +630,6 @@
             document.getElementById('pos-exento').dataset.valUsd = finalMontoExentoUsd;
         }
 
-        // --- COBRO FINAL ---
         function verificarIGTF() {
             const metodo = document.getElementById('cobro-metodo').value;
             const aplica = (metodo === 'EFECTIVO_USD' || metodo === 'ZELLE');
@@ -641,8 +643,6 @@
         }
 
         function abrirCobro() { 
-            // Copiar condición del screen principal al modal
-            document.getElementById('cobro-condicion').value = document.getElementById('pos-condicion').value;
             verificarIGTF(); 
             document.getElementById('modal-cobro').classList.remove('hidden'); document.getElementById('modal-cobro').classList.add('flex'); 
         }
@@ -655,6 +655,7 @@
             mostrarCarga("Procesando...", "Registrando venta e imprimiendo factura fiscal");
             try {
                 const metodo = document.getElementById('cobro-metodo').value;
+                const condicion = document.getElementById('pos-condicion').value;
                 const totalBsFinal = parseFloat(document.getElementById('modal-total-bs-final').innerText.replace('Bs. ',''));
                 
                 const baseImpUsd = parseFloat(document.getElementById('pos-base-imponible').dataset.valUsd) || 0;
@@ -667,7 +668,7 @@
                     total_usd: totalBsFinal/tasaBCV, 
                     tasa_bcv: tasaBCV, 
                     metodo_pago: metodo, 
-                    condicion_pago: document.getElementById('cobro-condicion').value, 
+                    condicion_pago: condicion, 
                     iva_porcentaje: pypIva * 100, 
                     igtf_porcentaje: (metodo === 'EFECTIVO_USD' || metodo === 'ZELLE') ? pypIgtf * 100 : 0,
                     base_imponible: baseImpUsd * tasaBCV, 
