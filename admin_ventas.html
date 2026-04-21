@@ -23,62 +23,88 @@
 <body class="bg-[#f4f6f8] flex h-screen overflow-hidden text-gray-800" onclick="cerrarDropdownCliente(event)">
 
     <div id="modal-info-producto" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[9999] hidden flex-col items-center justify-center p-4 fade-in" onclick="cerrarInfoProducto()">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col border border-gray-200" onclick="event.stopPropagation()">
-            <div class="bg-[#143B62] text-white px-4 py-3 flex justify-between items-center shrink-0">
-                <h3 class="font-black text-xs tracking-wide uppercase flex items-center gap-2"><i class="fa-solid fa-address-card text-[#E67E22]"></i> Detalle Técnico de Producto</h3>
-                <button onclick="cerrarInfoProducto()" class="text-gray-300 hover:text-white transition"><i class="fa-solid fa-times"></i></button>
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-5xl max-h-[95vh] overflow-hidden flex flex-col border border-gray-200" onclick="event.stopPropagation()">
+            <div class="bg-[#143B62] text-white px-5 py-3 flex justify-between items-center shrink-0">
+                <h3 class="font-black text-xs tracking-wide uppercase flex items-center gap-2"><i class="fa-solid fa-address-card text-[#E67E22]"></i> Ficha Técnica del Producto (Solo Lectura)</h3>
+                <button onclick="cerrarInfoProducto()" class="text-gray-300 hover:text-white transition text-lg"><i class="fa-solid fa-times"></i></button>
             </div>
-            <div class="p-5 bg-gray-50 flex-1 overflow-y-auto custom-scroll grid grid-cols-1 md:grid-cols-3 gap-5">
+            
+            <div class="p-5 bg-gray-50 flex-1 overflow-y-auto custom-scroll flex flex-col lg:flex-row gap-5">
                 
-                <div class="md:col-span-1 space-y-3">
-                    <div class="bg-white p-3 rounded-lg border flex flex-col items-center justify-center h-48 relative shadow-sm cursor-pointer" onclick="abrirVisorEnPOS(document.getElementById('info-prod-img-main').src)">
-                        <img id="info-prod-img-main" src="" class="max-h-full max-w-full object-contain">
+                <div class="w-full lg:w-1/4 space-y-4 shrink-0">
+                    <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
+                        <h4 class="text-[9px] font-black text-gray-800 uppercase mb-2 tracking-wider border-b border-gray-50 pb-1">Imagen Principal</h4>
+                        <div class="flex flex-col items-center justify-center h-40 relative cursor-pointer group rounded overflow-hidden" onclick="abrirVisorEnPOS(document.getElementById('info-prod-img-main').src)">
+                            <img id="info-prod-img-main" src="" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform">
+                            <div class="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"><i class="fa-solid fa-magnifying-glass-plus text-white text-2xl drop-shadow-md"></i></div>
+                        </div>
                     </div>
-                    <div id="info-prod-galeria" class="grid grid-cols-4 gap-1.5 p-1 bg-gray-100 rounded border"></div>
+
+                    <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-sm" id="info-prod-galeria-container">
+                        <h4 class="text-[9px] font-black text-[#E67E22] uppercase mb-2 tracking-wider border-b border-gray-50 pb-1">Galería Adicional</h4>
+                        <div id="info-prod-galeria" class="grid grid-cols-3 gap-1.5 p-1 bg-gray-50 rounded border border-gray-100"></div>
+                    </div>
+
+                    <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-sm" id="info-prod-video-container">
+                        <h4 class="text-[9px] font-black text-red-600 uppercase mb-2 tracking-wider border-b border-gray-50 pb-1"><i class="fa-brands fa-youtube"></i> Video Promocional</h4>
+                        <div class="w-full aspect-video rounded border border-gray-200 overflow-hidden bg-black">
+                            <iframe id="info-prod-video" class="w-full h-full" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="md:col-span-2 space-y-4">
-                    <div class="bg-white p-4 rounded-lg border shadow-sm">
-                        <h4 class="text-lg font-black text-[#143B62] uppercase leading-tight mb-1" id="info-prod-nom">NOMBRE DEL PRODUCTO</h4>
-                        <div class="flex gap-4 text-[10px] text-gray-500 font-mono">
-                            <span>SKU: <span id="info-prod-sku" class="font-bold text-gray-700">N/A</span></span> 
-                            <span>BARRA: <span id="info-prod-barra" class="font-bold text-gray-700">N/A</span></span>
+                <div class="w-full lg:w-3/4 space-y-4">
+                    
+                    <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                        <h4 class="text-[10px] font-black text-[#143B62] uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Identidad del Producto</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4 border-b border-gray-50 pb-3">
+                            <div><label class="text-[8px] font-bold text-gray-400 uppercase block mb-0.5">Código SKU</label><span class="text-[11px] font-black uppercase text-gray-800 bg-gray-100 px-2 py-1 rounded block" id="info-prod-sku"></span></div>
+                            <div><label class="text-[8px] font-bold text-gray-400 uppercase block mb-0.5">Código Barra</label><span class="text-[11px] font-mono font-bold uppercase text-gray-800 bg-gray-100 px-2 py-1 rounded block" id="info-prod-barra"></span></div>
+                            <div class="md:col-span-2"><label class="text-[8px] font-bold text-gray-400 uppercase block mb-0.5">Nombre / Descripción</label><span class="text-[12px] font-black uppercase text-[#143B62] block pt-1" id="info-prod-nom"></span></div>
                         </div>
-                        
-                        <div class="grid grid-cols-3 gap-3 mt-4 border-t pt-3 border-gray-100">
-                            <div><label class="text-[9px] font-bold text-gray-400 uppercase">Marca</label><p class="text-[11px] font-black uppercase text-[#143B62]" id="info-prod-marca">N/A</p></div>
-                            <div><label class="text-[9px] font-bold text-gray-400 uppercase">Categoría</label><p class="text-[11px] font-black uppercase text-[#143B62]" id="info-prod-cat">N/A</p></div>
-                            <div><label class="text-[9px] font-bold text-gray-400 uppercase">Cat. Venta</label><p class="text-[11px] font-black uppercase text-[#143B62]" id="info-prod-catventa">N/A</p></div>
-                            <div><label class="text-[9px] font-bold text-gray-400 uppercase">Tipo Prod.</label><p class="text-[11px] font-black uppercase text-[#143B62]" id="info-prod-tipo">N/A</p></div>
-                            <div><label class="text-[9px] font-bold text-gray-400 uppercase">Condición</label><p class="text-[11px] font-black uppercase text-[#143B62]" id="info-prod-condicion">N/A</p></div>
-                            <div><label class="text-[9px] font-bold text-gray-400 uppercase">Impuesto</label><p class="text-[11px] font-black uppercase text-[#143B62]" id="info-prod-impuesto">N/A</p></div>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="bg-white p-4 rounded-lg border shadow-sm">
-                            <h5 class="text-[9px] font-black text-gray-500 uppercase mb-3">Variantes y Stock</h5>
-                            <div class="flex flex-wrap gap-x-4 gap-y-1 mb-3 text-xs">
-                                <p><span class="font-bold text-gray-400">Talla:</span> <span class="font-black uppercase" id="info-prod-talla">N/A</span></p> 
-                                <p><span class="font-bold text-gray-400">Color:</span> <span class="font-black uppercase" id="info-prod-color">N/A</span></p>
-                                <p class="w-full text-[9px] mt-1"><span class="font-bold text-gray-400">Permite Negativo:</span> <span class="font-black uppercase" id="info-prod-negativo">NO</span></p>
-                            </div>
-                            <div class="bg-blue-50 p-2 rounded border border-blue-100 flex items-center justify-between">
-                                <span class="text-[10px] font-black text-blue-800 uppercase">Existencia Actual</span>
-                                <span class="text-2xl font-black text-[#143B62] leading-none" id="info-prod-stock">0</span>
-                            </div>
-                        </div>
-                        <div class="bg-white p-4 rounded-lg border shadow-sm overflow-hidden">
-                            <h5 class="text-[9px] font-black text-gray-500 uppercase mb-2">Descripción</h5>
-                            <p class="text-[10px] text-gray-600 custom-scroll overflow-y-auto h-20 uppercase" id="info-prod-desc">SIN DESCRIPCIÓN.</p>
+                        <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+                            <div><label class="text-[8px] font-bold text-gray-400 uppercase block mb-0.5">Tipo Producto</label><span class="text-[10px] font-bold uppercase text-gray-700" id="info-prod-tipo"></span></div>
+                            <div><label class="text-[8px] font-bold text-gray-400 uppercase block mb-0.5">Categoría</label><span class="text-[10px] font-bold uppercase text-gray-700" id="info-prod-cat"></span></div>
+                            <div><label class="text-[8px] font-bold text-gray-400 uppercase block mb-0.5">Cat. Venta</label><span class="text-[10px] font-bold uppercase text-gray-700" id="info-prod-catventa"></span></div>
+                            <div><label class="text-[8px] font-bold text-gray-400 uppercase block mb-0.5">Marca</label><span class="text-[10px] font-bold uppercase text-gray-700" id="info-prod-marca"></span></div>
+                            <div><label class="text-[8px] font-bold text-gray-400 uppercase block mb-0.5">Condición</label><span class="text-[10px] font-bold uppercase text-gray-700" id="info-prod-condicion"></span></div>
                         </div>
                     </div>
 
-                    <div class="bg-emerald-50 p-4 rounded-lg border border-emerald-100 shadow-sm">
-                        <h5 class="text-[10px] font-black text-emerald-800 uppercase mb-3">Escalas de Precios ($) y Requisitos</h5>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                            <h4 class="text-[10px] font-black text-blue-600 uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Atributos y Logística</h4>
+                            <div class="grid grid-cols-3 gap-3 mb-4">
+                                <div><label class="text-[8px] font-bold text-gray-400 uppercase block mb-0.5">Talla</label><span class="text-[10px] font-bold uppercase text-gray-700" id="info-prod-talla"></span></div>
+                                <div><label class="text-[8px] font-bold text-gray-400 uppercase block mb-0.5">Color</label><span class="text-[10px] font-bold uppercase text-gray-700" id="info-prod-color"></span></div>
+                                <div><label class="text-[8px] font-bold text-gray-400 uppercase block mb-0.5">Unidad</label><span class="text-[10px] font-bold uppercase text-gray-700" id="info-prod-unidad"></span></div>
+                            </div>
+                            <div class="grid grid-cols-3 gap-2 bg-gray-50 p-2 rounded border border-gray-100">
+                                <div><label class="text-[8px] font-bold text-blue-600 uppercase block mb-0.5">Stock Actual</label><span class="text-sm font-black text-[#143B62]" id="info-prod-stock"></span></div>
+                                <div><label class="text-[8px] font-bold text-red-500 uppercase block mb-0.5">Min. Alerta</label><span class="text-xs font-black text-red-600" id="info-prod-min"></span></div>
+                                <div><label class="text-[8px] font-bold text-gray-500 uppercase block mb-0.5">P. Negativo</label><span class="text-[10px] font-bold text-gray-700 uppercase" id="info-prod-negativo"></span></div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm flex flex-col">
+                            <h4 class="text-[10px] font-black text-gray-600 uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Reglas Sistema</h4>
+                            <div class="grid grid-cols-2 gap-3 mb-3">
+                                <div><label class="text-[8px] font-bold text-gray-400 uppercase block mb-0.5">Estado Producto</label><span id="info-prod-estatus"></span></div>
+                                <div><label class="text-[8px] font-bold text-gray-400 uppercase block mb-0.5">Tipo Impuesto</label><span class="text-[10px] font-bold uppercase text-gray-700" id="info-prod-impuesto"></span></div>
+                            </div>
+                            <div class="flex-1 flex flex-col">
+                                <label class="text-[8px] font-bold text-gray-400 uppercase block mb-1">Descripción Interna</label>
+                                <p class="text-[10px] text-gray-600 bg-gray-50 p-2 rounded border border-gray-100 flex-1 overflow-y-auto custom-scroll max-h-16 uppercase" id="info-prod-desc"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-emerald-50 p-4 rounded-lg border border-emerald-200 shadow-sm">
+                        <h4 class="text-[10px] font-black text-emerald-800 uppercase border-b border-emerald-200/50 pb-2 mb-3 tracking-wider">Estructura de Precios y Descuentos</h4>
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-3" id="info-prod-tiers">
                             </div>
                     </div>
+
                 </div>
             </div>
         </div>
@@ -318,8 +344,8 @@
             document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { cerrarCobro(); cerrarModalNuevoCliente(); cerrarModalFichaCompleta(); cerrarVisor(); cerrarInfoProducto(); } });
         };
 
-        // --- MANEJO DE ERRORES PROACTIVOS ---
-        function mostrarErrorConexion(msg = "Error de conexión detectado. Para resolver este problema y sincronizar la base de datos, por favor cierra la sesión y vuelve a entrar. Tu trabajo no se ha perdido.") {
+        // --- SISTEMA DE MANEJO DE ERRORES PROACTIVO ---
+        function mostrarErrorConexion(msg = "Error de conexión detectado. Para resolver este problema y recargar la base de datos, por favor cierra la sesión y vuelve a entrar. Tu trabajo no se ha perdido.") {
             const ol = document.getElementById('loading-overlay');
             document.getElementById('loading-text').innerText = "Fallo de Conexión";
             document.getElementById('loading-text').classList.replace('text-[#143B62]', 'text-red-600');
@@ -330,7 +356,7 @@
             errEl.classList.remove('hidden');
             
             document.getElementById('error-actions').classList.remove('hidden');
-            document.getElementById('btn-cerrar-carga').classList.add('hidden'); // Ocultar el viejo boton
+            document.getElementById('btn-cerrar-carga').classList.add('hidden'); 
             
             ol.classList.remove('hidden');
             ol.classList.add('flex');
@@ -345,7 +371,7 @@
         async function iniciarPuntoVenta() {
             try {
                 const resUser = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?select=id_empresa&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
-                if (!resUser.ok) throw new Error();
+                if (!resUser.ok) throw new Error("Fallo token");
                 empresaActual = (await resUser.json())[0].id_empresa;
 
                 const [resTasa, resProd, resPre, resCli, resConf] = await Promise.all([
@@ -356,7 +382,7 @@
                     fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } })
                 ]);
 
-                if (!resProd.ok) throw new Error();
+                if (!resProd.ok || !resPre.ok) throw new Error("Fallo descarga db");
 
                 const dataTasa = await resTasa.json(); if(dataTasa.length > 0) { tasaBCV = dataTasa[0].tasa; document.getElementById('tasa-display').innerText = tasaBCV.toFixed(2); }
                 
@@ -421,57 +447,108 @@
             grid.innerHTML = html || `<div class="col-span-full p-10 text-center text-gray-400 font-medium text-xs">Sin resultados.</div>`;
         }
 
-        // --- ENHANCED INFO PRODUCTO (FICHA TÉCNICA DE SOLO LECTURA) ---
+        // --- ENHANCED INFO PRODUCTO (CLON DE LECTURA DE FICHA) ---
         function abrirInfoProducto(prodStr) {
             const p = JSON.parse(decodeURIComponent(prodStr));
             
+            // Imagenes
             const mainImg = document.getElementById('info-prod-img-main');
             const contGal = document.getElementById('info-prod-galeria');
+            const contGalContainer = document.getElementById('info-prod-galeria-container');
             mainImg.src = p.imagen_principal || imgDefecto;
             contGal.innerHTML = '';
             
             let arrayGaleria = [p.imagen_principal].filter(url => url);
             if(p.galeria_imagenes) { try { let parsed = typeof p.galeria_imagenes === 'string' ? JSON.parse(p.galeria_imagenes) : p.galeria_imagenes; if(Array.isArray(parsed)) arrayGaleria = [...new Set([...arrayGaleria, ...parsed])]; } catch(e) {} }
             
-            if(arrayGaleria.length > 0) {
+            if(arrayGaleria.length > 1) {
+                contGalContainer.classList.remove('hidden');
                 arrayGaleria.forEach(url => {
-                    contGal.innerHTML += `<div class="h-12 bg-white rounded border border-gray-200 p-0.5 cursor-pointer flex items-center justify-center hover:border-[#E67E22]" onclick="document.getElementById('info-prod-img-main').src='${url}'"><img src="${url}" class="max-h-full max-w-full object-contain"></div>`;
+                    contGal.innerHTML += `<div class="h-10 bg-white rounded border border-gray-200 p-0.5 cursor-pointer flex items-center justify-center hover:border-[#E67E22]" onclick="document.getElementById('info-prod-img-main').src='${url}'"><img src="${url}" class="max-h-full max-w-full object-contain"></div>`;
                 });
+            } else {
+                contGalContainer.classList.add('hidden');
             }
 
-            const setText = (id, val) => { const el = document.getElementById(id); el.innerText = val ? val.toString().toUpperCase() : 'N/A'; };
-            setText('info-prod-nom', p.nombre);
-            setText('info-prod-sku', p.id_producto_sku);
-            setText('info-prod-barra', p.codigo_barras);
-            setText('info-prod-marca', p.marca);
-            setText('info-prod-cat', p.categoria_del_producto);
-            setText('info-prod-catventa', p.categoria_venta);
-            setText('info-prod-tipo', p.tipo_producto);
-            setText('info-prod-condicion', p.condicion_producto);
-            setText('info-prod-impuesto', p.tipo_impuesto);
-            setText('info-prod-talla', p.talla);
-            setText('info-prod-color', p.color);
-            setText('info-prod-negativo', p.permitir_negativo ? 'SÍ' : 'NO');
-            setText('info-prod-stock', p.stock_actual);
+            // Video
+            const videoUrl = p.video_url || '';
+            const videoContainer = document.getElementById('info-prod-video-container');
+            const videoIframe = document.getElementById('info-prod-video');
+            if(videoUrl) {
+                let videoId = '';
+                if(videoUrl.includes('youtube.com/watch?v=')) videoId = videoUrl.split('v=')[1].split('&')[0];
+                else if(videoUrl.includes('youtu.be/')) videoId = videoUrl.split('youtu.be/')[1].split('?')[0];
+                else if(videoUrl.includes('youtube.com/shorts/')) videoId = videoUrl.split('shorts/')[1].split('?')[0];
+                
+                if(videoId) { videoIframe.src = `https://www.youtube.com/embed/${videoId}`; videoContainer.classList.remove('hidden'); } 
+                else { videoContainer.classList.add('hidden'); videoIframe.src = ''; }
+            } else { videoContainer.classList.add('hidden'); videoIframe.src = ''; }
+
+            // Datos Técnicos Básicos
+            const sT = (id, val) => { const el = document.getElementById(id); el.innerText = val ? val.toString().toUpperCase() : 'N/A'; };
+            sT('info-prod-nom', p.nombre); sT('info-prod-sku', p.id_producto_sku); sT('info-prod-barra', p.codigo_barras);
+            sT('info-prod-marca', p.marca); sT('info-prod-cat', p.categoria_del_producto); sT('info-prod-catventa', p.categoria_venta);
+            sT('info-prod-tipo', p.tipo_producto); sT('info-prod-condicion', p.condicion_producto); sT('info-prod-impuesto', p.tipo_impuesto);
+            sT('info-prod-talla', p.talla); sT('info-prod-color', p.color); sT('info-prod-unidad', p.unidad_medida);
+            sT('info-prod-negativo', p.permitir_negativo ? 'SÍ' : 'NO');
+            sT('info-prod-stock', p.stock_actual); sT('info-prod-min', p.stock_minimo || 0);
+            
+            const estatusEl = document.getElementById('info-prod-estatus');
+            estatusEl.innerText = p.estado_producto || 'ACTIVO';
+            estatusEl.className = p.estado_producto === 'ACTIVO' ? 'text-[10px] font-black uppercase text-emerald-600' : 'text-[10px] font-black uppercase text-red-600';
+
             document.getElementById('info-prod-desc').innerText = p.descripcion || 'SIN DESCRIPCIÓN TÉCNICA.';
 
+            // Estructura de Precios
             const contTiers = document.getElementById('info-prod-tiers'); contTiers.innerHTML = '';
             const genUsd = p.pre.es_precio_fijo_bs ? p.pre.precio_fijo_bs / tasaBCV : p.pre.precio_general_usd || 0;
-            contTiers.innerHTML = `<div class="bg-white p-2 rounded border border-emerald-100 text-center"><label class="text-[8px] font-bold text-gray-400 uppercase">General</label><p class="text-[13px] font-black text-emerald-800">$${genUsd.toFixed(2)}</p></div>`;
             
-            if(p.pre.precio_1_usd > 0) contTiers.innerHTML += `<div class="bg-white p-2 rounded border border-emerald-100 text-center"><label class="text-[8px] font-bold text-emerald-600 uppercase">Mayor (≥ ${p.requerido_precio_1 || 1} u)</label><p class="text-[13px] font-black text-emerald-800">$${(p.pre.precio_1_usd).toFixed(2)}</p></div>`;
-            if(p.pre.precio_2_usd > 0) contTiers.innerHTML += `<div class="bg-white p-2 rounded border border-emerald-100 text-center"><label class="text-[8px] font-bold text-emerald-600 uppercase">Dist (≥ ${p.requerido_precio_2 || 1} u)</label><p class="text-[13px] font-black text-emerald-800">$${(p.pre.precio_2_usd).toFixed(2)}</p></div>`;
-            if(p.pre.precio_3_usd > 0) contTiers.innerHTML += `<div class="bg-white p-2 rounded border border-emerald-100 text-center"><label class="text-[8px] font-bold text-emerald-600 uppercase">Espec (≥ ${p.requerido_precio_3 || 1} u)</label><p class="text-[13px] font-black text-emerald-800">$${(p.pre.precio_3_usd).toFixed(2)}</p></div>`;
+            contTiers.innerHTML = `<div class="bg-white p-2 rounded border border-emerald-100 flex flex-col justify-center">
+                <label class="text-[8px] font-bold text-gray-500 uppercase text-center w-full block border-b border-gray-50 pb-1 mb-1">P. General</label>
+                <p class="text-[14px] font-black text-emerald-700 text-center w-full">$${genUsd.toFixed(2)}</p>
+            </div>`;
+            
+            if(p.pre.precio_1_usd > 0) {
+                contTiers.innerHTML += `<div class="bg-white p-2 rounded border border-emerald-100 flex flex-col justify-center">
+                    <div class="flex justify-between items-center border-b border-gray-50 pb-1 mb-1">
+                        <span class="text-[7px] font-bold text-gray-500">Req: <span class="text-emerald-600">${p.requerido_precio_1 || 1}</span></span>
+                        <span class="text-[7px] font-bold text-emerald-600 uppercase">Precio 1</span>
+                    </div>
+                    <p class="text-[14px] font-black text-emerald-700 text-center">$${(p.pre.precio_1_usd).toFixed(2)}</p>
+                </div>`;
+            }
+            if(p.pre.precio_2_usd > 0) {
+                contTiers.innerHTML += `<div class="bg-white p-2 rounded border border-emerald-100 flex flex-col justify-center">
+                    <div class="flex justify-between items-center border-b border-gray-50 pb-1 mb-1">
+                        <span class="text-[7px] font-bold text-gray-500">Req: <span class="text-emerald-600">${p.requerido_precio_2 || 1}</span></span>
+                        <span class="text-[7px] font-bold text-emerald-600 uppercase">Precio 2</span>
+                    </div>
+                    <p class="text-[14px] font-black text-emerald-700 text-center">$${(p.pre.precio_2_usd).toFixed(2)}</p>
+                </div>`;
+            }
+            if(p.pre.precio_3_usd > 0) {
+                contTiers.innerHTML += `<div class="bg-white p-2 rounded border border-emerald-100 flex flex-col justify-center">
+                    <div class="flex justify-between items-center border-b border-gray-50 pb-1 mb-1">
+                        <span class="text-[7px] font-bold text-gray-500">Req: <span class="text-emerald-600">${p.requerido_precio_3 || 1}</span></span>
+                        <span class="text-[7px] font-bold text-emerald-600 uppercase">Precio 3</span>
+                    </div>
+                    <p class="text-[14px] font-black text-emerald-700 text-center">$${(p.pre.precio_3_usd).toFixed(2)}</p>
+                </div>`;
+            }
 
             document.getElementById('modal-info-producto').classList.remove('hidden');
             document.getElementById('modal-info-producto').classList.add('flex');
         }
-        function cerrarInfoProducto() { document.getElementById('modal-info-producto').classList.add('hidden'); }
+        
+        function cerrarInfoProducto() { 
+            document.getElementById('modal-info-producto').classList.add('hidden'); 
+            document.getElementById('info-prod-video').src = ''; // Detener el video al cerrar
+        }
         
         function abrirVisorEnPOS(imgUrl) {
             const main = document.getElementById('viewer-img-main');
             main.src = imgUrl; 
-            document.getElementById('viewer-thumbnails').innerHTML = ''; // Limpiamos thumbs para visualización rápida
+            document.getElementById('viewer-thumbnails').innerHTML = ''; 
             document.getElementById('media-viewer').classList.remove('hidden');
             document.getElementById('media-viewer').classList.add('flex');
         }
@@ -701,6 +778,7 @@
         }
 
         function abrirCobro() { 
+            document.getElementById('cobro-condicion').value = document.getElementById('pos-condicion').value;
             verificarIGTF(); 
             document.getElementById('modal-cobro').classList.remove('hidden'); document.getElementById('modal-cobro').classList.add('flex'); 
         }
