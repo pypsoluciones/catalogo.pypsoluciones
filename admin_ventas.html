@@ -292,7 +292,7 @@
             </div>
 <div class="w-full md:w-2/5 lg:w-1/3 h-full flex flex-col bg-white shadow-[-5px_0_15px_rgba(0,0,0,0.03)] z-10">
                 
-                <div class="bg-gray-50 p-2 border-b border-gray-200 shrink-0 flex flex-col gap-1.5 shadow-inner">
+              <div class="bg-gray-50 p-2 border-b border-gray-200 shrink-0 flex flex-col gap-1.5 shadow-inner">
                     <h3 class="text-[9px] font-bold text-[#143B62] uppercase tracking-wider border-b border-gray-200 pb-1"><i class="fa-solid fa-file-invoice mr-1"></i> Cabecera del Documento</h3>
                     
                     <div class="grid grid-cols-3 gap-2">
@@ -313,19 +313,17 @@
                         </div>
                     </div>
                     
-                    <div class="flex items-end gap-2 mt-0.5">
-                        <div class="flex-1 grid grid-cols-2 gap-2">
-                            <div>
-                                <label class="block text-[7px] font-medium text-gray-500 uppercase mb-0.5">Nro Factura (Aut)</label>
-                                <input type="text" id="pos-nro-factura" placeholder="Cargando..." class="w-full border border-gray-300 rounded px-1.5 py-1 text-[9px] font-mono text-center font-bold outline-none uppercase text-[#143B62] bg-gray-50" readonly>
-                            </div>
-                            <div>
-                                <label class="block text-[7px] font-medium text-gray-500 uppercase mb-0.5">Nro Control (Manual)</label>
-                                <input type="text" id="pos-nro-control" placeholder="Ej: 20-000001" class="w-full border border-gray-300 rounded px-1.5 py-1 text-[9px] font-mono text-center font-bold outline-none uppercase focus:border-[#143B62] bg-white">
-                            </div>
+                    <div class="grid grid-cols-[1fr_1fr_auto] gap-2 items-end mt-0.5">
+                        <div>
+                            <label class="block text-[7px] font-medium text-gray-500 uppercase mb-0.5">Nro Factura (Aut)</label>
+                            <input type="text" id="pos-nro-factura" placeholder="Cargando..." class="w-full border border-gray-300 rounded px-1.5 py-1 text-[11px] font-mono text-center font-black text-red-600 outline-none uppercase bg-white" readonly>
                         </div>
-                        <div class="flex flex-col gap-0.5 shrink-0 items-end">
-                            <span class="text-[7px] font-bold text-gray-400 uppercase tracking-tighter">Registro Cliente:</span>
+                        <div>
+                            <label class="block text-[7px] font-medium text-gray-500 uppercase mb-0.5">Nro Control (Manual)</label>
+                            <input type="text" id="pos-nro-control" placeholder="Ej: 20-000001" class="w-full border border-gray-300 rounded px-1.5 py-1 text-[9px] font-mono text-center font-bold outline-none uppercase focus:border-[#143B62] bg-white">
+                        </div>
+                        <div>
+                            <label class="block text-[7px] font-medium text-gray-500 uppercase mb-0.5 text-left">Registro Cliente</label>
                             <div class="flex gap-1">
                                 <button onclick="abrirModalNuevoCliente()" class="px-2 py-0.5 h-[22px] bg-orange-50 text-[#E67E22] border border-orange-100 rounded text-[8px] font-bold uppercase hover:bg-orange-100 transition"><i class="fa-solid fa-bolt"></i> Rápido</button>
                                 <button onclick="abrirModalFichaCompleta()" class="px-2 py-0.5 h-[22px] bg-blue-50 text-[#143B62] border border-blue-100 rounded text-[8px] font-bold uppercase hover:bg-blue-100 transition"><i class="fa-solid fa-address-book"></i> Completo</button>
@@ -446,7 +444,8 @@
                 document.getElementById('txt-cajero-nombre').innerText = nombreUsuario;
             }
             
-            document.getElementById('filtro-stock-pos').value = localStorage.getItem('pyp_pos_vista_inventario');
+            // CORRECCIÓN: Leer el parámetro correcto para el stock
+            document.getElementById('filtro-stock-pos').value = localStorage.getItem('pyp_pos_filtro_stock_default') || 'DISPONIBLE';
             
             // Inicializar Fechas de Facturación por defecto
             document.getElementById('pos-fecha-emision').value = getFechaHoy();
@@ -455,21 +454,11 @@
 
             actualizarBotonesVistaPos();
             
-            // 1. Cargar datos base
             await iniciarPuntoVenta();
-            
-            // 2. NUEVO: Calcular el próximo número de factura automáticamente
             await inicializarCorrelativos(); 
 
-            // Evento para cerrar modales con la tecla Escape
             document.addEventListener('keydown', (e) => { 
-                if (e.key === 'Escape') { 
-                    cerrarCobro(); 
-                    cerrarModalNuevoCliente(); 
-                    cerrarModalFichaCompleta(); 
-                    cerrarVisor(); 
-                    cerrarInfoProducto(); 
-                } 
+                if (e.key === 'Escape') { cerrarCobro(); cerrarModalNuevoCliente(); cerrarModalFichaCompleta(); cerrarVisor(); cerrarInfoProducto(); } 
             });
         };
 
