@@ -37,6 +37,22 @@
             }
             .no-print { display: none !important; }
         }
+        /* ================= MOTOR DE IMPRESIÓN P&P ================= */
+        @media print {
+            body * { visibility: hidden; }
+            #ticket-impresion, #ticket-impresion * { visibility: visible; }
+            #ticket-impresion { position: absolute; left: 0; top: 0; margin: 0; padding: 0; color: #000; background: #fff; }
+            
+            /* Formato 80mm */
+            #ticket-impresion.formato-80mm { width: 78mm; font-family: 'Courier New', monospace; font-size: 11px; }
+            /* Formato 58mm */
+            #ticket-impresion.formato-58mm { width: 56mm; font-family: 'Courier New', monospace; font-size: 9px; line-height: 1.1; }
+            /* Formato Carta */
+            #ticket-impresion.formato-carta { width: 210mm; font-family: 'Inter', sans-serif; font-size: 12px; padding: 15mm; }
+            
+            .no-print { display: none !important; }
+            .print-break { page-break-after: auto; }
+        }
     </style>
     <script src="config.js"></script>
     <script>
@@ -957,50 +973,157 @@
             document.getElementById('error-actions').classList.add('hidden');
         }
 
-        async function procesarVenta() {
+       async function procesarVenta() {
             const btn = document.getElementById('btn-confirmar'); btn.disabled = true;
-            mostrarCarga("Procesando...", "Registrando venta e imprimiendo factura fiscal");
+            mostrarCarga("Procesando...", "Registrando venta e imprimiendo documento");
             try {
                 const metodo = document.getElementById('cobro-metodo').value;
                 const condicion = document.getElementById('pos-condicion').value;
-                const totalBsFinal = parseFloat(document.getElementById('modal-total-bs-final').innerText.replace('Bs. ',''));
+                const formatoPrint = document.getElementById('cobro-formato-impresion').value;
+                const nroFactura = document.getElementById('cobro-nro-factura').value.trim().toUpperCase();
+                const nroControl = document.getElementById('cobro-nro-control').value.trim().toUpperCase();
                 
+                const totalBsFinal = parseFloat(document.getElementById('modal-total-bs-final').innerText.replace('Bs. ',''));
                 const baseImpUsd = parseFloat(document.getElementById('pos-base-imponible').dataset.valUsd) || 0;
                 const exentoUsd = parseFloat(document.getElementById('pos-exento').dataset.valUsd) || 0;
                 
+                // 1. Validar que la UI tenga los datos si se exige control fiscal (opcional, ajusta según necesidad)
+                // if (!nroFactura || !nroControl) throw new Error("Debe ingresar Nro de Factura y Control");
+
+                // 2. Traer info de la empresa para la cabecera (Esto lo optimizaremos luego cargándolo al inicio)
+                const resEmpresa = await fetch(`${SUPABASE_URL}/rest/v1/empresas?select=nombre_empresa,rif&id_empresa=eq.${empresaActual}`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                const dataEmpresa = await resEmpresa.json();
+                const empresaPrint = dataEmpresa[0] || { nombre_empresa: 'P&P SOLUCIONES', rif: 'J-50000000-0', direccion_fiscal: 'SIN DIRECCIÓN' }; // Fallback
+
+                // 3. Payload alineado EXACTAMENTE con tu tabla de Supabase
                 const payload = { 
                     id_empresa: empresaActual, 
                     id_cliente: document.getElementById('pos-id-cliente').value || null, 
                     total_bs: totalBsFinal, 
                     total_usd: totalBsFinal/tasaBCV, 
-                    tasa_bcv: tasaBCV, 
-                    metodo_pago: metodo, 
+                    tasa_bcv_aplicada: tasaBCV, 
+                    metodos_pago: metodo, 
                     condicion_pago: condicion, 
                     iva_porcentaje: pypIva * 100, 
                     igtf_porcentaje: (metodo === 'EFECTIVO_USD' || metodo === 'ZELLE') ? pypIgtf * 100 : 0,
                     base_imponible: baseImpUsd * tasaBCV, 
                     monto_exento: exentoUsd * tasaBCV,
                     nombre_cajero: localStorage.getItem('pyp_usuario_nombre') || 'Sistema', 
-                    estatus: 'PAGADA' 
+                    nro_factura_manual: nroFactura || null,
+                    nro_control_manual: nroControl || null,
+                    estatus: 'Completada', // Ajustado a los valores de tu tabla
+                    tipo_transaccion: 'Venta'
                 };
                 
                 const resF = await fetch(`${SUPABASE_URL}/rest/v1/facturas`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, body: JSON.stringify(payload) });
                 if(!resF.ok) throw new Error("Fallo al guardar factura");
-                const fId = (await resF.json())[0].id;
+                const fId = (await resF.json())[0].id_factura; // Corregido a id_factura según tu imagen
                 
                 const promesas = [];
                 carrito.forEach(i => {
-                    promesas.push(fetch(`${SUPABASE_URL}/rest/v1/detalles_factura`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ id_factura: fId, id_producto_sku: i.id_producto_sku, nombre_producto: i.nombre, cantidad: i.cantidad, precio_unitario_usd: i.pUsd, total_linea_usd: i.pUsd * i.cantidad }) }));
+                    promesas.push(fetch(`${SUPABASE_URL}/rest/v1/detalles_factura`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ factura_id: fId, producto_sku: i.id_producto_sku, producto_nombre: i.nombre, cantidad: i.cantidad, precio_unitario_usd: i.pUsd, subtotal_usd: i.pUsd * i.cantidad }) }));
                     if(!i.permitir_negativo) promesas.push(fetch(`${SUPABASE_URL}/rest/v1/productos?id_producto_sku=eq.${i.id_producto_sku}`, { method: 'PATCH', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ stock_actual: i.stock_actual - i.cantidad }) }));
                 });
                 await Promise.all(promesas);
                 
-                carrito = []; document.getElementById('pos-input-desc-general').value = ''; limpiarCliente(); cerrarCobro(); actualizarUI_Carrito(); await iniciarPuntoVenta();
+                // 4. Generar Ticket y Lanzar Impresión
+                generarHTMLImpresion(formatoPrint, empresaPrint, payload, carrito);
+                window.print();
+                
+                // 5. Limpieza post-venta
+                carrito = []; document.getElementById('pos-input-desc-general').value = ''; 
+                document.getElementById('cobro-nro-factura').value = ''; document.getElementById('cobro-nro-control').value = '';
+                limpiarCliente(); cerrarCobro(); actualizarUI_Carrito(); await iniciarPuntoVenta();
                 cerrarErrorCarga(); alert("✅ VENTA REGISTRADA");
             } catch(e) { mostrarCarga("Fallo Crítico", e.message, true); } finally { btn.disabled = false; }
         }
-    </script>
-    <div id="ticket-impresion" class="hidden print:block bg-white p-2 text-black">
-        </div>
-</body>
-</html>
+
+        function generarHTMLImpresion(formato, empresa, factura, items) {
+            const contenedor = document.getElementById('ticket-impresion');
+            contenedor.className = `hidden print:block formato-${formato}`;
+            
+            const docCliente = document.getElementById('txt-cli-doc').innerText;
+            const nomCliente = document.getElementById('txt-cli-nom').innerText;
+            const fechaActual = new Date().toLocaleString('es-VE');
+            
+            let htmlItems = '';
+            items.forEach(i => {
+                const subTotBs = (i.pUsd * i.cantidad * factura.tasa_bcv_aplicada).toFixed(2);
+                const indImpuesto = (i.tipo_impuesto === 'EXENTO') ? '(E)' : '(G)';
+                
+                if(formato === 'carta') {
+                    htmlItems += `<tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 4px;">${i.id_producto_sku}</td>
+                        <td style="padding: 4px;">${i.nombre}</td>
+                        <td style="padding: 4px; text-align: center;">${i.cantidad}</td>
+                        <td style="padding: 4px; text-align: right;">Bs. ${(i.pUsd * factura.tasa_bcv_aplicada).toFixed(2)}</td>
+                        <td style="padding: 4px; text-align: right;">Bs. ${subTotBs} ${indImpuesto}</td>
+                    </tr>`;
+                } else {
+                    // Diseño térmico
+                    htmlItems += `
+                    <div style="margin-bottom: 4px;">
+                        <div style="font-weight: bold;">${i.nombre}</div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>${i.cantidad} x ${i.pUsd.toFixed(2)}$ / Bs.${(i.pUsd * factura.tasa_bcv_aplicada).toFixed(2)}</span>
+                            <span>Bs. ${subTotBs} ${indImpuesto}</span>
+                        </div>
+                    </div>`;
+                }
+            });
+
+            if(formato === 'carta') {
+                contenedor.innerHTML = `
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <h2 style="margin:0;">${empresa.nombre_empresa}</h2>
+                    <p style="margin:0;">RIF: ${empresa.rif}</p>
+                    <p style="margin:0;">DIRECCIÓN: ${empresa.direccion_fiscal || 'N/A'}</p>
+                    <h3 style="margin-top:10px;">FACTURA ${factura.nro_factura_manual ? 'NRO: ' + factura.nro_factura_manual : 'PROFORMA'}</h3>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 20px; border: 1px solid #ccc; padding: 10px;">
+                    <div><strong>Cliente:</strong> ${nomCliente}<br><strong>C.I./RIF:</strong> ${docCliente}</div>
+                    <div><strong>Fecha:</strong> ${fechaActual}<br><strong>Condición:</strong> ${factura.condicion_pago}</div>
+                </div>
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                    <thead style="background: #f4f6f8;"><tr><th style="padding: 4px; text-align:left;">SKU</th><th style="padding: 4px; text-align:left;">Descripción</th><th style="padding: 4px;">Cant.</th><th style="padding: 4px; text-align:right;">Precio Unt.</th><th style="padding: 4px; text-align:right;">Total</th></tr></thead>
+                    <tbody>${htmlItems}</tbody>
+                </table>
+                <div style="width: 300px; margin-left: auto;">
+                    <div style="display: flex; justify-content: space-between;"><span>Monto Exento:</span><span>Bs. ${factura.monto_exento.toFixed(2)}</span></div>
+                    <div style="display: flex; justify-content: space-between;"><span>Base Imponible:</span><span>Bs. ${factura.base_imponible.toFixed(2)}</span></div>
+                    <div style="display: flex; justify-content: space-between;"><span>IVA (16%):</span><span>Bs. ${(factura.base_imponible * 0.16).toFixed(2)}</span></div>
+                    ${factura.igtf_porcentaje > 0 ? `<div style="display: flex; justify-content: space-between;"><span>IGTF (3%):</span><span>Bs. ${(factura.total_bs * 0.03).toFixed(2)}</span></div>` : ''}
+                    <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 16px; margin-top: 5px; border-top: 2px solid #000;"><span>TOTAL:</span><span>Bs. ${factura.total_bs.toFixed(2)}</span></div>
+                    <div style="display: flex; justify-content: space-between; color: #555;"><span>Ref USD:</span><span>$${factura.total_usd.toFixed(2)}</span></div>
+                </div>`;
+            } else {
+                // Térmico (80mm o 58mm)
+                contenedor.innerHTML = `
+                <div style="text-align: center; margin-bottom: 10px; border-bottom: 1px dashed #000; padding-bottom: 5px;">
+                    <strong style="font-size: 1.2em;">${empresa.nombre_empresa}</strong><br>
+                    RIF: ${empresa.rif}<br>
+                    ${empresa.direccion_fiscal || 'Dir: N/A'}<br><br>
+                    FACTURA: ${factura.nro_factura_manual || 'N/A'}<br>
+                    CONTROL: ${factura.nro_control_manual || 'N/A'}<br>
+                    FECHA: ${fechaActual}
+                </div>
+                <div style="margin-bottom: 10px;">
+                    <strong>Cliente:</strong> ${nomCliente}<br>
+                    <strong>C.I./RIF:</strong> ${docCliente}
+                </div>
+                <div style="border-top: 1px dashed #000; border-bottom: 1px dashed #000; margin-bottom: 10px; padding: 5px 0;">
+                    ${htmlItems}
+                </div>
+                <div>
+                    <div style="display: flex; justify-content: space-between;"><span>Exento:</span><span>Bs. ${factura.monto_exento.toFixed(2)}</span></div>
+                    <div style="display: flex; justify-content: space-between;"><span>B. Imponible:</span><span>Bs. ${factura.base_imponible.toFixed(2)}</span></div>
+                    <div style="display: flex; justify-content: space-between;"><span>IVA (16%):</span><span>Bs. ${(factura.base_imponible * 0.16).toFixed(2)}</span></div>
+                    ${factura.igtf_porcentaje > 0 ? `<div style="display: flex; justify-content: space-between;"><span>IGTF (3%):</span><span>Bs. ${(factura.total_bs * 0.03).toFixed(2)}</span></div>` : ''}
+                    <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 1.2em; border-top: 1px solid #000; margin-top: 5px; padding-top: 5px;"><span>TOTAL Bs:</span><span>${factura.total_bs.toFixed(2)}</span></div>
+                    <div style="display: flex; justify-content: space-between; font-weight: bold;"><span>Ref USD:</span><span>$${factura.total_usd.toFixed(2)}</span></div>
+                </div>
+                <div style="text-align: center; margin-top: 15px; font-size: 0.9em;">
+                    ¡Gracias por su compra!<br>Cajero: ${factura.nombre_cajero}
+                </div>`;
+            }
+        }
