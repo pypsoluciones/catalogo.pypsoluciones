@@ -220,6 +220,8 @@
             if(localStorage.getItem('pyp_usuario_nombre') && document.getElementById('nombre-usuario')) {
                 document.getElementById('nombre-usuario').innerText = localStorage.getItem('pyp_usuario_nombre').split(' ')[0];
             }
+            const defStock = localStorage.getItem('pyp_filtro_stock_inv_default') || 'TODOS';
+            if(document.getElementById('filtro-stock-inv')) document.getElementById('filtro-stock-inv').value = defStock;
             actualizarUIBotonesVista();
             await cargarBaseDatos();
             
@@ -251,7 +253,16 @@
                 const dataPre = await resPre.json();
                 dbInventario = dataProd.map(p => { const pre = dataPre.find(pr => pr.id_producto_sku === p.id_producto_sku) || {}; return { ...p, pre: pre }; });
                 
-                fuseInventario = new Fuse(dbInventario, { keys: ['id_producto_sku', 'codigo_barras', 'nombre'], threshold: 0.2 });
+                // NORMALIZACIÓN DE BÚSQUEDA DE INVENTARIO (Tolera acentos y errores ortográficos)
+                fuseInventario = new Fuse(dbInventario, { 
+                    keys: ['id_producto_sku', 'codigo_barras', 'nombre'], 
+                    threshold: 0.4, 
+                    ignoreLocation: true,
+                    getFn: function(obj, path) {
+                        let val = obj; for (let i = 0; i < path.length; i++) { val = val ? val[path[i]] : null; }
+                        return typeof val === 'string' ? val.normalize("NFD").replace(/[\u0300-\u036f]/g, "") : val;
+                    }
+                });
 
                 const pars = await resPar.json();
                 
@@ -292,20 +303,26 @@
         
         function filtrarInventario() { renderizarInventario(); }
 
-        function renderizarInventario() {
-            const query = document.getElementById('buscador-inv') ? document.getElementById('buscador-inv').value.trim() : '';
+function renderizarInventario() {
+            let query = document.getElementById('buscador-inv') ? document.getElementById('buscador-inv').value.trim() : '';
             const cat = document.getElementById('filtro-cat-inv') ? document.getElementById('filtro-cat-inv').value : 'TODAS';
             const marca = document.getElementById('filtro-marca-inv') ? document.getElementById('filtro-marca-inv').value : 'TODAS';
             const estatus = document.getElementById('filtro-estatus-inv') ? document.getElementById('filtro-estatus-inv').value : 'TODOS';
             const stock = document.getElementById('filtro-stock-inv') ? document.getElementById('filtro-stock-inv').value : 'TODOS';
             
             let data = dbInventario;
-            if (query !== '') data = fuseInventario.search(query).map(r => r.item);
+            
+            // Inyección predictiva: Normalizamos la consulta (quitamos acentos al buscar)
+            if (query !== '') { 
+                const queryNormalizada = query.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                data = fuseInventario.search(queryNormalizada).map(r => r.item); 
+            }
+            
             if (cat !== 'TODAS') data = data.filter(p => p.categoria_del_producto === cat);
             if (marca !== 'TODAS') data = data.filter(p => p.marca === marca);
             if (estatus !== 'TODOS') data = data.filter(p => p.estado_producto === estatus);
             if (stock === 'CRITICO') data = data.filter(p => p.stock_actual <= p.stock_minimo);
-            if (stock === 'DISPONIBLE') data = data.filter(p => p.stock_actual > 0);
+            if (stock === 'DISPONIBLE') data = data.filter(p => p.stock_actual > 0 || p.permitir_negativo);
 
             const c = document.getElementById('contenedor-inventario');
             if(data.length === 0) { c.innerHTML = `<div class="p-10 text-center text-gray-400 font-bold uppercase"><i class="fa-solid fa-box-open text-4xl mb-3 block opacity-50"></i> Sin Resultados</div>`; return; }
