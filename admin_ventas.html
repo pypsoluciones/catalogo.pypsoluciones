@@ -1611,28 +1611,40 @@
         async function inicializarCorrelativos() {
             const inputNroFactura = document.getElementById('pos-nro-factura');
             inputNroFactura.value = "Cargando...";
-            inputNroFactura.classList.add('animate-pulse');
 
             try {
-                // Consultamos la tabla facturas de ESTA empresa, ordenamos por número manual descendente, limit 1.
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/facturas?id_empresa=eq.${empresaActual}&select=nro_factura_manual&order=nro_factura_manual.desc&limit=1`, {
+                // Buscamos la última factura creada de ESTA empresa
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/facturas?id_empresa=eq.${empresaActual}&select=nro_factura_manual&order=fecha_creacion.desc&limit=1`, {
                     headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` }
                 });
 
-                if (!res.ok) throw new Error("Error consultando correlativos.");
+                let proximoNumero = 1; // Valor base si la tabla está vacía
 
-                const data = await res.json();
-                let proximoNumero = 1; // Valor por defecto si es la primera factura del sistema
-
-                if (data.length > 0 && data[0].nro_factura_manual) {
-                    // Convertimos a entero el último número y sumamos 1
-                    const ultimoNumeroArr = data[0].nro_factura_manual.split('-');
-                    const ultimoNumeroPuro = parseInt(ultimoNumeroArr[ultimoNumeroArr.length - 1]);
-                    
-                    if (!isNaN(ultimoNumeroPuro)) {
-                        proximoNumero = ultimoNumeroPuro + 1;
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.length > 0 && data[0].nro_factura_manual) {
+                        const ultimoStr = data[0].nro_factura_manual.trim();
+                        // Expresión regular para extraer solo los números (ignora letras o guiones)
+                        const soloNumeros = ultimoStr.replace(/\D/g, '');
+                        if(soloNumeros !== '') {
+                            proximoNumero = parseInt(soloNumeros) + 1;
+                        }
                     }
                 }
+                
+                // Formateamos a 6 dígitos (000001)
+                inputNroFactura.value = String(proximoNumero).padStart(6, '0');
+
+            } catch (e) {
+                console.error("Error al calcular correlativo:", e);
+                // Sistema de Autoconservación: Permitir ingreso manual si hay error
+                inputNroFactura.value = "";
+                inputNroFactura.placeholder = "Ej: 000001";
+                inputNroFactura.readOnly = false;
+                inputNroFactura.classList.remove('bg-white');
+                inputNroFactura.classList.add('bg-red-50');
+            }
+        }
 
                 // Formateamos a 6 dígitos con ceros a la izquierda (Standard Profit/Saint)
                 // Usamos String().padStart(longitud, caracter)
