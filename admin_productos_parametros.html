@@ -51,6 +51,26 @@
                     <button type="submit" id="btn-guardar" style="display:none;" class="w-full bg-[#143B62] hover:bg-[#0f2d4a] text-white font-bold py-2.5 rounded-lg shadow-sm transition flex justify-center items-center gap-2"><i class="fa-solid fa-plus"></i> Guardar Parámetro</button>
                     <p id="msg-selecciona" class="text-xs text-center text-gray-400 font-medium mt-2">Selecciona un grupo específico arriba para agregar nuevos valores.</p>
                 </form>
+                <div class="mt-6 border-t border-gray-200 pt-5">
+                    <h3 class="font-bold text-[#143B62] mb-3 flex items-center gap-2"><i class="fa-solid fa-desktop"></i> Preferencias de este Equipo</h3>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-[9px] font-bold text-gray-500 uppercase tracking-wider mb-1">Vista por Defecto</label>
+                            <select id="pref-vista" onchange="guardarPreferenciaLocal('pyp_vista_inventario', this.value)" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-semibold text-[#143B62] outline-none bg-gray-50 transition">
+                                <option value="tabla">Modo Tabla (Listado)</option>
+                                <option value="grid">Modo Cuadrícula (Tarjetas)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[9px] font-bold text-gray-500 uppercase tracking-wider mb-1">Filtro de Stock Inicial</label>
+                            <select id="pref-stock" onchange="guardarPreferenciaLocal('pyp_filtro_stock_inv_default', this.value)" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-semibold text-[#143B62] outline-none bg-gray-50 transition">
+                                <option value="TODOS">Mostrar Todo el Inventario</option>
+                                <option value="DISPONIBLE">Mostrar Solo Disponibles (>0)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <p class="text-[8px] text-gray-400 mt-2 text-justify leading-tight italic"><i class="fa-solid fa-info-circle"></i> Estas opciones se guardan en la memoria de este navegador.</p>
+                </div>
             </div>
 
             <div class="flex-1 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
@@ -69,21 +89,21 @@
     <script>
         const TOKEN_JWT = localStorage.getItem('pyp_token_seguro');
 
-        window.onload = () => { cargarParametros(); };
-
-        const textosAyuda = {
-            'CATEGORIA': "Ejemplo: Escribe <strong>'SMARTPHONES'</strong>, <strong>'LAPTOPS'</strong> o <strong>'PAPELERÍA'</strong>.",
-            'MARCA': "Ejemplo: Escribe <strong>'SAMSUNG'</strong> o <strong>'APPLE'</strong>.",
-            'TIPO_PRODUCTO': "Ejemplo: <strong>'PRODUCTO TERMINADO'</strong> o <strong>'SERVICIO'</strong>.",
-            'UNIDAD_MEDIDA': "Ejemplo: <strong>'UNIDADES'</strong>, <strong>'KG'</strong>, <strong>'PAQUETE'</strong>.",
-            'ESTADO_PRODUCTO': "Ejemplo: <strong>'ACTIVO'</strong> o <strong>'INACTIVO'</strong>.",
-            'CONDICION_PRODUCTO': "Ejemplo: <strong>'NUEVO'</strong> o <strong>'USADO'</strong>.",
-            'TALLA': "Ejemplo: <strong>'S'</strong>, <strong>'M'</strong>, <strong>'L'</strong>.",
-            'COLOR': "Ejemplo: <strong>'ROJO'</strong>, <strong>'NEGRO'</strong>.",
-            'CATEGORIA_VENTA': "Ejemplo: <strong>'OFERTA'</strong>, <strong>'COMBO'</strong>.",
-            'TIPO_IMPUESTO': "Ejemplo: <strong>'GENERAL'</strong> o <strong>'EXENTO'</strong>.",
-            'IMAGEN_DEFECTO': "Pega aquí el enlace <strong>(URL)</strong> exacto de la imagen para los artículos sin foto."
+       window.onload = () => { 
+            cargarParametros(); 
+            cargarPreferenciasLocales();
         };
+
+        function cargarPreferenciasLocales() {
+            const vista = localStorage.getItem('pyp_vista_inventario') || 'tabla';
+            const stock = localStorage.getItem('pyp_filtro_stock_inv_default') || 'TODOS';
+            if(document.getElementById('pref-vista')) document.getElementById('pref-vista').value = vista;
+            if(document.getElementById('pref-stock')) document.getElementById('pref-stock').value = stock;
+        }
+        
+        function guardarPreferenciaLocal(clave, valor) {
+            localStorage.setItem(clave, valor);
+        }
 
         async function cargarParametros() {
             const grupo = document.getElementById('param-grupo').value;
