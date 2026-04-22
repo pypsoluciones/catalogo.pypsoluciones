@@ -824,12 +824,62 @@
             document.getElementById('media-viewer').classList.remove('flex'); 
         }
 
+       // ============================================================================
+        // GESTIÓN DE CLIENTES Y BUSCADOR PREDICTIVO (ACTUALIZADO PRO)
         // ============================================================================
-        // GESTIÓN DE CLIENTES Y BUSCADOR PREDICTIVO
-        // ============================================================================
+        let clientesBusquedaActual = [];
+        let clienteIndexEnfocado = -1;
+
+        // Listener global de teclado exclusivo para el input de clientes
+        document.addEventListener('DOMContentLoaded', () => {
+            const inputCliente = document.getElementById('pos-buscador-cliente');
+            if(inputCliente) {
+                inputCliente.addEventListener('keydown', (e) => {
+                    const drop = document.getElementById('dropdown-clientes');
+                    if (drop.classList.contains('hidden')) return;
+                    
+                    const items = drop.querySelectorAll('.cliente-dropdown-item');
+                    if (items.length === 0) return;
+
+                    if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        clienteIndexEnfocado++;
+                        if (clienteIndexEnfocado >= items.length) clienteIndexEnfocado = 0;
+                        actualizarFocoCliente(items);
+                    } else if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        clienteIndexEnfocado--;
+                        if (clienteIndexEnfocado < 0) clienteIndexEnfocado = items.length - 1;
+                        actualizarFocoCliente(items);
+                    } else if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (clienteIndexEnfocado >= 0 && clienteIndexEnfocado < items.length) {
+                            seleccionarClienteIndex(clienteIndexEnfocado);
+                        }
+                    } else if (e.key === 'Escape') {
+                        drop.classList.add('hidden');
+                    }
+                });
+            }
+        });
+
+        function actualizarFocoCliente(items) {
+            items.forEach((item, i) => {
+                if (i === clienteIndexEnfocado) {
+                    item.classList.add('bg-blue-100', 'border-l-4', 'border-[#143B62]');
+                    item.classList.remove('hover:bg-blue-50');
+                    item.scrollIntoView({ block: 'nearest' });
+                } else {
+                    item.classList.remove('bg-blue-100', 'border-l-4', 'border-[#143B62]');
+                    item.classList.add('hover:bg-blue-50');
+                }
+            });
+        }
+
         function buscarPredictivoCliente() {
             const query = document.getElementById('pos-buscador-cliente').value.trim(); 
             const drop = document.getElementById('dropdown-clientes');
+            clienteIndexEnfocado = -1; // Resetear foco al escribir
             
             if(query === '') { 
                 drop.classList.add('hidden'); 
@@ -837,21 +887,86 @@
             }
             
             const resultados = fuseClientes.search(query).slice(0, 5); 
+            clientesBusquedaActual = resultados.map(r => r.item); // Guardar en RAM
             drop.innerHTML = '';
             
-            if(resultados.length === 0) { 
+            if(clientesBusquedaActual.length === 0) { 
                 drop.innerHTML = `<div class="p-2 text-[9px] text-gray-500 text-center">Cliente no existe.</div>`; 
             } else { 
-                resultados.forEach(r => { 
-                    const c = r.item; 
+                clientesBusquedaActual.forEach((c, index) => { 
                     drop.innerHTML += `
-                    <div class="p-1.5 border-b border-gray-100 hover:bg-blue-50 cursor-pointer" onclick="seleccionarCliente('${encodeURIComponent(JSON.stringify(c))}')">
+                    <div class="p-1.5 border-b border-gray-100 hover:bg-blue-50 cursor-pointer cliente-dropdown-item transition-all" onclick="seleccionarClienteIndex(${index})">
                         <div class="font-bold text-[#143B62] text-[9px] truncate uppercase">${c.nombre_razon_social}</div>
                         <div class="text-[8px] text-gray-500 font-mono">${c.documento_identidad}</div>
                     </div>`; 
                 }); 
             }
             drop.classList.remove('hidden');
+        }
+
+        function seleccionarClienteIndex(index) {
+            const c = clientesBusquedaActual[index];
+            if(!c) return;
+            ejecutarSeleccionCliente(c);
+        }
+
+        // Se mantiene por compatibilidad con los modales de guardado
+        function seleccionarCliente(cStr) {
+            const c = JSON.parse(decodeURIComponent(cStr));
+            ejecutarSeleccionCliente(c);
+        }
+
+        function ejecutarSeleccionCliente(c) {
+            document.getElementById('txt-cli-nom').innerText = c.nombre_razon_social; 
+            document.getElementById('txt-cli-doc').innerText = c.documento_identidad; 
+            document.getElementById('txt-cli-tel').innerText = c.telefono_principal || 'N/A'; 
+            document.getElementById('txt-cli-dir').innerText = c.direccion_fiscal || c.direccion_principal || 'SIN DIRECCIÓN FISCAL CARGADA'; 
+            document.getElementById('txt-cli-tipo').innerText = c.tipo_contribuyente || 'NATURAL'; 
+            document.getElementById('txt-cli-precio').innerText = c.nivel_precio || 'GENERAL'; 
+            
+            document.getElementById('pos-id-cliente').value = c.id; 
+            document.getElementById('pos-nivel-precio-cliente').value = c.nivel_precio || 'GENERAL';
+            
+            document.getElementById('dropdown-clientes').classList.add('hidden'); 
+            document.getElementById('pos-buscador-cliente').value = ''; 
+            
+            document.getElementById('info-cliente-seleccionado').classList.remove('hidden'); 
+            document.getElementById('pos-buscador-cliente').classList.add('hidden');
+            
+            actualizarUI_Carrito();
+        }
+
+        function limpiarCliente() {
+            document.getElementById('info-cliente-seleccionado').classList.add('hidden'); 
+            document.getElementById('pos-buscador-cliente').classList.remove('hidden'); 
+            document.getElementById('pos-id-cliente').value = ''; 
+            document.getElementById('pos-nivel-precio-cliente').value = 'GENERAL'; 
+            
+            actualizarUI_Carrito();
+        }
+
+        function abrirModalNuevoCliente() { 
+            document.getElementById('form-cliente-rapido').reset(); 
+            document.getElementById('modal-nuevo-cliente').classList.remove('hidden'); 
+            document.getElementById('modal-nuevo-cliente').classList.add('flex'); 
+        }
+        function cerrarModalNuevoCliente() { 
+            document.getElementById('modal-nuevo-cliente').classList.add('hidden'); 
+        }
+        
+        function abrirModalFichaCompleta() { 
+            document.getElementById('form-ficha-completa').reset(); 
+            document.getElementById('modal-ficha-completa').classList.remove('hidden'); 
+            document.getElementById('modal-ficha-completa').classList.add('flex'); 
+        }
+        function cerrarModalFichaCompleta() { 
+            document.getElementById('modal-ficha-completa').classList.add('hidden'); 
+        }
+        
+        function cerrarDropdownCliente(e) { 
+            if(e.target.id !== 'pos-buscador-cliente') {
+                document.getElementById('dropdown-clientes').classList.add('hidden'); 
+            }
         }
 
         function seleccionarCliente(cStr) {
