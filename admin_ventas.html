@@ -502,7 +502,7 @@
             localStorage.removeItem('pyp_token_seguro'); localStorage.removeItem('pyp_usuario_nombre'); window.location.href = 'login.html';
         }
 
-        // ============================================================================
+       // ============================================================================
         // CONEXIÓN A BASE DE DATOS Y DESCARGA INICIAL
         // ============================================================================
         async function iniciarPuntoVenta() {
@@ -538,7 +538,17 @@
                 if(igtfConf) { pypIgtf = parseFloat(igtfConf.valor) / 100; }
 
                 dbClientes = await resCli.json();
-                fuseClientes = new Fuse(dbClientes, { keys: ['documento_identidad', 'nombre_razon_social'], threshold: 0.3, ignoreLocation: true });
+                
+                // NORMALIZACIÓN DE BÚSQUEDA DE CLIENTES
+                fuseClientes = new Fuse(dbClientes, { 
+                    keys: ['documento_identidad', 'nombre_razon_social'], 
+                    threshold: 0.4, 
+                    ignoreLocation: true,
+                    getFn: function(obj, path) {
+                        let val = obj; for (let i = 0; i < path.length; i++) { val = val ? val[path[i]] : null; }
+                        return typeof val === 'string' ? val.normalize("NFD").replace(/[\u0300-\u036f]/g, "") : val;
+                    }
+                });
 
                 const dataProd = await resProd.json(); 
                 const dataPre = await resPre.json();
@@ -548,7 +558,17 @@
                     return { ...p, pre: pre }; 
                 });
                 
-                fuseInventario = new Fuse(dbInventario, { keys: ['id_producto_sku', 'codigo_barras', 'nombre'], threshold: 0.2 });
+                // NORMALIZACIÓN DE BÚSQUEDA DE INVENTARIO (Tolera acentos y errores ortográficos)
+                fuseInventario = new Fuse(dbInventario, { 
+                    keys: ['id_producto_sku', 'codigo_barras', 'nombre'], 
+                    threshold: 0.4, // Nivel de tolerancia a errores ortográficos
+                    ignoreLocation: true,
+                    getFn: function(obj, path) {
+                        let val = obj; for (let i = 0; i < path.length; i++) { val = val ? val[path[i]] : null; }
+                        // Remueve acentos internamente para la comparación
+                        return typeof val === 'string' ? val.normalize("NFD").replace(/[\u0300-\u036f]/g, "") : val;
+                    }
+                });
 
                 const catArr = [...new Set(dbInventario.map(p => p.categoria_del_producto))];
                 let catHtml = '<option value="TODAS">TODAS LAS CATEGORÍAS</option>';
@@ -562,6 +582,113 @@
             }
         }
 
+        // ============================================================================
+        // VISTAS Y BÚSQUEDA DE INVENTARIO
+        // ============================================================================
+        function cambiarVistaPos(v) { 
+            posVistaActual = v; 
+            localStorage.setItem('pyp_pos_vista_inventario', v); 
+            actualizarBotonesVistaPos(); 
+            buscarProductos(); 
+        }
+
+        function actualizarBotonesVistaPos() { 
+            const btnTabla = document.getElementById('btn-vista-tabla-pos');
+            const btnGrid = document.getElementById('btn-vista-grid-pos');
+            btnTabla.classList.toggle('bg-white', posVistaActual === 'tabla'); 
+            btnTabla.classList.toggle('shadow-sm', posVistaActual === 'tabla'); 
+            btnGrid.classList.toggle('bg-white', posVistaActual === 'grid'); 
+            btnGrid.classList.toggle('shadow-sm', posVistaActual === 'grid'); 
+        }
+
+        function buscarProductos() {
+            let query = document.getElementById('buscador-pos').value.trim(); 
+            const cat = document.getElementById('filtro-cat-pos').value; 
+            const stockFilter = document.getElementById('filtro-stock-pos').value;
+            
+            let data = dbInventario;
+            
+            // Inyección predictiva: Normalizamos lo que escribe el usuario (le quitamos los acentos)
+            if (query !== '') { 
+                const queryNormalizada = query.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                data = fuseInventario.search(queryNormalizada).map(r => r.item); 
+            }
+            
+            if (cat !== 'TODAS') { data = data.filter(p => p.categoria_del_producto === cat); }
+            if (stockFilter === 'DISPONIBLE') { data = data.filter(p => p.stock_actual > 0 || p.permitir_negativo); }
+
+            const grid = document.getElementById('grid-productos'); 
+            let html = '';
+            
+            if (data.length === 0) { 
+                grid.className = "flex flex-col gap-1"; 
+                grid.innerHTML = `<div class="col-span-full p-10 text-center text-gray-400 font-medium text-xs">Sin resultados con los filtros actuales.</div>`; 
+                return; 
+            }
+
+            if (posVistaActual === 'tabla') {
+                grid.className = "dynamic-grid-table"; 
+                html = `
+                <div class="bg-white rounded shadow-sm border border-gray-200 overflow-hidden">
+                    <table class="w-full text-left text-[9px] whitespace-nowrap">
+                        <thead class="bg-[#143B62] text-white uppercase tracking-wider sticky top-0">
+                            <tr>
+                                <th class="py-1.5 px-2">Info</th><th class="py-1.5 px-2">SKU</th><th class="py-1.5 px-2">Producto</th>
+                                <th class="py-1.5 px-2 text-center">Stock</th><th class="py-1.5 px-2 text-right">Precio ($)</th><th class="py-1.5 px-2 text-center">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">`;
+                        
+                data.slice(0, 50).forEach(p => {
+                    const pUsd = p.pre.es_precio_fijo_bs ? p.pre.precio_fijo_bs / tasaBCV : p.pre.precio_general_usd || 0;
+                    const prodStr = encodeURIComponent(JSON.stringify({...p, pUsd: pUsd}));
+                    const bStkColor = p.stock_actual > 0 ? "text-emerald-600 font-bold" : "text-red-600 font-bold";
+                    
+                    html += `
+                        <tr class="hover:bg-blue-50 transition cursor-pointer" onclick="agregarAlCarrito('${prodStr}')">
+                            <td class="py-1 px-2 text-center"><button onclick="event.stopPropagation(); abrirInfoProducto('${prodStr}')" class="text-blue-500 hover:text-blue-700 transition"><i class="fa-solid fa-info-circle text-xs"></i></button></td>
+                            <td class="py-1 px-2 font-mono text-gray-500">${p.id_producto_sku}</td>
+                            <td class="py-1 px-2 font-bold text-[#143B62] truncate max-w-[150px]">${p.nombre}</td>
+                            <td class="py-1 px-2 text-center ${bStkColor}">${p.stock_actual}</td>
+                            <td class="py-1 px-2 text-right font-black text-[#25D366]">$${pUsd.toFixed(2)}</td>
+                            <td class="py-1 px-2 text-center"><button class="bg-[#25D366] text-white px-2 py-0.5 rounded text-[8px] font-bold">Agregar</button></td>
+                        </tr>`;
+                });
+                html += `</tbody></table></div>`;
+                
+            } else {
+                grid.className = "dynamic-grid-grid"; 
+                data.slice(0, 40).forEach(p => {
+                    const img = p.imagen_principal || imgDefecto; 
+                    const pUsd = p.pre.es_precio_fijo_bs ? p.pre.precio_fijo_bs / tasaBCV : p.pre.precio_general_usd || 0; 
+                    const pBs = pUsd * tasaBCV; 
+                    const prodStr = encodeURIComponent(JSON.stringify({...p, pUsd: pUsd}));
+                    
+                    let btnInfo = `<button onclick="event.stopPropagation(); abrirInfoProducto('${prodStr}')" class="absolute top-1 left-1 bg-blue-500 text-white w-5 h-5 rounded flex items-center justify-center transition shadow hover:bg-blue-600 z-10"><i class="fa-solid fa-info text-[8px]"></i></button>`;
+                    const bStkColor = p.stock_actual > 0 ? "text-emerald-600 bg-emerald-50" : "text-red-600 bg-red-50";
+                    
+                    html += `
+                    <div class="bg-white border border-gray-200 rounded-lg p-1.5 flex flex-col shadow-sm hover:shadow-md transition cursor-pointer active:scale-95 fade-in relative" onclick="agregarAlCarrito('${prodStr}')">
+                        ${btnInfo}
+                        <div class="h-16 w-full mb-1 bg-white flex items-center justify-center rounded">
+                            <img src="${img}" class="max-h-full max-w-full object-contain">
+                        </div>
+                        <div class="flex-1 flex flex-col justify-between min-w-0">
+                            <h4 class="text-[9px] font-bold text-[#143B62] leading-tight line-clamp-2 mb-1 uppercase">${p.nombre}</h4>
+                            <div class="mt-auto pt-1 border-t border-gray-100">
+                                <div class="flex items-baseline mb-0.5">
+                                    <span class="text-[8px] font-bold text-gray-900 mr-0.5">Bs.</span>
+                                    <span class="text-sm font-black text-gray-900 leading-none">${pBs.toFixed(2)}</span>
+                                </div>
+                                <div class="text-[8px] font-bold text-[#25D366]">US$ ${pUsd.toFixed(2)}</div>
+                                <div class="text-right text-[7px] font-bold ${bStkColor} px-1 rounded w-fit ml-auto mt-0.5">${p.stock_actual} und</div>
+                            </div>
+                        </div>
+                    </div>`;
+                });
+            }
+            grid.innerHTML = html;
+        }
         // ============================================================================
         // VISTAS Y BÚSQUEDA DE INVENTARIO
         // ============================================================================
@@ -905,11 +1032,24 @@
                     <i class="fa-solid fa-cart-arrow-down text-4xl mb-2"></i>
                     <p class="font-bold text-[10px] uppercase tracking-widest">Venta Vacía</p>
                 </div>`; 
-                document.getElementById('pos-subtotal').innerText = 'Bs. 0.00'; document.getElementById('pos-iva').innerText = 'Bs. 0.00'; document.getElementById('pos-exento').innerText = 'Bs. 0.00'; document.getElementById('pos-base-imponible').innerText = 'Bs. 0.00'; document.getElementById('pos-descuento-general-val').innerText = '- Bs. 0.00'; document.getElementById('pos-total-bs').innerText = 'Bs. 0.00'; document.getElementById('pos-total-usd').innerText = 'US$ 0.00'; document.getElementById('pos-items').innerText = '0'; document.getElementById('btn-cobrar').disabled = true; 
+                document.getElementById('pos-subtotal').innerText = 'Bs. 0.00'; 
+                document.getElementById('pos-iva').innerText = 'Bs. 0.00'; 
+                document.getElementById('pos-exento').innerText = 'Bs. 0.00'; 
+                document.getElementById('pos-base-imponible').innerText = 'Bs. 0.00'; 
+                document.getElementById('pos-descuento-general-val').innerText = '- Bs. 0.00'; 
+                document.getElementById('pos-total-bs').innerText = 'Bs. 0.00'; 
+                document.getElementById('pos-total-usd').innerText = 'US$ 0.00'; 
+                document.getElementById('pos-items').innerText = '0'; 
+                document.getElementById('btn-cobrar').disabled = true; 
                 return; 
             }
 
-            let html = ''; let itemsTotal = 0; let sumBaseImponibleUsd = 0; let sumMontoExentoUsd = 0; let sumTotalDescItemUsd = 0; let sumSubtotalBasePuroUsd = 0;
+            let html = ''; 
+            let itemsTotal = 0; 
+            let sumBaseImponibleUsd = 0; 
+            let sumMontoExentoUsd = 0; 
+            let sumTotalDescItemUsd = 0; 
+            let sumSubtotalBasePuroUsd = 0; // Ahora reflejará la suma de los NETOS
 
             carrito.forEach(item => {
                 let baseUsd = item.pUsd;
@@ -922,16 +1062,32 @@
                 else if (item.requerido_precio_2 > 0 && item.cantidad >= item.requerido_precio_2) { baseUsd = item.pre.precio_2_usd; } 
                 else if (item.requerido_precio_1 > 0 && item.cantidad >= item.requerido_precio_1) { baseUsd = item.pre.precio_1_usd; }
 
-                const lineaBaseUsd = baseUsd * item.cantidad; sumSubtotalBasePuroUsd += lineaBaseUsd;
+                const lineaBaseUsd = baseUsd * item.cantidad; 
+                
                 let descLineaUsd = 0; 
-                if(item.desc_tipo === 'PORCENTAJE') { descLineaUsd = lineaBaseUsd * (item.desc_val / 100); } else if(item.desc_tipo === 'MONTO') { descLineaUsd = item.desc_val; } else if(item.desc_tipo === 'MONTO_BS') { descLineaUsd = item.desc_val / tasaBCV; }
+                if(item.desc_tipo === 'PORCENTAJE') { descLineaUsd = lineaBaseUsd * (item.desc_val / 100); } 
+                else if(item.desc_tipo === 'MONTO') { descLineaUsd = item.desc_val; } 
+                else if(item.desc_tipo === 'MONTO_BS') { descLineaUsd = item.desc_val / tasaBCV; }
+                
                 if (descLineaUsd > lineaBaseUsd) descLineaUsd = lineaBaseUsd; 
                 
-                const totalLineaNetaUsd = lineaBaseUsd - descLineaUsd; sumTotalDescItemUsd += descLineaUsd;
-                const impItem = item.tipo_impuesto || 'GENERAL'; 
-                if(impItem === 'EXENTO') { sumMontoExentoUsd += totalLineaNetaUsd; } else { sumBaseImponibleUsd += totalLineaNetaUsd; }
+                const totalLineaNetaUsd = lineaBaseUsd - descLineaUsd; 
                 
-                itemsTotal += item.cantidad; const tieneDesc = descLineaUsd > 0; const precioUnidadFinalUsd = item.cantidad > 0 ? (totalLineaNetaUsd / item.cantidad) : 0;
+                // AQUÍ EL CAMBIO CONTABLE CLAVE: Sumamos el neto al subtotal general de la factura
+                sumSubtotalBasePuroUsd += totalLineaNetaUsd;
+                
+                sumTotalDescItemUsd += descLineaUsd;
+                
+                const impItem = item.tipo_impuesto || 'GENERAL'; 
+                if(impItem === 'EXENTO') { sumMontoExentoUsd += totalLineaNetaUsd; } 
+                else { sumBaseImponibleUsd += totalLineaNetaUsd; }
+                
+                itemsTotal += item.cantidad; 
+                const tieneDesc = descLineaUsd > 0; 
+                const precioUnidadFinalUsd = item.cantidad > 0 ? (totalLineaNetaUsd / item.cantidad) : 0;
+                
+                // Formateo sin el '0' molesto: si es mayor a 0 lo muestra, sino string vacío
+                const valorInputDesc = item.desc_val > 0 ? item.desc_val : '';
 
                 html += `
                 <div class="bg-white border border-gray-200 rounded p-1 mb-1.5 shadow-sm flex flex-col fade-in relative group min-h-[50px]">
@@ -950,7 +1106,7 @@
                                     <option value="PORCENTAJE" ${item.desc_tipo === 'PORCENTAJE'?'selected':''}>%</option>
                                     <option value="MONTO" ${item.desc_tipo === 'MONTO'?'selected':''}>$</option>
                                 </select>
-                                <input type="number" min="0" class="border border-red-200 rounded text-[9px] p-0.5 w-12 text-center outline-none bg-white font-black" value="${item.desc_val}" onchange="actualizarDescItem('${item.id_producto_sku}', 'val', this.value)">
+                                <input type="number" min="0" placeholder="0" class="border border-red-200 rounded text-[9px] p-0.5 w-12 text-center outline-none bg-white font-black" value="${valorInputDesc}" onchange="actualizarDescItem('${item.id_producto_sku}', 'val', this.value)">
                             </div>
                         </div>
                         <div class="shrink-0 flex flex-col items-center justify-center border border-gray-200 rounded overflow-hidden shadow-inner h-[44px]">
@@ -971,24 +1127,51 @@
             lista.innerHTML = html;
             
             // Prorrateo Factura Global
-            const typeDescGeneral = document.getElementById('pos-type-desc-general').value; const inputDescGeneral = parseFloat(document.getElementById('pos-input-desc-general').value) || 0;
-            let descGeneralTotalUsd = 0; const sumNetoItemsUsd = sumBaseImponibleUsd + sumMontoExentoUsd;
+            const typeDescGeneral = document.getElementById('pos-type-desc-general').value; 
+            const inputDescGeneral = parseFloat(document.getElementById('pos-input-desc-general').value) || 0;
+            
+            let descGeneralTotalUsd = 0; 
+            const sumNetoItemsUsd = sumBaseImponibleUsd + sumMontoExentoUsd; // Esto ahora equivale al "Subtotal Base" puro
 
-            if (typeDescGeneral === 'PORCENTAJE' && inputDescGeneral > 0) { descGeneralTotalUsd = sumNetoItemsUsd * (inputDescGeneral / 100); } else if (typeDescGeneral === 'MONTO' && inputDescGeneral > 0) { descGeneralTotalUsd = inputDescGeneral; } else if (typeDescGeneral === 'MONTO_BS' && inputDescGeneral > 0) { descGeneralTotalUsd = inputDescGeneral / tasaBCV; }
+            if (typeDescGeneral === 'PORCENTAJE' && inputDescGeneral > 0) { 
+                descGeneralTotalUsd = sumNetoItemsUsd * (inputDescGeneral / 100); 
+            } else if (typeDescGeneral === 'MONTO' && inputDescGeneral > 0) { 
+                descGeneralTotalUsd = inputDescGeneral; 
+            } else if (typeDescGeneral === 'MONTO_BS' && inputDescGeneral > 0) { 
+                descGeneralTotalUsd = inputDescGeneral / tasaBCV; 
+            }
+            
             if (descGeneralTotalUsd > sumNetoItemsUsd) descGeneralTotalUsd = sumNetoItemsUsd;
 
-            let finalBaseImponibleUsd = sumBaseImponibleUsd; let finalMontoExentoUsd = sumMontoExentoUsd;
-            if(sumNetoItemsUsd > 0 && descGeneralTotalUsd > 0) { const factor = 1 - (descGeneralTotalUsd / sumNetoItemsUsd); finalBaseImponibleUsd = sumBaseImponibleUsd * factor; finalMontoExentoUsd = sumMontoExentoUsd * factor; }
-            if(isNaN(finalBaseImponibleUsd)) finalBaseImponibleUsd = 0; if(isNaN(finalMontoExentoUsd)) finalMontoExentoUsd = 0;
-
-            const ivaUsd = finalBaseImponibleUsd * pypIva; const granTotalUsd = finalBaseImponibleUsd + finalMontoExentoUsd + ivaUsd;
+            let finalBaseImponibleUsd = sumBaseImponibleUsd; 
+            let finalMontoExentoUsd = sumMontoExentoUsd;
             
-            document.getElementById('pos-subtotal').innerText = `Bs. ${(sumSubtotalBasePuroUsd * tasaBCV).toFixed(2)}`; document.getElementById('pos-descuento-general-val').innerText = `- Bs. ${(descGeneralTotalUsd * tasaBCV).toFixed(2)}`;
-            document.getElementById('pos-exento').innerText = `Bs. ${(finalMontoExentoUsd * tasaBCV).toFixed(2)}`; document.getElementById('pos-base-imponible').innerText = `Bs. ${(finalBaseImponibleUsd * tasaBCV).toFixed(2)}`; document.getElementById('pos-iva').innerText = `Bs. ${(ivaUsd * tasaBCV).toFixed(2)}`;
-            document.getElementById('pos-items').innerText = itemsTotal; document.getElementById('pos-total-bs').innerText = `Bs. ${(granTotalUsd * tasaBCV).toFixed(2)}`; document.getElementById('pos-total-usd').innerText = `US$ ${granTotalUsd.toFixed(2)}`; document.getElementById('btn-cobrar').disabled = false;
-            document.getElementById('pos-base-imponible').dataset.valUsd = finalBaseImponibleUsd; document.getElementById('pos-exento').dataset.valUsd = finalMontoExentoUsd;
-        }
+            if(sumNetoItemsUsd > 0 && descGeneralTotalUsd > 0) { 
+                const factor = 1 - (descGeneralTotalUsd / sumNetoItemsUsd); 
+                finalBaseImponibleUsd = sumBaseImponibleUsd * factor; 
+                finalMontoExentoUsd = sumMontoExentoUsd * factor; 
+            }
+            
+            if(isNaN(finalBaseImponibleUsd)) finalBaseImponibleUsd = 0; 
+            if(isNaN(finalMontoExentoUsd)) finalMontoExentoUsd = 0;
 
+            const ivaUsd = finalBaseImponibleUsd * pypIva; 
+            const granTotalUsd = finalBaseImponibleUsd + finalMontoExentoUsd + ivaUsd;
+            
+            // Actualizamos la UI
+            document.getElementById('pos-subtotal').innerText = `Bs. ${(sumSubtotalBasePuroUsd * tasaBCV).toFixed(2)}`; 
+            document.getElementById('pos-descuento-general-val').innerText = `- Bs. ${(descGeneralTotalUsd * tasaBCV).toFixed(2)}`;
+            document.getElementById('pos-exento').innerText = `Bs. ${(finalMontoExentoUsd * tasaBCV).toFixed(2)}`; 
+            document.getElementById('pos-base-imponible').innerText = `Bs. ${(finalBaseImponibleUsd * tasaBCV).toFixed(2)}`; 
+            document.getElementById('pos-iva').innerText = `Bs. ${(ivaUsd * tasaBCV).toFixed(2)}`;
+            document.getElementById('pos-items').innerText = itemsTotal; 
+            document.getElementById('pos-total-bs').innerText = `Bs. ${(granTotalUsd * tasaBCV).toFixed(2)}`; 
+            document.getElementById('pos-total-usd').innerText = `US$ ${granTotalUsd.toFixed(2)}`; 
+            document.getElementById('btn-cobrar').disabled = false;
+            
+            document.getElementById('pos-base-imponible').dataset.valUsd = finalBaseImponibleUsd; 
+            document.getElementById('pos-exento').dataset.valUsd = finalMontoExentoUsd;
+        }
         // ============================================================================
         // MODAL DE COBRO Y CONFIRMACIÓN
         // ============================================================================
