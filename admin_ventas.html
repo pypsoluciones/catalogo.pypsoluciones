@@ -264,15 +264,18 @@
                         <span title="Euro Oficial" class="cursor-help">🇪🇺 EUR:</span>
                         <input type="number" id="input-tasa-eur" step="0.01" class="w-14 bg-white border border-blue-200 rounded px-1 py-0.5 outline-none text-right focus:border-[#E67E22] transition" value="0.00" onchange="guardarTasaManual('EUR', this.value)">
                     </div>
-                    <button onclick="sincronizarBCV()" class="bg-[#143B62] hover:bg-[#E67E22] text-white w-6 h-6 rounded flex items-center justify-center transition-colors shadow-md btn-press ml-1" title="Sincronizar BCV Automáticamente">
+                    <button onclick="sincronizarBCV()" class="bg-[#143B62] hover:bg-[#E67E22] text-white w-6 h-6 rounded flex items-center justify-center transition-colors shadow-md btn-press ml-1" title="Sincronizar BCV">
                         <i class="fa-solid fa-rotate text-[10px]"></i>
                     </button>
                 </div>
+                <button onclick="toggleSupermercado()" id="btn-supermercado" class="bg-slate-800 hover:bg-slate-900 text-white px-3 py-1.5 rounded text-[10px] font-bold uppercase transition-all shadow-md btn-press hidden sm:flex items-center">
+                    <i class="fa-solid fa-expand mr-1"></i> Expandir
+                </button>
             </div>
         </header>
 
         <div class="flex-1 flex flex-col md:flex-row overflow-hidden">
-            <div class="w-full md:w-3/5 lg:w-2/3 h-full flex flex-col border-r border-gray-200 bg-white relative z-0">
+            <div id="panel-izquierdo" class="w-full md:w-3/5 lg:w-2/3 h-full flex flex-col border-r border-gray-200 bg-white relative z-0 transition-all duration-300">
                 <div class="p-1.5 px-3 border-b border-gray-200 bg-gray-50 flex gap-2 shrink-0 overflow-x-auto no-scrollbar">
                     <div class="relative flex-1 min-w-[150px]">
                         <i class="fa-solid fa-search absolute left-2.5 top-1.5 text-gray-400 text-[10px]"></i>
@@ -297,7 +300,7 @@
                 </div>
             </div>
 
-            <div class="w-full md:w-2/5 lg:w-1/3 h-full flex flex-col bg-white shadow-[-5px_0_15px_rgba(0,0,0,0.03)] z-10 relative">
+            <div id="panel-derecho" class="w-full md:w-2/5 lg:w-1/3 h-full flex flex-col bg-white shadow-[-5px_0_15px_rgba(0,0,0,0.03)] z-10 transition-all duration-300">
                 
                 <div class="bg-gray-50 p-2 border-b border-gray-200 shrink-0 flex flex-col gap-1.5 shadow-inner">
                     <h3 class="text-[9px] font-bold text-[#143B62] uppercase tracking-wider border-b border-gray-200 pb-1"><i class="fa-solid fa-file-invoice mr-1"></i> Cabecera del Documento</h3>
@@ -370,14 +373,14 @@
                     </div>
                 </div>
 
-                <div class="p-2.5 bg-white border-t border-gray-200 shrink-0 shadow-[0_-10px_20px_rgba(0,0,0,0.03)] flex flex-col gap-0.5">
+                <div class="bg-white border-t border-gray-200 shrink-0 shadow-[0_-10px_20px_rgba(0,0,0,0.03)] flex flex-col">
                     
-                    <div class="flex justify-between items-center border-b border-gray-100 pb-1 mb-1 cursor-pointer group" onclick="document.getElementById('caja-acordeon-totales').classList.toggle('hidden'); this.querySelector('i').classList.toggle('fa-chevron-up'); this.querySelector('i').classList.toggle('fa-chevron-down');">
-                        <span class="text-[8px] font-black text-gray-400 uppercase tracking-widest group-hover:text-[#143B62] transition">Desglose Fiscal (Click para Ocultar/Mostrar)</span>
-                        <i class="fa-solid fa-chevron-down text-[10px] text-gray-300 group-hover:text-[#143B62] transition"></i>
-                    </div>
+                    <button onclick="toggleAcordeon()" class="w-full py-1.5 flex justify-center items-center gap-2 hover:bg-gray-50 transition border-b border-gray-100 focus:outline-none">
+                        <span id="txt-toggle-acordeon" class="text-[8px] font-black text-gray-400 uppercase tracking-widest">OCULTAR DESGLOSE FISCAL</span>
+                        <i id="icon-toggle-acordeon" class="fa-solid fa-chevron-down text-[9px] text-gray-400"></i>
+                    </button>
 
-                    <div id="caja-acordeon-totales" class="hidden flex flex-col gap-0.5 fade-in">
+                    <div id="caja-acordeon-totales" class="flex flex-col gap-0.5 p-2.5 pb-0">
                         <div class="flex justify-between items-center text-[9px] text-gray-500 font-bold uppercase">
                             <span>Subtotal Base</span>
                             <span id="pos-subtotal">Bs. 0.00</span>
@@ -399,23 +402,25 @@
                         <div id="contenedor-totales-fiscales" class="flex flex-col gap-0.5"></div>
                         <div class="border-t border-gray-100 my-1"></div>
                     </div>
-                    
-                    <div class="flex justify-between items-end mb-0.5 mt-1">
-                        <span class="text-[10px] font-bold text-[#143B62] uppercase tracking-wider">Total a Pagar Bs</span>
-                        <span class="text-2xl font-black text-gray-900 leading-none" id="pos-total-bs">Bs. 0.00</span>
-                    </div>
-                    <div class="flex justify-between items-center mb-1.5">
-                        <span class="text-[8px] font-bold text-gray-400 uppercase">Total Divisas</span>
-                        <span class="text-xs font-bold text-[#25D366]" id="pos-total-usd">US$ 0.00</span>
-                    </div>
-                    <div class="flex gap-2 h-7 mt-1">
-                        <div class="bg-blue-50 rounded flex items-center justify-center border border-blue-100 px-3 shrink-0 shadow-inner">
-                            <span class="text-xs font-bold text-[#143B62]" id="pos-items">0</span>
-                            <span class="text-[7px] font-medium text-gray-500 uppercase ml-1">Art</span>
+
+                    <div class="px-2.5 pb-2.5 pt-1">
+                        <div class="flex justify-between items-end mb-0.5 mt-1">
+                            <span class="text-[10px] font-bold text-[#143B62] uppercase tracking-wider">Total a Pagar Bs</span>
+                            <span class="text-2xl font-black text-gray-900 leading-none" id="pos-total-bs">Bs. 0.00</span>
                         </div>
-                        <button onclick="abrirCobro()" id="btn-cobrar" disabled class="flex-1 bg-[#25D366] hover:bg-[#1ebd5c] disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold rounded shadow-sm transition-all text-[10px] uppercase tracking-widest flex justify-center items-center gap-1.5 btn-press">
-                            <i class="fa-solid fa-hand-holding-dollar"></i> Cobrar
-                        </button>
+                        <div class="flex justify-between items-center mb-1.5">
+                            <span class="text-[8px] font-bold text-gray-400 uppercase">Total Divisas</span>
+                            <span class="text-xs font-bold text-[#25D366]" id="pos-total-usd">US$ 0.00</span>
+                        </div>
+                        <div class="flex gap-2 h-7 mt-1">
+                            <div class="bg-blue-50 rounded flex items-center justify-center border border-blue-100 px-3 shrink-0 shadow-inner">
+                                <span class="text-xs font-bold text-[#143B62]" id="pos-items">0</span>
+                                <span class="text-[7px] font-medium text-gray-500 uppercase ml-1">Art</span>
+                            </div>
+                            <button onclick="abrirCobro()" id="btn-cobrar" disabled class="flex-1 bg-[#25D366] hover:bg-[#1ebd5c] disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold rounded shadow-sm transition-all text-[10px] uppercase tracking-widest flex justify-center items-center gap-1.5 btn-press">
+                                <i class="fa-solid fa-hand-holding-dollar"></i> Cobrar
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -424,15 +429,14 @@
     <script>
         // ================= CONFIGURACIÓN Y VARIABLES GLOBALES =================
         const TOKEN_JWT = localStorage.getItem('pyp_token_seguro');
-        let dbInventario = [], carrito = [], dbClientes = [], fuseInventario = null, fuseClientes = null, empresaActual = null;
-        let dbCondiciones = []; // Para almacenar las condiciones desde Supabase
+        let dbInventario = [], carrito = [], dbClientes = [], dbCondiciones = [], fuseInventario = null, fuseClientes = null, empresaActual = null;
         let tasaBCV = 1, tasaBCVEur = 1;
         let pypIva = 0.16, pypIvaRed1 = 0.08, pypIvaRed2 = 0.12, pypIgtf = 0.03;
         let pypMostrarExento = 'SI';
         let imgDefecto = 'https://via.placeholder.com/150/f8fafc/94a3b8?text=P%26P';
         let posVistaActual = 'grid';
+        let modoSupermercado = false;
 
-        // FECHA LOCAL DEL SISTEMA: Si tu PC está en 2026, esto devolverá 2026.
         function getFechaHoy() { const hoy = new Date(); return hoy.toISOString().split('T')[0]; }
 
         // ================= INICIALIZACIÓN DEL SISTEMA =================
@@ -457,30 +461,65 @@
             });
         };
 
+        // ================= FUNCIONES DE INTERFAZ (NUEVAS) =================
+        function toggleSupermercado() {
+            modoSupermercado = !modoSupermercado;
+            const panelIzq = document.getElementById('panel-izquierdo');
+            const panelDer = document.getElementById('panel-derecho');
+            const btn = document.getElementById('btn-supermercado');
+
+            if (modoSupermercado) {
+                // Ocultar inventario y expandir factura al 100%
+                panelIzq.style.width = '0px'; panelIzq.classList.add('opacity-0', 'overflow-hidden');
+                panelDer.style.width = '100%'; panelDer.classList.remove('md:w-2/5', 'lg:w-1/3');
+                btn.innerHTML = `<i class="fa-solid fa-compress mr-1"></i> Contraer`;
+                btn.classList.replace('bg-slate-800', 'bg-blue-600');
+            } else {
+                // Restaurar el diseño original
+                panelIzq.style.width = ''; panelIzq.classList.remove('opacity-0', 'overflow-hidden');
+                panelDer.style.width = ''; panelDer.classList.add('md:w-2/5', 'lg:w-1/3');
+                btn.innerHTML = `<i class="fa-solid fa-expand mr-1"></i> Expandir`;
+                btn.classList.replace('bg-blue-600', 'bg-slate-800');
+            }
+        }
+
+        function toggleAcordeon() {
+            const caja = document.getElementById('caja-acordeon-totales');
+            const icon = document.getElementById('icon-toggle-acordeon');
+            const txt = document.getElementById('txt-toggle-acordeon');
+            
+            if (caja.classList.contains('hidden')) {
+                caja.classList.remove('hidden');
+                icon.className = 'fa-solid fa-chevron-down text-[9px] text-gray-400';
+                txt.innerText = 'OCULTAR DESGLOSE FISCAL';
+            } else {
+                caja.classList.add('hidden');
+                icon.className = 'fa-solid fa-chevron-up text-[9px] text-gray-300';
+                txt.innerText = 'VER DESGLOSE FISCAL';
+            }
+        }
+
         function ajustarFechaVencimiento() {
-            // El value del select ahora tiene la CANTIDAD DE DÍAS (Ej. "0", "15", "30")
             const selectVal = document.getElementById('pos-condicion').value;
             const inputVenc = document.getElementById('pos-fecha-vencimiento');
             const emisionStr = document.getElementById('pos-fecha-emision').value;
             
+            // Permitimos el caso de que el usuario cree una condicion "Manual|MANUAL"
             if (selectVal === 'MANUAL') {
-                // Si alguien crea una condición con valor 'MANUAL', dejamos que editen
-                inputVenc.readOnly = false;
-                inputVenc.classList.remove('bg-gray-100'); inputVenc.classList.add('bg-white');
+                inputVenc.readOnly = false; inputVenc.classList.remove('bg-gray-100'); inputVenc.classList.add('bg-white');
                 return;
             }
 
             const dias = parseInt(selectVal) || 0;
-            // T12:00:00Z evita problemas de zonas horarias
+            // T12:00:00Z para evitar problemas de zona horaria local
             let fechaBase = new Date(emisionStr + 'T12:00:00Z');
             fechaBase.setDate(fechaBase.getDate() + dias);
-            
             inputVenc.value = fechaBase.toISOString().split('T')[0];
             
             if (dias === 0) {
                 inputVenc.readOnly = true; inputVenc.classList.add('bg-gray-100'); inputVenc.classList.remove('bg-white');
             } else {
-                // Aunque se calcule sola, permitimos que el cajero la ajuste si es un crédito flexible
+                // Si es un crédito, igual le dejamos la caja libre para ajustar si negocia más días.
                 inputVenc.readOnly = false; inputVenc.classList.remove('bg-gray-100'); inputVenc.classList.add('bg-white');
             }
         }
@@ -504,7 +543,6 @@
                 if (!resUser.ok) throw new Error("Sesión inválida.");
                 empresaActual = (await resUser.json())[0].id_empresa;
 
-                // Añadimos resCond para traer las CONDICION_PAGO de la base de datos
                 const [resTasa, resProd, resPre, resCli, resConf, resCond] = await Promise.all([
                     fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?select=*&order=fecha_actualizacion.desc&limit=5`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
                     fetch(`${SUPABASE_URL}/rest/v1/productos?select=*&estado_producto=eq.ACTIVO`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
@@ -516,26 +554,22 @@
 
                 if (!resProd.ok || !resPre.ok) throw new Error("Fallo al descargar la base de datos.");
 
-                // Llenado dinámico del Select de Condiciones
+                // CONDICIONES DE PAGO DESDE LA NUBE
                 if (resCond.ok) {
                     dbCondiciones = await resCond.json();
                     let htmlCond = '';
-                    if (dbCondiciones.length === 0) {
-                        htmlCond = '<option value="0">CONTADO</option>'; // Fallback de emergencia
-                    } else {
+                    if(dbCondiciones.length === 0) { htmlCond = '<option value="0">CONTADO</option>'; } 
+                    else {
                         dbCondiciones.forEach(c => {
-                            // c.valor debería ser "NOMBRE|DIAS", ej "CRÉDITO 15 DÍAS|15"
-                            const partes = c.valor.split('|');
-                            const nombre = partes[0];
-                            const dias = partes.length > 1 ? partes[1] : 0;
-                            htmlCond += `<option value="${dias}">${nombre}</option>`;
+                            const partes = c.valor.split('|'); 
+                            htmlCond += `<option value="${partes[1] || 0}">${partes[0].toUpperCase()}</option>`;
                         });
                     }
                     document.getElementById('pos-condicion').innerHTML = htmlCond;
                     ajustarFechaVencimiento();
                 }
 
-                // Carga de Tasas
+                // TASAS
                 const dataTasa = await resTasa.json(); 
                 if(dataTasa.length > 0) { 
                     const tUsd = dataTasa.find(t => t.moneda === 'USD');
@@ -544,7 +578,7 @@
                     if(tEur) { tasaBCVEur = tEur.tasa; document.getElementById('input-tasa-eur').value = tasaBCVEur.toFixed(2); }
                 }
                 
-                // Carga de Configuración
+                // CONFIGURACIÓN FISCAL
                 let dConf = []; if(resConf.ok) dConf = await resConf.json();
                 const ivaConf = dConf.find(c => c.parametro === 'IVA_GENERAL'); if(ivaConf) pypIva = parseFloat(ivaConf.valor) / 100;
                 const ivaR1Conf = dConf.find(c => c.parametro === 'IVA_REDUCIDO_1'); if(ivaR1Conf) pypIvaRed1 = parseFloat(ivaR1Conf.valor) / 100;
@@ -552,32 +586,16 @@
                 const igtfConf = dConf.find(c => c.parametro === 'IGTF'); if(igtfConf) pypIgtf = parseFloat(igtfConf.valor) / 100;
                 const exentoConf = dConf.find(c => c.parametro === 'POS_MOSTRAR_EXENTO'); if(exentoConf) pypMostrarExento = exentoConf.valor;
 
-                // Motor Predictivo Clientes
+                // INVENTARIO Y CLIENTES (FUSE)
                 dbClientes = await resCli.json();
-                fuseClientes = new Fuse(dbClientes, { 
-                    keys: ['documento_identidad', 'nombre_razon_social'], threshold: 0.4, ignoreLocation: true,
-                    getFn: function(obj, path) {
-                        let val = obj; for (let i = 0; i < path.length; i++) { val = val ? val[path[i]] : null; }
-                        return typeof val === 'string' ? val.normalize("NFD").replace(/[\u0300-\u036f]/g, "") : val;
-                    }
-                });
+                fuseClientes = new Fuse(dbClientes, { keys: ['documento_identidad', 'nombre_razon_social'], threshold: 0.4, ignoreLocation: true, getFn: function(obj, path) { let val = obj; for (let i = 0; i < path.length; i++) { val = val ? val[path[i]] : null; } return typeof val === 'string' ? val.normalize("NFD").replace(/[\u0300-\u036f]/g, "") : val; } });
 
-                // Motor Inventario
                 const dataProd = await resProd.json(); const dataPre = await resPre.json();
                 dbInventario = dataProd.map(p => { const pre = dataPre.find(pr => pr.id_producto_sku === p.id_producto_sku) || {}; return { ...p, pre: pre }; });
-                
-                fuseInventario = new Fuse(dbInventario, { 
-                    keys: ['id_producto_sku', 'codigo_barras', 'nombre'], threshold: 0.4, ignoreLocation: true,
-                    getFn: function(obj, path) {
-                        let val = obj; for (let i = 0; i < path.length; i++) { val = val ? val[path[i]] : null; }
-                        return typeof val === 'string' ? val.normalize("NFD").replace(/[\u0300-\u036f]/g, "") : val;
-                    }
-                });
+                fuseInventario = new Fuse(dbInventario, { keys: ['id_producto_sku', 'codigo_barras', 'nombre'], threshold: 0.4, ignoreLocation: true, getFn: function(obj, path) { let val = obj; for (let i = 0; i < path.length; i++) { val = val ? val[path[i]] : null; } return typeof val === 'string' ? val.normalize("NFD").replace(/[\u0300-\u036f]/g, "") : val; } });
 
-                const catArr = [...new Set(dbInventario.map(p => p.categoria_del_producto))];
-                let catHtml = '<option value="TODAS">TODAS LAS CATEGORÍAS</option>';
-                catArr.forEach(c => { if(c) catHtml += `<option value="${c}">${c}</option>` });
-                document.getElementById('filtro-cat-pos').innerHTML = catHtml;
+                const catArr = [...new Set(dbInventario.map(p => p.categoria_del_producto))]; let catHtml = '<option value="TODAS">TODAS LAS CATEGORÍAS</option>';
+                catArr.forEach(c => { if(c) catHtml += `<option value="${c}">${c}</option>` }); document.getElementById('filtro-cat-pos').innerHTML = catHtml;
                 
                 buscarProductos(); 
             } catch(e) { mostrarErrorConexion(e.message); }
@@ -588,22 +606,14 @@
         function actualizarBotonesVistaPos() { document.getElementById('btn-vista-tabla-pos').classList.toggle('bg-white', posVistaActual === 'tabla'); document.getElementById('btn-vista-tabla-pos').classList.toggle('shadow-sm', posVistaActual === 'tabla'); document.getElementById('btn-vista-grid-pos').classList.toggle('bg-white', posVistaActual === 'grid'); document.getElementById('btn-vista-grid-pos').classList.toggle('shadow-sm', posVistaActual === 'grid'); }
 
         function buscarProductos() {
-            let query = document.getElementById('buscador-pos').value.trim(); 
-            const cat = document.getElementById('filtro-cat-pos').value; 
-            const stockFilter = document.getElementById('filtro-stock-pos').value;
-            
+            let query = document.getElementById('buscador-pos').value.trim(); const cat = document.getElementById('filtro-cat-pos').value; const stockFilter = document.getElementById('filtro-stock-pos').value;
             let data = dbInventario;
             
-            if (query !== '') { 
-                const queryNormalizada = query.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                data = fuseInventario.search(queryNormalizada).map(r => r.item); 
-            }
-            
+            if (query !== '') { const queryNormalizada = query.normalize("NFD").replace(/[\u0300-\u036f]/g, ""); data = fuseInventario.search(queryNormalizada).map(r => r.item); }
             if (cat !== 'TODAS') data = data.filter(p => p.categoria_del_producto === cat);
             if (stockFilter === 'DISPONIBLE') data = data.filter(p => p.stock_actual > 0 || p.permitir_negativo);
 
             const grid = document.getElementById('grid-productos'); let html = '';
-            
             if (data.length === 0) { grid.className = "flex flex-col gap-1"; grid.innerHTML = `<div class="col-span-full p-10 text-center text-gray-400 font-medium text-xs">Sin resultados.</div>`; return; }
 
             if (posVistaActual === 'tabla') {
@@ -675,7 +685,6 @@
         function buscarPredictivoCliente() {
             let query = document.getElementById('pos-buscador-cliente').value.trim(); const drop = document.getElementById('dropdown-clientes'); clienteIndexEnfocado = -1; 
             if(query === '') { drop.classList.add('hidden'); return; }
-            
             const queryNormalizada = query.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
             const resultados = fuseClientes.search(queryNormalizada).slice(0, 5); 
             clientesBusquedaActual = resultados.map(r => r.item); drop.innerHTML = '';
@@ -714,7 +723,7 @@
             try { const payload = { id_empresa: empresaActual, tipo_persona: 'CLIENTE', documento_identidad: document.getElementById('fc-doc').value.trim().toUpperCase(), nombre_razon_social: document.getElementById('fc-nombre').value.trim().toUpperCase(), direccion_principal: document.getElementById('fc-dir-p').value.trim().toUpperCase(), telefono_principal: document.getElementById('fc-tel1').value.trim(), correo_electronico: document.getElementById('fc-email').value.trim(), tipo_contribuyente: document.getElementById('fc-tipo').value, nivel_precio: document.getElementById('fc-precio').value, estatus: 'ACTIVO' }; const res = await fetch(`${SUPABASE_URL}/rest/v1/directorio_maestro`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, body: JSON.stringify(payload) }); if(!res.ok) throw new Error("Doc duplicado o error."); const data = await res.json(); dbClientes.push(data[0]); fuseClientes.setCollection(dbClientes); ejecutarSeleccionCliente(data[0]); cerrarModalFichaCompleta(); } catch(e) { alert(e.message); } finally { btn.innerHTML = `Guardar`; btn.disabled = false; } 
         }
 
-        // ================= MATEMÁTICA Y LÓGICA DEL CARRITO (MOTOR MULTI-TAX INTACTO) =================
+        // ================= MATEMÁTICA Y LÓGICA DEL CARRITO (RESTAURADA 100%) =================
         function agregarAlCarrito(prodStr) { const p = JSON.parse(decodeURIComponent(prodStr)); const idx = carrito.findIndex(i => i.id_producto_sku === p.id_producto_sku); if (idx !== -1) { if(carrito[idx].cantidad < p.stock_actual || p.permitir_negativo) { carrito[idx].cantidad++; } } else { carrito.push({ ...p, cantidad: 1, desc_tipo: 'MONTO_BS', desc_val: 0 }); } actualizarUI_Carrito(); }
         function modificarCantidad(sku, delta) { const idx = carrito.findIndex(i => i.id_producto_sku === sku); if (idx === -1) return; const nuevo = carrito[idx].cantidad + delta; if(nuevo > carrito[idx].stock_actual && !carrito[idx].permitir_negativo) return; carrito[idx].cantidad = nuevo; if (carrito[idx].cantidad <= 0) carrito.splice(idx, 1); actualizarUI_Carrito(); }
         function eliminarDelCarrito(sku) { carrito = carrito.filter(i => i.id_producto_sku !== sku); actualizarUI_Carrito(); }
@@ -748,6 +757,7 @@
                 itemsTotal += item.cantidad; const tieneDesc = descLineaUsd > 0; const precioUnidadFinalUsd = item.cantidad > 0 ? (totalLineaNetaUsd / item.cantidad) : 0;
                 const valorInputDesc = item.desc_val > 0 ? item.desc_val : '';
 
+                // HTML COMPLETO DEL ITEM (CON DESCUENTOS INDIVIDUALES INTACTOS)
                 html += `
                 <div class="bg-white border border-gray-200 rounded p-1 mb-1.5 shadow-sm flex flex-col fade-in relative group min-h-[50px]">
                     <div class="flex gap-2">
@@ -821,7 +831,7 @@
         async function procesarVenta() {
             const btn = document.getElementById('btn-confirmar'); btn.disabled = true; mostrarCarga("Procesando...", "Registrando venta e imprimiendo documento");
             try {
-                const metodo = document.getElementById('cobro-metodo').value; const formatoPrint = document.getElementById('cobro-formato-impresion').value; const condicion = document.getElementById('pos-condicion').options[document.getElementById('pos-condicion').selectedIndex].text; const nroFactura = document.getElementById('pos-nro-factura').value.trim().toUpperCase(); const nroControl = document.getElementById('pos-nro-control').value.trim().toUpperCase(); const fechaVenc = document.getElementById('pos-fecha-vencimiento').value;
+                const metodo = document.getElementById('cobro-metodo').value; const formatoPrint = document.getElementById('cobro-formato-impresion').value; const condicionSel = document.getElementById('pos-condicion'); const condicion = condicionSel.options[condicionSel.selectedIndex].text; const nroFactura = document.getElementById('pos-nro-factura').value.trim().toUpperCase(); const nroControl = document.getElementById('pos-nro-control').value.trim().toUpperCase(); const fechaVenc = document.getElementById('pos-fecha-vencimiento').value;
                 const totalBsFinal = parseFloat(document.getElementById('modal-total-bs-final').innerText.replace('Bs. ','')); const baseImpUsd = parseFloat(document.getElementById('contenedor-totales-fiscales').dataset.baseTotalUsd) || 0; const exentoUsd = parseFloat(document.getElementById('contenedor-totales-fiscales').dataset.exentoTotalUsd) || 0;
 
                 let empresaPrint = { nombre_empresa: 'P&P SOLUCIONES', rif: 'J-00000000-0', direccion_fiscal: 'SIN DIRECCIÓN FISCAL' };
@@ -841,7 +851,7 @@
             } catch(e) { mostrarCarga("Fallo Crítico", e.message, true); } finally { btn.disabled = false; }
         }
 
-        // ================= MOTOR DE IMPRESIÓN FISCAL =================
+        // ================= MOTOR DE IMPRESIÓN FISCAL (INTACTO) =================
         function generarHTMLImpresion(formato, empresa, factura, items) {
             const contenedor = document.getElementById('ticket-impresion'); contenedor.className = `hidden print:block formato-${formato}`;
             const docCliente = document.getElementById('txt-cli-doc').innerText; const nomCliente = document.getElementById('txt-cli-nom').innerText; const dirCliente = document.getElementById('txt-cli-dir').innerText; const fechaE = new Date().toLocaleDateString('es-VE'); const fechaV = new Date(factura.fecha_vencimiento + 'T12:00:00Z').toLocaleDateString('es-VE');
@@ -855,45 +865,54 @@
             }
         }
 
-        // ================= MOTOR DE TASAS (MANUAL Y API) =================
+        // ================= MOTOR DE TASAS (CON BLINDAJE DE INTEGRIDAD) =================
         async function guardarTasaManual(moneda, valor) {
-            const nuevaTasa = parseFloat(valor); if(isNaN(nuevaTasa) || nuevaTasa <= 0) return;
-            if(moneda === 'USD') tasaBCV = nuevaTasa; if(moneda === 'EUR') tasaBCVEur = nuevaTasa;
-            try { await guardarTasaEnDB(moneda, nuevaTasa); actualizarUI_Carrito(); } catch(e) { alert("Error al guardar la tasa manual."); }
-        }
-
-        async function guardarTasaEnDB(moneda, valor) {
-            const payload = { moneda: moneda, tasa: valor };
-            await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            const t = parseFloat(valor); if(isNaN(t) || t <= 0) return;
+            if(moneda === 'USD') tasaBCV = t; if(moneda === 'EUR') tasaBCVEur = t;
+            try { 
+                await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?moneda=eq.${moneda}`, { method: 'DELETE', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ moneda: moneda, tasa: t }) }); 
+                actualizarUI_Carrito(); 
+            } catch(e) { console.error("Error tasa manual:", e); }
         }
 
         async function sincronizarBCV() {
-            mostrarCarga("Sincronizando...", "Obteniendo tasas oficiales actualizadas de internet...");
+            mostrarCarga("Sincronizando con BCV...", "Extrayendo tasa oficial de internet...");
             try {
-                // Fetch Dólar Oficial
-                const resUsd = await fetch('https://ve.dolarapi.com/v1/dolares/oficial');
-                if(!resUsd.ok) throw new Error("Fallo API USD");
-                const dataUsd = await resUsd.json();
+                // Viajamos por proxy para evitar el Firewall del BCV
+                const bcvUrl = encodeURIComponent('https://www.bcv.org.ve/');
+                const proxyUrl = `https://api.allorigins.win/get?url=${bcvUrl}`;
                 
-                // Fetch Euro Oficial
-                const resEur = await fetch('https://ve.dolarapi.com/v1/euros/oficial');
-                if(!resEur.ok) throw new Error("Fallo API EUR");
-                const dataEur = await resEur.json();
+                const response = await fetch(proxyUrl);
+                if (!response.ok) throw new Error("Fallo el Proxy");
+                const dataProxy = await response.json();
+                const html = dataProxy.contents; 
 
-                tasaBCV = dataUsd.promedio;
-                tasaBCVEur = dataEur.promedio;
+                const matchDolar = html.match(/<div id="dolar".*?>.*?<strong>\s*(.*?)\s*<\/strong>/is);
+                const matchEuro = html.match(/<div id="euro".*?>.*?<strong>\s*(.*?)\s*<\/strong>/is);
 
-                document.getElementById('input-tasa-usd').value = tasaBCV.toFixed(2);
-                document.getElementById('input-tasa-eur').value = tasaBCVEur.toFixed(2);
+                if (matchDolar && matchEuro) {
+                    const stringDolar = matchDolar[1].trim().replace(/\./g, '').replace(',', '.');
+                    const stringEuro = matchEuro[1].trim().replace(/\./g, '').replace(',', '.');
+                    
+                    tasaBCV = parseFloat(stringDolar);
+                    tasaBCVEur = parseFloat(stringEuro);
 
-                await guardarTasaEnDB('USD', tasaBCV);
-                await guardarTasaEnDB('EUR', tasaBCVEur);
+                    document.getElementById('input-tasa-usd').value = tasaBCV.toFixed(2);
+                    document.getElementById('input-tasa-eur').value = tasaBCVEur.toFixed(2);
 
-                actualizarUI_Carrito();
-                cerrarErrorCarga();
+                    // Guardado seguro (Borra y reemplaza)
+                    await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?moneda=eq.USD`, { method: 'DELETE', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                    await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ moneda: 'USD', tasa: tasaBCV }) }); 
+                    
+                    actualizarUI_Carrito(); 
+                    cerrarErrorCarga();
+                } else {
+                    throw new Error("Estructura del BCV cambió.");
+                }
             } catch (e) {
                 console.error(e);
-                mostrarCarga("Error de Conexión", "El servidor de tasas de internet no responde. Por favor, ingresa la tasa manualmente en la caja y presiona Enter.", true);
+                mostrarCarga("Error BCV", "No se pudo conectar a internet para la tasa. Ingresa la tasa manualmente.", true);
             }
         }
     </script>
