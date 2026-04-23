@@ -174,13 +174,15 @@
             ];
 
             try {
+                // 1. Borramos los parámetros viejos para evitar choques
                 const nombresParams = configs.map(c => c.parametro).join(',');
                 await fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?id_empresa=eq.${empId}&parametro=in.(${nombresParams})`, {
                     method: 'DELETE', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` }
                 });
 
+                // 2. Insertamos la configuración fresca (SIN LA COLUMNA ESTATUS)
                 const payload = configs.map(c => ({
-                    parametro: c.parametro, valor: String(c.valor), id_empresa: empId, estatus: 'ACTIVO'
+                    parametro: c.parametro, valor: String(c.valor), id_empresa: empId
                 }));
 
                 const resInsert = await fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema`, {
@@ -188,7 +190,7 @@
                     body: JSON.stringify(payload)
                 });
 
-                if (!resInsert.ok) throw new Error("Fallo inserción");
+                if (!resInsert.ok) throw new Error("Fallo al insertar la nueva configuración.");
 
                 localStorage.setItem('pyp_logo_pc_url', document.getElementById('url-logo').value);
                 alert("Ajustes guardados exitosamente.");
