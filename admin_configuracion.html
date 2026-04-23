@@ -10,8 +10,11 @@
         const cSec = localStorage.getItem('pyp_color_secundario') || '#E67E22';
         const fontFam = localStorage.getItem('pyp_fuente') || "'Inter', sans-serif";
         const fontSiz = localStorage.getItem('pyp_tamano') || "14px";
+        
         document.documentElement.style.setProperty('--font-global', fontFam);
         document.documentElement.style.setProperty('--size-global', fontSiz);
+        
+        // Tailwind recibe los colores aquí
         window.tailwind = { config: { theme: { extend: { colors: { primary: cPri, secondary: cSec } } } } };
     </script>
 
@@ -28,6 +31,7 @@
         .custom-scroll::-webkit-scrollbar-thumb { background-color: var(--color-primary, #cbd5e1); border-radius: 4px; }
         .btn-press:active { transform: scale(0.96); }
         .fade-in { animation: fadeIn 0.15s ease-in-out; }
+        /* Estilos pro para el selector de colores */
         input[type="color"] { -webkit-appearance: none; border: none; width: 100%; height: 40px; border-radius: 8px; cursor: pointer; padding: 0; background: transparent; }
         input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
         input[type="color"]::-webkit-color-swatch { border: none; border-radius: 8px; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1); }
@@ -44,19 +48,19 @@
             <div class="max-w-5xl mx-auto space-y-6 pb-20">
                 
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div class="bg-primary px-4 py-2 text-white font-bold text-xs uppercase tracking-widest border-b border-gray-200">💸 Moneda y Tasa de Cambio</div>
+                    <div class="bg-emerald-600 px-4 py-2 text-white font-bold text-xs uppercase tracking-widest border-b border-gray-200">💸 Moneda y Tasa de Cambio</div>
                     <div class="p-5">
                         <div class="flex items-end gap-4">
                             <div class="flex-1">
                                 <label class="block text-[10px] font-black text-gray-500 uppercase mb-1">Tasa Oficial Dólar (USD)</label>
                                 <div class="relative">
-                                    <span class="absolute left-3 top-2.5 font-bold text-primary">Bs.</span>
-                                    <input type="number" id="conf-tasa" step="0.01" class="w-full border-2 border-gray-200 rounded-lg pl-10 pr-3 py-2 text-xl font-black text-primary outline-none focus:border-secondary transition">
+                                    <span class="absolute left-3 top-2.5 font-bold text-emerald-600">Bs.</span>
+                                    <input type="number" id="conf-tasa" step="0.01" class="w-full border-2 border-gray-200 rounded-lg pl-10 pr-3 py-2 text-xl font-black text-primary outline-none focus:border-emerald-500 transition">
                                 </div>
                             </div>
                             <div class="flex flex-col gap-2 w-48">
-                                <button type="button" onclick="sincronizarTasaBCV()" class="bg-primary hover:opacity-90 text-white px-4 py-2 rounded font-bold transition shadow text-[10px] uppercase btn-press flex items-center justify-center gap-2"><i class="fa-solid fa-rotate text-secondary"></i> Sincronizar BCV</button>
-                                <button type="button" onclick="guardarTasaManual()" class="bg-primary hover:opacity-90 text-white px-4 py-2 rounded font-bold transition shadow text-[10px] uppercase btn-press flex items-center justify-center gap-2"><i class="fa-solid fa-save text-secondary"></i> Guardar Manual</button>
+                                <button type="button" onclick="sincronizarTasaBCV()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-bold transition shadow text-[10px] uppercase btn-press flex items-center justify-center gap-2"><i class="fa-solid fa-rotate"></i> Sincronizar BCV</button>
+                                <button type="button" onclick="guardarTasaManual()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded font-bold transition shadow text-[10px] uppercase btn-press flex items-center justify-center gap-2"><i class="fa-solid fa-save"></i> Guardar Manual</button>
                             </div>
                         </div>
                     </div>
@@ -87,8 +91,9 @@
                 </div>
 
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div class="bg-primary px-4 py-2 text-white font-bold text-xs uppercase tracking-widest border-b border-gray-200">🎨 Branding, Identidad y Tipografía</div>
+                    <div class="bg-slate-800 px-4 py-2 text-white font-bold text-xs uppercase tracking-widest">🎨 Branding, Identidad y Tipografía</div>
                     <div class="p-5">
+                        
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
                             <div>
                                 <label class="block text-[10px] font-black text-gray-500 uppercase mb-2">Color Primario (Corporativo)</label>
@@ -154,6 +159,7 @@
                                 </div>
                             </div>
                         </div>
+
                     </div>
                 </div>
 
@@ -168,10 +174,10 @@
         <i class="fa-solid fa-cloud-arrow-up text-5xl text-secondary mb-4 animate-bounce"></i>
         <h2 id="loading-text-config" class="text-xl font-black text-white uppercase mb-2 tracking-widest">Procesando...</h2>
     </div>
+
     <script>
         const TOKEN_JWT = localStorage.getItem('pyp_token_seguro');
-        let empId = null; 
-        let listaCondiciones = [];
+        let empId = null; let listaCondiciones = [];
 
         window.onload = async () => { 
             try {
@@ -179,18 +185,15 @@
                 if (!resUser.ok) throw new Error("Fallo token");
                 const users = await resUser.json(); if(users.length > 0) empId = users[0].id_empresa;
                 await cargarConfig(); 
-            } catch(e) { alert("Error de conexión al cargar. Verifica tu internet y presiona F5."); }
+            } catch(e) {
+                alert("Error de conexión. Presiona F5.");
+            }
         };
 
-        // ================= CONSTRUCTOR DE CRÉDITOS VISUAL =================
+        // ================= CONSTRUCTOR DE CRÉDITOS =================
         function cargarCondicionesUI(str) {
             listaCondiciones = [];
-            if (str && str.trim() !== '') { 
-                str.split(',').forEach(c => { 
-                    const p = c.split('|'); 
-                    if (p[0]) listaCondiciones.push({ nombre: p[0].trim(), dias: parseInt(p[1]) || 0 }); 
-                }); 
-            }
+            if (str && str.trim() !== '') { str.split(',').forEach(c => { const p = c.split('|'); if (p[0]) listaCondiciones.push({ nombre: p[0].trim(), dias: parseInt(p[1]) || 0 }); }); }
             if (listaCondiciones.length === 0) listaCondiciones.push({ nombre: 'CONTADO', dias: 0 });
             renderCondicionesUI();
         }
@@ -198,18 +201,7 @@
         function renderCondicionesUI() {
             const cont = document.getElementById('contenedor-condiciones'); cont.innerHTML = '';
             listaCondiciones.forEach((c, i) => {
-                cont.innerHTML += `
-                <div class="grid grid-cols-12 gap-2 items-center bg-white p-2 rounded-lg border border-gray-200 shadow-sm fade-in hover:shadow transition">
-                    <div class="col-span-8">
-                        <input type="text" value="${c.nombre}" onchange="actualizarCondicionUI(${i}, 'nombre', this.value)" placeholder="Ej: CRÉDITO 15 DÍAS" class="w-full border-none px-2 py-1 text-xs font-bold uppercase text-primary outline-none bg-transparent">
-                    </div>
-                    <div class="col-span-3 border-l border-gray-200">
-                        <input type="number" value="${c.dias}" onchange="actualizarCondicionUI(${i}, 'dias', this.value)" placeholder="0" class="w-full border-none px-2 py-1 text-xs font-black text-center text-primary outline-none bg-transparent" min="0">
-                    </div>
-                    <div class="col-span-1 flex justify-center border-l border-gray-200">
-                        <button type="button" onclick="eliminarCondicionUI(${i})" class="text-red-400 hover:text-red-600 transition px-2 bg-red-50 hover:bg-red-100 rounded p-1.5" title="Eliminar"><i class="fa-solid fa-trash-can"></i></button>
-                    </div>
-                </div>`;
+                cont.innerHTML += `<div class="grid grid-cols-12 gap-2 items-center bg-white p-2 rounded-lg border border-gray-200 shadow-sm fade-in hover:shadow transition"><div class="col-span-8"><input type="text" value="${c.nombre}" onchange="actualizarCondicionUI(${i}, 'nombre', this.value)" placeholder="Ej: CRÉDITO 15 DÍAS" class="w-full border-none px-2 py-1 text-xs font-bold uppercase text-primary outline-none bg-transparent"></div><div class="col-span-3 border-l border-gray-200"><input type="number" value="${c.dias}" onchange="actualizarCondicionUI(${i}, 'dias', this.value)" placeholder="0" class="w-full border-none px-2 py-1 text-xs font-black text-center text-primary outline-none bg-transparent" min="0"></div><div class="col-span-1 flex justify-center border-l border-gray-200"><button type="button" onclick="eliminarCondicionUI(${i})" class="text-red-400 hover:text-red-600 transition px-2 bg-red-50 hover:bg-red-100 rounded p-1.5"><i class="fa-solid fa-trash-can"></i></button></div></div>`;
             });
             sincronizarInputOculto();
         }
@@ -219,7 +211,7 @@
         function actualizarCondicionUI(idx, campo, valor) { if (campo === 'nombre') listaCondiciones[idx].nombre = valor.replace(/[,|]/g, '').trim(); if (campo === 'dias') listaCondiciones[idx].dias = parseInt(valor) || 0; sincronizarInputOculto(); }
         function sincronizarInputOculto() { document.getElementById('conf-condiciones').value = listaCondiciones.filter(c => c.nombre.trim() !== '').map(c => `${c.nombre}|${c.dias}`).join(','); }
 
-        // ================= DESCARGA DE CONFIGURACIONES =================
+        // ================= DESCARGA Y LECTURA DE DATOS =================
         async function cargarConfig() {
             const [resTasa, resConf] = await Promise.all([
                 fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?moneda=eq.USD&select=tasa&order=fecha_actualizacion.desc&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
@@ -244,7 +236,7 @@
             fill('conf-color-primario', 'COLOR_PRIMARIO'); fill('conf-color-secundario', 'COLOR_SECUNDARIO');
             fill('conf-fuente', 'FUENTE_FAMILIA'); fill('conf-tamano', 'FUENTE_TAMAÑO');
 
-            // Llenar etiquetas Hexadecimales
+            // Actualizar etiquetas Hex
             if(document.getElementById('conf-color-primario').value) document.getElementById('hex-pri').innerText = document.getElementById('conf-color-primario').value.toUpperCase();
             if(document.getElementById('conf-color-secundario').value) document.getElementById('hex-sec').innerText = document.getElementById('conf-color-secundario').value.toUpperCase();
         }
@@ -254,7 +246,7 @@
             if(url) { img.src = url; img.classList.remove('hidden'); txt.classList.add('hidden'); } else { img.classList.add('hidden'); txt.classList.remove('hidden'); }
         }
 
-        // ================= MOTOR SUBIDA IMÁGENES =================
+        // ================= MOTOR DE SUBIDA IMÁGENES =================
         async function comprimirYSubir(file) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader(); reader.readAsDataURL(file);
@@ -286,33 +278,26 @@
             document.getElementById('loading-overlay-config').classList.add('hidden'); document.getElementById('loading-overlay-config').classList.remove('flex');
         }
 
-        // ================= TASAS DE CAMBIO =================
+        // ================= TASAS =================
         async function guardarTasaManual() {
             const t = parseFloat(document.getElementById('conf-tasa').value); if(isNaN(t) || t <= 0) { alert("Ingresa una tasa válida mayor a 0."); return; }
             try { await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?moneda=eq.USD`, { method: 'DELETE', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }); await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ moneda: 'USD', tasa: t }) }); alert("¡Tasa manual guardada correctamente!"); } catch(e) { console.error(e); alert("Hubo un error al guardar la tasa."); }
         }
 
         async function sincronizarTasaBCV() {
-            document.getElementById('loading-text-config').innerText = "Consultando...";
-            document.getElementById('loading-overlay-config').classList.remove('hidden'); document.getElementById('loading-overlay-config').classList.add('flex');
-            try { 
-                const bcvUrl = encodeURIComponent('https://www.bcv.org.ve/'); const proxyUrl = `https://api.allorigins.win/get?url=${bcvUrl}`;
-                const res = await fetch(proxyUrl); if(!res.ok) throw new Error("Fallo");
-                const data = await res.json(); const html = data.contents;
-                const match = html.match(/<div id="dolar".*?>.*?<strong>\s*(.*?)\s*<\/strong>/is);
-                if (match) { document.getElementById('conf-tasa').value = parseFloat(match[1].trim().replace(/\./g, '').replace(',', '.')).toFixed(2); alert("Tasa obtenida. Presiona 'Guardar Manual'."); } else { throw new Error("No se encontró"); }
-            } catch(e) { alert("Error al conectar con el servidor BCV. Ingresa la tasa manualmente."); }
-            document.getElementById('loading-overlay-config').classList.add('hidden'); document.getElementById('loading-overlay-config').classList.remove('flex');
-            document.getElementById('loading-text-config').innerText = "Procesando...";
+            try { const resUsd = await fetch('https://ve.dolarapi.com/v1/dolares/oficial'); if(!resUsd.ok) throw new Error("Fallo API"); const dataUsd = await resUsd.json(); document.getElementById('conf-tasa').value = dataUsd.promedio.toFixed(2); alert("Tasa obtenida de internet. Presiona 'Guardar Manual' para fijarla."); } catch(e) { alert("Error al conectar con el servidor. Ingresa la tasa manualmente y presiona 'Guardar Manual'."); }
         }
 
         // ================= GUARDADO GENERAL Y CACHÉ =================
         async function guardarTodo(event) {
             const btn = event.currentTarget; const textoOriginal = btn.innerHTML; btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Guardando...`; btn.disabled = true;
-            sincronizarInputOculto(); // Asegura capturar los créditos visuales
+            
+            sincronizarInputOculto();
 
-            const cP = document.getElementById('conf-color-primario').value; const cS = document.getElementById('conf-color-secundario').value;
-            const fF = document.getElementById('conf-fuente').value; const fS = document.getElementById('conf-tamano').value;
+            const cP = document.getElementById('conf-color-primario').value;
+            const cS = document.getElementById('conf-color-secundario').value;
+            const fF = document.getElementById('conf-fuente').value;
+            const fS = document.getElementById('conf-tamano').value;
 
             const configs = [ 
                 { parametro: 'IVA_GENERAL', valor: document.getElementById('conf-iva').value || '16' }, 
@@ -320,27 +305,28 @@
                 { parametro: 'IVA_REDUCIDO_1', valor: document.getElementById('conf-iva-r1').value || '8' }, 
                 { parametro: 'IVA_REDUCIDO_2', valor: document.getElementById('conf-iva-r2').value || '12' }, 
                 { parametro: 'POS_MOSTRAR_EXENTO', valor: document.getElementById('conf-exento').value || 'SI' }, 
-                { parametro: 'CONDICIONES_PAGO', valor: document.getElementById('conf-condiciones').value || 'CONTADO|0' }, 
+                { parametro: 'CONDICIONES_PAGO', valor: document.getElementById('conf-condiciones').value || 'CONTADO|0' },
                 { parametro: 'LOGO_URL', valor: document.getElementById('url-logo').value || '' }, 
-                { parametro: 'FONDO_URL', valor: document.getElementById('url-fondo').value || '' }, 
-                { parametro: 'COLOR_PRIMARIO', valor: cP }, 
-                { parametro: 'COLOR_SECUNDARIO', valor: cS }, 
-                { parametro: 'FUENTE_FAMILIA', valor: fF }, 
+                { parametro: 'FONDO_URL', valor: document.getElementById('url-fondo').value || '' },
+                { parametro: 'COLOR_PRIMARIO', valor: cP },
+                { parametro: 'COLOR_SECUNDARIO', valor: cS },
+                { parametro: 'FUENTE_FAMILIA', valor: fF },
                 { parametro: 'FUENTE_TAMAÑO', valor: fS }
             ];
 
             try {
-                for (let c of configs) { 
-                    await fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?parametro=eq.${c.parametro}`, { method: 'DELETE', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }); 
+                for (let c of configs) {
+                    await fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?parametro=eq.${c.parametro}`, { method: 'DELETE', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
                     const payload = { parametro: c.parametro, valor: String(c.valor) }; if (empId) payload.id_empresa = empId; 
-                    await fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); 
+                    const res = await fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                    if (!res.ok) throw new Error(`Fallo en ${c.parametro}`);
                 }
                 
-                // GUARDADO EN MEMORIA CACHÉ PARA APLICACIÓN INMEDIATA
-                localStorage.setItem('pyp_color_primario', cP); 
-                localStorage.setItem('pyp_color_secundario', cS); 
-                localStorage.setItem('pyp_fuente', fF); 
-                localStorage.setItem('pyp_tamano', fS); 
+                // GUARDAR EN CACHÉ PARA APLICACIÓN INMEDIATA
+                localStorage.setItem('pyp_color_primario', cP);
+                localStorage.setItem('pyp_color_secundario', cS);
+                localStorage.setItem('pyp_fuente', fF);
+                localStorage.setItem('pyp_tamano', fS);
                 localStorage.setItem('pyp_logo_pc_url', document.getElementById('url-logo').value);
                 
                 alert("Ajustes y Marca Blanca guardados exitosamente."); location.reload();
