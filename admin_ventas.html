@@ -585,7 +585,7 @@
                 empresaActual = (await resUser.json())[0].id_empresa;
 
                 const [resTasa, resProd, resPre, resCli, resConf] = await Promise.all([
-                    fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?id_empresa=eq.${empresaActual}&select=*&order=fecha_actualizacion.desc&limit=5`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
+                   fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?select=*&order=fecha_actualizacion.desc&limit=5`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
                     fetch(`${SUPABASE_URL}/rest/v1/productos?select=*&estado_producto=eq.ACTIVO`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
                     fetch(`${SUPABASE_URL}/rest/v1/precios?select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
                     fetch(`${SUPABASE_URL}/rest/v1/directorio_maestro?select=*&tipo_persona=eq.CLIENTE&estatus=eq.ACTIVO`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
@@ -928,8 +928,9 @@
             try { await guardarTasaEnDB(moneda, nuevaTasa); actualizarUI_Carrito(); } catch(e) { alert("Error al guardar la tasa manual en la nube."); }
         }
 
-        async function guardarTasaEnDB(moneda, valor) {
-            const payload = { moneda: moneda, tasa: valor, id_empresa: empresaActual };
+       async function guardarTasaEnDB(moneda, valor) {
+            // Se quitó id_empresa porque tu tabla tasas_bcv no tiene esa columna
+            const payload = { moneda: moneda, tasa: valor }; 
             await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
         }
     </script>
