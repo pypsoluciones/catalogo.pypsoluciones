@@ -175,20 +175,33 @@
             ];
 
             try {
+                // Motor Inteligente: Revisa si existe. Si existe lo edita, si no, lo crea de cero.
                 for (let c of configs) {
-                    // Usamos PATCH para actualizar el valor exacto de tu empresa sin errores
-                    await fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?parametro=eq.${c.parametro}&id_empresa=eq.${empId}`, { 
-                        method: 'PATCH', 
-                        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, 
-                        body: JSON.stringify({ valor: c.valor }) 
+                    const resCheck = await fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?parametro=eq.${c.parametro}&id_empresa=eq.${empId}`, {
+                        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` }
                     });
+                    const dataCheck = await resCheck.json();
+
+                    if (dataCheck.length > 0) {
+                        // Existe -> Actualiza (PATCH)
+                        await fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?parametro=eq.${c.parametro}&id_empresa=eq.${empId}`, { 
+                            method: 'PATCH', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, 
+                            body: JSON.stringify({ valor: c.valor }) 
+                        });
+                    } else {
+                        // No existe -> Lo Crea (POST) usando TU id_empresa real
+                        await fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema`, { 
+                            method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, 
+                            body: JSON.stringify({ parametro: c.parametro, valor: c.valor, id_empresa: empId, estatus: 'ACTIVO' }) 
+                        });
+                    }
                 }
                 
                 localStorage.setItem('pyp_logo_pc_url', document.getElementById('url-logo').value);
-                alert("Ajustes guardados correctamente en la base de datos.");
+                alert("Ajustes guardados correctamente en tu empresa.");
                 location.reload();
             } catch (error) {
-                alert("Ocurrió un error al guardar.");
+                alert("Ocurrió un error de red al guardar.");
                 btn.innerHTML = `<i class="fa-solid fa-save mr-2"></i> Guardar Todos los Ajustes`; 
                 btn.disabled = false;
             }
