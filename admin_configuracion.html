@@ -102,50 +102,58 @@
     </main>
 
     <script>
-        <script>
         const TOKEN_JWT = localStorage.getItem('pyp_token_seguro');
         let empId = null;
 
         window.onload = async () => { 
-            const resUser = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?select=id_empresa&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
-            const users = await resUser.json();
-            if(users.length > 0) empId = users[0].id_empresa;
-            await cargarConfig(); 
+            try {
+                const resUser = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?select=id_empresa&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                const users = await resUser.json();
+                if(users.length > 0) empId = users[0].id_empresa;
+                await cargarConfig(); 
+            } catch(e) {
+                console.error("Error iniciando config:", e);
+            }
         };
 
         async function cargarConfig() {
-            // Quitamos el filtro estricto de empresa para poder leer y rescatar los datos "NULL"
-            const [resTasa, resConf] = await Promise.all([
-                fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?moneda=eq.USD&select=tasa&order=fecha_actualizacion.desc&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
-                fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } })
-            ]);
-            
-            const dataTasa = await resTasa.json();
-            if(dataTasa.length > 0) document.getElementById('conf-tasa').value = dataTasa[0].tasa;
+            try {
+                const [resTasa, resConf] = await Promise.all([
+                    fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?moneda=eq.USD&select=tasa&order=fecha_actualizacion.desc&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
+                    fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } })
+                ]);
+                
+                const dataTasa = await resTasa.json();
+                if(dataTasa.length > 0) document.getElementById('conf-tasa').value = dataTasa[0].tasa;
 
-            const dataConf = await resConf.json();
+                const dataConf = await resConf.json();
 
-            // Auto-reparación: Si no tenemos un ID de empresa, tomamos uno válido de la base de datos
-            const validRow = dataConf.find(c => c.id_empresa !== null);
-            if (validRow && !empId) empId = validRow.id_empresa;
+                // Recupera el ID de empresa si no lo teníamos
+                const validRow = dataConf.find(c => c.id_empresa !== null);
+                if (validRow && !empId) empId = validRow.id_empresa;
 
-            const fill = (id, param, previewId, txtId) => {
-                // Si hay duplicados basura, toma el más reciente
-                const items = dataConf.filter(c => c.parametro === param);
-                if(items.length > 0) {
-                    const bestItem = items[items.length - 1]; 
-                    document.getElementById(id).value = bestItem.valor;
-                    if(previewId) actualizarPreview(id, previewId, txtId);
-                }
-            };
-            
-            fill('conf-iva', 'IVA_GENERAL'); 
-            fill('conf-igtf', 'IGTF'); 
-            fill('conf-iva-r1', 'IVA_REDUCIDO_1'); 
-            fill('conf-iva-r2', 'IVA_REDUCIDO_2');
-            fill('conf-exento', 'POS_MOSTRAR_EXENTO');
-            fill('url-logo', 'LOGO_URL', 'preview-logo', 'txt-logo');
-            fill('url-fondo', 'FONDO_URL', 'preview-fondo', 'txt-fondo');
+                const fill = (id, param, previewId, txtId) => {
+                    const items = dataConf.filter(c => c.parametro === param);
+                    if(items.length > 0) {
+                        const bestItem = items[items.length - 1]; 
+                        const inputElement = document.getElementById(id);
+                        if(inputElement) {
+                            inputElement.value = bestItem.valor;
+                        }
+                        if(previewId) actualizarPreview(id, previewId, txtId);
+                    }
+                };
+                
+                fill('conf-iva', 'IVA_GENERAL'); 
+                fill('conf-igtf', 'IGTF'); 
+                fill('conf-iva-r1', 'IVA_REDUCIDO_1'); 
+                fill('conf-iva-r2', 'IVA_REDUCIDO_2');
+                fill('conf-exento', 'POS_MOSTRAR_EXENTO');
+                fill('url-logo', 'LOGO_URL', 'preview-logo', 'txt-logo');
+                fill('url-fondo', 'FONDO_URL', 'preview-fondo', 'txt-fondo');
+            } catch(e) {
+                console.error("Error cargando configuración:", e);
+            }
         }
 
         function actualizarPreview(inputId, imgId, txtId) {
@@ -159,12 +167,16 @@
         async function guardarTasa() {
             const t = parseFloat(document.getElementById('conf-tasa').value);
             if(isNaN(t)) return;
-            await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv`, { 
-                method: 'POST', 
-                headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, 
-                body: JSON.stringify({ moneda: 'USD', tasa: t }) 
-            });
-            alert("Tasa actualizada correctamente.");
+            try {
+                await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv`, { 
+                    method: 'POST', 
+                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ moneda: 'USD', tasa: t }) 
+                });
+                alert("Tasa actualizada correctamente.");
+            } catch(e) {
+                console.error(e);
+            }
         }
 
         async function guardarTodo(event) {
@@ -184,16 +196,16 @@
             ];
 
             try {
-                // Motor de Limpieza: Borra todos los parámetros viejos/duplicados/NULL para hacer limpieza general
+                // Limpieza de parámetros existentes
                 for (let c of configs) {
                     await fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?parametro=eq.${c.parametro}`, {
                         method: 'DELETE',
                         headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` }
                     });
 
-                    // Inserta el parámetro totalmente limpio y enlazado
-                    const payload = { parametro: c.parametro, valor: String(c.valor), estatus: 'ACTIVO' };
-                    if (empId) payload.id_empresa = empId; // Asegura que siempre lleve empresa
+                    // Inserción fresca y limpia
+                    const payload = { parametro: c.parametro, valor: String(c.valor) };
+                    if (empId) payload.id_empresa = empId; 
 
                     const res = await fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema`, { 
                         method: 'POST', 
@@ -205,16 +217,15 @@
                 }
                 
                 localStorage.setItem('pyp_logo_pc_url', document.getElementById('url-logo').value);
-                alert("Ajustes guardados y base de datos limpiada exitosamente.");
+                alert("Ajustes guardados y base de datos sincronizada exitosamente.");
                 location.reload();
             } catch (error) {
                 console.error("Error al guardar:", error);
-                alert("Hubo un error de conexión. Intenta de nuevo.");
+                alert("Hubo un error de conexión al guardar en la base de datos.");
                 btn.innerHTML = textoOriginal; 
                 btn.disabled = false;
             }
         }
-    </script>
     </script>
 </body>
 </html>
