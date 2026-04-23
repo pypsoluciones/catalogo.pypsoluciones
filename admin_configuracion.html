@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>P&P Admin | Configuración General</title>
     
+    <script src="https://cdn.tailwindcss.com"></script>
+
     <script>
         const cPri = localStorage.getItem('pyp_color_primario') || '#143B62';
         const cSec = localStorage.getItem('pyp_color_secundario') || '#E67E22';
@@ -14,11 +16,15 @@
         document.documentElement.style.setProperty('--font-global', fontFam);
         document.documentElement.style.setProperty('--size-global', fontSiz);
         
-        // Tailwind recibe los colores aquí
-        window.tailwind = { config: { theme: { extend: { colors: { primary: cPri, secondary: cSec } } } } };
+        tailwind.config = { 
+            theme: { 
+                extend: { 
+                    colors: { primary: cPri, secondary: cSec } 
+                } 
+            } 
+        };
     </script>
 
-    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;900&family=Poppins:wght@300;400;500;700;900&family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     
@@ -31,7 +37,6 @@
         .custom-scroll::-webkit-scrollbar-thumb { background-color: var(--color-primary, #cbd5e1); border-radius: 4px; }
         .btn-press:active { transform: scale(0.96); }
         .fade-in { animation: fadeIn 0.15s ease-in-out; }
-        /* Estilos pro para el selector de colores */
         input[type="color"] { -webkit-appearance: none; border: none; width: 100%; height: 40px; border-radius: 8px; cursor: pointer; padding: 0; background: transparent; }
         input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
         input[type="color"]::-webkit-color-swatch { border: none; border-radius: 8px; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1); }
@@ -48,26 +53,26 @@
             <div class="max-w-5xl mx-auto space-y-6 pb-20">
                 
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div class="bg-emerald-600 px-4 py-2 text-white font-bold text-xs uppercase tracking-widest border-b border-gray-200">💸 Moneda y Tasa de Cambio</div>
+                    <div class="bg-primary px-4 py-2 text-white font-bold text-xs uppercase tracking-widest border-b border-primary/20 shadow-sm">💸 Moneda y Tasa de Cambio</div>
                     <div class="p-5">
                         <div class="flex items-end gap-4">
                             <div class="flex-1">
                                 <label class="block text-[10px] font-black text-gray-500 uppercase mb-1">Tasa Oficial Dólar (USD)</label>
                                 <div class="relative">
-                                    <span class="absolute left-3 top-2.5 font-bold text-emerald-600">Bs.</span>
-                                    <input type="number" id="conf-tasa" step="0.01" class="w-full border-2 border-gray-200 rounded-lg pl-10 pr-3 py-2 text-xl font-black text-primary outline-none focus:border-emerald-500 transition">
+                                    <span class="absolute left-3 top-2.5 font-bold text-primary">Bs.</span>
+                                    <input type="number" id="conf-tasa" step="0.01" class="w-full border-2 border-gray-200 rounded-lg pl-10 pr-3 py-2 text-xl font-black text-primary outline-none focus:border-secondary transition">
                                 </div>
                             </div>
                             <div class="flex flex-col gap-2 w-48">
-                                <button type="button" onclick="sincronizarTasaBCV()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-bold transition shadow text-[10px] uppercase btn-press flex items-center justify-center gap-2"><i class="fa-solid fa-rotate"></i> Sincronizar BCV</button>
-                                <button type="button" onclick="guardarTasaManual()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded font-bold transition shadow text-[10px] uppercase btn-press flex items-center justify-center gap-2"><i class="fa-solid fa-save"></i> Guardar Manual</button>
+                                <button type="button" onclick="sincronizarTasaBCV()" class="bg-primary hover:opacity-90 text-white px-4 py-2 rounded font-bold transition shadow text-[10px] uppercase btn-press flex items-center justify-center gap-2"><i class="fa-solid fa-rotate text-secondary"></i> Sincronizar BCV</button>
+                                <button type="button" onclick="guardarTasaManual()" class="bg-primary hover:opacity-90 text-white px-4 py-2 rounded font-bold transition shadow text-[10px] uppercase btn-press flex items-center justify-center gap-2"><i class="fa-solid fa-save text-secondary"></i> Guardar Manual</button>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div class="bg-primary px-4 py-2 text-white font-bold text-xs uppercase tracking-widest border-b border-gray-200">⚖️ Configuración de Impuestos</div>
+                    <div class="bg-primary px-4 py-2 text-white font-bold text-xs uppercase tracking-widest border-b border-primary/20 shadow-sm">⚖️ Configuración de Impuestos</div>
                     <div class="p-5 grid grid-cols-2 md:grid-cols-5 gap-6">
                         <div><label class="block text-[10px] font-black text-gray-500 uppercase mb-1">IVA General (%)</label><input type="number" id="conf-iva" class="w-full border border-gray-300 rounded px-3 py-2 font-bold text-primary focus:border-secondary outline-none transition"></div>
                         <div><label class="block text-[10px] font-black text-gray-500 uppercase mb-1">IGTF Divisas (%)</label><input type="number" id="conf-igtf" class="w-full border border-gray-300 rounded px-3 py-2 font-bold text-primary focus:border-secondary outline-none transition"></div>
@@ -78,7 +83,7 @@
                 </div>
 
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div class="bg-primary px-4 py-2 text-white font-bold text-xs uppercase tracking-widest border-b border-gray-200">💳 Condiciones de Pago y Crédito</div>
+                    <div class="bg-primary px-4 py-2 text-white font-bold text-xs uppercase tracking-widest border-b border-primary/20 shadow-sm">💳 Condiciones de Pago y Crédito</div>
                     <div class="p-5 bg-slate-50/50">
                         <div class="grid grid-cols-12 gap-2 mb-2 px-2">
                             <div class="col-span-8 text-[9px] font-black text-gray-400 uppercase tracking-widest">Nombre de la Condición (Visible en POS)</div>
@@ -91,7 +96,7 @@
                 </div>
 
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div class="bg-slate-800 px-4 py-2 text-white font-bold text-xs uppercase tracking-widest">🎨 Branding, Identidad y Tipografía</div>
+                    <div class="bg-primary px-4 py-2 text-white font-bold text-xs uppercase tracking-widest border-b border-primary/20 shadow-sm">🎨 Branding, Identidad y Tipografía</div>
                     <div class="p-5">
                         
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
@@ -291,13 +296,10 @@
         // ================= GUARDADO GENERAL Y CACHÉ =================
         async function guardarTodo(event) {
             const btn = event.currentTarget; const textoOriginal = btn.innerHTML; btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Guardando...`; btn.disabled = true;
-            
             sincronizarInputOculto();
 
-            const cP = document.getElementById('conf-color-primario').value;
-            const cS = document.getElementById('conf-color-secundario').value;
-            const fF = document.getElementById('conf-fuente').value;
-            const fS = document.getElementById('conf-tamano').value;
+            const cP = document.getElementById('conf-color-primario').value; const cS = document.getElementById('conf-color-secundario').value;
+            const fF = document.getElementById('conf-fuente').value; const fS = document.getElementById('conf-tamano').value;
 
             const configs = [ 
                 { parametro: 'IVA_GENERAL', valor: document.getElementById('conf-iva').value || '16' }, 
