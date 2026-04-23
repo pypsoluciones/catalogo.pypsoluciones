@@ -168,18 +168,37 @@
             document.getElementById('loading-overlay-config').classList.remove('flex');
         }
 
-        // NUEVOS BOTONES DE TASA
+       // ================= MOTOR DE TASAS (GUARDADO BLINDADO) =================
         async function guardarTasaManual() {
             const t = parseFloat(document.getElementById('conf-tasa').value);
             if(isNaN(t) || t <= 0) { alert("Por favor, ingresa una tasa válida mayor a 0."); return; }
+            
+            mostrarCarga("Actualizando Tasa...", "Blindando integridad de datos en la nube...");
+
             try {
-                await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv`, { 
+                // ARCHITECTURAL FIX: Blindaje de Integridad. 
+                // 1. Borramos CUALQUIER registro de USD que exista en la tabla para asegurar unicidad.
+                await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?moneda=eq.USD`, { 
+                    method: 'DELETE', 
+                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } 
+                });
+
+                // 2. Insertamos la tasa nueva como ÚNICO registro USD fresco (POST)
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv`, { 
                     method: 'POST', 
                     headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, 
                     body: JSON.stringify({ moneda: 'USD', tasa: t }) 
                 });
-                alert("¡Tasa manual guardada correctamente!");
-            } catch(e) { console.error(e); alert("Hubo un error al guardar la tasa."); }
+
+                if(!res.ok) throw new Error("Fallo al insertar nueva tasa");
+
+                alert("¡Tasa manual guardada correctamente! Ahora es el único registro USD en la nube.");
+                location.reload(); // Recargar para sincronizar la UI
+            } catch(e) { 
+                console.error(e); 
+                alert("Hubo un error crítico al guardar la tasa. Revisa la consola."); 
+                cerrarErrorCarga();
+            }
         }
 
         async function sincronizarTasaBCV() {
