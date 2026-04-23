@@ -23,7 +23,7 @@
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                     <div class="bg-emerald-600 px-4 py-2 text-white font-bold text-xs uppercase tracking-widest">💸 Moneda y Tasa de Cambio</div>
                     <div class="p-5">
-                        <p class="text-[10px] text-gray-400 font-bold uppercase mb-3"><i class="fa-solid fa-circle-info"></i> Usa "Sincronizar" para leer de internet (2024) o "Guardar Manual" para simulaciones (Ej: 2026).</p>
+                        <p class="text-[10px] text-gray-400 font-bold uppercase mb-3"><i class="fa-solid fa-circle-info"></i> Usa "Sincronizar" para leer de internet o "Guardar Manual" para simulaciones.</p>
                         <div class="flex items-end gap-4">
                             <div class="flex-1">
                                 <label class="block text-[10px] font-black text-gray-500 uppercase mb-1">Tasa Oficial Dólar (USD)</label>
@@ -48,6 +48,14 @@
                         <div><label class="block text-[10px] font-black text-gray-500 uppercase mb-1">IVA Reducido 1 (%)</label><input type="number" id="conf-iva-r1" class="w-full border border-gray-300 rounded px-3 py-2 font-bold text-[#143B62]"></div>
                         <div><label class="block text-[10px] font-black text-gray-500 uppercase mb-1">IVA Reducido 2 (%)</label><input type="number" id="conf-iva-r2" class="w-full border border-gray-300 rounded px-3 py-2 font-bold text-[#143B62]"></div>
                         <div><label class="block text-[10px] font-black text-gray-500 uppercase mb-1">Mostrar Exento POS</label><select id="conf-exento" class="w-full border border-gray-300 rounded px-3 py-2 font-bold text-[#143B62] outline-none"><option value="SI">SÍ MOSTRAR</option><option value="NO">OCULTAR</option></select></div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="bg-indigo-600 px-4 py-2 text-white font-bold text-xs uppercase tracking-widest">💳 Condiciones de Pago y Crédito</div>
+                    <div class="p-5">
+                        <p class="text-[10px] text-gray-400 font-bold uppercase mb-2"><i class="fa-solid fa-circle-info"></i> Define los plazos de crédito para el POS. Formato: <b>Nombre|Días</b>. Separa las opciones con <b>comas (,)</b>.</p>
+                        <textarea id="conf-condiciones" rows="2" class="w-full border border-gray-300 rounded-lg px-3 py-2 font-bold text-[#143B62] text-xs outline-none focus:border-indigo-500" placeholder="CONTADO|0, CRÉDITO 15 DÍAS|15, CRÉDITO 30 DÍAS|30"></textarea>
                     </div>
                 </div>
 
@@ -121,7 +129,12 @@
                 }
             };
             
-            fill('conf-iva', 'IVA_GENERAL'); fill('conf-igtf', 'IGTF'); fill('conf-iva-r1', 'IVA_REDUCIDO_1'); fill('conf-iva-r2', 'IVA_REDUCIDO_2'); fill('conf-exento', 'POS_MOSTRAR_EXENTO'); fill('url-logo', 'LOGO_URL', 'preview-logo', 'txt-logo'); fill('url-fondo', 'FONDO_URL', 'preview-fondo', 'txt-fondo');
+            fill('conf-iva', 'IVA_GENERAL'); fill('conf-igtf', 'IGTF'); fill('conf-iva-r1', 'IVA_REDUCIDO_1'); fill('conf-iva-r2', 'IVA_REDUCIDO_2'); fill('conf-exento', 'POS_MOSTRAR_EXENTO'); 
+            fill('conf-condiciones', 'CONDICIONES_PAGO'); // Carga la condición de pago
+            fill('url-logo', 'LOGO_URL', 'preview-logo', 'txt-logo'); fill('url-fondo', 'FONDO_URL', 'preview-fondo', 'txt-fondo');
+            
+            // Fallback por defecto si no existe CONDICIONES_PAGO
+            if(!document.getElementById('conf-condiciones').value) document.getElementById('conf-condiciones').value = "CONTADO|0, CRÉDITO 15 DÍAS|15, CRÉDITO 30 DÍAS|30";
         }
 
         function actualizarPreview(inputId, imgId, txtId) {
@@ -129,7 +142,6 @@
             if(url) { img.src = url; img.classList.remove('hidden'); txt.classList.add('hidden'); } else { img.classList.add('hidden'); txt.classList.remove('hidden'); }
         }
 
-        // MOTOR DE SUBIDA DE IMÁGENES AL BUCKET
         async function comprimirYSubir(file) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader(); reader.readAsDataURL(file);
@@ -157,48 +169,19 @@
 
         async function subirImagenLocal(event, urlInputId, previewId, txtId) {
             const file = event.target.files[0]; if(!file) return;
-            document.getElementById('loading-overlay-config').classList.remove('hidden');
-            document.getElementById('loading-overlay-config').classList.add('flex');
-            try {
-                const url = await comprimirYSubir(file);
-                document.getElementById(urlInputId).value = url;
-                actualizarPreview(urlInputId, previewId, txtId);
-            } catch(e) { alert("Error al subir la imagen al servidor."); }
-            document.getElementById('loading-overlay-config').classList.add('hidden');
-            document.getElementById('loading-overlay-config').classList.remove('flex');
+            document.getElementById('loading-overlay-config').classList.remove('hidden'); document.getElementById('loading-overlay-config').classList.add('flex');
+            try { const url = await comprimirYSubir(file); document.getElementById(urlInputId).value = url; actualizarPreview(urlInputId, previewId, txtId); } catch(e) { alert("Error al subir la imagen al servidor."); }
+            document.getElementById('loading-overlay-config').classList.add('hidden'); document.getElementById('loading-overlay-config').classList.remove('flex');
         }
 
-       // ================= MOTOR DE TASAS (GUARDADO BLINDADO) =================
         async function guardarTasaManual() {
             const t = parseFloat(document.getElementById('conf-tasa').value);
-            if(isNaN(t) || t <= 0) { alert("Por favor, ingresa una tasa válida mayor a 0."); return; }
-            
-            mostrarCarga("Actualizando Tasa...", "Blindando integridad de datos en la nube...");
-
+            if(isNaN(t) || t <= 0) { alert("Ingresa una tasa válida mayor a 0."); return; }
             try {
-                // ARCHITECTURAL FIX: Blindaje de Integridad. 
-                // 1. Borramos CUALQUIER registro de USD que exista en la tabla para asegurar unicidad.
-                await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?moneda=eq.USD`, { 
-                    method: 'DELETE', 
-                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } 
-                });
-
-                // 2. Insertamos la tasa nueva como ÚNICO registro USD fresco (POST)
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv`, { 
-                    method: 'POST', 
-                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, 
-                    body: JSON.stringify({ moneda: 'USD', tasa: t }) 
-                });
-
-                if(!res.ok) throw new Error("Fallo al insertar nueva tasa");
-
-                alert("¡Tasa manual guardada correctamente! Ahora es el único registro USD en la nube.");
-                location.reload(); // Recargar para sincronizar la UI
-            } catch(e) { 
-                console.error(e); 
-                alert("Hubo un error crítico al guardar la tasa. Revisa la consola."); 
-                cerrarErrorCarga();
-            }
+                await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?moneda=eq.USD`, { method: 'DELETE', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ moneda: 'USD', tasa: t }) });
+                alert("¡Tasa manual guardada correctamente!");
+            } catch(e) { console.error(e); alert("Hubo un error al guardar la tasa."); }
         }
 
         async function sincronizarTasaBCV() {
@@ -208,23 +191,27 @@
                 const dataUsd = await resUsd.json();
                 document.getElementById('conf-tasa').value = dataUsd.promedio.toFixed(2);
                 alert("Tasa obtenida de internet. Presiona 'Guardar Manual' para fijarla.");
-            } catch(e) {
-                alert("Error al conectar con el servidor. Ingresa la tasa manualmente y presiona 'Guardar Manual'.");
-            }
+            } catch(e) { alert("Error al conectar con el servidor. Ingresa la tasa manualmente y presiona 'Guardar Manual'."); }
         }
 
         async function guardarTodo(event) {
             const btn = event.currentTarget; const textoOriginal = btn.innerHTML; btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Guardando...`; btn.disabled = true;
-            const configs = [ { parametro: 'IVA_GENERAL', valor: document.getElementById('conf-iva').value || '16' }, { parametro: 'IGTF', valor: document.getElementById('conf-igtf').value || '3' }, { parametro: 'IVA_REDUCIDO_1', valor: document.getElementById('conf-iva-r1').value || '8' }, { parametro: 'IVA_REDUCIDO_2', valor: document.getElementById('conf-iva-r2').value || '12' }, { parametro: 'POS_MOSTRAR_EXENTO', valor: document.getElementById('conf-exento').value || 'SI' }, { parametro: 'LOGO_URL', valor: document.getElementById('url-logo').value || '' }, { parametro: 'FONDO_URL', valor: document.getElementById('url-fondo').value || '' } ];
+            
+            const configs = [ 
+                { parametro: 'IVA_GENERAL', valor: document.getElementById('conf-iva').value || '16' }, 
+                { parametro: 'IGTF', valor: document.getElementById('conf-igtf').value || '3' }, 
+                { parametro: 'IVA_REDUCIDO_1', valor: document.getElementById('conf-iva-r1').value || '8' }, 
+                { parametro: 'IVA_REDUCIDO_2', valor: document.getElementById('conf-iva-r2').value || '12' }, 
+                { parametro: 'POS_MOSTRAR_EXENTO', valor: document.getElementById('conf-exento').value || 'SI' }, 
+                { parametro: 'CONDICIONES_PAGO', valor: document.getElementById('conf-condiciones').value || 'CONTADO|0' }, // Se añade aquí
+                { parametro: 'LOGO_URL', valor: document.getElementById('url-logo').value || '' }, 
+                { parametro: 'FONDO_URL', valor: document.getElementById('url-fondo').value || '' } 
+            ];
 
             try {
                 for (let c of configs) {
                     await fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?parametro=eq.${c.parametro}`, { method: 'DELETE', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
-                    
-                    // ¡CORRECCIÓN CRÍTICA APLICADA: SIN LA COLUMNA ESTATUS!
-                    const payload = { parametro: c.parametro, valor: String(c.valor) }; 
-                    if (empId) payload.id_empresa = empId; 
-                    
+                    const payload = { parametro: c.parametro, valor: String(c.valor) }; if (empId) payload.id_empresa = empId; 
                     const res = await fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
                     if (!res.ok) throw new Error(`Fallo en ${c.parametro}`);
                 }
