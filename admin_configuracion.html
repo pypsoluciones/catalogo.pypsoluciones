@@ -26,7 +26,7 @@
                         <p class="text-[10px] text-gray-400 font-bold uppercase mb-3"><i class="fa-solid fa-circle-info"></i> Esta tasa afecta a todos los precios en Bolívares del sistema y el catálogo web.</p>
                         <div class="flex items-end gap-4">
                             <div class="flex-1">
-                                <label class="block text-[10px] font-black text-gray-500 uppercase mb-1">Tasa Oficial Dólar (BCV)</label>
+                                <label class="block text-[10px] font-black text-gray-500 uppercase mb-1">Tasa Oficial Dólar (USD)</label>
                                 <div class="relative">
                                     <span class="absolute left-3 top-2.5 font-bold text-emerald-600">Bs.</span>
                                     <input type="number" id="conf-tasa" step="0.01" class="w-full border-2 border-gray-200 rounded-lg pl-10 pr-3 py-2 text-xl font-black text-[#143B62] outline-none focus:border-emerald-500">
@@ -39,24 +39,34 @@
 
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                     <div class="bg-[#143B62] px-4 py-2 text-white font-bold text-xs uppercase tracking-widest">⚖️ Configuración de Impuestos</div>
-                    <div class="p-5 grid grid-cols-2 md:grid-cols-4 gap-6">
+                    <div class="p-5 grid grid-cols-2 md:grid-cols-5 gap-6">
                         <div>
                             <label class="block text-[10px] font-black text-gray-500 uppercase mb-1">IVA General (%)</label>
                             <input type="number" id="conf-iva" class="w-full border border-gray-300 rounded px-3 py-2 font-bold text-[#143B62]">
-                            <p class="text-[8px] text-gray-400 mt-1 italic">Estándar nacional (16%)</p>
+                            <p class="text-[8px] text-gray-400 mt-1 italic">Estándar nacional</p>
                         </div>
                         <div>
                             <label class="block text-[10px] font-black text-gray-500 uppercase mb-1">IGTF Divisas (%)</label>
                             <input type="number" id="conf-igtf" class="w-full border border-gray-300 rounded px-3 py-2 font-bold text-[#143B62]">
-                            <p class="text-[8px] text-gray-400 mt-1 italic">Pagos en $ (3%)</p>
+                            <p class="text-[8px] text-gray-400 mt-1 italic">Pagos en $ o Zelle</p>
                         </div>
                         <div>
                             <label class="block text-[10px] font-black text-gray-500 uppercase mb-1">IVA Reducido 1 (%)</label>
                             <input type="number" id="conf-iva-r1" class="w-full border border-gray-300 rounded px-3 py-2 font-bold text-[#143B62]">
+                            <p class="text-[8px] text-gray-400 mt-1 italic">Ej: 8%</p>
                         </div>
                         <div>
                             <label class="block text-[10px] font-black text-gray-500 uppercase mb-1">IVA Reducido 2 (%)</label>
                             <input type="number" id="conf-iva-r2" class="w-full border border-gray-300 rounded px-3 py-2 font-bold text-[#143B62]">
+                            <p class="text-[8px] text-gray-400 mt-1 italic">Ej: 12%</p>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black text-gray-500 uppercase mb-1">Mostrar Exento POS</label>
+                            <select id="conf-exento" class="w-full border border-gray-300 rounded px-3 py-2 font-bold text-[#143B62] outline-none">
+                                <option value="SI">SÍ MOSTRAR</option>
+                                <option value="NO">OCULTAR</option>
+                            </select>
+                            <p class="text-[8px] text-gray-400 mt-1 italic">Ahorra espacio visual</p>
                         </div>
                     </div>
                 </div>
@@ -84,7 +94,7 @@
                 </div>
 
                 <div class="flex justify-end gap-4">
-                    <button onclick="guardarTodo()" class="bg-[#143B62] hover:bg-[#0f2d4a] text-white px-10 py-3 rounded-xl font-black shadow-lg transition-all uppercase tracking-widest btn-press">
+                    <button onclick="guardarTodo(event)" class="bg-[#143B62] hover:bg-[#0f2d4a] text-white px-10 py-3 rounded-xl font-black shadow-lg transition-all uppercase tracking-widest btn-press">
                         <i class="fa-solid fa-save mr-2"></i> Guardar Todos los Ajustes
                     </button>
                 </div>
@@ -104,8 +114,8 @@
 
         async function cargarConfig() {
             const [resTasa, resConf] = await Promise.all([
-                fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?select=tasa&order=fecha_actualizacion.desc&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
-                fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } })
+                fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?moneda=eq.USD&select=tasa&order=fecha_actualizacion.desc&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
+                fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?id_empresa=eq.${empId}&select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } })
             ]);
             
             const dataTasa = await resTasa.json();
@@ -119,7 +129,12 @@
                     if(previewId) actualizarPreview(id, previewId, txtId);
                 }
             };
-            fill('conf-iva', 'IVA_GENERAL'); fill('conf-igtf', 'IGTF'); fill('conf-iva-r1', 'IVA_REDUCIDO_1'); fill('conf-iva-r2', 'IVA_REDUCIDO_2');
+            
+            fill('conf-iva', 'IVA_GENERAL'); 
+            fill('conf-igtf', 'IGTF'); 
+            fill('conf-iva-r1', 'IVA_REDUCIDO_1'); 
+            fill('conf-iva-r2', 'IVA_REDUCIDO_2');
+            fill('conf-exento', 'POS_MOSTRAR_EXENTO');
             fill('url-logo', 'LOGO_URL', 'preview-logo', 'txt-logo');
             fill('url-fondo', 'FONDO_URL', 'preview-fondo', 'txt-fondo');
         }
@@ -134,23 +149,49 @@
 
         async function guardarTasa() {
             const t = parseFloat(document.getElementById('conf-tasa').value);
-            await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ tasa: t, id_empresa: empId }) });
-            alert("Tasa actualizada.");
+            if(isNaN(t)) return;
+            // Recordamos que ya la tasa es global (no lleva id_empresa)
+            await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv`, { 
+                method: 'POST', 
+                headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, 
+                body: JSON.stringify({ moneda: 'USD', tasa: t }) 
+            });
+            alert("Tasa actualizada correctamente.");
         }
 
-        async function guardarTodo() {
+        async function guardarTodo(event) {
+            const btn = event.currentTarget;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Guardando...`; 
+            btn.disabled = true;
+
             const configs = [
-                { parametro: 'IVA_GENERAL', valor: document.getElementById('conf-iva').value, id_empresa: empId },
-                { parametro: 'IGTF', valor: document.getElementById('conf-igtf').value, id_empresa: empId },
-                { parametro: 'LOGO_URL', valor: document.getElementById('url-logo').value, id_empresa: empId },
-                { parametro: 'FONDO_URL', valor: document.getElementById('url-fondo').value, id_empresa: empId }
+                { parametro: 'IVA_GENERAL', valor: document.getElementById('conf-iva').value },
+                { parametro: 'IGTF', valor: document.getElementById('conf-igtf').value },
+                { parametro: 'IVA_REDUCIDO_1', valor: document.getElementById('conf-iva-r1').value },
+                { parametro: 'IVA_REDUCIDO_2', valor: document.getElementById('conf-iva-r2').value },
+                { parametro: 'POS_MOSTRAR_EXENTO', valor: document.getElementById('conf-exento').value },
+                { parametro: 'LOGO_URL', valor: document.getElementById('url-logo').value },
+                { parametro: 'FONDO_URL', valor: document.getElementById('url-fondo').value }
             ];
-            for (let c of configs) {
-                await fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?on_conflict=parametro`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' }, body: JSON.stringify(c) });
+
+            try {
+                for (let c of configs) {
+                    // Usamos PATCH para actualizar el valor exacto de tu empresa sin errores
+                    await fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?parametro=eq.${c.parametro}&id_empresa=eq.${empId}`, { 
+                        method: 'PATCH', 
+                        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, 
+                        body: JSON.stringify({ valor: c.valor }) 
+                    });
+                }
+                
+                localStorage.setItem('pyp_logo_pc_url', document.getElementById('url-logo').value);
+                alert("Ajustes guardados correctamente en la base de datos.");
+                location.reload();
+            } catch (error) {
+                alert("Ocurrió un error al guardar.");
+                btn.innerHTML = `<i class="fa-solid fa-save mr-2"></i> Guardar Todos los Ajustes`; 
+                btn.disabled = false;
             }
-            localStorage.setItem('pyp_logo_pc_url', document.getElementById('url-logo').value);
-            alert("Ajustes guardados correctamente.");
-            location.reload();
         }
     </script>
 </body>
