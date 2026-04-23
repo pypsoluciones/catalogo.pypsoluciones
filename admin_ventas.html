@@ -414,105 +414,6 @@
             </div>
         </div>
     </main>
-    <div id="media-viewer" class="fixed inset-0 bg-black/95 z-[9999] hidden flex-col items-center justify-center p-4 fade-in" onclick="cerrarVisor()">
-        <button class="absolute top-4 right-4 text-white text-3xl hover:text-gray-300 z-10 transition"><i class="fa-solid fa-times"></i></button>
-        <div class="flex flex-col items-center gap-4 max-w-4xl w-full" onclick="event.stopPropagation()">
-            <img id="viewer-img-main" src="" class="max-w-full max-h-[70vh] object-contain rounded shadow-2xl border-4 border-white/10 bg-white">
-            <div id="viewer-thumbnails" class="flex gap-2 overflow-x-auto p-2 no-scrollbar bg-white/5 rounded-xl"></div>
-        </div>
-    </div>
-
-    <div id="modal-cobro" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4 fade-in">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden flex flex-col border border-gray-200 relative">
-            <div class="bg-[#143B62] px-4 py-3 flex justify-between items-center shrink-0">
-                <h3 class="font-bold text-white text-[12px] tracking-wide uppercase">Finalizar Transacción</h3>
-                <button onclick="cerrarCobro()" class="text-gray-300 hover:text-white text-lg transition"><i class="fa-solid fa-times"></i></button>
-            </div>
-            <div class="p-5 bg-gray-50 space-y-3">
-                <div class="bg-[#143B62] rounded-lg p-3 text-center shadow-inner relative overflow-hidden">
-                    <p class="text-blue-200 text-[8px] font-bold uppercase tracking-widest mb-0.5 z-10 relative">Monto a Liquidar</p>
-                    <h2 class="text-3xl font-black text-[#25D366] leading-none mb-1 z-10 relative" id="modal-total-bs-final">Bs. 0.00</h2>
-                    <p class="text-white font-bold text-[10px] z-10 relative" id="modal-total-usd-final">US$ 0.00</p>
-                </div>
-                <div>
-                    <label class="block text-[9px] font-medium text-gray-500 uppercase mb-1">Método de Pago Principal</label>
-                    <select id="cobro-metodo" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[11px] font-bold text-[#143B62] outline-none shadow-sm bg-white" onchange="verificarIGTF()">
-                        <option value="EFECTIVO_BS">🇻🇪 Efectivo Bolívares</option>
-                        <option value="PAGO_MOVIL">📱 Pago Móvil</option>
-                        <option value="PUNTO_VENTA">💳 Punto de Venta</option>
-                        <option value="EFECTIVO_USD">💵 Divisas (Aplica IGTF)</option>
-                        <option value="ZELLE">🟣 Zelle (Aplica IGTF)</option>
-                    </select>
-                </div>
-                <div id="caja-igtf" class="hidden bg-yellow-50 border border-yellow-200 p-2 rounded mb-3"><p class="text-[9px] text-yellow-700 font-bold uppercase"><i class="fa-solid fa-triangle-exclamation"></i> Se aplicará 3% de IGTF al monto final</p></div>
-                
-                <div class="bg-gray-100 p-2 rounded border border-gray-200 shadow-inner mb-3">
-                    <label class="block text-[8px] font-bold text-[#143B62] uppercase mb-0.5">Formato de Salida / Impresión</label>
-                    <select id="cobro-formato-impresion" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] font-bold text-gray-700 outline-none bg-white">
-                        <option value="80mm">Térmica 80mm</option>
-                        <option value="58mm">Térmica 58mm</option>
-                        <option value="carta">Documento Carta (A4)</option>
-                    </select>
-                </div>
-                
-                <button onclick="procesarVenta()" id="btn-confirmar" class="w-full bg-[#143B62] hover:bg-[#0f2d4a] text-white font-bold py-3 rounded-lg shadow-md transition-all text-xs uppercase tracking-wider btn-press flex justify-center items-center gap-2"><i class="fa-solid fa-print"></i> Facturar e Imprimir</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="loading-overlay" class="fixed inset-0 bg-white/95 z-[999] hidden flex-col items-center justify-center p-6 text-center backdrop-blur-sm">
-        <i id="loading-icon" class="fa-solid fa-circle-notch fa-spin text-5xl text-[#25D366] mb-4"></i>
-        <h2 id="loading-text" class="text-xl font-bold text-[#143B62] uppercase mb-2">Procesando...</h2>
-        <p id="loading-error" class="text-xs text-gray-500 font-medium max-w-sm hidden text-center"></p>
-        <div id="error-actions" class="hidden mt-6 flex gap-3">
-            <button onclick="window.location.reload()" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2.5 rounded font-bold uppercase text-xs btn-press transition shadow">Reintentar</button>
-            <button onclick="forzarCierreSesion()" class="bg-[#E67E22] hover:bg-orange-600 text-white px-6 py-2.5 rounded font-bold uppercase text-xs btn-press transition shadow-md"><i class="fa-solid fa-power-off mr-2"></i> Cerrar Sesión</button>
-        </div>
-    </div>
-
-    <div id="modal-nuevo-cliente" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[110] hidden flex items-center justify-center p-4 fade-in">
-        <div class="bg-white rounded-lg shadow-2xl w-full max-w-sm overflow-hidden flex flex-col border border-gray-200">
-            <div class="bg-[#143B62] text-white px-3 py-2.5 flex justify-between items-center">
-                <h3 class="font-bold text-[11px] tracking-wide uppercase">Registro Rápido Cliente</h3>
-                <button onclick="cerrarModalNuevoCliente()" class="text-gray-300 hover:text-white transition"><i class="fa-solid fa-times"></i></button>
-            </div>
-            <form id="form-cliente-rapido" onsubmit="guardarClienteRapido(event)" class="p-4 bg-gray-50 space-y-2.5">
-                <div class="grid grid-cols-2 gap-2">
-                    <div class="col-span-2"><label class="block text-[8px] font-medium text-gray-500 uppercase mb-0.5">Doc. Identidad / RIF *</label><input type="text" id="cli-rap-doc" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] font-bold uppercase focus:border-[#143B62] outline-none bg-white"></div>
-                    <div class="col-span-2"><label class="block text-[8px] font-medium text-gray-500 uppercase mb-0.5">Nombre / Razón Social *</label><input type="text" id="cli-rap-nom" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] font-bold uppercase focus:border-[#143B62] outline-none bg-white"></div>
-                    <div class="col-span-2"><label class="block text-[8px] font-medium text-gray-500 uppercase mb-0.5">Dirección Fiscal Exacta *</label><input type="text" id="cli-rap-dir" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] font-bold uppercase focus:border-[#143B62] outline-none bg-white"></div>
-                    <div><label class="block text-[8px] font-medium text-gray-500 uppercase mb-0.5">Celular</label><input type="text" id="cli-rap-tel" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] font-bold focus:border-[#143B62] outline-none bg-white"></div>
-                    <div><label class="block text-[8px] font-medium text-gray-500 uppercase mb-0.5">Contribuyente *</label><select id="cli-rap-tipo" required class="w-full border border-gray-300 rounded px-1.5 py-1.5 text-[10px] font-bold outline-none bg-white"><option value="NATURAL">NATURAL</option><option value="JURIDICA">JURÍDICA</option><option value="RETENCION">CONT. ESPECIAL</option></select></div>
-                </div>
-                <button type="submit" id="btn-guardar-cli-rap" class="w-full bg-[#25D366] text-white font-bold py-2 rounded shadow mt-2 btn-press uppercase text-[10px]"><i class="fa-solid fa-save mr-1"></i> Guardar y Usar</button>
-            </form>
-        </div>
-    </div>
-
-    <div id="modal-ficha-completa" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[110] hidden flex items-center justify-center p-4 fade-in">
-        <div class="bg-white rounded-lg shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col border border-gray-200 relative max-h-[90vh]">
-            <div class="bg-[#143B62] text-white px-4 py-3 flex justify-between items-center shrink-0">
-                <h3 class="font-bold text-[12px] tracking-wide uppercase"><i class="fa-solid fa-address-book mr-2 text-[#E67E22]"></i> Ficha Completa de Cliente</h3>
-                <button onclick="cerrarModalFichaCompleta()" class="text-gray-300 hover:text-white text-lg transition"><i class="fa-solid fa-times"></i></button>
-            </div>
-            <form id="form-ficha-completa" onsubmit="guardarFichaCompleta(event)" class="p-5 bg-gray-50 overflow-y-auto custom-scroll space-y-3">
-                <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    <div><label class="block text-[9px] font-medium text-gray-500 uppercase mb-0.5">Cédula / RIF *</label><input type="text" id="fc-doc" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] font-bold uppercase outline-none bg-white"></div>
-                    <div class="md:col-span-2"><label class="block text-[9px] font-medium text-gray-500 uppercase mb-0.5">Razón Social *</label><input type="text" id="fc-nombre" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] font-bold uppercase outline-none bg-white"></div>
-                    <div class="col-span-2 md:col-span-3"><label class="block text-[9px] font-medium text-gray-500 uppercase mb-0.5">Dirección Fiscal *</label><input type="text" id="fc-dir-p" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] outline-none uppercase bg-white"></div>
-                    <div><label class="block text-[9px] font-medium text-gray-500 uppercase mb-0.5">Celular Principal</label><input type="text" id="fc-tel1" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] outline-none bg-white"></div>
-                    <div><label class="block text-[9px] font-medium text-gray-500 uppercase mb-0.5">Correo</label><input type="email" id="fc-email" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] outline-none bg-white"></div>
-                    <div><label class="block text-[9px] font-medium text-gray-500 uppercase mb-0.5">Tipo Contribuyente *</label><select id="fc-tipo" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] outline-none bg-white"><option value="NATURAL">NATURAL</option><option value="JURIDICA">JURÍDICA</option><option value="RETENCION">AGENTE RETENCIÓN</option></select></div>
-                    <div><label class="block text-[9px] font-medium text-gray-500 uppercase mb-0.5">Nivel de Precio *</label><select id="fc-precio" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] outline-none bg-white"><option value="GENERAL">P. GENERAL</option><option value="P1">MAYORISTA</option><option value="P2">DISTRIBUIDOR</option></select></div>
-                </div>
-                <div class="flex gap-2 justify-end pt-2 mt-2 border-t"><button type="button" onclick="cerrarModalFichaCompleta()" class="px-4 py-1.5 bg-gray-200 rounded text-[10px] font-bold hover:bg-gray-300 btn-press">Cancelar</button><button type="submit" id="btn-guardar-fc" class="px-4 py-1.5 bg-[#143B62] text-white rounded text-[10px] font-bold uppercase btn-press">Guardar</button></div>
-            </form>
-        </div>
-    </div>
-
-    <div id="ticket-impresion" class="hidden print:block"></div>
-
-    <script src="menu.js"></script>
 
     <script>
         // ================= CONFIGURACIÓN Y VARIABLES GLOBALES =================
@@ -529,16 +430,13 @@
         // ================= INICIALIZACIÓN DEL SISTEMA =================
         window.onload = async () => {
             const nombreUsuario = localStorage.getItem('pyp_usuario_nombre') || 'SISTEMA';
-            
             if(document.getElementById('nombre-usuario')) document.getElementById('nombre-usuario').innerText = nombreUsuario.split(' ')[0];
             if(document.getElementById('txt-cajero-nombre')) document.getElementById('txt-cajero-nombre').innerText = nombreUsuario;
             
-            // Preferencias Locales
             const vistaLocal = localStorage.getItem('pyp_pos_vista_inventario');
             if(vistaLocal) posVistaActual = vistaLocal;
             document.getElementById('filtro-stock-pos').value = localStorage.getItem('pyp_pos_filtro_stock_default') || 'DISPONIBLE';
             
-            // Fechas
             document.getElementById('pos-fecha-emision').value = getFechaHoy();
             document.getElementById('pos-fecha-vencimiento').value = getFechaHoy();
             ajustarFechaVencimiento();
@@ -578,7 +476,7 @@
         function forzarCierreSesion() { localStorage.removeItem('pyp_token_seguro'); localStorage.removeItem('pyp_usuario_nombre'); window.location.href = 'login.html'; }
 
         // ================= CONEXIÓN A DB Y DESCARGA INICIAL =================
-      async function iniciarPuntoVenta() {
+        async function iniciarPuntoVenta() {
             try {
                 const resUser = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?select=id_empresa&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
                 if (!resUser.ok) throw new Error("Sesión inválida.");
@@ -910,54 +808,55 @@
             }
         }
 
-        // ================= MOTOR DE TASAS (AUTOMÁTICO Y MANUAL) =================
-      // ================= MOTOR DE TASAS (SCRAPER BCV VÍA PROXY CORS) =================
-        // ================= MOTOR DE TASAS (VÍA API OFICIAL ESTABLE) =================
+        // ================= MOTOR DE TASAS (SCRAPER BCV VÍA PROXY CORS) =================
         async function sincronizarBCV() {
-            mostrarCarga("Sincronizando...", "Obteniendo tasas oficiales actualizadas...");
+            mostrarCarga("Sincronizando con BCV...", "Extrayendo tasa oficial del portal...");
             try {
-                // Fetch Dólar Oficial
-                const resUsd = await fetch('https://ve.dolarapi.com/v1/dolares/oficial');
-                if(!resUsd.ok) throw new Error("Fallo API USD");
-                const dataUsd = await resUsd.json();
+                const bcvUrl = encodeURIComponent('https://www.bcv.org.ve/');
+                const proxyUrl = `https://api.allorigins.win/get?url=${bcvUrl}`;
                 
-                // Fetch Euro Oficial
-                const resEur = await fetch('https://ve.dolarapi.com/v1/euros/oficial');
-                if(!resEur.ok) throw new Error("Fallo API EUR");
-                const dataEur = await resEur.json();
+                const response = await fetch(proxyUrl);
+                if (!response.ok) throw new Error("Fallo el Proxy");
+                const dataProxy = await response.json();
+                const html = dataProxy.contents; 
 
-                // Actualizar variables globales
-                tasaBCV = dataUsd.promedio;
-                tasaBCVEur = dataEur.promedio;
+                const matchDolar = html.match(/<div id="dolar".*?>.*?<strong>\s*(.*?)\s*<\/strong>/is);
+                const matchEuro = html.match(/<div id="euro".*?>.*?<strong>\s*(.*?)\s*<\/strong>/is);
 
-                // Reflejar en la UI
-                document.getElementById('input-tasa-usd').value = tasaBCV.toFixed(2);
-                document.getElementById('input-tasa-eur').value = tasaBCVEur.toFixed(2);
+                if (matchDolar && matchEuro) {
+                    const stringDolar = matchDolar[1].trim().replace(/\./g, '').replace(',', '.');
+                    const stringEuro = matchEuro[1].trim().replace(/\./g, '').replace(',', '.');
+                    
+                    tasaBCV = parseFloat(stringDolar);
+                    tasaBCVEur = parseFloat(stringEuro);
 
-                // Guardar histórico en Supabase
-                await guardarTasaEnDB('USD', tasaBCV);
-                await guardarTasaEnDB('EUR', tasaBCVEur);
+                    document.getElementById('input-tasa-usd').value = tasaBCV.toFixed(2);
+                    document.getElementById('input-tasa-eur').value = tasaBCVEur.toFixed(2);
 
-                actualizarUI_Carrito(); // Recalcula la factura
-                cerrarErrorCarga();
+                    await guardarTasaEnDB('USD', tasaBCV);
+                    await guardarTasaEnDB('EUR', tasaBCVEur);
+
+                    actualizarUI_Carrito(); 
+                    cerrarErrorCarga();
+                } else {
+                    throw new Error("Estructura del BCV cambió.");
+                }
             } catch (e) {
                 console.error(e);
-                mostrarCarga("Error de Conexión", "El servidor de tasas no responde. Por favor, ingresa la tasa manualmente.", true);
+                mostrarCarga("Error BCV", "El portal bloqueó la conexión. Ingresa la tasa manualmente.", true);
             }
         }
 
         async function guardarTasaManual(moneda, valor) {
             const nuevaTasa = parseFloat(valor); if(isNaN(nuevaTasa) || nuevaTasa <= 0) return;
             if(moneda === 'USD') tasaBCV = nuevaTasa; if(moneda === 'EUR') tasaBCVEur = nuevaTasa;
-            try { await guardarTasaEnDB(moneda, nuevaTasa); actualizarUI_Carrito(); } catch(e) { alert("Error al guardar la tasa manual en la nube."); }
+            try { await guardarTasaEnDB(moneda, nuevaTasa); actualizarUI_Carrito(); } catch(e) { alert("Error al guardar la tasa manual."); }
         }
 
-       async function guardarTasaEnDB(moneda, valor) {
-            // Se quitó id_empresa porque tu tabla tasas_bcv no tiene esa columna
-            const payload = { moneda: moneda, tasa: valor }; 
+        async function guardarTasaEnDB(moneda, valor) {
+            const payload = { moneda: moneda, tasa: valor };
             await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
         }
     </script>
 </body>
 </html>
-    
