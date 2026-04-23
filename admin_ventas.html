@@ -534,19 +534,19 @@
         function forzarCierreSesion() { localStorage.removeItem('pyp_token_seguro'); localStorage.removeItem('pyp_usuario_nombre'); window.location.href = 'login.html'; }
 
         // ================= CONEXIÓN A DB Y DESCARGA INICIAL =================
-        // ================= CONEXIÓN A DB Y DESCARGA INICIAL =================
         async function iniciarPuntoVenta() {
             try {
                 const resUser = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?select=id_empresa&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
                 if (!resUser.ok) throw new Error("Sesión inválida.");
                 empresaActual = (await resUser.json())[0].id_empresa;
 
+                // 1. ELIMINAMOS LA LECTURA DE LA TABLA VIEJA Y DEJAMOS SOLO CONFIGURACIÓN
                 const [resTasa, resProd, resPre, resCli, resConf] = await Promise.all([
                     fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?select=*&order=fecha_actualizacion.desc&limit=5`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
                     fetch(`${SUPABASE_URL}/rest/v1/productos?select=*&estado_producto=eq.ACTIVO`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
                     fetch(`${SUPABASE_URL}/rest/v1/precios?select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
                     fetch(`${SUPABASE_URL}/rest/v1/directorio_maestro?select=*&tipo_persona=eq.CLIENTE&estatus=eq.ACTIVO`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
-                    // ¡AQUÍ ESTÁ LA MAGIA! Quitamos el filtro id_empresa para que lea todo, incluyendo los NULL
+                    // Quitamos el filtro estricto de empresa para que lea todo, incluyendo tu nueva configuración
                     fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } })
                 ]);
 
@@ -564,6 +564,7 @@
                 // CONFIGURACIÓN FISCAL Y CONDICIONES (LEYENDO EL ÚLTIMO REGISTRO FRESCO)
                 let dConf = []; if(resConf.ok) dConf = await resConf.json();
                 
+                // LA MAGIA: Usamos filter y tomamos el ÚLTIMO elemento en vez del primero (evita fantasmas)
                 const getC = (p, def) => { 
                     const items = dConf.filter(c => c.parametro === p); 
                     return items.length > 0 ? items[items.length - 1].valor : def; 
@@ -575,7 +576,7 @@
                 pypIgtf = parseFloat(getC('IGTF', '3')) / 100;
                 pypMostrarExento = getC('POS_MOSTRAR_EXENTO', 'SI');
                 
-                // CARGAR CONDICIONES DE PAGO EXACTAS DEL CONSTRUCTOR
+                // 2. CARGAR CONDICIONES DE PAGO EXACTAS DEL CONSTRUCTOR
                 const strCond = getC('CONDICIONES_PAGO', 'CONTADO|0');
                 let htmlCond = '';
                 strCond.split(',').forEach(c => {
@@ -600,7 +601,6 @@
                 buscarProductos(); 
             } catch(e) { mostrarErrorConexion(e.message); }
         }
-
         // ================= VISTAS Y BÚSQUEDA DE INVENTARIO =================
         function cambiarVistaPos(v) { posVistaActual = v; localStorage.setItem('pyp_pos_vista_inventario', v); actualizarBotonesVistaPos(); buscarProductos(); }
         function actualizarBotonesVistaPos() { document.getElementById('btn-vista-tabla-pos').classList.toggle('bg-white', posVistaActual === 'tabla'); document.getElementById('btn-vista-tabla-pos').classList.toggle('shadow-sm', posVistaActual === 'tabla'); document.getElementById('btn-vista-grid-pos').classList.toggle('bg-white', posVistaActual === 'grid'); document.getElementById('btn-vista-grid-pos').classList.toggle('shadow-sm', posVistaActual === 'grid'); }
