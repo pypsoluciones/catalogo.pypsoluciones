@@ -103,7 +103,6 @@
     </main>
 
     <script>
-        <script>
         const TOKEN_JWT = localStorage.getItem('pyp_token_seguro');
         let empId = null;
 
@@ -175,13 +174,11 @@
             ];
 
             try {
-                // 1. Borramos los parámetros viejos para evitar choques
                 const nombresParams = configs.map(c => c.parametro).join(',');
                 await fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?id_empresa=eq.${empId}&parametro=in.(${nombresParams})`, {
                     method: 'DELETE', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` }
                 });
 
-                // 2. Insertamos la configuración limpia y fresca
                 const payload = configs.map(c => ({
                     parametro: c.parametro, valor: String(c.valor), id_empresa: empId, estatus: 'ACTIVO'
                 }));
@@ -191,7 +188,7 @@
                     body: JSON.stringify(payload)
                 });
 
-                if (!resInsert.ok) throw new Error("Fallo al insertar la nueva configuración.");
+                if (!resInsert.ok) throw new Error("Fallo inserción");
 
                 localStorage.setItem('pyp_logo_pc_url', document.getElementById('url-logo').value);
                 alert("Ajustes guardados exitosamente.");
@@ -203,7 +200,6 @@
                 btn.disabled = false;
             }
         }
-    </script>
     </script>
 </body>
 </html>
