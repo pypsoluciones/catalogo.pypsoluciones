@@ -264,7 +264,7 @@
                         <span title="Euro Oficial" class="cursor-help">🇪🇺 EUR:</span>
                         <input type="number" id="input-tasa-eur" step="0.01" class="w-14 bg-white border border-blue-200 rounded px-1 py-0.5 outline-none text-right focus:border-[#E67E22] transition" value="0.00" onchange="guardarTasaManual('EUR', this.value)">
                     </div>
-                    <button onclick="sincronizarBCV()" class="bg-[#143B62] hover:bg-[#E67E22] text-white w-6 h-6 rounded flex items-center justify-center transition-colors shadow-md btn-press ml-1" title="Sincronizar BCV">
+                    <button onclick="sincronizarBCV()" class="bg-[#143B62] hover:bg-[#E67E22] text-white w-6 h-6 rounded flex items-center justify-center transition-colors shadow-md btn-press ml-1" title="Sincronizar BCV Automáticamente">
                         <i class="fa-solid fa-rotate text-[10px]"></i>
                     </button>
                 </div>
@@ -297,7 +297,7 @@
                 </div>
             </div>
 
-            <div class="w-full md:w-2/5 lg:w-1/3 h-full flex flex-col bg-white shadow-[-5px_0_15px_rgba(0,0,0,0.03)] z-10">
+            <div class="w-full md:w-2/5 lg:w-1/3 h-full flex flex-col bg-white shadow-[-5px_0_15px_rgba(0,0,0,0.03)] z-10 relative">
                 
                 <div class="bg-gray-50 p-2 border-b border-gray-200 shrink-0 flex flex-col gap-1.5 shadow-inner">
                     <h3 class="text-[9px] font-bold text-[#143B62] uppercase tracking-wider border-b border-gray-200 pb-1"><i class="fa-solid fa-file-invoice mr-1"></i> Cabecera del Documento</h3>
@@ -314,8 +314,7 @@
                         <div>
                             <label class="block text-[7px] font-medium text-gray-500 uppercase mb-0.5">Condición</label>
                             <select id="pos-condicion" class="w-full border border-gray-300 rounded px-1 py-1 text-[8px] font-bold text-[#143B62] outline-none bg-white h-[24px] cursor-pointer" onchange="ajustarFechaVencimiento()">
-                                <option value="CONTADO">CONTADO</option>
-                                <option value="CREDITO">CRÉDITO</option>
+                                <option value="0">CONTADO</option>
                             </select>
                         </div>
                     </div>
@@ -372,26 +371,34 @@
                 </div>
 
                 <div class="p-2.5 bg-white border-t border-gray-200 shrink-0 shadow-[0_-10px_20px_rgba(0,0,0,0.03)] flex flex-col gap-0.5">
-                    <div class="flex justify-between items-center text-[9px] text-gray-500 font-bold uppercase">
-                        <span>Subtotal Base</span>
-                        <span id="pos-subtotal">Bs. 0.00</span>
-                    </div>
-                    <div class="flex justify-between items-center text-[9px] text-gray-500 font-bold uppercase mt-0.5">
-                        <div class="flex items-center gap-1">
-                            <span>Desc. Gral</span>
-                            <select id="pos-type-desc-general" class="border border-gray-200 rounded text-[8px] p-0.5 outline-none bg-gray-50 font-bold text-[#143B62]" onchange="actualizarUI_Carrito()">
-                                <option value="MONTO_BS" selected>Bs.</option>
-                                <option value="PORCENTAJE">%</option>
-                                <option value="MONTO">$</option>
-                            </select>
-                            <input type="number" id="pos-input-desc-general" placeholder="0" class="border border-gray-200 rounded text-center w-14 py-0.5 text-[9px] font-bold text-gray-700 outline-none shadow-inner" onchange="actualizarUI_Carrito()">
-                        </div>
-                        <span id="pos-descuento-general-val" class="text-red-500 font-bold">- Bs. 0.00</span>
-                    </div>
                     
-                    <div class="border-t border-gray-100 my-0.5"></div>
-                    <div id="contenedor-totales-fiscales" class="flex flex-col gap-0.5"></div>
-                    <div class="border-t border-gray-100 my-1"></div>
+                    <div class="flex justify-between items-center border-b border-gray-100 pb-1 mb-1 cursor-pointer group" onclick="document.getElementById('caja-acordeon-totales').classList.toggle('hidden'); this.querySelector('i').classList.toggle('fa-chevron-up'); this.querySelector('i').classList.toggle('fa-chevron-down');">
+                        <span class="text-[8px] font-black text-gray-400 uppercase tracking-widest group-hover:text-[#143B62] transition">Desglose Fiscal (Click para Ocultar/Mostrar)</span>
+                        <i class="fa-solid fa-chevron-down text-[10px] text-gray-300 group-hover:text-[#143B62] transition"></i>
+                    </div>
+
+                    <div id="caja-acordeon-totales" class="hidden flex flex-col gap-0.5 fade-in">
+                        <div class="flex justify-between items-center text-[9px] text-gray-500 font-bold uppercase">
+                            <span>Subtotal Base</span>
+                            <span id="pos-subtotal">Bs. 0.00</span>
+                        </div>
+                        <div class="flex justify-between items-center text-[9px] text-gray-500 font-bold uppercase mt-0.5">
+                            <div class="flex items-center gap-1">
+                                <span>Desc. Gral</span>
+                                <select id="pos-type-desc-general" class="border border-gray-200 rounded text-[8px] p-0.5 outline-none bg-gray-50 font-bold text-[#143B62]" onchange="actualizarUI_Carrito()">
+                                    <option value="MONTO_BS" selected>Bs.</option>
+                                    <option value="PORCENTAJE">%</option>
+                                    <option value="MONTO">$</option>
+                                </select>
+                                <input type="number" id="pos-input-desc-general" placeholder="0" class="border border-gray-200 rounded text-center w-14 py-0.5 text-[9px] font-bold text-gray-700 outline-none shadow-inner" onchange="actualizarUI_Carrito()">
+                            </div>
+                            <span id="pos-descuento-general-val" class="text-red-500 font-bold">- Bs. 0.00</span>
+                        </div>
+                        
+                        <div class="border-t border-gray-100 my-0.5"></div>
+                        <div id="contenedor-totales-fiscales" class="flex flex-col gap-0.5"></div>
+                        <div class="border-t border-gray-100 my-1"></div>
+                    </div>
                     
                     <div class="flex justify-between items-end mb-0.5 mt-1">
                         <span class="text-[10px] font-bold text-[#143B62] uppercase tracking-wider">Total a Pagar Bs</span>
@@ -414,17 +421,18 @@
             </div>
         </div>
     </main>
-
     <script>
         // ================= CONFIGURACIÓN Y VARIABLES GLOBALES =================
         const TOKEN_JWT = localStorage.getItem('pyp_token_seguro');
         let dbInventario = [], carrito = [], dbClientes = [], fuseInventario = null, fuseClientes = null, empresaActual = null;
+        let dbCondiciones = []; // Para almacenar las condiciones desde Supabase
         let tasaBCV = 1, tasaBCVEur = 1;
         let pypIva = 0.16, pypIvaRed1 = 0.08, pypIvaRed2 = 0.12, pypIgtf = 0.03;
         let pypMostrarExento = 'SI';
         let imgDefecto = 'https://via.placeholder.com/150/f8fafc/94a3b8?text=P%26P';
         let posVistaActual = 'grid';
 
+        // FECHA LOCAL DEL SISTEMA: Si tu PC está en 2026, esto devolverá 2026.
         function getFechaHoy() { const hoy = new Date(); return hoy.toISOString().split('T')[0]; }
 
         // ================= INICIALIZACIÓN DEL SISTEMA =================
@@ -439,7 +447,6 @@
             
             document.getElementById('pos-fecha-emision').value = getFechaHoy();
             document.getElementById('pos-fecha-vencimiento').value = getFechaHoy();
-            ajustarFechaVencimiento();
             actualizarBotonesVistaPos();
             
             await iniciarPuntoVenta();
@@ -451,15 +458,30 @@
         };
 
         function ajustarFechaVencimiento() {
-            const cond = document.getElementById('pos-condicion').value;
+            // El value del select ahora tiene la CANTIDAD DE DÍAS (Ej. "0", "15", "30")
+            const selectVal = document.getElementById('pos-condicion').value;
             const inputVenc = document.getElementById('pos-fecha-vencimiento');
-            if(cond === 'CONTADO') {
-                inputVenc.value = document.getElementById('pos-fecha-emision').value;
+            const emisionStr = document.getElementById('pos-fecha-emision').value;
+            
+            if (selectVal === 'MANUAL') {
+                // Si alguien crea una condición con valor 'MANUAL', dejamos que editen
+                inputVenc.readOnly = false;
+                inputVenc.classList.remove('bg-gray-100'); inputVenc.classList.add('bg-white');
+                return;
+            }
+
+            const dias = parseInt(selectVal) || 0;
+            // T12:00:00Z evita problemas de zonas horarias
+            let fechaBase = new Date(emisionStr + 'T12:00:00Z');
+            fechaBase.setDate(fechaBase.getDate() + dias);
+            
+            inputVenc.value = fechaBase.toISOString().split('T')[0];
+            
+            if (dias === 0) {
                 inputVenc.readOnly = true; inputVenc.classList.add('bg-gray-100'); inputVenc.classList.remove('bg-white');
             } else {
+                // Aunque se calcule sola, permitimos que el cajero la ajuste si es un crédito flexible
                 inputVenc.readOnly = false; inputVenc.classList.remove('bg-gray-100'); inputVenc.classList.add('bg-white');
-                let d = new Date(); d.setDate(d.getDate() + 15);
-                inputVenc.value = d.toISOString().split('T')[0];
             }
         }
 
@@ -482,16 +504,38 @@
                 if (!resUser.ok) throw new Error("Sesión inválida.");
                 empresaActual = (await resUser.json())[0].id_empresa;
 
-                const [resTasa, resProd, resPre, resCli, resConf] = await Promise.all([
+                // Añadimos resCond para traer las CONDICION_PAGO de la base de datos
+                const [resTasa, resProd, resPre, resCli, resConf, resCond] = await Promise.all([
                     fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?select=*&order=fecha_actualizacion.desc&limit=5`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
                     fetch(`${SUPABASE_URL}/rest/v1/productos?select=*&estado_producto=eq.ACTIVO`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
                     fetch(`${SUPABASE_URL}/rest/v1/precios?select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
                     fetch(`${SUPABASE_URL}/rest/v1/directorio_maestro?select=*&tipo_persona=eq.CLIENTE&estatus=eq.ACTIVO`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
-                    fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?id_empresa=eq.${empresaActual}&select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } })
+                    fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?id_empresa=eq.${empresaActual}&select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
+                    fetch(`${SUPABASE_URL}/rest/v1/parametros_inventario?grupo=eq.CONDICION_PAGO&estatus=eq.ACTIVO`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } })
                 ]);
 
                 if (!resProd.ok || !resPre.ok) throw new Error("Fallo al descargar la base de datos.");
 
+                // Llenado dinámico del Select de Condiciones
+                if (resCond.ok) {
+                    dbCondiciones = await resCond.json();
+                    let htmlCond = '';
+                    if (dbCondiciones.length === 0) {
+                        htmlCond = '<option value="0">CONTADO</option>'; // Fallback de emergencia
+                    } else {
+                        dbCondiciones.forEach(c => {
+                            // c.valor debería ser "NOMBRE|DIAS", ej "CRÉDITO 15 DÍAS|15"
+                            const partes = c.valor.split('|');
+                            const nombre = partes[0];
+                            const dias = partes.length > 1 ? partes[1] : 0;
+                            htmlCond += `<option value="${dias}">${nombre}</option>`;
+                        });
+                    }
+                    document.getElementById('pos-condicion').innerHTML = htmlCond;
+                    ajustarFechaVencimiento();
+                }
+
+                // Carga de Tasas
                 const dataTasa = await resTasa.json(); 
                 if(dataTasa.length > 0) { 
                     const tUsd = dataTasa.find(t => t.moneda === 'USD');
@@ -500,6 +544,7 @@
                     if(tEur) { tasaBCVEur = tEur.tasa; document.getElementById('input-tasa-eur').value = tasaBCVEur.toFixed(2); }
                 }
                 
+                // Carga de Configuración
                 let dConf = []; if(resConf.ok) dConf = await resConf.json();
                 const ivaConf = dConf.find(c => c.parametro === 'IVA_GENERAL'); if(ivaConf) pypIva = parseFloat(ivaConf.valor) / 100;
                 const ivaR1Conf = dConf.find(c => c.parametro === 'IVA_REDUCIDO_1'); if(ivaR1Conf) pypIvaRed1 = parseFloat(ivaR1Conf.valor) / 100;
@@ -507,6 +552,7 @@
                 const igtfConf = dConf.find(c => c.parametro === 'IGTF'); if(igtfConf) pypIgtf = parseFloat(igtfConf.valor) / 100;
                 const exentoConf = dConf.find(c => c.parametro === 'POS_MOSTRAR_EXENTO'); if(exentoConf) pypMostrarExento = exentoConf.valor;
 
+                // Motor Predictivo Clientes
                 dbClientes = await resCli.json();
                 fuseClientes = new Fuse(dbClientes, { 
                     keys: ['documento_identidad', 'nombre_razon_social'], threshold: 0.4, ignoreLocation: true,
@@ -516,6 +562,7 @@
                     }
                 });
 
+                // Motor Inventario
                 const dataProd = await resProd.json(); const dataPre = await resPre.json();
                 dbInventario = dataProd.map(p => { const pre = dataPre.find(pr => pr.id_producto_sku === p.id_producto_sku) || {}; return { ...p, pre: pre }; });
                 
@@ -667,7 +714,7 @@
             try { const payload = { id_empresa: empresaActual, tipo_persona: 'CLIENTE', documento_identidad: document.getElementById('fc-doc').value.trim().toUpperCase(), nombre_razon_social: document.getElementById('fc-nombre').value.trim().toUpperCase(), direccion_principal: document.getElementById('fc-dir-p').value.trim().toUpperCase(), telefono_principal: document.getElementById('fc-tel1').value.trim(), correo_electronico: document.getElementById('fc-email').value.trim(), tipo_contribuyente: document.getElementById('fc-tipo').value, nivel_precio: document.getElementById('fc-precio').value, estatus: 'ACTIVO' }; const res = await fetch(`${SUPABASE_URL}/rest/v1/directorio_maestro`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, body: JSON.stringify(payload) }); if(!res.ok) throw new Error("Doc duplicado o error."); const data = await res.json(); dbClientes.push(data[0]); fuseClientes.setCollection(dbClientes); ejecutarSeleccionCliente(data[0]); cerrarModalFichaCompleta(); } catch(e) { alert(e.message); } finally { btn.innerHTML = `Guardar`; btn.disabled = false; } 
         }
 
-        // ================= MATEMÁTICA Y LÓGICA DEL CARRITO (MOTOR MULTI-TAX) =================
+        // ================= MATEMÁTICA Y LÓGICA DEL CARRITO (MOTOR MULTI-TAX INTACTO) =================
         function agregarAlCarrito(prodStr) { const p = JSON.parse(decodeURIComponent(prodStr)); const idx = carrito.findIndex(i => i.id_producto_sku === p.id_producto_sku); if (idx !== -1) { if(carrito[idx].cantidad < p.stock_actual || p.permitir_negativo) { carrito[idx].cantidad++; } } else { carrito.push({ ...p, cantidad: 1, desc_tipo: 'MONTO_BS', desc_val: 0 }); } actualizarUI_Carrito(); }
         function modificarCantidad(sku, delta) { const idx = carrito.findIndex(i => i.id_producto_sku === sku); if (idx === -1) return; const nuevo = carrito[idx].cantidad + delta; if(nuevo > carrito[idx].stock_actual && !carrito[idx].permitir_negativo) return; carrito[idx].cantidad = nuevo; if (carrito[idx].cantidad <= 0) carrito.splice(idx, 1); actualizarUI_Carrito(); }
         function eliminarDelCarrito(sku) { carrito = carrito.filter(i => i.id_producto_sku !== sku); actualizarUI_Carrito(); }
@@ -774,7 +821,7 @@
         async function procesarVenta() {
             const btn = document.getElementById('btn-confirmar'); btn.disabled = true; mostrarCarga("Procesando...", "Registrando venta e imprimiendo documento");
             try {
-                const metodo = document.getElementById('cobro-metodo').value; const formatoPrint = document.getElementById('cobro-formato-impresion').value; const condicion = document.getElementById('pos-condicion').value; const nroFactura = document.getElementById('pos-nro-factura').value.trim().toUpperCase(); const nroControl = document.getElementById('pos-nro-control').value.trim().toUpperCase(); const fechaVenc = document.getElementById('pos-fecha-vencimiento').value;
+                const metodo = document.getElementById('cobro-metodo').value; const formatoPrint = document.getElementById('cobro-formato-impresion').value; const condicion = document.getElementById('pos-condicion').options[document.getElementById('pos-condicion').selectedIndex].text; const nroFactura = document.getElementById('pos-nro-factura').value.trim().toUpperCase(); const nroControl = document.getElementById('pos-nro-control').value.trim().toUpperCase(); const fechaVenc = document.getElementById('pos-fecha-vencimiento').value;
                 const totalBsFinal = parseFloat(document.getElementById('modal-total-bs-final').innerText.replace('Bs. ','')); const baseImpUsd = parseFloat(document.getElementById('contenedor-totales-fiscales').dataset.baseTotalUsd) || 0; const exentoUsd = parseFloat(document.getElementById('contenedor-totales-fiscales').dataset.exentoTotalUsd) || 0;
 
                 let empresaPrint = { nombre_empresa: 'P&P SOLUCIONES', rif: 'J-00000000-0', direccion_fiscal: 'SIN DIRECCIÓN FISCAL' };
@@ -790,7 +837,7 @@
                 
                 generarHTMLImpresion(formatoPrint, empresaPrint, payload, carrito); window.print();
                 
-                carrito = []; document.getElementById('pos-input-desc-general').value = ''; document.getElementById('pos-nro-control').value = ''; document.getElementById('pos-condicion').value = 'CONTADO'; ajustarFechaVencimiento(); limpiarCliente(); cerrarCobro(); actualizarUI_Carrito(); await iniciarPuntoVenta(); await inicializarCorrelativos(); cerrarErrorCarga(); 
+                carrito = []; document.getElementById('pos-input-desc-general').value = ''; document.getElementById('pos-nro-control').value = ''; document.getElementById('pos-condicion').value = '0'; ajustarFechaVencimiento(); limpiarCliente(); cerrarCobro(); actualizarUI_Carrito(); await iniciarPuntoVenta(); await inicializarCorrelativos(); cerrarErrorCarga(); 
             } catch(e) { mostrarCarga("Fallo Crítico", e.message, true); } finally { btn.disabled = false; }
         }
 
@@ -804,49 +851,11 @@
             if(formato === 'carta') {
                 contenedor.innerHTML = `<div style="max-width: 800px; margin: 0 auto; color: #333;"><div style="text-align: center; margin-bottom: 20px;"><h2 style="margin:0; font-size: 24px; color: #143B62;">${empresa.nombre_empresa}</h2><p style="margin:0; font-weight: bold;">RIF: ${empresa.rif}</p><p style="margin:0; font-size: 11px;">DIRECCIÓN: ${empresa.direccion_fiscal}</p><h3 style="margin-top:15px; font-size: 18px;">DOCUMENTO ${factura.nro_factura_manual ? 'NRO: ' + factura.nro_factura_manual : ''}</h3></div><div style="display: flex; justify-content: space-between; margin-bottom: 20px; border: 1px solid #ccc; padding: 15px; border-radius: 4px; background: #fafafa; font-size: 12px;"><div><strong>Cliente:</strong> ${nomCliente}<br><strong>C.I./RIF:</strong> ${docCliente}<br><strong>Dirección:</strong> ${dirCliente}</div><div style="text-align: right;"><strong>Fecha Emisión:</strong> ${fechaE}<br><strong>Vencimiento:</strong> ${fechaV}<br><strong>Condición:</strong> ${factura.condicion_pago}<br><strong>Pago:</strong> ${factura.metodos_pago.replace('_', ' ')}</div></div><table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;"><thead style="background: #143B62; color: white;"><tr><th style="padding: 8px 4px; text-align:left;">SKU</th><th style="padding: 8px 4px; text-align:left;">Descripción</th><th style="padding: 8px 4px; width: 50px;">Cant.</th><th style="padding: 8px 4px; text-align:right;">Precio Unt.</th><th style="padding: 8px 4px; text-align:right;">Total Bs</th></tr></thead><tbody>${htmlItems}</tbody></table><div style="width: 320px; margin-left: auto; font-size: 12px;"><div style="display: flex; justify-content: space-between; padding: 3px 0;"><span>Exento:</span><span>Bs. ${factura.monto_exento.toFixed(2)}</span></div><div style="display: flex; justify-content: space-between; padding: 3px 0;"><span>Base Imponible:</span><span>Bs. ${factura.base_imponible.toFixed(2)}</span></div><div style="display: flex; justify-content: space-between; padding: 3px 0;"><span>IVA (16%):</span><span>Bs. ${(factura.base_imponible * 0.16).toFixed(2)}</span></div>${factura.igtf_porcentaje > 0 ? `<div style="display: flex; justify-content: space-between; padding: 3px 0;"><span>IGTF (3%):</span><span>Bs. ${(factura.total_bs * 0.03).toFixed(2)}</span></div>` : ''}<div style="display: flex; justify-content: space-between; font-weight: 900; font-size: 18px; margin-top: 5px; border-top: 2px solid #143B62; padding-top: 5px;"><span>TOTAL:</span><span>Bs. ${factura.total_bs.toFixed(2)}</span></div><div style="display: flex; justify-content: space-between; color: #25D366; font-weight: bold; font-size: 14px;"><span>Ref USD (Tasa: ${factura.tasa_bcv_aplicada}):</span><span>$${factura.total_usd.toFixed(2)}</span></div></div></div>`;
             } else {
-                contenedor.innerHTML = `<div style="text-align: center; margin-bottom: 10px; border-bottom: 1px dashed #000; padding-bottom: 5px;"><strong style="font-size: 1.2em;">${empresa.nombre_empresa}</strong><br>RIF: ${empresa.rif}<br>${empresa.direccion_fiscal}<br><br>FACT: ${factura.nro_factura_manual || 'N/A'}<br>CTRL: ${factura.nro_control_manual || 'N/A'}<br>FECHA: ${fechaE} ${factura.condicion_pago === 'CREDITO' ? '<br>VENCE: ' + fechaV : ''}</div><div style="margin-bottom: 10px;"><strong>Cliente:</strong> ${nomCliente}<br><strong>C.I./RIF:</strong> ${docCliente}</div><div style="border-top: 1px dashed #000; border-bottom: 1px dashed #000; margin-bottom: 10px; padding: 5px 0;">${htmlItems}</div><div><div style="display: flex; justify-content: space-between;"><span>Exento:</span><span>Bs. ${factura.monto_exento.toFixed(2)}</span></div><div style="display: flex; justify-content: space-between;"><span>B. Imponible:</span><span>Bs. ${factura.base_imponible.toFixed(2)}</span></div><div style="display: flex; justify-content: space-between;"><span>IVA (16%):</span><span>Bs. ${(factura.base_imponible * 0.16).toFixed(2)}</span></div>${factura.igtf_porcentaje > 0 ? `<div style="display: flex; justify-content: space-between;"><span>IGTF (3%):</span><span>Bs. ${(factura.total_bs * 0.03).toFixed(2)}</span></div>` : ''}<div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 1.2em; border-top: 1px solid #000; margin-top: 5px; padding-top: 5px;"><span>TOTAL Bs:</span><span>${factura.total_bs.toFixed(2)}</span></div><div style="display: flex; justify-content: space-between; font-weight: bold; margin-top: 2px;"><span>Ref USD:</span><span>$${factura.total_usd.toFixed(2)}</span></div><div style="text-align: right; font-size: 0.8em; color: #555;">Tasa: Bs. ${factura.tasa_bcv_aplicada.toFixed(2)}</div></div><div style="text-align: center; margin-top: 15px; font-size: 0.9em;">¡Gracias por su compra!<br>Cajero: ${factura.nombre_cajero}</div>`;
+                contenedor.innerHTML = `<div style="text-align: center; margin-bottom: 10px; border-bottom: 1px dashed #000; padding-bottom: 5px;"><strong style="font-size: 1.2em;">${empresa.nombre_empresa}</strong><br>RIF: ${empresa.rif}<br>${empresa.direccion_fiscal}<br><br>FACT: ${factura.nro_factura_manual || 'N/A'}<br>CTRL: ${factura.nro_control_manual || 'N/A'}<br>FECHA: ${fechaE} ${factura.condicion_pago !== 'CONTADO' ? '<br>VENCE: ' + fechaV : ''}</div><div style="margin-bottom: 10px;"><strong>Cliente:</strong> ${nomCliente}<br><strong>C.I./RIF:</strong> ${docCliente}</div><div style="border-top: 1px dashed #000; border-bottom: 1px dashed #000; margin-bottom: 10px; padding: 5px 0;">${htmlItems}</div><div><div style="display: flex; justify-content: space-between;"><span>Exento:</span><span>Bs. ${factura.monto_exento.toFixed(2)}</span></div><div style="display: flex; justify-content: space-between;"><span>B. Imponible:</span><span>Bs. ${factura.base_imponible.toFixed(2)}</span></div><div style="display: flex; justify-content: space-between;"><span>IVA (16%):</span><span>Bs. ${(factura.base_imponible * 0.16).toFixed(2)}</span></div>${factura.igtf_porcentaje > 0 ? `<div style="display: flex; justify-content: space-between;"><span>IGTF (3%):</span><span>Bs. ${(factura.total_bs * 0.03).toFixed(2)}</span></div>` : ''}<div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 1.2em; border-top: 1px solid #000; margin-top: 5px; padding-top: 5px;"><span>TOTAL Bs:</span><span>${factura.total_bs.toFixed(2)}</span></div><div style="display: flex; justify-content: space-between; font-weight: bold; margin-top: 2px;"><span>Ref USD:</span><span>$${factura.total_usd.toFixed(2)}</span></div><div style="text-align: right; font-size: 0.8em; color: #555;">Tasa: Bs. ${factura.tasa_bcv_aplicada.toFixed(2)}</div></div><div style="text-align: center; margin-top: 15px; font-size: 0.9em;">¡Gracias por su compra!<br>Cajero: ${factura.nombre_cajero}</div>`;
             }
         }
 
-        // ================= MOTOR DE TASAS (SCRAPER BCV VÍA PROXY CORS) =================
-        async function sincronizarBCV() {
-            mostrarCarga("Sincronizando con BCV...", "Extrayendo tasa oficial del portal...");
-            try {
-                const bcvUrl = encodeURIComponent('https://www.bcv.org.ve/');
-                const proxyUrl = `https://api.allorigins.win/get?url=${bcvUrl}`;
-                
-                const response = await fetch(proxyUrl);
-                if (!response.ok) throw new Error("Fallo el Proxy");
-                const dataProxy = await response.json();
-                const html = dataProxy.contents; 
-
-                const matchDolar = html.match(/<div id="dolar".*?>.*?<strong>\s*(.*?)\s*<\/strong>/is);
-                const matchEuro = html.match(/<div id="euro".*?>.*?<strong>\s*(.*?)\s*<\/strong>/is);
-
-                if (matchDolar && matchEuro) {
-                    const stringDolar = matchDolar[1].trim().replace(/\./g, '').replace(',', '.');
-                    const stringEuro = matchEuro[1].trim().replace(/\./g, '').replace(',', '.');
-                    
-                    tasaBCV = parseFloat(stringDolar);
-                    tasaBCVEur = parseFloat(stringEuro);
-
-                    document.getElementById('input-tasa-usd').value = tasaBCV.toFixed(2);
-                    document.getElementById('input-tasa-eur').value = tasaBCVEur.toFixed(2);
-
-                    await guardarTasaEnDB('USD', tasaBCV);
-                    await guardarTasaEnDB('EUR', tasaBCVEur);
-
-                    actualizarUI_Carrito(); 
-                    cerrarErrorCarga();
-                } else {
-                    throw new Error("Estructura del BCV cambió.");
-                }
-            } catch (e) {
-                console.error(e);
-                mostrarCarga("Error BCV", "El portal bloqueó la conexión. Ingresa la tasa manualmente.", true);
-            }
-        }
-
+        // ================= MOTOR DE TASAS (MANUAL Y API) =================
         async function guardarTasaManual(moneda, valor) {
             const nuevaTasa = parseFloat(valor); if(isNaN(nuevaTasa) || nuevaTasa <= 0) return;
             if(moneda === 'USD') tasaBCV = nuevaTasa; if(moneda === 'EUR') tasaBCVEur = nuevaTasa;
@@ -856,6 +865,36 @@
         async function guardarTasaEnDB(moneda, valor) {
             const payload = { moneda: moneda, tasa: valor };
             await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        }
+
+        async function sincronizarBCV() {
+            mostrarCarga("Sincronizando...", "Obteniendo tasas oficiales actualizadas de internet...");
+            try {
+                // Fetch Dólar Oficial
+                const resUsd = await fetch('https://ve.dolarapi.com/v1/dolares/oficial');
+                if(!resUsd.ok) throw new Error("Fallo API USD");
+                const dataUsd = await resUsd.json();
+                
+                // Fetch Euro Oficial
+                const resEur = await fetch('https://ve.dolarapi.com/v1/euros/oficial');
+                if(!resEur.ok) throw new Error("Fallo API EUR");
+                const dataEur = await resEur.json();
+
+                tasaBCV = dataUsd.promedio;
+                tasaBCVEur = dataEur.promedio;
+
+                document.getElementById('input-tasa-usd').value = tasaBCV.toFixed(2);
+                document.getElementById('input-tasa-eur').value = tasaBCVEur.toFixed(2);
+
+                await guardarTasaEnDB('USD', tasaBCV);
+                await guardarTasaEnDB('EUR', tasaBCVEur);
+
+                actualizarUI_Carrito();
+                cerrarErrorCarga();
+            } catch (e) {
+                console.error(e);
+                mostrarCarga("Error de Conexión", "El servidor de tasas de internet no responde. Por favor, ingresa la tasa manualmente en la caja y presiona Enter.", true);
+            }
         }
     </script>
 </body>
