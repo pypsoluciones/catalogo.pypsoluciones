@@ -5,26 +5,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>P&P Admin | Configuración General</title>
     
-    <script src="https://cdn.tailwindcss.com"></script>
-
     <script>
         const cPri = localStorage.getItem('pyp_color_primario') || '#143B62';
         const cSec = localStorage.getItem('pyp_color_secundario') || '#E67E22';
         const fontFam = localStorage.getItem('pyp_fuente') || "'Inter', sans-serif";
         const fontSiz = localStorage.getItem('pyp_tamano') || "14px";
         
+        // Inyectamos las variables directamente al núcleo del navegador
+        document.documentElement.style.setProperty('--color-primary', cPri);
+        document.documentElement.style.setProperty('--color-secondary', cSec);
         document.documentElement.style.setProperty('--font-global', fontFam);
         document.documentElement.style.setProperty('--size-global', fontSiz);
         
-        tailwind.config = { 
-            theme: { 
-                extend: { 
-                    colors: { primary: cPri, secondary: cSec } 
+        // Tailwind obedece ciegamente a las variables
+        window.tailwind = { 
+            config: { 
+                theme: { 
+                    extend: { 
+                        colors: { primary: 'var(--color-primary)', secondary: 'var(--color-secondary)' } 
+                    } 
                 } 
             } 
         };
     </script>
 
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;900&family=Poppins:wght@300;400;500;700;900&family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     
@@ -34,7 +39,7 @@
     <style>
         body { font-family: var(--font-global); font-size: var(--size-global); }
         .custom-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background-color: var(--color-primary, #cbd5e1); border-radius: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background-color: var(--color-primary); border-radius: 4px; }
         .btn-press:active { transform: scale(0.96); }
         .fade-in { animation: fadeIn 0.15s ease-in-out; }
         input[type="color"] { -webkit-appearance: none; border: none; width: 100%; height: 40px; border-radius: 8px; cursor: pointer; padding: 0; background: transparent; }
@@ -53,7 +58,7 @@
             <div class="max-w-5xl mx-auto space-y-6 pb-20">
                 
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div class="bg-primary px-4 py-2 text-white font-bold text-xs uppercase tracking-widest border-b border-primary/20 shadow-sm">💸 Moneda y Tasa de Cambio</div>
+                    <div class="bg-primary px-4 py-2 text-white font-bold text-xs uppercase tracking-widest border-b border-primary/20 shadow-sm flex items-center gap-2"><i class="fa-solid fa-money-bill-wave text-secondary"></i> Moneda y Tasa de Cambio</div>
                     <div class="p-5">
                         <div class="flex items-end gap-4">
                             <div class="flex-1">
@@ -72,7 +77,7 @@
                 </div>
 
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div class="bg-primary px-4 py-2 text-white font-bold text-xs uppercase tracking-widest border-b border-primary/20 shadow-sm">⚖️ Configuración de Impuestos</div>
+                    <div class="bg-primary px-4 py-2 text-white font-bold text-xs uppercase tracking-widest border-b border-primary/20 shadow-sm flex items-center gap-2"><i class="fa-solid fa-scale-balanced text-secondary"></i> Configuración de Impuestos</div>
                     <div class="p-5 grid grid-cols-2 md:grid-cols-5 gap-6">
                         <div><label class="block text-[10px] font-black text-gray-500 uppercase mb-1">IVA General (%)</label><input type="number" id="conf-iva" class="w-full border border-gray-300 rounded px-3 py-2 font-bold text-primary focus:border-secondary outline-none transition"></div>
                         <div><label class="block text-[10px] font-black text-gray-500 uppercase mb-1">IGTF Divisas (%)</label><input type="number" id="conf-igtf" class="w-full border border-gray-300 rounded px-3 py-2 font-bold text-primary focus:border-secondary outline-none transition"></div>
@@ -83,7 +88,7 @@
                 </div>
 
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div class="bg-primary px-4 py-2 text-white font-bold text-xs uppercase tracking-widest border-b border-primary/20 shadow-sm">💳 Condiciones de Pago y Crédito</div>
+                    <div class="bg-primary px-4 py-2 text-white font-bold text-xs uppercase tracking-widest border-b border-primary/20 shadow-sm flex items-center gap-2"><i class="fa-regular fa-credit-card text-secondary"></i> Condiciones de Pago y Crédito</div>
                     <div class="p-5 bg-slate-50/50">
                         <div class="grid grid-cols-12 gap-2 mb-2 px-2">
                             <div class="col-span-8 text-[9px] font-black text-gray-400 uppercase tracking-widest">Nombre de la Condición (Visible en POS)</div>
@@ -96,23 +101,23 @@
                 </div>
 
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div class="bg-primary px-4 py-2 text-white font-bold text-xs uppercase tracking-widest border-b border-primary/20 shadow-sm">🎨 Branding, Identidad y Tipografía</div>
+                    <div class="bg-primary px-4 py-2 text-white font-bold text-xs uppercase tracking-widest border-b border-primary/20 shadow-sm flex items-center gap-2"><i class="fa-solid fa-palette text-secondary"></i> Branding, Identidad y Tipografía</div>
                     <div class="p-5">
                         
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
                             <div>
                                 <label class="block text-[10px] font-black text-gray-500 uppercase mb-2">Color Primario (Corporativo)</label>
                                 <div class="flex items-center gap-3">
-                                    <input type="color" id="conf-color-primario" value="#143B62" class="w-16 h-10 shadow-sm" oninput="document.getElementById('hex-pri').innerText = this.value.toUpperCase()">
-                                    <span id="hex-pri" class="text-xs font-mono font-black text-gray-700 bg-gray-100 px-2 py-1 rounded border border-gray-200 w-20 text-center">#143B62</span>
-                                    <span class="text-[10px] font-bold text-gray-400">Color dominante del sistema.</span>
+                                    <input type="color" id="conf-color-primario" class="w-16 h-10 shadow-sm cursor-pointer" oninput="actualizarHex('pri', this.value)">
+                                    <input type="text" id="hex-pri" class="text-xs font-mono font-black text-gray-700 bg-gray-100 px-2 py-2 rounded border border-gray-300 w-24 text-center outline-none focus:border-primary transition" placeholder="#143B62" onchange="actualizarDesdeHex('pri', this.value)">
+                                    <span class="text-[10px] font-bold text-gray-400">Color principal del sistema.</span>
                                 </div>
                             </div>
                             <div>
                                 <label class="block text-[10px] font-black text-gray-500 uppercase mb-2">Color Secundario (Acentos)</label>
                                 <div class="flex items-center gap-3">
-                                    <input type="color" id="conf-color-secundario" value="#E67E22" class="w-16 h-10 shadow-sm" oninput="document.getElementById('hex-sec').innerText = this.value.toUpperCase()">
-                                    <span id="hex-sec" class="text-xs font-mono font-black text-gray-700 bg-gray-100 px-2 py-1 rounded border border-gray-200 w-20 text-center">#E67E22</span>
+                                    <input type="color" id="conf-color-secundario" class="w-16 h-10 shadow-sm cursor-pointer" oninput="actualizarHex('sec', this.value)">
+                                    <input type="text" id="hex-sec" class="text-xs font-mono font-black text-gray-700 bg-gray-100 px-2 py-2 rounded border border-gray-300 w-24 text-center outline-none focus:border-primary transition" placeholder="#E67E22" onchange="actualizarDesdeHex('sec', this.value)">
                                     <span class="text-[10px] font-bold text-gray-400">Color de botones y alertas.</span>
                                 </div>
                             </div>
@@ -132,7 +137,7 @@
                                 <label class="block text-[10px] font-black text-gray-500 uppercase mb-2">Tamaño Base de Interfaz</label>
                                 <select id="conf-tamano" class="w-full border border-gray-300 rounded px-3 py-2 text-sm font-bold text-primary outline-none focus:border-secondary transition">
                                     <option value="12px">Pequeño (12px) - Para resoluciones bajas</option>
-                                    <option value="14px" selected>Normal (14px) - Estándar recomendado</option>
+                                    <option value="14px">Normal (14px) - Estándar recomendado</option>
                                     <option value="16px">Grande (16px) - Mayor legibilidad</option>
                                 </select>
                             </div>
@@ -141,9 +146,9 @@
                         <div class="border-t border-gray-100 pt-6 grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div>
                                 <label class="block text-[10px] font-black text-gray-500 uppercase mb-2">Logo Principal del Negocio</label>
-                                <div class="bg-primary border-2 border-dashed border-gray-300 rounded-xl p-4 flex items-center justify-center h-32 mb-3 shadow-inner">
-                                    <img id="preview-logo" src="" class="max-h-full max-w-full object-contain hidden">
-                                    <span id="txt-logo" class="text-white/50 text-[10px] font-bold">SIN LOGO CONFIGURADO</span>
+                                <div class="bg-primary border-2 border-dashed border-gray-300 rounded-xl p-4 flex items-center justify-center h-32 mb-3 shadow-inner relative overflow-hidden group">
+                                    <img id="preview-logo" src="" class="max-h-full max-w-full object-contain hidden relative z-10">
+                                    <span id="txt-logo" class="text-white/50 text-[10px] font-bold z-0">SIN LOGO CONFIGURADO</span>
                                 </div>
                                 <div class="flex gap-2">
                                     <input type="text" id="url-logo" oninput="actualizarPreview('url-logo','preview-logo','txt-logo')" placeholder="Pega URL o sube archivo..." class="flex-1 border border-gray-300 rounded px-3 py-2 text-xs font-bold outline-none focus:border-secondary transition">
@@ -153,9 +158,9 @@
                             </div>
                             <div>
                                 <label class="block text-[10px] font-black text-gray-500 uppercase mb-2">Fondo / Marca de Agua</label>
-                                <div class="bg-gray-100 border-2 border-dashed border-gray-300 rounded-xl p-4 flex items-center justify-center h-32 mb-3 shadow-inner">
-                                    <img id="preview-fondo" src="" class="max-h-full max-w-full object-contain hidden opacity-40">
-                                    <span id="txt-fondo" class="text-gray-400 text-[10px] font-bold">SIN FONDO CONFIGURADO</span>
+                                <div class="bg-gray-100 border-2 border-dashed border-gray-300 rounded-xl p-4 flex items-center justify-center h-32 mb-3 shadow-inner relative overflow-hidden group">
+                                    <img id="preview-fondo" src="" class="max-h-full max-w-full object-contain hidden opacity-40 relative z-10">
+                                    <span id="txt-fondo" class="text-gray-400 text-[10px] font-bold z-0">SIN FONDO CONFIGURADO</span>
                                 </div>
                                 <div class="flex gap-2">
                                     <input type="text" id="url-fondo" oninput="actualizarPreview('url-fondo','preview-fondo','txt-fondo')" placeholder="Pega URL o sube archivo..." class="flex-1 border border-gray-300 rounded px-3 py-2 text-xs font-bold outline-none focus:border-secondary transition">
@@ -169,7 +174,7 @@
                 </div>
 
                 <div class="flex justify-end gap-4 mt-6">
-                    <button onclick="guardarTodo(event)" class="bg-primary hover:opacity-90 text-white px-10 py-3 rounded-xl font-black shadow-lg transition-all uppercase tracking-widest btn-press"><i class="fa-solid fa-save mr-2 text-secondary"></i> Guardar Todos los Ajustes</button>
+                    <button onclick="guardarTodo(event)" class="bg-primary hover:opacity-90 text-white px-10 py-3 rounded-xl font-black shadow-lg transition-all uppercase tracking-widest btn-press flex items-center"><i class="fa-solid fa-save mr-2 text-secondary text-lg"></i> Guardar Todos los Ajustes</button>
                 </div>
             </div>
         </div>
@@ -179,7 +184,6 @@
         <i class="fa-solid fa-cloud-arrow-up text-5xl text-secondary mb-4 animate-bounce"></i>
         <h2 id="loading-text-config" class="text-xl font-black text-white uppercase mb-2 tracking-widest">Procesando...</h2>
     </div>
-
     <script>
         const TOKEN_JWT = localStorage.getItem('pyp_token_seguro');
         let empId = null; let listaCondiciones = [];
@@ -216,6 +220,25 @@
         function actualizarCondicionUI(idx, campo, valor) { if (campo === 'nombre') listaCondiciones[idx].nombre = valor.replace(/[,|]/g, '').trim(); if (campo === 'dias') listaCondiciones[idx].dias = parseInt(valor) || 0; sincronizarInputOculto(); }
         function sincronizarInputOculto() { document.getElementById('conf-condiciones').value = listaCondiciones.filter(c => c.nombre.trim() !== '').map(c => `${c.nombre}|${c.dias}`).join(','); }
 
+        // ================= SINCRONIZAR COLOR HEXADECIMAL MANUAL =================
+        function actualizarHex(tipo, valor) {
+            document.getElementById(`hex-${tipo}`).value = valor.toUpperCase();
+        }
+
+        function actualizarDesdeHex(tipo, valor) {
+            let hex = valor.trim().toUpperCase();
+            if (!hex.startsWith('#')) hex = '#' + hex;
+            // Valida que sea un color HEX real
+            if (/^#[0-9A-F]{6}$/i.test(hex)) {
+                document.getElementById(`conf-color-${tipo === 'pri' ? 'primario' : 'secundario'}`).value = hex;
+                document.getElementById(`hex-${tipo}`).value = hex;
+            } else {
+                alert("Formato HEX inválido. Debe ser #RRGGBB (Ejemplo: #143B62)");
+                // Revertimos al valor del picker
+                document.getElementById(`hex-${tipo}`).value = document.getElementById(`conf-color-${tipo === 'pri' ? 'primario' : 'secundario'}`).value.toUpperCase();
+            }
+        }
+
         // ================= DESCARGA Y LECTURA DE DATOS =================
         async function cargarConfig() {
             const [resTasa, resConf] = await Promise.all([
@@ -238,12 +261,16 @@
             
             fill('conf-iva', 'IVA_GENERAL'); fill('conf-igtf', 'IGTF'); fill('conf-iva-r1', 'IVA_REDUCIDO_1'); fill('conf-iva-r2', 'IVA_REDUCIDO_2'); fill('conf-exento', 'POS_MOSTRAR_EXENTO'); 
             fill('conf-condiciones', 'CONDICIONES_PAGO'); fill('url-logo', 'LOGO_URL', 'preview-logo', 'txt-logo'); fill('url-fondo', 'FONDO_URL', 'preview-fondo', 'txt-fondo');
-            fill('conf-color-primario', 'COLOR_PRIMARIO'); fill('conf-color-secundario', 'COLOR_SECUNDARIO');
-            fill('conf-fuente', 'FUENTE_FAMILIA'); fill('conf-tamano', 'FUENTE_TAMAÑO');
+            
+            // Llenar variables de marca blanca
+            document.getElementById('conf-color-primario').value = localStorage.getItem('pyp_color_primario') || '#143B62';
+            document.getElementById('conf-color-secundario').value = localStorage.getItem('pyp_color_secundario') || '#E67E22';
+            document.getElementById('conf-fuente').value = localStorage.getItem('pyp_fuente') || "'Inter', sans-serif";
+            document.getElementById('conf-tamano').value = localStorage.getItem('pyp_tamano') || "14px";
 
-            // Actualizar etiquetas Hex
-            if(document.getElementById('conf-color-primario').value) document.getElementById('hex-pri').innerText = document.getElementById('conf-color-primario').value.toUpperCase();
-            if(document.getElementById('conf-color-secundario').value) document.getElementById('hex-sec').innerText = document.getElementById('conf-color-secundario').value.toUpperCase();
+            // Actualizar inputs Hex
+            actualizarHex('pri', document.getElementById('conf-color-primario').value);
+            actualizarHex('sec', document.getElementById('conf-color-secundario').value);
         }
 
         function actualizarPreview(inputId, imgId, txtId) {
@@ -296,10 +323,13 @@
         // ================= GUARDADO GENERAL Y CACHÉ =================
         async function guardarTodo(event) {
             const btn = event.currentTarget; const textoOriginal = btn.innerHTML; btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Guardando...`; btn.disabled = true;
+            
             sincronizarInputOculto();
 
-            const cP = document.getElementById('conf-color-primario').value; const cS = document.getElementById('conf-color-secundario').value;
-            const fF = document.getElementById('conf-fuente').value; const fS = document.getElementById('conf-tamano').value;
+            const cP = document.getElementById('conf-color-primario').value;
+            const cS = document.getElementById('conf-color-secundario').value;
+            const fF = document.getElementById('conf-fuente').value;
+            const fS = document.getElementById('conf-tamano').value;
 
             const configs = [ 
                 { parametro: 'IVA_GENERAL', valor: document.getElementById('conf-iva').value || '16' }, 
