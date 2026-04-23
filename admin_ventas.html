@@ -913,45 +913,37 @@
 
         // ================= MOTOR DE TASAS (AUTOMÁTICO Y MANUAL) =================
       // ================= MOTOR DE TASAS (SCRAPER BCV VÍA PROXY CORS) =================
+        // ================= MOTOR DE TASAS (VÍA API OFICIAL ESTABLE) =================
         async function sincronizarBCV() {
-            mostrarCarga("Sincronizando con BCV...", "Extrayendo tasa oficial del portal...");
+            mostrarCarga("Sincronizando...", "Obteniendo tasas oficiales actualizadas...");
             try {
-                // Usamos AllOrigins como puente para saltar el bloqueo CORS del BCV
-                const bcvUrl = encodeURIComponent('https://www.bcv.org.ve/');
-                const proxyUrl = `https://api.allorigins.win/get?url=${bcvUrl}`;
+                // Fetch Dólar Oficial
+                const resUsd = await fetch('https://ve.dolarapi.com/v1/dolares/oficial');
+                if(!resUsd.ok) throw new Error("Fallo API USD");
+                const dataUsd = await resUsd.json();
                 
-                const response = await fetch(proxyUrl);
-                if (!response.ok) throw new Error("Fallo el Proxy");
-                const dataProxy = await response.json();
-                const html = dataProxy.contents; // Aquí está el código fuente del BCV
+                // Fetch Euro Oficial
+                const resEur = await fetch('https://ve.dolarapi.com/v1/euros/oficial');
+                if(!resEur.ok) throw new Error("Fallo API EUR");
+                const dataEur = await resEur.json();
 
-                // TUS MISMAS EXPRESIONES REGULARES DE APPSHEET
-                const matchDolar = html.match(/<div id="dolar".*?>.*?<strong>\s*(.*?)\s*<\/strong>/is);
-                const matchEuro = html.match(/<div id="euro".*?>.*?<strong>\s*(.*?)\s*<\/strong>/is);
+                // Actualizar variables globales
+                tasaBCV = dataUsd.promedio;
+                tasaBCVEur = dataEur.promedio;
 
-                if (matchDolar && matchEuro) {
-                    const stringDolar = matchDolar[1].trim().replace(/\./g, '').replace(',', '.');
-                    const stringEuro = matchEuro[1].trim().replace(/\./g, '').replace(',', '.');
-                    
-                    tasaBCV = parseFloat(stringDolar);
-                    tasaBCVEur = parseFloat(stringEuro);
+                // Reflejar en la UI
+                document.getElementById('input-tasa-usd').value = tasaBCV.toFixed(2);
+                document.getElementById('input-tasa-eur').value = tasaBCVEur.toFixed(2);
 
-                    // Reflejar en las cajas de texto
-                    document.getElementById('input-tasa-usd').value = tasaBCV.toFixed(2);
-                    document.getElementById('input-tasa-eur').value = tasaBCVEur.toFixed(2);
+                // Guardar histórico en Supabase
+                await guardarTasaEnDB('USD', tasaBCV);
+                await guardarTasaEnDB('EUR', tasaBCVEur);
 
-                    // Guardar en Supabase para el historial
-                    await guardarTasaEnDB('USD', tasaBCV);
-                    await guardarTasaEnDB('EUR', tasaBCVEur);
-
-                    actualizarUI_Carrito(); // Recalcula la factura
-                    cerrarErrorCarga();
-                } else {
-                    throw new Error("La estructura del BCV cambió o no se encontraron los IDs.");
-                }
+                actualizarUI_Carrito(); // Recalcula la factura
+                cerrarErrorCarga();
             } catch (e) {
                 console.error(e);
-                mostrarCarga("Error BCV", "El portal del BCV bloqueó la conexión. Ingresa la tasa manualmente.", true);
+                mostrarCarga("Error de Conexión", "El servidor de tasas no responde. Por favor, ingresa la tasa manualmente.", true);
             }
         }
 
