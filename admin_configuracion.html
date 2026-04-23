@@ -3,36 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>P&P Admin | Configuración</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>P&P Admin | Configuración General</title>
     
     <script>
         const cPri = localStorage.getItem('pyp_color_primario') || '#143B62';
         const cSec = localStorage.getItem('pyp_color_secundario') || '#E67E22';
-        tailwind.config = { theme: { extend: { colors: { primary: cPri, secondary: cSec } } } };
+        const fontFam = localStorage.getItem('pyp_fuente') || "'Inter', sans-serif";
+        const fontSiz = localStorage.getItem('pyp_tamano') || "14px";
+        
+        // Inyectamos la fuente y tamaño al navegador al instante
+        document.documentElement.style.setProperty('--font-global', fontFam);
+        document.documentElement.style.setProperty('--size-global', fontSiz);
+
+        // Pre-configuramos Tailwind CSS
+        window.tailwind = { config: { theme: { extend: { colors: { primary: cPri, secondary: cSec } } } } };
     </script>
 
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;900&family=Poppins:wght@300;400;500;700;900&family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    
     <script src="config.js"></script>
     <script>if (!localStorage.getItem('pyp_token_seguro')) window.location.href = 'login.html';</script>
+    
     <style>
-        body { font-family: 'Inter', sans-serif; }
+        /* Aplicamos la fuente centralizada a todo el sistema */
+        body { font-family: var(--font-global); font-size: var(--size-global); }
         .custom-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
         .custom-scroll::-webkit-scrollbar-thumb { background-color: var(--color-primary, #cbd5e1); border-radius: 4px; }
         .btn-press:active { transform: scale(0.96); }
         .fade-in { animation: fadeIn 0.15s ease-in-out; }
-        /* Estilos para el selector de color nativo */
-        input[type="color"] { -webkit-appearance: none; border: none; width: 100%; height: 40px; border-radius: 8px; cursor: pointer; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(2px); } to { opacity: 1; transform: translateY(0); } }
+        /* Estilos pro para el selector de colores */
+        input[type="color"] { -webkit-appearance: none; border: none; width: 100%; height: 40px; border-radius: 8px; cursor: pointer; padding: 0; background: transparent; }
         input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
-        input[type="color"]::-webkit-color-swatch { border: none; border-radius: 8px; }
+        input[type="color"]::-webkit-color-swatch { border: none; border-radius: 8px; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1); }
     </style>
 </head>
 <body class="bg-[#f4f6f8] flex h-screen overflow-hidden text-gray-800">
     <script src="menu.js"></script>
     <main class="flex-1 flex flex-col h-screen overflow-hidden bg-[#f4f6f8] w-full z-10 relative">
         <header class="bg-white shadow-sm px-4 py-3 flex justify-between items-center z-10 border-b border-gray-200">
-            <h1 class="text-base font-bold text-primary flex items-center gap-2"><i class="fa-solid fa-gear text-secondary"></i> Panel de Configuración del Sistema</h1>
+            <h1 class="text-base font-bold text-primary flex items-center gap-2"><i class="fa-solid fa-gear text-secondary"></i> Panel de Configuración y Marca Blanca</h1>
         </header>
 
         <div class="flex-1 overflow-y-auto p-4 md:p-6 custom-scroll">
@@ -41,7 +53,7 @@
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                     <div class="bg-emerald-600 px-4 py-2 text-white font-bold text-xs uppercase tracking-widest">💸 Moneda y Tasa de Cambio</div>
                     <div class="p-5">
-                        <p class="text-[10px] text-gray-400 font-bold uppercase mb-3"><i class="fa-solid fa-circle-info"></i> Usa "Sincronizar" para leer de internet o "Guardar Manual" para simulaciones.</p>
+                        <p class="text-[10px] text-gray-400 font-bold uppercase mb-3"><i class="fa-solid fa-circle-info"></i> Usa "Sincronizar" para leer de internet o "Guardar Manual" para fijar un valor.</p>
                         <div class="flex items-end gap-4">
                             <div class="flex-1">
                                 <label class="block text-[10px] font-black text-gray-500 uppercase mb-1">Tasa Oficial Dólar (USD)</label>
@@ -72,34 +84,56 @@
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                     <div class="bg-indigo-600 px-4 py-2 text-white font-bold text-xs uppercase tracking-widest">💳 Condiciones de Pago y Crédito</div>
                     <div class="p-5 bg-indigo-50/30">
-                        <p class="text-[10px] text-gray-500 font-bold uppercase mb-4"><i class="fa-solid fa-circle-info text-indigo-500 mr-1"></i> Agrega los plazos de crédito para el Punto de Venta. El sistema sumará los días automáticamente al vencimiento.</p>
                         <div class="grid grid-cols-12 gap-2 mb-2 px-2">
-                            <div class="col-span-8 text-[9px] font-black text-gray-400 uppercase tracking-widest">Nombre de la Condición (Visible en el POS)</div>
+                            <div class="col-span-8 text-[9px] font-black text-gray-400 uppercase tracking-widest">Nombre de la Condición (Visible en POS)</div>
                             <div class="col-span-3 text-[9px] font-black text-gray-400 uppercase tracking-widest text-center">Días a Sumar</div>
                         </div>
                         <div id="contenedor-condiciones" class="space-y-2 mb-4"></div>
-                        <button type="button" onclick="agregarCondicionUI()" class="bg-indigo-100 hover:bg-indigo-200 text-indigo-700 border border-indigo-300 px-4 py-2 rounded-lg font-bold transition text-[10px] uppercase tracking-wider flex items-center justify-center gap-2 w-full md:w-auto btn-press shadow-sm"><i class="fa-solid fa-plus"></i> Agregar Nuevo Plazo</button>
+                        <button type="button" onclick="agregarCondicionUI()" class="bg-indigo-100 hover:bg-indigo-200 text-indigo-700 border border-indigo-300 px-4 py-2 rounded-lg font-bold transition text-[10px] uppercase tracking-wider flex items-center justify-center gap-2 btn-press shadow-sm w-fit"><i class="fa-solid fa-plus"></i> Agregar Nuevo Plazo</button>
                         <input type="hidden" id="conf-condiciones">
                     </div>
                 </div>
 
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div class="bg-slate-800 px-4 py-2 text-white font-bold text-xs uppercase tracking-widest">🎨 Branding y Marca Blanca</div>
+                    <div class="bg-slate-800 px-4 py-2 text-white font-bold text-xs uppercase tracking-widest">🎨 Branding, Identidad y Tipografía</div>
                     <div class="p-5">
+                        
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
                             <div>
                                 <label class="block text-[10px] font-black text-gray-500 uppercase mb-2">Color Primario (Corporativo)</label>
                                 <div class="flex items-center gap-3">
-                                    <input type="color" id="conf-color-primario" value="#143B62" class="w-16 h-10 shadow-sm">
-                                    <span class="text-xs font-bold text-gray-500">Color principal de menús, botones y textos clave.</span>
+                                    <input type="color" id="conf-color-primario" value="#143B62" class="w-16 h-10 shadow-sm" oninput="document.getElementById('hex-pri').innerText = this.value.toUpperCase()">
+                                    <span id="hex-pri" class="text-xs font-mono font-black text-gray-700 bg-gray-100 px-2 py-1 rounded border border-gray-200 w-20 text-center">#143B62</span>
+                                    <span class="text-[10px] font-bold text-gray-400">Color dominante del sistema.</span>
                                 </div>
                             </div>
                             <div>
                                 <label class="block text-[10px] font-black text-gray-500 uppercase mb-2">Color Secundario (Acentos)</label>
                                 <div class="flex items-center gap-3">
-                                    <input type="color" id="conf-color-secundario" value="#E67E22" class="w-16 h-10 shadow-sm">
-                                    <span class="text-xs font-bold text-gray-500">Color para alertas, íconos o botones secundarios.</span>
+                                    <input type="color" id="conf-color-secundario" value="#E67E22" class="w-16 h-10 shadow-sm" oninput="document.getElementById('hex-sec').innerText = this.value.toUpperCase()">
+                                    <span id="hex-sec" class="text-xs font-mono font-black text-gray-700 bg-gray-100 px-2 py-1 rounded border border-gray-200 w-20 text-center">#E67E22</span>
+                                    <span class="text-[10px] font-bold text-gray-400">Color de botones y alertas.</span>
                                 </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6 border-t border-gray-100 pt-6">
+                            <div>
+                                <label class="block text-[10px] font-black text-gray-500 uppercase mb-2">Tipografía Principal</label>
+                                <select id="conf-fuente" class="w-full border border-gray-300 rounded px-3 py-2 text-sm font-bold text-primary outline-none">
+                                    <option value="'Inter', sans-serif">Inter (Moderna y Limpia)</option>
+                                    <option value="'Roboto', sans-serif">Roboto (Clásica y Formal)</option>
+                                    <option value="'Poppins', sans-serif">Poppins (Redondeada y Amigable)</option>
+                                    <option value="Arial, sans-serif">Arial (Estándar Web)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-black text-gray-500 uppercase mb-2">Tamaño Base de Interfaz</label>
+                                <select id="conf-tamano" class="w-full border border-gray-300 rounded px-3 py-2 text-sm font-bold text-primary outline-none">
+                                    <option value="12px">Pequeño (12px) - Para resoluciones bajas</option>
+                                    <option value="14px" selected>Normal (14px) - Estándar recomendado</option>
+                                    <option value="16px">Grande (16px) - Mayor legibilidad</option>
+                                </select>
                             </div>
                         </div>
 
@@ -129,6 +163,7 @@
                                 </div>
                             </div>
                         </div>
+
                     </div>
                 </div>
 
@@ -149,11 +184,17 @@
         let empId = null; let listaCondiciones = [];
 
         window.onload = async () => { 
-            const resUser = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?select=id_empresa&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
-            const users = await resUser.json(); if(users.length > 0) empId = users[0].id_empresa;
-            await cargarConfig(); 
+            try {
+                const resUser = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?select=id_empresa&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                if (!resUser.ok) throw new Error("Fallo token");
+                const users = await resUser.json(); if(users.length > 0) empId = users[0].id_empresa;
+                await cargarConfig(); 
+            } catch(e) {
+                alert("Error de conexión. Presiona F5.");
+            }
         };
 
+        // ================= CONSTRUCTOR DE CRÉDITOS =================
         function cargarCondicionesUI(str) {
             listaCondiciones = [];
             if (str && str.trim() !== '') { str.split(',').forEach(c => { const p = c.split('|'); if (p[0]) listaCondiciones.push({ nombre: p[0].trim(), dias: parseInt(p[1]) || 0 }); }); }
@@ -174,6 +215,7 @@
         function actualizarCondicionUI(idx, campo, valor) { if (campo === 'nombre') listaCondiciones[idx].nombre = valor.replace(/[,|]/g, '').trim(); if (campo === 'dias') listaCondiciones[idx].dias = parseInt(valor) || 0; sincronizarInputOculto(); }
         function sincronizarInputOculto() { document.getElementById('conf-condiciones').value = listaCondiciones.filter(c => c.nombre.trim() !== '').map(c => `${c.nombre}|${c.dias}`).join(','); }
 
+        // ================= DESCARGA Y LECTURA DE DATOS =================
         async function cargarConfig() {
             const [resTasa, resConf] = await Promise.all([
                 fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?moneda=eq.USD&select=tasa&order=fecha_actualizacion.desc&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
@@ -188,12 +230,19 @@
                 const items = dataConf.filter(c => c.parametro === param);
                 if(items.length > 0) {
                     const val = items[items.length - 1].valor;
-                    if (id === 'conf-condiciones') { cargarCondicionesUI(val); } else { const el = document.getElementById(id); if(el) el.value = val; if(previewId) actualizarPreview(id, previewId, txtId); }
+                    if (id === 'conf-condiciones') { cargarCondicionesUI(val); } 
+                    else { const el = document.getElementById(id); if(el) el.value = val; if(previewId) actualizarPreview(id, previewId, txtId); }
                 } else if (id === 'conf-condiciones') { cargarCondicionesUI('CONTADO|0, CRÉDITO 15 DÍAS|15'); }
             };
             
-            fill('conf-iva', 'IVA_GENERAL'); fill('conf-igtf', 'IGTF'); fill('conf-iva-r1', 'IVA_REDUCIDO_1'); fill('conf-iva-r2', 'IVA_REDUCIDO_2'); fill('conf-exento', 'POS_MOSTRAR_EXENTO'); fill('conf-condiciones', 'CONDICIONES_PAGO'); fill('url-logo', 'LOGO_URL', 'preview-logo', 'txt-logo'); fill('url-fondo', 'FONDO_URL', 'preview-fondo', 'txt-fondo');
+            fill('conf-iva', 'IVA_GENERAL'); fill('conf-igtf', 'IGTF'); fill('conf-iva-r1', 'IVA_REDUCIDO_1'); fill('conf-iva-r2', 'IVA_REDUCIDO_2'); fill('conf-exento', 'POS_MOSTRAR_EXENTO'); 
+            fill('conf-condiciones', 'CONDICIONES_PAGO'); fill('url-logo', 'LOGO_URL', 'preview-logo', 'txt-logo'); fill('url-fondo', 'FONDO_URL', 'preview-fondo', 'txt-fondo');
             fill('conf-color-primario', 'COLOR_PRIMARIO'); fill('conf-color-secundario', 'COLOR_SECUNDARIO');
+            fill('conf-fuente', 'FUENTE_FAMILIA'); fill('conf-tamano', 'FUENTE_TAMAÑO');
+
+            // Actualizar etiquetas Hex
+            if(document.getElementById('conf-color-primario').value) document.getElementById('hex-pri').innerText = document.getElementById('conf-color-primario').value.toUpperCase();
+            if(document.getElementById('conf-color-secundario').value) document.getElementById('hex-sec').innerText = document.getElementById('conf-color-secundario').value.toUpperCase();
         }
 
         function actualizarPreview(inputId, imgId, txtId) {
@@ -201,6 +250,7 @@
             if(url) { img.src = url; img.classList.remove('hidden'); txt.classList.add('hidden'); } else { img.classList.add('hidden'); txt.classList.remove('hidden'); }
         }
 
+        // ================= MOTOR DE SUBIDA IMÁGENES =================
         async function comprimirYSubir(file) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader(); reader.readAsDataURL(file);
@@ -232,6 +282,7 @@
             document.getElementById('loading-overlay-config').classList.add('hidden'); document.getElementById('loading-overlay-config').classList.remove('flex');
         }
 
+        // ================= TASAS =================
         async function guardarTasaManual() {
             const t = parseFloat(document.getElementById('conf-tasa').value); if(isNaN(t) || t <= 0) { alert("Ingresa una tasa válida mayor a 0."); return; }
             try { await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?moneda=eq.USD`, { method: 'DELETE', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }); await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ moneda: 'USD', tasa: t }) }); alert("¡Tasa manual guardada correctamente!"); } catch(e) { console.error(e); alert("Hubo un error al guardar la tasa."); }
@@ -241,24 +292,29 @@
             try { const resUsd = await fetch('https://ve.dolarapi.com/v1/dolares/oficial'); if(!resUsd.ok) throw new Error("Fallo API"); const dataUsd = await resUsd.json(); document.getElementById('conf-tasa').value = dataUsd.promedio.toFixed(2); alert("Tasa obtenida de internet. Presiona 'Guardar Manual' para fijarla."); } catch(e) { alert("Error al conectar con el servidor. Ingresa la tasa manualmente y presiona 'Guardar Manual'."); }
         }
 
+        // ================= GUARDADO GENERAL Y CACHÉ =================
         async function guardarTodo(event) {
             const btn = event.currentTarget; const textoOriginal = btn.innerHTML; btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Guardando...`; btn.disabled = true;
             sincronizarInputOculto();
 
-            const cp = document.getElementById('conf-color-primario').value;
-            const cs = document.getElementById('conf-color-secundario').value;
+            const cP = document.getElementById('conf-color-primario').value;
+            const cS = document.getElementById('conf-color-secundario').value;
+            const fF = document.getElementById('conf-fuente').value;
+            const fS = document.getElementById('conf-tamano').value;
 
             const configs = [ 
                 { parametro: 'IVA_GENERAL', valor: document.getElementById('conf-iva').value || '16' }, 
                 { parametro: 'IGTF', valor: document.getElementById('conf-igtf').value || '3' }, 
                 { parametro: 'IVA_REDUCIDO_1', valor: document.getElementById('conf-iva-r1').value || '8' }, 
-                { parametro: 'IVA_REDUCIDO_2', document.getElementById('conf-iva-r2').value || '12' }, 
+                { parametro: 'IVA_REDUCIDO_2', valor: document.getElementById('conf-iva-r2').value || '12' }, 
                 { parametro: 'POS_MOSTRAR_EXENTO', valor: document.getElementById('conf-exento').value || 'SI' }, 
                 { parametro: 'CONDICIONES_PAGO', valor: document.getElementById('conf-condiciones').value || 'CONTADO|0' },
                 { parametro: 'LOGO_URL', valor: document.getElementById('url-logo').value || '' }, 
                 { parametro: 'FONDO_URL', valor: document.getElementById('url-fondo').value || '' },
-                { parametro: 'COLOR_PRIMARIO', valor: cp },
-                { parametro: 'COLOR_SECUNDARIO', valor: cs }
+                { parametro: 'COLOR_PRIMARIO', valor: cP },
+                { parametro: 'COLOR_SECUNDARIO', valor: cS },
+                { parametro: 'FUENTE_FAMILIA', valor: fF },
+                { parametro: 'FUENTE_TAMAÑO', valor: fS }
             ];
 
             try {
@@ -266,14 +322,17 @@
                     await fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?parametro=eq.${c.parametro}`, { method: 'DELETE', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
                     const payload = { parametro: c.parametro, valor: String(c.valor) }; if (empId) payload.id_empresa = empId; 
                     const res = await fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                    if (!res.ok) throw new Error(`Fallo en ${c.parametro}`);
                 }
                 
-                // GUARDAR EN CACHÉ PARA APLICACIÓN INMEDIATA
-                localStorage.setItem('pyp_color_primario', cp);
-                localStorage.setItem('pyp_color_secundario', cs);
+                // GUARDADO EN MEMORIA CACHÉ LOCAL PARA LECTURA RÁPIDA DE UI
+                localStorage.setItem('pyp_color_primario', cP);
+                localStorage.setItem('pyp_color_secundario', cS);
+                localStorage.setItem('pyp_fuente', fF);
+                localStorage.setItem('pyp_tamano', fS);
                 localStorage.setItem('pyp_logo_pc_url', document.getElementById('url-logo').value);
                 
-                alert("Ajustes guardados exitosamente."); location.reload();
+                alert("Ajustes y Marca Blanca guardados exitosamente."); location.reload();
             } catch (error) { alert("Hubo un error de conexión."); btn.innerHTML = textoOriginal; btn.disabled = false; }
         }
     </script>
