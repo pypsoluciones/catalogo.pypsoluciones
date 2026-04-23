@@ -55,7 +55,9 @@ document.addEventListener("DOMContentLoaded", () => {
         </nav>
         
         <div class="p-3 border-t border-white/10 shrink-0 bg-[#0f2d4a]">
-            <button onclick="cerrarSesion()" class="w-full flex items-center justify-center gap-2 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white py-2.5 rounded font-bold transition text-xs shadow-sm"><i class="fa-solid fa-power-off"></i> Cerrar Sesión</button>
+            <button onclick="cerrarSesion()" class="w-full flex items-center justify-center gap-2 bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white py-2.5 rounded font-bold transition text-xs shadow-sm border border-transparent hover:border-gray-500 uppercase tracking-wider">
+                <i class="fa-solid fa-power-off text-gray-400"></i> Cerrar Sesión
+            </button>
         </div>
     </aside>
     `;
@@ -65,7 +67,7 @@ document.addEventListener("DOMContentLoaded", () => {
         <div class="bg-white p-6 rounded-xl shadow-2xl max-w-sm w-full"><i class="fa-solid fa-shield-halved text-5xl text-[#E67E22] mb-3"></i><h2 class="text-lg font-black text-[#143B62] mb-1">Sesión Expirada</h2><p class="text-gray-500 mb-5 text-xs font-medium">Por seguridad, tu sesión se ha cerrado. Vuelve a ingresar.</p><button onclick="forzarCierreSesion()" class="w-full bg-[#E67E22] hover:bg-[#c96b1c] text-white py-2.5 rounded font-bold uppercase text-sm">Ingresar</button></div>
     </div>
     <div id="pyp-modal-offline" class="fixed inset-0 bg-slate-900/95 z-[99999] hidden flex-col items-center justify-center p-6 text-center backdrop-blur-sm">
-        <div class="bg-white p-6 rounded-xl shadow-2xl max-w-sm w-full"><i class="fa-solid fa-wifi text-5xl text-red-500 mb-3"></i><h2 class="text-lg font-black text-[#143B62] mb-1">Sin Conexión</h2><p class="text-gray-500 mb-5 text-xs font-medium">Revisa tu internet para continuar trabajando.</p><button onclick="window.location.reload()" class="w-full bg-[#143B62] hover:bg-[#0f2d4a] text-white py-2.5 rounded font-bold uppercase text-sm">Reintentar</button></div>
+        <div class="bg-white p-6 rounded-xl shadow-2xl max-w-sm w-full"><i class="fa-solid fa-wifi text-5xl text-[#143B62] mb-3"></i><h2 class="text-lg font-black text-[#143B62] mb-1">Sin Conexión</h2><p class="text-gray-500 mb-5 text-xs font-medium">Revisa tu internet para continuar trabajando.</p><button onclick="window.location.reload()" class="w-full bg-[#143B62] hover:bg-[#0f2d4a] text-white py-2.5 rounded font-bold uppercase text-sm">Reintentar</button></div>
     </div>
     `;
 
