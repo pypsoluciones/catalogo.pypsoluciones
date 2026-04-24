@@ -29,8 +29,6 @@
     
     <style>
         body { font-family: var(--font-global); font-size: var(--size-global); }
-        
-        /* 🛡️ BLINDAJE VISUAL */
         .bg-primary { background-color: var(--color-primary) !important; }
         .text-primary { color: var(--color-primary) !important; }
         .bg-secondary { background-color: var(--color-secondary) !important; }
@@ -195,6 +193,7 @@
                         <option value="EFECTIVO_BS">🇻🇪 Efectivo Bolívares</option>
                         <option value="PAGO_MOVIL">📱 Pago Móvil</option>
                         <option value="PUNTO_VENTA">💳 Punto de Venta</option>
+                        <option value="TRANSFERENCIA_BS">🏦 Transferencia Bolívares</option>
                         <option value="EFECTIVO_USD">💵 Divisas (Aplica IGTF)</option>
                         <option value="ZELLE">🟣 Zelle (Aplica IGTF)</option>
                     </select>
@@ -269,7 +268,6 @@
     </div>
 
     <div id="ticket-impresion" class="hidden print:block"></div>
-
     <script src="menu.js"></script>
     <main class="flex-1 flex flex-col h-screen overflow-hidden bg-[#f4f6f8] w-full z-10 relative">
         <header class="bg-white shadow-sm px-4 flex justify-between items-center z-10 shrink-0 border-b border-gray-200 h-10">
@@ -331,7 +329,7 @@
                     <div class="grid grid-cols-3 gap-2">
                         <div>
                             <label class="block text-[7px] font-medium text-gray-500 uppercase mb-0.5">Fecha Emisión</label>
-                            <input type="date" id="pos-fecha-emision" class="w-full border border-gray-300 rounded px-1.5 py-1 text-[8px] font-bold outline-none text-gray-700 bg-gray-100" readonly>
+                            <input type="date" id="pos-fecha-emision" class="w-full border border-gray-300 rounded px-1.5 py-1 text-[8px] font-bold outline-none text-gray-700 bg-white focus:border-tertiary transition cursor-pointer" onchange="validarFechaEmision()">
                         </div>
                         <div>
                             <label class="block text-[7px] font-medium text-gray-500 uppercase mb-0.5">Vencimiento</label>
@@ -456,10 +454,11 @@
         let imgDefecto = 'https://via.placeholder.com/150/f8fafc/94a3b8?text=P%26P';
         let posVistaActual = 'grid';
         let modoSupermercado = false;
+        
+        let ultimaFechaFactura = null;
+        let correlativoActual = 1;
 
         function getFechaHoy() { const hoy = new Date(); return hoy.toISOString().split('T')[0]; }
-        
-        // 🏦 FORMATEADOR BANCARIO (COMAS DE MILES)
         function fmt(num) { return parseFloat(num || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 
         // ================= INICIALIZACIÓN DEL SISTEMA =================
@@ -484,7 +483,39 @@
             });
         };
 
-        // ================= FUNCIONES DE INTERFAZ =================
+        // ================= INTERFAZ Y VALIDACIÓN DE FECHAS =================
+        function validarFechaEmision() {
+            const inputFecha = document.getElementById('pos-fecha-emision');
+            const fechaElegida = inputFecha.value;
+            if (ultimaFechaFactura && fechaElegida < ultimaFechaFactura) {
+                alert(`🛑 SEGURIDAD FISCAL:\nNo puedes emitir una factura con fecha (${fechaElegida}) anterior a la última registrada en el sistema (${ultimaFechaFactura}).`);
+                inputFecha.value = getFechaHoy();
+            }
+            ajustarFechaVencimiento();
+        }
+
+        function ajustarFechaVencimiento() {
+            const selectVal = document.getElementById('pos-condicion').value;
+            const inputVenc = document.getElementById('pos-fecha-vencimiento');
+            const emisionStr = document.getElementById('pos-fecha-emision').value;
+            
+            if (selectVal === 'MANUAL') {
+                inputVenc.readOnly = false; inputVenc.classList.remove('bg-gray-100'); inputVenc.classList.add('bg-white');
+                return;
+            }
+
+            const dias = parseInt(selectVal) || 0;
+            let fechaBase = new Date(emisionStr + 'T12:00:00Z');
+            fechaBase.setDate(fechaBase.getDate() + dias);
+            inputVenc.value = fechaBase.toISOString().split('T')[0];
+            
+            if (dias === 0) {
+                inputVenc.readOnly = true; inputVenc.classList.add('bg-gray-100'); inputVenc.classList.remove('bg-white');
+            } else {
+                inputVenc.readOnly = false; inputVenc.classList.remove('bg-gray-100'); inputVenc.classList.add('bg-white');
+            }
+        }
+
         function toggleSupermercado() {
             modoSupermercado = !modoSupermercado;
             const panelIzq = document.getElementById('panel-izquierdo');
@@ -508,37 +539,10 @@
             const caja = document.getElementById('caja-acordeon-totales');
             const icon = document.getElementById('icon-toggle-acordeon');
             const txt = document.getElementById('txt-toggle-acordeon');
-            
             if (caja.classList.contains('hidden')) {
-                caja.classList.remove('hidden');
-                icon.className = 'fa-solid fa-chevron-down text-[9px] text-gray-400';
-                txt.innerText = 'OCULTAR DESGLOSE FISCAL';
+                caja.classList.remove('hidden'); icon.className = 'fa-solid fa-chevron-down text-[9px] text-gray-400'; txt.innerText = 'OCULTAR DESGLOSE FISCAL';
             } else {
-                caja.classList.add('hidden');
-                icon.className = 'fa-solid fa-chevron-up text-[9px] text-gray-300';
-                txt.innerText = 'VER DESGLOSE FISCAL';
-            }
-        }
-
-        function ajustarFechaVencimiento() {
-            const selectVal = document.getElementById('pos-condicion').value;
-            const inputVenc = document.getElementById('pos-fecha-vencimiento');
-            const emisionStr = document.getElementById('pos-fecha-emision').value;
-            
-            if (selectVal === 'MANUAL') {
-                inputVenc.readOnly = false; inputVenc.classList.remove('bg-gray-100'); inputVenc.classList.add('bg-white');
-                return;
-            }
-
-            const dias = parseInt(selectVal) || 0;
-            let fechaBase = new Date(emisionStr + 'T12:00:00Z');
-            fechaBase.setDate(fechaBase.getDate() + dias);
-            inputVenc.value = fechaBase.toISOString().split('T')[0];
-            
-            if (dias === 0) {
-                inputVenc.readOnly = true; inputVenc.classList.add('bg-gray-100'); inputVenc.classList.remove('bg-white');
-            } else {
-                inputVenc.readOnly = false; inputVenc.classList.remove('bg-gray-100'); inputVenc.classList.add('bg-white');
+                caja.classList.add('hidden'); icon.className = 'fa-solid fa-chevron-up text-[9px] text-gray-300'; txt.innerText = 'VER DESGLOSE FISCAL';
             }
         }
 
@@ -571,7 +575,6 @@
 
                 if (!resProd.ok || !resPre.ok) throw new Error("Fallo al descargar la base de datos.");
 
-                // TASAS
                 const dataTasa = await resTasa.json(); 
                 if(dataTasa.length > 0) { 
                     const tUsd = dataTasa.find(t => t.moneda === 'USD');
@@ -580,13 +583,8 @@
                     if(tEur) { tasaBCVEur = tEur.tasa; document.getElementById('input-tasa-eur').value = tasaBCVEur.toFixed(2); }
                 }
                 
-                // CONFIGURACIÓN FISCAL Y CONDICIONES (ÚLTIMO REGISTRO FRESCO)
                 let dConf = []; if(resConf.ok) dConf = await resConf.json();
-                
-                const getC = (p, def) => { 
-                    const items = dConf.filter(c => c.parametro === p); 
-                    return items.length > 0 ? items[items.length - 1].valor : def; 
-                };
+                const getC = (p, def) => { const items = dConf.filter(c => c.parametro === p); return items.length > 0 ? items[items.length - 1].valor : def; };
                 
                 pypIva = parseFloat(getC('IVA_GENERAL', '16')) / 100;
                 pypIvaRed1 = parseFloat(getC('IVA_REDUCIDO_1', '8')) / 100;
@@ -594,7 +592,6 @@
                 pypIgtf = parseFloat(getC('IGTF', '3')) / 100;
                 pypMostrarExento = getC('POS_MOSTRAR_EXENTO', 'SI');
                 
-                // CARGAR CONDICIONES DE PAGO EXACTAS DEL CONSTRUCTOR
                 const strCond = getC('CONDICIONES_PAGO', 'CONTADO|0');
                 let htmlCond = '';
                 strCond.split(',').forEach(c => {
@@ -604,11 +601,9 @@
                 document.getElementById('pos-condicion').innerHTML = htmlCond;
                 ajustarFechaVencimiento();
 
-                // CLIENTES (FUSE)
                 dbClientes = await resCli.json();
                 fuseClientes = new Fuse(dbClientes, { keys: ['documento_identidad', 'nombre_razon_social'], threshold: 0.4, ignoreLocation: true, getFn: function(obj, path) { let val = obj; for (let i = 0; i < path.length; i++) { val = val ? val[path[i]] : null; } return typeof val === 'string' ? val.normalize("NFD").replace(/[\u0300-\u036f]/g, "") : val; } });
 
-                // INVENTARIO
                 const dataProd = await resProd.json(); const dataPre = await resPre.json();
                 dbInventario = dataProd.map(p => { const pre = dataPre.find(pr => pr.id_producto_sku === p.id_producto_sku) || {}; return { ...p, pre: pre }; });
                 fuseInventario = new Fuse(dbInventario, { keys: ['id_producto_sku', 'codigo_barras', 'nombre'], threshold: 0.4, ignoreLocation: true, getFn: function(obj, path) { let val = obj; for (let i = 0; i < path.length; i++) { val = val ? val[path[i]] : null; } return typeof val === 'string' ? val.normalize("NFD").replace(/[\u0300-\u036f]/g, "") : val; } });
@@ -620,6 +615,29 @@
             } catch(e) { mostrarErrorConexion(e.message); }
         }
 
+        // ================= INGENIERÍA DE CORRELATIVOS FISCALES =================
+        async function inicializarCorrelativos() {
+            const inputNroFactura = document.getElementById('pos-nro-factura'); inputNroFactura.value = "Cargando...";
+            try {
+                const resConf = await fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?parametro=eq.CORRELATIVO_INICIAL&select=valor`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                let corrInicial = 0; if(resConf.ok) { const dConf = await resConf.json(); if(dConf.length > 0) corrInicial = parseInt(dConf[0].valor) || 0; }
+
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/facturas?id_empresa=eq.${empresaActual}&select=correlativo,nro_factura_manual,fecha_emision&order=fecha_emision.desc&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                
+                if (res.ok) { 
+                    const data = await res.json(); 
+                    if (data.length > 0) { 
+                        ultimaFechaFactura = new Date(data[0].fecha_emision).toISOString().split('T')[0];
+                        let maxCorr = data[0].correlativo || 0;
+                        if (data[0].nro_factura_manual) { const soloNums = data[0].nro_factura_manual.replace(/\D/g, ''); if(soloNums !== '') { let mNum = parseInt(soloNums); if(mNum > maxCorr) maxCorr = mNum; } }
+                        correlativoActual = Math.max(maxCorr, corrInicial) + 1; 
+                    } else { correlativoActual = corrInicial > 0 ? corrInicial + 1 : 1; }
+                } else { correlativoActual = corrInicial > 0 ? corrInicial + 1 : 1; }
+                
+                inputNroFactura.value = String(correlativoActual).padStart(6, '0');
+            } catch (e) { inputNroFactura.value = ""; inputNroFactura.placeholder = "Ej: 000001"; inputNroFactura.readOnly = false; }
+        }
+
         // ================= VISTAS Y BÚSQUEDA DE INVENTARIO =================
         function cambiarVistaPos(v) { posVistaActual = v; localStorage.setItem('pyp_pos_vista_inventario', v); actualizarBotonesVistaPos(); buscarProductos(); }
         function actualizarBotonesVistaPos() { document.getElementById('btn-vista-tabla-pos').classList.toggle('text-tertiary', posVistaActual === 'tabla'); document.getElementById('btn-vista-tabla-pos').classList.toggle('shadow-sm', posVistaActual === 'tabla'); document.getElementById('btn-vista-grid-pos').classList.toggle('text-tertiary', posVistaActual === 'grid'); document.getElementById('btn-vista-grid-pos').classList.toggle('shadow-sm', posVistaActual === 'grid'); }
@@ -627,7 +645,6 @@
         function buscarProductos() {
             let query = document.getElementById('buscador-pos').value.trim(); const cat = document.getElementById('filtro-cat-pos').value; const stockFilter = document.getElementById('filtro-stock-pos').value;
             let data = dbInventario;
-            
             if (query !== '') { const queryNormalizada = query.normalize("NFD").replace(/[\u0300-\u036f]/g, ""); data = fuseInventario.search(queryNormalizada).map(r => r.item); }
             if (cat !== 'TODAS') data = data.filter(p => p.categoria_del_producto === cat);
             if (stockFilter === 'DISPONIBLE') data = data.filter(p => p.stock_actual > 0 || p.permitir_negativo);
@@ -743,10 +760,28 @@
         }
 
         // ================= MATEMÁTICA Y LÓGICA DEL CARRITO =================
+        function calcularPrecioUnitario(prod, cantidad) { 
+            if (prod.precio_manual_usd !== undefined) return prod.precio_manual_usd; // 🔵 Permite editar precio en POS
+            let pU = prod.es_precio_fijo_bs ? (Number(prod.precio_fijo_bs) / tasaBCV) : (Number(prod.precio_general_usd) || 0); 
+            if (prod.requerido_precio_3 && cantidad >= prod.requerido_precio_3 && prod.precio_3_usd != null) pU = Number(prod.precio_3_usd); 
+            else if (prod.requerido_precio_2 && cantidad >= prod.requerido_precio_2 && prod.precio_2_usd != null) pU = Number(prod.precio_2_usd); 
+            else if (prod.requerido_precio_1 && cantidad >= prod.requerido_precio_1 && prod.precio_1_usd != null) pU = Number(prod.precio_1_usd); 
+            return pU; 
+        }
+
+        function actualizarPrecioManualItem(sku, valorStr) {
+            const idx = carrito.findIndex(i => i.id_producto_sku === sku); if (idx === -1) return;
+            let val = parseFloat(valorStr); if(isNaN(val) || val < 0) val = 0;
+            carrito[idx].precio_manual_usd = val;
+            actualizarUI_Carrito();
+        }
+
         function agregarAlCarrito(prodStr) { const p = JSON.parse(decodeURIComponent(prodStr)); const idx = carrito.findIndex(i => i.id_producto_sku === p.id_producto_sku); if (idx !== -1) { if(carrito[idx].cantidad < p.stock_actual || p.permitir_negativo) { carrito[idx].cantidad++; } } else { carrito.push({ ...p, cantidad: 1, desc_tipo: 'MONTO_BS', desc_val: 0 }); } actualizarUI_Carrito(); }
         function modificarCantidad(sku, delta) { const idx = carrito.findIndex(i => i.id_producto_sku === sku); if (idx === -1) return; const nuevo = carrito[idx].cantidad + delta; if(nuevo > carrito[idx].stock_actual && !carrito[idx].permitir_negativo) return; carrito[idx].cantidad = nuevo; if (carrito[idx].cantidad <= 0) carrito.splice(idx, 1); actualizarUI_Carrito(); }
         function eliminarDelCarrito(sku) { carrito = carrito.filter(i => i.id_producto_sku !== sku); actualizarUI_Carrito(); }
         function actualizarDescItem(sku, campo, valor) { const idx = carrito.findIndex(i => i.id_producto_sku === sku); if (idx === -1) return; if(campo === 'tipo') carrito[idx].desc_tipo = valor; if(campo === 'val') carrito[idx].desc_val = parseFloat(valor) || 0; actualizarUI_Carrito(); }
+
+        let sumSubtotalBasePuroUsd = 0, descGeneralTotalUsd = 0, granTotalUsd = 0;
 
         function actualizarUI_Carrito() {
             const lista = document.getElementById('lista-carrito'); const nivelCli = document.getElementById('pos-nivel-precio-cliente').value || 'GENERAL'; const contenedorFiscal = document.getElementById('contenedor-totales-fiscales');
@@ -756,14 +791,11 @@
                 document.getElementById('pos-subtotal').innerText = 'Bs. 0.00'; document.getElementById('pos-descuento-general-val').innerText = '- Bs. 0.00'; contenedorFiscal.innerHTML = ''; document.getElementById('pos-total-bs').innerText = 'Bs. 0.00'; document.getElementById('pos-total-usd').innerText = 'US$ 0.00'; document.getElementById('pos-items').innerText = '0'; document.getElementById('btn-cobrar').disabled = true; return; 
             }
 
-            let html = ''; let itemsTotal = 0; let sumSubtotalBasePuroUsd = 0;
+            let html = ''; let itemsTotal = 0; sumSubtotalBasePuroUsd = 0;
             let bases = { 'GENERAL': 0, 'REDUCIDO_1': 0, 'REDUCIDO_2': 0, 'EXENTO': 0 };
 
             carrito.forEach(item => {
-                let baseUsd = item.pUsd;
-                if (nivelCli === 'P1' && item.pre.precio_1_usd) baseUsd = item.pre.precio_1_usd; if (nivelCli === 'P2' && item.pre.precio_2_usd) baseUsd = item.pre.precio_2_usd; if (nivelCli === 'P3' && item.pre.precio_3_usd) baseUsd = item.pre.precio_3_usd;
-                if (item.requerido_precio_3 > 0 && item.cantidad >= item.requerido_precio_3) { baseUsd = item.pre.precio_3_usd; } else if (item.requerido_precio_2 > 0 && item.cantidad >= item.requerido_precio_2) { baseUsd = item.pre.precio_2_usd; } else if (item.requerido_precio_1 > 0 && item.cantidad >= item.requerido_precio_1) { baseUsd = item.pre.precio_1_usd; }
-
+                let baseUsd = calcularPrecioUnitario(item, item.cantidad);
                 const lineaBaseUsd = baseUsd * item.cantidad; 
                 let descLineaUsd = 0; if(item.desc_tipo === 'PORCENTAJE') { descLineaUsd = lineaBaseUsd * (item.desc_val / 100); } else if(item.desc_tipo === 'MONTO') { descLineaUsd = item.desc_val; } else if(item.desc_tipo === 'MONTO_BS') { descLineaUsd = item.desc_val / tasaBCV; }
                 if (descLineaUsd > lineaBaseUsd) descLineaUsd = lineaBaseUsd; 
@@ -776,12 +808,16 @@
                 itemsTotal += item.cantidad; const tieneDesc = descLineaUsd > 0; const precioUnidadFinalUsd = item.cantidad > 0 ? (totalLineaNetaUsd / item.cantidad) : 0;
                 const valorInputDesc = item.desc_val > 0 ? item.desc_val : '';
 
+                // 🔵 INPUT EDITABLE PARA EL PRECIO
                 html += `
                 <div class="bg-white border border-gray-200 rounded p-1 mb-1.5 shadow-sm flex flex-col fade-in relative group min-h-[50px]">
                     <div class="flex gap-2">
                         <div class="flex-1 min-w-0 pr-2 border-r border-gray-100 flex flex-col justify-between">
                             <h4 class="text-[9px] font-black text-primary truncate uppercase leading-tight mb-1 pr-4">${item.nombre}</h4>
-                            <div class="flex items-center gap-1.5 text-[8px] font-bold">${tieneDesc ? `<span class="line-through text-gray-400 mr-1 font-mono text-[7px]">$${fmt(baseUsd)}</span>` : ''}<span class="text-secondary font-extrabold text-[10px]">$${fmt(precioUnidadFinalUsd)}</span><span class="text-gray-500 font-bold ml-1">Bs. ${fmt(precioUnidadFinalUsd * tasaBCV)}</span></div>
+                            <div class="flex items-center gap-1 mt-0.5">
+                                <span class="text-[10px] font-bold text-gray-500">US$</span>
+                                <input type="number" step="0.01" class="w-16 border-b border-gray-300 text-xs font-black text-secondary px-1 outline-none focus:border-tertiary text-center transition" value="${baseUsd.toFixed(2)}" onchange="actualizarPrecioManualItem('${item.id_producto_sku}', this.value)" title="Modificar Precio USD">
+                            </div>
                             <div class="flex items-center gap-1 mt-1 pt-1 border-t border-gray-100">
                                 <span class="text-[7px] text-red-500 font-bold uppercase">Desc:</span>
                                 <select class="border border-red-200 rounded text-[8px] p-0.5 outline-none bg-red-50 text-red-700 font-bold" onchange="actualizarDescItem('${item.id_producto_sku}', 'tipo', this.value)"><option value="MONTO_BS" ${item.desc_tipo === 'MONTO_BS'?'selected':''}>Bs.</option><option value="PORCENTAJE" ${item.desc_tipo === 'PORCENTAJE'?'selected':''}>%</option><option value="MONTO" ${item.desc_tipo === 'MONTO'?'selected':''}>$</option></select>
@@ -800,7 +836,7 @@
             lista.innerHTML = html;
             
             const typeDescGeneral = document.getElementById('pos-type-desc-general').value; const inputDescGeneral = parseFloat(document.getElementById('pos-input-desc-general').value) || 0;
-            let sumNetoItemsUsd = bases['GENERAL'] + bases['REDUCIDO_1'] + bases['REDUCIDO_2'] + bases['EXENTO']; let descGeneralTotalUsd = 0; 
+            let sumNetoItemsUsd = bases['GENERAL'] + bases['REDUCIDO_1'] + bases['REDUCIDO_2'] + bases['EXENTO']; descGeneralTotalUsd = 0; 
             if (typeDescGeneral === 'PORCENTAJE' && inputDescGeneral > 0) { descGeneralTotalUsd = sumNetoItemsUsd * (inputDescGeneral / 100); } else if (typeDescGeneral === 'MONTO' && inputDescGeneral > 0) { descGeneralTotalUsd = inputDescGeneral; } else if (typeDescGeneral === 'MONTO_BS' && inputDescGeneral > 0) { descGeneralTotalUsd = inputDescGeneral / tasaBCV; }
             if (descGeneralTotalUsd > sumNetoItemsUsd) descGeneralTotalUsd = sumNetoItemsUsd;
 
@@ -808,7 +844,7 @@
             let bG = (bases['GENERAL'] * factor) || 0; let bR1 = (bases['REDUCIDO_1'] * factor) || 0; let bR2 = (bases['REDUCIDO_2'] * factor) || 0; let bE = (bases['EXENTO'] * factor) || 0;
             
             let ivaG = bG * pypIva; let ivaR1 = bR1 * pypIvaRed1; let ivaR2 = bR2 * pypIvaRed2;
-            const granTotalUsd = bG + bR1 + bR2 + bE + ivaG + ivaR1 + ivaR2;
+            granTotalUsd = bG + bR1 + bR2 + bE + ivaG + ivaR1 + ivaR2;
 
             let htmlTotales = ''; const Fila = (etiqueta, valUsd) => `<div class="flex justify-between items-center text-[9px] text-gray-500 font-bold uppercase"><span>${etiqueta}</span><span class="text-gray-900 font-bold">Bs. ${fmt(valUsd * tasaBCV)}</span></div>`;
             if (bE > 0 || pypMostrarExento === 'SI') htmlTotales += Fila('Monto Exento', bE);
@@ -822,11 +858,11 @@
             contenedorFiscal.dataset.baseTotalUsd = bG + bR1 + bR2; contenedorFiscal.dataset.exentoTotalUsd = bE;
         }
 
-        // ================= MODAL DE COBRO Y CONFIRMACIÓN =================
+        // ================= MODAL DE COBRO Y GUARDADO DB =================
         function verificarIGTF() {
             const metodo = document.getElementById('cobro-metodo').value; const aplica = (metodo === 'EFECTIVO_USD' || metodo === 'ZELLE');
             document.getElementById('caja-igtf').classList.toggle('hidden', !aplica);
-            const tBs = parseFloat(document.getElementById('pos-total-bs').innerText.replace(/Bs\.\s|,/g, '')); const igtfBs = aplica ? tBs * pypIgtf : 0;
+            const tBs = granTotalUsd * tasaBCV; const igtfBs = aplica ? tBs * pypIgtf : 0;
             document.getElementById('modal-total-bs-final').innerText = `Bs. ${fmt(tBs + igtfBs)}`; document.getElementById('modal-total-usd-final').innerText = `US$ ${fmt((tBs + igtfBs)/tasaBCV)}`;
         }
         function abrirCobro() { verificarIGTF(); document.getElementById('modal-cobro').classList.remove('hidden'); document.getElementById('modal-cobro').classList.add('flex'); }
@@ -834,47 +870,79 @@
         function mostrarCarga(t,d,e=false) { const ol=document.getElementById('loading-overlay'); document.getElementById('loading-text').innerText=t; document.getElementById('loading-error').innerText=d; if(e) { document.getElementById('loading-error').classList.remove('hidden'); document.getElementById('error-actions').classList.remove('hidden'); } else { document.getElementById('loading-error').classList.add('hidden'); document.getElementById('error-actions').classList.add('hidden'); } ol.classList.remove('hidden');ol.classList.add('flex'); }
         function cerrarErrorCarga() { document.getElementById('loading-overlay').classList.add('hidden'); document.getElementById('error-actions').classList.add('hidden'); }
 
-        // ================= INGENIERÍA DE CORRELATIVOS FISCALES =================
-        async function inicializarCorrelativos() {
-            const inputNroFactura = document.getElementById('pos-nro-factura'); inputNroFactura.value = "Cargando...";
-            try {
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/facturas?id_empresa=eq.${empresaActual}&select=nro_factura_manual&order=fecha_emision.desc&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
-                let proximoNumero = 1; 
-                if (res.ok) { const data = await res.json(); if (data.length > 0 && data[0].nro_factura_manual) { const soloNumeros = data[0].nro_factura_manual.trim().replace(/\D/g, ''); if(soloNumeros !== '') proximoNumero = parseInt(soloNumeros) + 1; } }
-                inputNroFactura.value = String(proximoNumero).padStart(6, '0');
-            } catch (e) { inputNroFactura.value = ""; inputNroFactura.placeholder = "Ej: 000001"; inputNroFactura.readOnly = false; inputNroFactura.classList.remove('bg-white'); inputNroFactura.classList.add('bg-red-50'); }
-        }
-
-        // ================= PROCESAMIENTO FINAL Y GUARDADO EN DB =================
         async function procesarVenta() {
-            const btn = document.getElementById('btn-confirmar'); btn.disabled = true; mostrarCarga("Procesando...", "Registrando venta e imprimiendo documento");
+            const btn = document.getElementById('btn-confirmar'); btn.disabled = true; mostrarCarga("Procesando...", "Registrando venta en la base de datos");
             try {
-                const metodo = document.getElementById('cobro-metodo').value; const formatoPrint = document.getElementById('cobro-formato-impresion').value; const condicionSel = document.getElementById('pos-condicion'); const condicion = condicionSel.options[condicionSel.selectedIndex].text; const nroFactura = document.getElementById('pos-nro-factura').value.trim().toUpperCase(); const nroControl = document.getElementById('pos-nro-control').value.trim().toUpperCase(); const fechaVenc = document.getElementById('pos-fecha-vencimiento').value;
-                const totalBsFinal = parseFloat(document.getElementById('modal-total-bs-final').innerText.replace(/Bs\.\s|,/g, '')); const baseImpUsd = parseFloat(document.getElementById('contenedor-totales-fiscales').dataset.baseTotalUsd) || 0; const exentoUsd = parseFloat(document.getElementById('contenedor-totales-fiscales').dataset.exentoTotalUsd) || 0;
+                const metodo = document.getElementById('cobro-metodo').value; const formatoPrint = document.getElementById('cobro-formato-impresion').value; const condicionSel = document.getElementById('pos-condicion'); const condicion = condicionSel.options[condicionSel.selectedIndex].text; const nroFactura = document.getElementById('pos-nro-factura').value.trim().toUpperCase(); const nroControl = document.getElementById('pos-nro-control').value.trim().toUpperCase(); const fechaVenc = document.getElementById('pos-fecha-vencimiento').value; const fechaEmision = document.getElementById('pos-fecha-emision').value + 'T12:00:00Z';
+                
+                const aplicaIgtf = (metodo === 'EFECTIVO_USD' || metodo === 'ZELLE');
+                const igtfVal = aplicaIgtf ? pypIgtf * 100 : 0;
+                const totalBsFinal = (granTotalUsd * tasaBCV) + (aplicaIgtf ? (granTotalUsd * tasaBCV * pypIgtf) : 0);
+                const totalUsdFinal = totalBsFinal / tasaBCV;
+                
+                const baseImpUsd = parseFloat(document.getElementById('contenedor-totales-fiscales').dataset.baseTotalUsd) || 0; 
+                const exentoUsd = parseFloat(document.getElementById('contenedor-totales-fiscales').dataset.exentoTotalUsd) || 0;
 
-                let empresaPrint = { nombre_empresa: 'P&P SOLUCIONES', rif: 'J-00000000-0', direccion_fiscal: 'SIN DIRECCIÓN FISCAL' };
-                if (empresaActual) { const resEmpresa = await fetch(`${SUPABASE_URL}/rest/v1/empresas?select=nombre_empresa,rif,direccion_fiscal&id_empresa=eq.${empresaActual}`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }); if (resEmpresa.ok) { const dataEmpresa = await resEmpresa.json(); if (dataEmpresa.length > 0) empresaPrint = dataEmpresa[0]; } }
+                // 🛡️ PAYLOAD SEGURO (Mapeado a la tabla facturas)
+                const payloadFactura = { 
+                    id_empresa: empresaActual, 
+                    id_cliente: document.getElementById('pos-id-cliente').value || null, 
+                    cliente_documento: document.getElementById('txt-cli-doc').innerText,
+                    cliente_nombre: document.getElementById('txt-cli-nom').innerText,
+                    subtotal_usd: sumSubtotalBasePuroUsd,
+                    descuento_usd: descGeneralTotalUsd,
+                    total_usd: totalUsdFinal,
+                    total_bs: totalBsFinal,
+                    tasa_bcv_aplicada: tasaBCV, 
+                    metodos_pago: metodo, 
+                    condicion_pago: condicion, 
+                    iva_porcentaje: pypIva * 100, 
+                    igtf_porcentaje: igtfVal, 
+                    base_imponible: baseImpUsd * tasaBCV, 
+                    monto_exento: exentoUsd * tasaBCV, 
+                    nombre_cajero: document.getElementById('txt-cajero-nombre').innerText, 
+                    nro_factura_manual: nroFactura || null, 
+                    nro_control_manual: nroControl || null, 
+                    fecha_vencimiento: fechaVenc, 
+                    fecha_emision: fechaEmision,
+                    estatus: 'Completada', 
+                    tipo_transaccion: 'Venta' 
+                };
 
-                const payload = { id_empresa: empresaActual, id_cliente: document.getElementById('pos-id-cliente').value || null, total_bs: totalBsFinal, total_usd: totalBsFinal/tasaBCV, tasa_bcv_aplicada: tasaBCV, metodos_pago: metodo, condicion_pago: condicion, iva_porcentaje: pypIva * 100, igtf_porcentaje: (metodo === 'EFECTIVO_USD' || metodo === 'ZELLE') ? pypIgtf * 100 : 0, base_imponible: baseImpUsd * tasaBCV, monto_exento: exentoUsd * tasaBCV, nombre_cajero: document.getElementById('txt-cajero-nombre').innerText, nro_factura_manual: nroFactura || null, nro_control_manual: nroControl || null, fecha_vencimiento: fechaVenc, estatus: 'Completada', tipo_transaccion: 'Venta' };
-                const resF = await fetch(`${SUPABASE_URL}/rest/v1/facturas`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, body: JSON.stringify(payload) });
-                if(!resF.ok) throw new Error("Fallo al guardar factura");
+                const resF = await fetch(`${SUPABASE_URL}/rest/v1/facturas`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, body: JSON.stringify(payloadFactura) });
+                if(!resF.ok) { const errObj = await resF.json(); throw new Error(errObj.message || "Fallo al guardar factura. Verifica las columnas en Supabase."); }
+                
                 const fId = (await resF.json())[0].id_factura;
                 
-                const promesas = []; carrito.forEach(i => { promesas.push(fetch(`${SUPABASE_URL}/rest/v1/detalles_factura`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ factura_id: fId, producto_sku: i.id_producto_sku, producto_nombre: i.nombre, cantidad: i.cantidad, precio_unitario_usd: i.pUsd, subtotal_usd: i.pUsd * i.cantidad }) })); if(!i.permitir_negativo) { promesas.push(fetch(`${SUPABASE_URL}/rest/v1/productos?id_producto_sku=eq.${i.id_producto_sku}`, { method: 'PATCH', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ stock_actual: i.stock_actual - i.cantidad }) })); } });
+                // 🛡️ REGISTRO DE MOVIMIENTO CAJA AUTOMÁTICO
+                const payloadCaja = {
+                    id_empresa: empresaActual, id_factura: fId, fecha: new Date().toISOString(), tipo: 'INGRESO', concepto: `COBRO FACTURA NRO: ${nroFactura} - CLIENTE: ${document.getElementById('txt-cli-nom').innerText}`, monto_usd: totalUsdFinal, monto_bs: totalBsFinal, metodo_pago: metodo, usuario: document.getElementById('txt-cajero-nombre').innerText
+                };
+                fetch(`${SUPABASE_URL}/rest/v1/caja_movimientos`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify(payloadCaja) });
+
+                // 🛡️ DETALLES Y STOCK
+                const promesas = []; 
+                carrito.forEach(i => { 
+                    const prAplicado = calcularPrecioUnitario(i, i.cantidad);
+                    promesas.push(fetch(`${SUPABASE_URL}/rest/v1/detalles_factura`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ id_empresa: empresaActual, factura_id: fId, producto_sku: i.id_producto_sku, producto_nombre: i.nombre, cantidad: i.cantidad, precio_unitario_usd: prAplicado, subtotal_usd: prAplicado * i.cantidad }) })); 
+                    if(!i.permitir_negativo) { promesas.push(fetch(`${SUPABASE_URL}/rest/v1/productos?id_producto_sku=eq.${i.id_producto_sku}`, { method: 'PATCH', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ stock_actual: i.stock_actual - i.cantidad }) })); } 
+                });
                 await Promise.all(promesas);
                 
-                generarHTMLImpresion(formatoPrint, empresaPrint, payload, carrito); window.print();
+                // IMPRESIÓN
+                let empresaPrint = { nombre_empresa: 'P&P SOLUCIONES', rif: 'J-00000000-0', direccion_fiscal: 'SIN DIRECCIÓN FISCAL' };
+                generarHTMLImpresion(formatoPrint, empresaPrint, payloadFactura, carrito); window.print();
                 
-                carrito = []; document.getElementById('pos-input-desc-general').value = ''; document.getElementById('pos-nro-control').value = ''; document.getElementById('pos-condicion').selectedIndex = 0; ajustarFechaVencimiento(); limpiarCliente(); cerrarCobro(); actualizarUI_Carrito(); await iniciarPuntoVenta(); await inicializarCorrelativos(); cerrarErrorCarga(); 
+                carrito = []; document.getElementById('pos-input-desc-general').value = ''; document.getElementById('pos-nro-control').value = ''; document.getElementById('pos-condicion').selectedIndex = 0; document.getElementById('pos-fecha-emision').value = getFechaHoy(); ajustarFechaVencimiento(); limpiarCliente(); cerrarCobro(); actualizarUI_Carrito(); await iniciarPuntoVenta(); await inicializarCorrelativos(); cerrarErrorCarga(); 
             } catch(e) { mostrarCarga("Fallo Crítico", e.message, true); } finally { btn.disabled = false; }
         }
 
-        // ================= MOTOR DE IMPRESIÓN FISCAL =================
+        // ================= MOTOR DE IMPRESIÓN =================
         function generarHTMLImpresion(formato, empresa, factura, items) {
             const contenedor = document.getElementById('ticket-impresion'); contenedor.className = `hidden print:block formato-${formato}`;
             const docCliente = document.getElementById('txt-cli-doc').innerText; const nomCliente = document.getElementById('txt-cli-nom').innerText; const dirCliente = document.getElementById('txt-cli-dir').innerText; const fechaE = new Date().toLocaleDateString('es-VE'); const fechaV = new Date(factura.fecha_vencimiento + 'T12:00:00Z').toLocaleDateString('es-VE');
             let htmlItems = '';
-            items.forEach(i => { const subTotBs = (i.pUsd * i.cantidad * factura.tasa_bcv_aplicada); const indImpuesto = (i.tipo_impuesto === 'EXENTO') ? '(E)' : '(G)'; if(formato === 'carta') { htmlItems += `<tr style="border-bottom: 1px solid #ddd; font-size: 11px;"><td style="padding: 6px 4px;">${i.id_producto_sku}</td><td style="padding: 6px 4px;">${i.nombre}</td><td style="padding: 6px 4px; text-align: center;">${i.cantidad}</td><td style="padding: 6px 4px; text-align: right;">Bs. ${fmt(i.pUsd * factura.tasa_bcv_aplicada)}</td><td style="padding: 6px 4px; text-align: right; font-weight: bold;">Bs. ${fmt(subTotBs)} ${indImpuesto}</td></tr>`; } else { htmlItems += `<div style="margin-bottom: 5px;"><div style="font-weight: bold;">${i.nombre}</div><div style="display: flex; justify-content: space-between;"><span>${i.cantidad}x ${fmt(i.pUsd)}$/Bs.${fmt(i.pUsd * factura.tasa_bcv_aplicada)}</span><span>Bs.${fmt(subTotBs)} ${indImpuesto}</span></div></div>`; } });
+            items.forEach(i => { const prAplicado = calcularPrecioUnitario(i, i.cantidad); const subTotBs = (prAplicado * i.cantidad * factura.tasa_bcv_aplicada); const indImpuesto = (i.tipo_impuesto === 'EXENTO') ? '(E)' : '(G)'; if(formato === 'carta') { htmlItems += `<tr style="border-bottom: 1px solid #ddd; font-size: 11px;"><td style="padding: 6px 4px;">${i.id_producto_sku}</td><td style="padding: 6px 4px;">${i.nombre}</td><td style="padding: 6px 4px; text-align: center;">${i.cantidad}</td><td style="padding: 6px 4px; text-align: right;">Bs. ${fmt(prAplicado * factura.tasa_bcv_aplicada)}</td><td style="padding: 6px 4px; text-align: right; font-weight: bold;">Bs. ${fmt(subTotBs)} ${indImpuesto}</td></tr>`; } else { htmlItems += `<div style="margin-bottom: 5px;"><div style="font-weight: bold;">${i.nombre}</div><div style="display: flex; justify-content: space-between;"><span>${i.cantidad}x ${fmt(prAplicado)}$/Bs.${fmt(prAplicado * factura.tasa_bcv_aplicada)}</span><span>Bs.${fmt(subTotBs)} ${indImpuesto}</span></div></div>`; } });
 
             if(formato === 'carta') {
                 contenedor.innerHTML = `<div style="max-width: 800px; margin: 0 auto; color: #333;"><div style="text-align: center; margin-bottom: 20px;"><h2 style="margin:0; font-size: 24px; color: var(--color-primary);">${empresa.nombre_empresa}</h2><p style="margin:0; font-weight: bold;">RIF: ${empresa.rif}</p><p style="margin:0; font-size: 11px;">DIRECCIÓN: ${empresa.direccion_fiscal}</p><h3 style="margin-top:15px; font-size: 18px;">DOCUMENTO ${factura.nro_factura_manual ? 'NRO: ' + factura.nro_factura_manual : ''}</h3></div><div style="display: flex; justify-content: space-between; margin-bottom: 20px; border: 1px solid #ccc; padding: 15px; border-radius: 4px; background: #fafafa; font-size: 12px;"><div><strong>Cliente:</strong> ${nomCliente}<br><strong>C.I./RIF:</strong> ${docCliente}<br><strong>Dirección:</strong> ${dirCliente}</div><div style="text-align: right;"><strong>Fecha Emisión:</strong> ${fechaE}<br><strong>Vencimiento:</strong> ${fechaV}<br><strong>Condición:</strong> ${factura.condicion_pago}<br><strong>Pago:</strong> ${factura.metodos_pago.replace('_', ' ')}</div></div><table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;"><thead style="background: var(--color-primary); color: white;"><tr><th style="padding: 8px 4px; text-align:left;">SKU</th><th style="padding: 8px 4px; text-align:left;">Descripción</th><th style="padding: 8px 4px; width: 50px;">Cant.</th><th style="padding: 8px 4px; text-align:right;">Precio Unt.</th><th style="padding: 8px 4px; text-align:right;">Total Bs</th></tr></thead><tbody>${htmlItems}</tbody></table><div style="width: 320px; margin-left: auto; font-size: 12px;"><div style="display: flex; justify-content: space-between; padding: 3px 0;"><span>Exento:</span><span>Bs. ${fmt(factura.monto_exento)}</span></div><div style="display: flex; justify-content: space-between; padding: 3px 0;"><span>Base Imponible:</span><span>Bs. ${fmt(factura.base_imponible)}</span></div><div style="display: flex; justify-content: space-between; padding: 3px 0;"><span>IVA (16%):</span><span>Bs. ${fmt(factura.base_imponible * 0.16)}</span></div>${factura.igtf_porcentaje > 0 ? `<div style="display: flex; justify-content: space-between; padding: 3px 0;"><span>IGTF (3%):</span><span>Bs. ${fmt(factura.total_bs * 0.03)}</span></div>` : ''}<div style="display: flex; justify-content: space-between; font-weight: 900; font-size: 18px; margin-top: 5px; border-top: 2px solid var(--color-primary); padding-top: 5px;"><span>TOTAL:</span><span>Bs. ${fmt(factura.total_bs)}</span></div><div style="display: flex; justify-content: space-between; color: var(--color-secondary); font-weight: bold; font-size: 14px;"><span>Ref USD (Tasa: ${fmt(factura.tasa_bcv_aplicada)}):</span><span>$${fmt(factura.total_usd)}</span></div></div></div>`;
@@ -884,52 +952,8 @@
         }
 
         // ================= MOTOR DE TASAS =================
-        async function guardarTasaManual(moneda, valor) {
-            const t = parseFloat(valor); if(isNaN(t) || t <= 0) return;
-            if(moneda === 'USD') tasaBCV = t; if(moneda === 'EUR') tasaBCVEur = t;
-            try { 
-                await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?moneda=eq.${moneda}`, { method: 'DELETE', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
-                await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ moneda: moneda, tasa: t }) }); 
-                actualizarUI_Carrito(); 
-            } catch(e) { console.error("Error tasa manual:", e); }
-        }
-
-        async function sincronizarBCV() {
-            mostrarCarga("Sincronizando con BCV...", "Extrayendo tasa oficial de internet...");
-            try {
-                const bcvUrl = encodeURIComponent('https://www.bcv.org.ve/');
-                const proxyUrl = `https://api.allorigins.win/get?url=${bcvUrl}`;
-                
-                const response = await fetch(proxyUrl);
-                if (!response.ok) throw new Error("Fallo el Proxy");
-                const dataProxy = await response.json();
-                const html = dataProxy.contents; 
-
-                const matchDolar = html.match(/<div id="dolar".*?>.*?<strong>\s*(.*?)\s*<\/strong>/is);
-                const matchEuro = html.match(/<div id="euro".*?>.*?<strong>\s*(.*?)\s*<\/strong>/is);
-
-                if (matchDolar && matchEuro) {
-                    const stringDolar = matchDolar[1].trim().replace(/\./g, '').replace(',', '.');
-                    const stringEuro = matchEuro[1].trim().replace(/\./g, '').replace(',', '.');
-                    
-                    tasaBCV = parseFloat(stringDolar);
-                    tasaBCVEur = parseFloat(stringEuro);
-
-                    document.getElementById('input-tasa-usd').value = tasaBCV.toFixed(2);
-                    document.getElementById('input-tasa-eur').value = tasaBCVEur.toFixed(2);
-
-                    await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?moneda=eq.USD`, { method: 'DELETE', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
-                    await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ moneda: 'USD', tasa: tasaBCV }) }); 
-                    
-                    actualizarUI_Carrito(); 
-                    cerrarErrorCarga();
-                } else {
-                    throw new Error("Estructura del BCV cambió.");
-                }
-            } catch (e) {
-                mostrarCarga("Error BCV", "No se pudo conectar a internet para la tasa. Ingresa la tasa manualmente.", true);
-            }
-        }
+        async function guardarTasaManual(moneda, valor) { const t = parseFloat(valor); if(isNaN(t) || t <= 0) return; if(moneda === 'USD') tasaBCV = t; if(moneda === 'EUR') tasaBCVEur = t; try { await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?moneda=eq.${moneda}`, { method: 'DELETE', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }); await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ moneda: moneda, tasa: t }) }); actualizarUI_Carrito(); } catch(e) { console.error(e); } }
+        async function sincronizarBCV() { mostrarCarga("Sincronizando...", "Extrayendo tasa oficial..."); try { const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent('https://www.bcv.org.ve/')}`); if (!res.ok) throw new Error(""); const html = (await res.json()).contents; const mD = html.match(/<div id="dolar".*?>.*?<strong>\s*(.*?)\s*<\/strong>/is); const mE = html.match(/<div id="euro".*?>.*?<strong>\s*(.*?)\s*<\/strong>/is); if (mD && mE) { tasaBCV = parseFloat(mD[1].replace(/\./g, '').replace(',', '.')); tasaBCVEur = parseFloat(mE[1].replace(/\./g, '').replace(',', '.')); document.getElementById('input-tasa-usd').value = tasaBCV.toFixed(2); document.getElementById('input-tasa-eur').value = tasaBCVEur.toFixed(2); await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?moneda=eq.USD`, { method: 'DELETE', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }); await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ moneda: 'USD', tasa: tasaBCV }) }); actualizarUI_Carrito(); cerrarErrorCarga(); } else throw new Error(""); } catch (e) { mostrarCarga("Error BCV", "Ingresa la tasa manualmente.", true); } }
     </script>
 </body>
 </html>
