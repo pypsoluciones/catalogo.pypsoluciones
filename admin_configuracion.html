@@ -239,11 +239,19 @@
             styleTag.innerHTML = css;
         }
 
-        // ================= CONSTRUCTOR DE CRÉDITOS =================
+// ================= CONSTRUCTOR DE CRÉDITOS =================
         function cargarCondicionesUI(str) {
             listaCondiciones = [];
-            if (str && str.trim() !== '') { str.split(',').forEach(c => { const p = c.split('|'); if (p[0]) listaCondiciones.push({ nombre: p[0].trim(), dias: parseInt(p[1]) || 0 }); }); }
+            if (str && str.trim() !== '') { 
+                str.split(',').forEach(c => { 
+                    const p = c.split('|'); 
+                    if (p[0]) listaCondiciones.push({ nombre: p[0].trim(), dias: parseInt(p[1]) || 0 }); 
+                }); 
+            }
             if (listaCondiciones.length === 0) listaCondiciones.push({ nombre: 'CONTADO', dias: 0 });
+            
+            // Ordenar de menor a mayor al cargar la página en la interfaz
+            listaCondiciones.sort((a, b) => a.dias - b.dias);
             renderCondicionesUI();
         }
 
@@ -268,8 +276,18 @@
 
         function agregarCondicionUI() { listaCondiciones.push({ nombre: '', dias: 0 }); renderCondicionesUI(); }
         function eliminarCondicionUI(idx) { listaCondiciones.splice(idx, 1); renderCondicionesUI(); }
-        function actualizarCondicionUI(idx, campo, valor) { if (campo === 'nombre') listaCondiciones[idx].nombre = valor.replace(/[,|]/g, '').trim(); if (campo === 'dias') listaCondiciones[idx].dias = parseInt(valor) || 0; sincronizarInputOculto(); }
-        function sincronizarInputOculto() { document.getElementById('conf-condiciones').value = listaCondiciones.filter(c => c.nombre.trim() !== '').map(c => `${c.nombre}|${c.dias}`).join(','); }
+        function actualizarCondicionUI(idx, campo, valor) { 
+            if (campo === 'nombre') listaCondiciones[idx].nombre = valor.replace(/[,|]/g, '').trim(); 
+            if (campo === 'dias') listaCondiciones[idx].dias = parseInt(valor) || 0; 
+            sincronizarInputOculto(); 
+        }
+        
+        function sincronizarInputOculto() { 
+            // Clonamos la lista y la ordenamos ESTRICTAMENTE por cantidad de días antes de inyectarla al string oculto.
+            // Esto evita que los campos "salten" mientras escribes, pero asegura un guardado impecable en BD.
+            const listaOrdenada = [...listaCondiciones].sort((a, b) => a.dias - b.dias);
+            document.getElementById('conf-condiciones').value = listaOrdenada.filter(c => c.nombre.trim() !== '').map(c => `${c.nombre}|${c.dias}`).join(','); 
+        }
 
         // ================= DESCARGA DE DATOS =================
         async function cargarConfig() {
