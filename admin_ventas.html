@@ -213,16 +213,6 @@
         </div>
     </div>
 
-    <div id="loading-overlay" class="fixed inset-0 bg-white/95 z-[999] hidden flex-col items-center justify-center p-6 text-center backdrop-blur-sm">
-        <i id="loading-icon" class="fa-solid fa-circle-notch fa-spin text-5xl text-primary mb-4"></i>
-        <h2 id="loading-text" class="text-xl font-black text-primary uppercase mb-2">Procesando...</h2>
-        <p id="loading-error" class="text-xs text-gray-500 font-medium max-w-sm hidden text-center"></p>
-        <div id="error-actions" class="hidden mt-6 flex gap-3">
-            <button onclick="window.location.reload()" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2.5 rounded font-bold uppercase text-xs btn-press transition shadow">Reintentar</button>
-            <button onclick="forzarCierreSesion()" class="bg-secondary hover:opacity-90 text-white px-6 py-2.5 rounded font-bold uppercase text-xs btn-press transition shadow-md"><i class="fa-solid fa-power-off mr-2"></i> Cerrar Sesión</button>
-        </div>
-    </div>
-
     <div id="modal-nuevo-cliente" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[110] hidden flex items-center justify-center p-4 fade-in">
         <div class="bg-white rounded-lg shadow-2xl w-full max-w-sm overflow-hidden flex flex-col border border-gray-200">
             <div class="bg-primary text-white px-3 py-2.5 flex justify-between items-center">
@@ -265,8 +255,6 @@
             </form>
         </div>
     </div>
-
-    <div id="ticket-impresion" class="hidden print:block"></div>
 
     <script src="menu.js"></script>
     <main class="flex-1 flex flex-col h-screen overflow-hidden bg-[#f4f6f8] w-full z-10 relative">
@@ -327,10 +315,8 @@
             </div>
             
             <div id="panel-derecho" class="w-full md:w-2/5 lg:w-1/3 h-full flex flex-col bg-white shadow-[-5px_0_15px_rgba(0,0,0,0.03)] z-10 transition-all duration-300">
-                
                 <div class="bg-gray-50 p-2 border-b border-gray-200 shrink-0 flex flex-col gap-1.5 shadow-inner">
                     <h3 class="text-[9px] font-bold text-primary uppercase tracking-wider border-b border-gray-200 pb-1"><i class="fa-solid fa-file-invoice mr-1 text-tertiary"></i> Cabecera</h3>
-                    
                     <div class="grid grid-cols-3 gap-2">
                         <div>
                             <label class="block text-[7px] font-medium text-gray-500 uppercase mb-0.5">Fecha Emisión</label>
@@ -349,27 +335,27 @@
                     </div>
                     
                     <div class="grid grid-cols-[1.2fr_1fr_auto] gap-2 items-end mt-0.5">
-                    <div>
-                        <label class="block text-[7px] font-medium text-gray-500 uppercase mb-0.5">Nro Factura (Aut)</label>
-                        <div class="flex gap-1 relative">
-                            <input type="text" id="pos-nro-factura" placeholder="Cargando..." class="w-full border border-red-300 rounded px-1.5 py-1 text-[11px] font-mono text-center font-black text-red-600 outline-none uppercase bg-white shadow-inner" readonly>
-                            <button onclick="toggleEditNroFactura()" id="btn-edit-nro-factura" class="absolute -right-1.5 -top-1.5 bg-gray-400 text-white w-4 h-4 rounded-full flex items-center justify-center shadow hover:bg-gray-500 transition z-10 btn-press" title="Permitir editar número manualmente">
-                                <i class="fa-solid fa-lock text-[8px]"></i>
-                            </button>
+                        <div>
+                            <label class="block text-[7px] font-medium text-gray-500 uppercase mb-0.5">Nro Factura (Aut)</label>
+                            <div class="flex gap-1 relative">
+                                <input type="text" id="pos-nro-factura" placeholder="Cargando..." class="w-full border border-red-300 rounded px-1.5 py-1 text-[11px] font-mono text-center font-black text-red-600 outline-none uppercase bg-white shadow-inner" readonly>
+                                <button onclick="toggleEditNroFactura()" id="btn-edit-nro-factura" class="absolute -right-1.5 -top-1.5 bg-gray-400 text-white w-4 h-4 rounded-full flex items-center justify-center shadow hover:bg-gray-500 transition z-10 btn-press" title="Permitir editar número manualmente">
+                                    <i class="fa-solid fa-lock text-[8px]"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-[7px] font-medium text-gray-500 uppercase mb-0.5">Nro Control (Manual)</label>
+                            <input type="text" id="pos-nro-control" placeholder="Ej: 00-000001" class="w-full border border-gray-300 rounded px-1.5 py-1 text-[11px] font-mono text-center font-black text-red-600 outline-none uppercase focus:border-red-500 transition bg-white shadow-inner">
+                        </div>
+                        <div>
+                            <label class="block text-[7px] font-medium text-gray-500 uppercase mb-0.5 text-left">Registro Cliente</label>
+                            <div class="flex gap-1">
+                                <button onclick="abrirModalNuevoCliente()" class="px-2 py-0.5 h-[24px] bg-secondary/10 text-secondary border border-secondary/20 rounded text-[8px] font-bold uppercase hover:bg-secondary/20 transition"><i class="fa-solid fa-bolt"></i> Rápido</button>
+                                <button onclick="abrirModalFichaCompleta()" class="px-2 py-0.5 h-[24px] bg-primary/10 text-primary border border-primary/20 rounded text-[8px] font-bold uppercase hover:bg-primary/20 transition"><i class="fa-solid fa-address-book"></i> Completo</button>
+                            </div>
                         </div>
                     </div>
-                    <div>
-                        <label class="block text-[7px] font-medium text-gray-500 uppercase mb-0.5">Nro Control (Manual)</label>
-                        <input type="text" id="pos-nro-control" placeholder="Ej: 00-000001" class="w-full border border-gray-300 rounded px-1.5 py-1 text-[11px] font-mono text-center font-black text-red-600 outline-none uppercase focus:border-red-500 transition bg-white shadow-inner">
-                    </div>
-                    <div>
-                        <label class="block text-[7px] font-medium text-gray-500 uppercase mb-0.5 text-left">Registro Cliente</label>
-                        <div class="flex gap-1">
-                            <button onclick="abrirModalNuevoCliente()" class="px-2 py-0.5 h-[24px] bg-secondary/10 text-secondary border border-secondary/20 rounded text-[8px] font-bold uppercase hover:bg-secondary/20 transition"><i class="fa-solid fa-bolt"></i> Rápido</button>
-                            <button onclick="abrirModalFichaCompleta()" class="px-2 py-0.5 h-[24px] bg-primary/10 text-primary border border-primary/20 rounded text-[8px] font-bold uppercase hover:bg-primary/20 transition"><i class="fa-solid fa-address-book"></i> Completo</button>
-                        </div>
-                    </div>
-                </div>
                 </div>
 
                 <div class="p-2 border-b border-gray-200 bg-white shrink-0 relative z-20 flex flex-col gap-1.5">
@@ -456,43 +442,39 @@
     </main>
 
     <script>
+        // GLOBALES Y CONEXIÓN
         const SUPABASE_URL = 'https://icvfmdvvochzaktugqvj.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImljdmZtZHZ2b2NoemFrdHVncXZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyNDEzMzEsImV4cCI6MjA5MTgxNzMzMX0.gO3D39piT6KGbMMOzrPGWXUp5-g_nOBAgJ-nwPv8IcQ';
         const TOKEN_JWT = localStorage.getItem('pyp_token_seguro');
         
         let dbInventario = [], carrito = [], dbClientes = [], fuseInventario = null, fuseClientes = null, empresaActual = null;
         let tasaBCV = 1, tasaBCVEur = 1;
-        let pypIva = 0.16, pypIvaRed1 = 0.08, pypIvaRed2 = 0.12, pypIgtf = 0.03;
-        let pypMostrarExento = 'SI';
+        let pypIva = 0.16, pypIvaRed1 = 0.08, pypIvaRed2 = 0.12, pypIgtf = 0.03, pypMostrarExento = 'SI';
         let imgDefecto = 'https://via.placeholder.com/150/f8fafc/94a3b8?text=P%26P';
-        let posVistaActual = 'grid';
-        let nroFacturaEditable = false; 
-        
-        let ultimaFechaFactura = null;
-        let correlativoActual = 1;
+        let posVistaActual = 'grid', modoSupermercado = false, nroFacturaEditable = false; 
+        let ultimaFechaFactura = null, correlativoActual = 1;
 
         // INICIALIZACIÓN
         window.onload = async () => {
             const nombreUsuario = localStorage.getItem('pyp_usuario_nombre') || 'SISTEMA';
-            const elUser = document.getElementById('nombre-usuario');
-            if(elUser) elUser.innerText = nombreUsuario.split(' ')[0];
-            const elCajero = document.getElementById('txt-cajero-nombre');
-            if(elCajero) elCajero.innerText = nombreUsuario;
+            const elUs = document.getElementById('nombre-usuario');
+            if(elUs) elUs.innerText = nombreUsuario.split(' ')[0];
+            const elCaj = document.getElementById('txt-cajero-nombre');
+            if(elCaj) elCaj.innerText = nombreUsuario;
             
             const vistaLocal = localStorage.getItem('pyp_pos_vista_inventario');
             if(vistaLocal) posVistaActual = vistaLocal;
             
-            const elFiltro = document.getElementById('filtro-stock-pos');
-            if(elFiltro) elFiltro.value = localStorage.getItem('pyp_pos_filtro_stock_default') || 'DISPONIBLE';
+            const eFs = document.getElementById('filtro-stock-pos');
+            if(eFs) eFs.value = localStorage.getItem('pyp_pos_filtro_stock_default') || 'DISPONIBLE';
             
-            const elEmision = document.getElementById('pos-fecha-emision');
-            if(elEmision) elEmision.value = getFechaHoy();
+            const eFem = document.getElementById('pos-fecha-emision');
+            if(eFem) eFem.value = getFechaHoy();
             
-            const elVencimiento = document.getElementById('pos-fecha-vencimiento');
-            if(elVencimiento) elVencimiento.value = getFechaHoy();
+            const eFven = document.getElementById('pos-fecha-vencimiento');
+            if(eFven) eFven.value = getFechaHoy();
             
             actualizarBotonesVistaPos();
-            
             await iniciarPuntoVenta();
             await inicializarCorrelativos(); 
 
@@ -503,10 +485,26 @@
             });
         };
 
+        // UTILIDADES Y MODALES
         function getFechaHoy() { const hoy = new Date(); return hoy.toISOString().split('T')[0]; }
         function fmt(num) { return parseFloat(num || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 
-        // ACTUALIZACIÓN DEL BADGE DE TASA BCV
+        function mostrarErrorConexion(msg = "Error desconocido.") {
+            const ol = document.getElementById('loading-overlay');
+            document.getElementById('loading-text').innerText = "Fallo de Conexión";
+            document.getElementById('loading-error').innerText = msg; 
+            document.getElementById('loading-error').classList.remove('hidden');
+            document.getElementById('error-actions').classList.remove('hidden');
+            document.getElementById('loading-icon').className = "fa-solid fa-wifi text-5xl text-red-500 mb-4"; 
+            ol.classList.remove('hidden'); ol.classList.add('flex');
+        }
+        function cerrarErrorCarga() { 
+            document.getElementById('loading-overlay').classList.add('hidden'); 
+            document.getElementById('error-actions').classList.add('hidden'); 
+        }
+        function forzarCierreSesion() { localStorage.removeItem('pyp_token_seguro'); localStorage.removeItem('pyp_usuario_nombre'); window.location.href = 'login.html'; }
+
+        // BADGE DE TASA BCV
         function actualizarIndicadorTasa(fechaIsoStr) {
             const badge = document.getElementById('status-tasa-badge');
             const texto = document.getElementById('status-tasa-texto');
@@ -530,14 +528,13 @@
             }
         }
 
-        // CONEXIÓN A DB Y DESCARGA INICIAL
+        // CARGA DE DATOS DESDE SUPABASE
         async function iniciarPuntoVenta() {
             try {
                 const resUser = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?select=id_empresa&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
                 if (!resUser.ok) throw new Error("Sesión inválida.");
                 const dataUser = await resUser.json();
-                if (dataUser.length > 0 && dataUser[0].id_empresa) { empresaActual = dataUser[0].id_empresa; } 
-                else { empresaActual = null; } 
+                if (dataUser.length > 0 && dataUser[0].id_empresa) { empresaActual = dataUser[0].id_empresa; } else { empresaActual = null; }
 
                 const [resTasa, resProd, resPre, resCli, resConf] = await Promise.all([
                     fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?select=*&order=fecha_actualizacion.desc&limit=5`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
@@ -593,7 +590,7 @@
             } catch(e) { mostrarErrorConexion(e.message); }
         }
 
-        // INGENIERÍA DE CORRELATIVOS FISCALES 
+        // CORRELATIVOS FISCALES
         async function inicializarCorrelativos() {
             const inputNroFactura = document.getElementById('pos-nro-factura'); inputNroFactura.value = "Cargando...";
             try {
@@ -617,7 +614,134 @@
             } catch (e) { inputNroFactura.value = ""; inputNroFactura.placeholder = "Ej: 000001"; inputNroFactura.readOnly = false; }
         }
 
-        // MATEMÁTICA Y LÓGICA DEL CARRITO (CON EDICIÓN BIMONETARIA Y PAPELERA)
+        // BÚSQUEDA DE PRODUCTOS
+        function cambiarVistaPos(v) { posVistaActual = v; localStorage.setItem('pyp_pos_vista_inventario', v); actualizarBotonesVistaPos(); buscarProductos(); }
+        function actualizarBotonesVistaPos() {
+            const btnT = document.getElementById('btn-vista-tabla-pos'); const btnG = document.getElementById('btn-vista-grid-pos');
+            if(btnT) btnT.className = posVistaActual === 'tabla' ? 'px-2 py-0.5 rounded text-tertiary bg-white shadow-sm transition text-xs' : 'px-2 py-0.5 rounded text-gray-500 hover:text-tertiary transition text-xs';
+            if(btnG) btnG.className = posVistaActual === 'grid' ? 'px-2 py-0.5 rounded text-tertiary bg-white shadow-sm transition text-xs' : 'px-2 py-0.5 rounded text-gray-500 hover:text-tertiary transition text-xs';
+        }
+        
+        function buscarProductos() {
+            let query = document.getElementById('buscador-pos').value.trim(); const cat = document.getElementById('filtro-cat-pos').value; const stockFilter = document.getElementById('filtro-stock-pos').value;
+            let data = dbInventario;
+            if (query !== '') { const qN = query.normalize("NFD").replace(/[\u0300-\u036f]/g, ""); data = fuseInventario.search(qN).map(r => r.item); }
+            if (cat !== 'TODAS') data = data.filter(p => p.categoria_del_producto === cat);
+            if (stockFilter === 'DISPONIBLE') data = data.filter(p => p.stock_actual > 0 || p.permitir_negativo);
+
+            const grid = document.getElementById('grid-productos'); let html = '';
+            if (data.length === 0) { grid.className = "flex flex-col gap-1"; grid.innerHTML = `<div class="col-span-full p-10 text-center text-gray-400 font-medium text-xs">Sin resultados.</div>`; return; }
+
+            if (posVistaActual === 'tabla') {
+                grid.className = "dynamic-grid-table"; 
+                html = `<div class="bg-white rounded shadow-sm border border-gray-200 overflow-hidden"><table class="w-full text-left text-[9px] whitespace-nowrap"><thead class="bg-primary text-white uppercase tracking-wider sticky top-0"><tr><th class="py-1.5 px-2">Info</th><th class="py-1.5 px-2">SKU</th><th class="py-1.5 px-2">Producto</th><th class="py-1.5 px-2 text-center">Stock</th><th class="py-1.5 px-2 text-right">Precio ($)</th><th class="py-1.5 px-2 text-center">Acción</th></tr></thead><tbody class="divide-y divide-gray-100">`;
+                data.slice(0, 50).forEach(p => {
+                    const pUsd = p.pre && p.pre.es_precio_fijo_bs ? (p.pre.precio_fijo_bs / tasaBCV) : (p.pre ? p.pre.precio_general_usd : 0);
+                    const prodStr = encodeURIComponent(JSON.stringify({...p, pUsd: pUsd}));
+                    const bStkColor = p.stock_actual > 0 ? "text-gray-900 font-bold" : "text-red-600 font-bold";
+                    html += `<tr class="hover:bg-blue-50 transition cursor-pointer" onclick="agregarAlCarrito('${prodStr}')"><td class="py-1 px-2 text-center"><button onclick="event.stopPropagation(); abrirInfoProducto('${prodStr}')" class="text-tertiary hover:opacity-80 transition"><i class="fa-solid fa-info-circle text-xs"></i></button></td><td class="py-1 px-2 font-mono text-gray-500">${p.id_producto_sku}</td><td class="py-1 px-2 font-bold text-primary truncate max-w-[150px]">${p.nombre}</td><td class="py-1 px-2 text-center ${bStkColor}">${p.stock_actual}</td><td class="py-1 px-2 text-right font-black text-primary">$${fmt(pUsd)}</td><td class="py-1 px-2 text-center"><button class="bg-secondary text-white px-2 py-0.5 rounded text-[8px] font-bold">Agregar</button></td></tr>`;
+                });
+                html += `</tbody></table></div>`;
+            } else {
+                grid.className = "dynamic-grid-grid"; 
+                data.slice(0, 40).forEach(p => {
+                    const img = p.imagen_principal || imgDefecto; 
+                    const pUsd = p.pre && p.pre.es_precio_fijo_bs ? (p.pre.precio_fijo_bs / tasaBCV) : (p.pre ? p.pre.precio_general_usd : 0); 
+                    const pBs = pUsd * tasaBCV; 
+                    const prodStr = encodeURIComponent(JSON.stringify({...p, pUsd: pUsd}));
+                    let btnInfo = `<button onclick="event.stopPropagation(); abrirInfoProducto('${prodStr}')" class="absolute top-1 left-1 bg-tertiary text-white w-5 h-5 rounded flex items-center justify-center transition shadow hover:opacity-90 z-10"><i class="fa-solid fa-info text-[8px]"></i></button>`;
+                    const bStkColor = p.stock_actual > 0 ? "text-gray-900 bg-gray-100 border border-gray-200" : "text-red-600 bg-red-50 border border-red-200";
+                    html += `<div class="bg-white border border-gray-200 rounded-lg p-1.5 flex flex-col shadow-sm hover:shadow-md transition cursor-pointer active:scale-95 fade-in relative" onclick="agregarAlCarrito('${prodStr}')">${btnInfo}<div class="h-16 w-full mb-1 bg-white flex items-center justify-center rounded"><img src="${img}" class="max-h-full max-w-full object-contain"></div><div class="flex-1 flex flex-col justify-between min-w-0"><h4 class="text-[9px] font-bold text-primary leading-tight line-clamp-2 mb-1 uppercase">${p.nombre}</h4><div class="mt-auto pt-1 border-t border-gray-100"><div class="flex items-baseline mb-0.5"><span class="text-[8px] font-bold text-gray-900 mr-0.5">Bs.</span><span class="text-sm font-black text-gray-900 leading-none">${fmt(pBs)}</span></div><div class="text-[8px] font-bold text-tertiary">$${fmt(pUsd)}</div><div class="text-right text-[7px] font-bold ${bStkColor} px-1 rounded w-fit ml-auto mt-0.5">${p.stock_actual} und</div></div></div></div>`;
+                });
+            }
+            grid.innerHTML = html;
+        }
+
+        // INFO PRODUCTO Y VISOR
+        function abrirInfoProducto(prodStr) {
+            const p = JSON.parse(decodeURIComponent(prodStr)); const mainImg = document.getElementById('info-prod-img-main'); const contGal = document.getElementById('info-prod-galeria');
+            mainImg.src = p.imagen_principal || imgDefecto; contGal.innerHTML = '';
+            let arrayGaleria = [p.imagen_principal].filter(url => url);
+            if(p.galeria_imagenes) { try { let parsed = typeof p.galeria_imagenes === 'string' ? JSON.parse(p.galeria_imagenes) : p.galeria_imagenes; if(Array.isArray(parsed)) arrayGaleria = [...new Set([...arrayGaleria, ...parsed])]; } catch(e) {} }
+            if(arrayGaleria.length > 1) { arrayGaleria.forEach(url => { contGal.innerHTML += `<div class="h-10 bg-white rounded border border-gray-200 p-0.5 cursor-pointer flex items-center justify-center hover:border-secondary" onclick="document.getElementById('info-prod-img-main').src='${url}'"><img src="${url}" class="max-h-full max-w-full object-contain"></div>`; }); } else { contGal.innerHTML = `<span class="text-[8px] font-bold text-gray-400 uppercase col-span-full text-center">Sin Galería</span>`; }
+            
+            const videoUrl = p.video_url || ''; const videoIframe = document.getElementById('info-prod-video'); const videoPlaceholder = document.getElementById('info-prod-video-placeholder');
+            if(videoUrl) { let videoId = ''; if(videoUrl.includes('youtube.com/watch?v=')) videoId = videoUrl.split('v=')[1].split('&')[0]; else if(videoUrl.includes('youtu.be/')) videoId = videoUrl.split('youtu.be/')[1].split('?')[0]; else if(videoUrl.includes('youtube.com/shorts/')) videoId = videoUrl.split('shorts/')[1].split('?')[0];
+                if(videoId) { videoIframe.src = `https://www.youtube.com/embed/${videoId}`; videoIframe.classList.remove('hidden'); videoPlaceholder.classList.add('hidden'); } else { videoIframe.src = ''; videoIframe.classList.add('hidden'); videoPlaceholder.classList.remove('hidden'); } } else { videoIframe.src = ''; videoIframe.classList.add('hidden'); videoPlaceholder.classList.remove('hidden'); }
+
+            const sV = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = (val !== null && val !== undefined && val !== '') ? val.toString().toUpperCase() : 'N/A'; };
+            sV('info-prod-sku', p.id_producto_sku); sV('info-prod-barra', p.codigo_barras); sV('info-prod-nom', p.nombre); sV('info-prod-tipo', p.tipo_producto); sV('info-prod-cat', p.categoria_del_producto); sV('info-prod-catventa', p.categoria_venta); sV('info-prod-marca', p.marca); sV('info-prod-condicion', p.condicion_producto); sV('info-prod-talla', p.talla); sV('info-prod-color', p.color); sV('info-prod-unidad', p.unidad_medida); sV('info-prod-stock', p.stock_actual); sV('info-prod-min', p.stock_minimo || 0); sV('info-prod-negativo', p.permitir_negativo ? 'SÍ' : 'NO'); sV('info-prod-estatus', p.estado_producto || 'ACTIVO'); sV('info-prod-impuesto', p.tipo_impuesto); document.getElementById('info-prod-desc').innerText = p.descripcion || 'SIN DESCRIPCIÓN TÉCNICA.';
+            const genUsd = p.pre && p.pre.es_precio_fijo_bs ? p.pre.precio_fijo_bs / tasaBCV : (p.pre ? p.pre.precio_general_usd : 0); document.getElementById('info-prod-precio-usd').innerText = genUsd > 0 ? `$${fmt(genUsd)}` : '0.00';
+            sV('info-req-p1', p.requerido_precio_1 || '-'); document.getElementById('info-usd-p1').innerText = (p.pre && p.pre.precio_1_usd > 0) ? `$${fmt(p.pre.precio_1_usd)}` : '-'; sV('info-req-p2', p.requerido_precio_2 || '-'); document.getElementById('info-usd-p2').innerText = (p.pre && p.pre.precio_2_usd > 0) ? `$${fmt(p.pre.precio_2_usd)}` : '-'; sV('info-req-p3', p.requerido_precio_3 || '-'); document.getElementById('info-usd-p3').innerText = (p.pre && p.pre.precio_3_usd > 0) ? `$${fmt(p.pre.precio_3_usd)}` : '-';
+            
+            document.getElementById('modal-info-producto').classList.remove('hidden'); document.getElementById('modal-info-producto').classList.add('flex');
+        }
+        function cerrarInfoProducto() { document.getElementById('modal-info-producto').classList.add('hidden'); document.getElementById('info-prod-video').src = ''; }
+        function abrirVisorEnPOS(imgUrl) { const main = document.getElementById('viewer-img-main'); main.src = imgUrl; document.getElementById('viewer-thumbnails').innerHTML = ''; document.getElementById('media-viewer').classList.remove('hidden'); document.getElementById('media-viewer').classList.add('flex'); }
+        function cerrarVisor() { document.getElementById('media-viewer').classList.add('hidden'); document.getElementById('media-viewer').classList.remove('flex'); }
+
+        // BUSCADOR DE CLIENTES Y EVENTOS
+        let clientesBusquedaActual = []; let clienteIndexEnfocado = -1;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const inputCliente = document.getElementById('pos-buscador-cliente');
+            if(inputCliente) {
+                inputCliente.addEventListener('keydown', (e) => {
+                    const drop = document.getElementById('dropdown-clientes');
+                    if (drop.classList.contains('hidden')) return;
+                    const items = drop.querySelectorAll('.cliente-dropdown-item');
+                    if (items.length === 0) return;
+                    if (e.key === 'ArrowDown') { e.preventDefault(); clienteIndexEnfocado++; if (clienteIndexEnfocado >= items.length) clienteIndexEnfocado = 0; actualizarFocoCliente(items); } 
+                    else if (e.key === 'ArrowUp') { e.preventDefault(); clienteIndexEnfocado--; if (clienteIndexEnfocado < 0) clienteIndexEnfocado = items.length - 1; actualizarFocoCliente(items); } 
+                    else if (e.key === 'Enter') { e.preventDefault(); if (clienteIndexEnfocado >= 0 && clienteIndexEnfocado < items.length) { seleccionarClienteIndex(clienteIndexEnfocado); } } 
+                    else if (e.key === 'Escape') { drop.classList.add('hidden'); }
+                });
+            }
+        });
+
+        function actualizarFocoCliente(items) { items.forEach((item, i) => { if (i === clienteIndexEnfocado) { item.classList.add('bg-blue-100', 'border-l-4', 'border-primary'); item.classList.remove('hover:bg-blue-50'); item.scrollIntoView({ block: 'nearest' }); } else { item.classList.remove('bg-blue-100', 'border-l-4', 'border-primary'); item.classList.add('hover:bg-blue-50'); } }); }
+
+        function buscarPredictivoCliente() {
+            let query = document.getElementById('pos-buscador-cliente').value.trim(); const drop = document.getElementById('dropdown-clientes'); clienteIndexEnfocado = -1; 
+            if(query === '') { drop.classList.add('hidden'); return; }
+            const queryNormalizada = query.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            const resultados = fuseClientes.search(queryNormalizada).slice(0, 5); 
+            clientesBusquedaActual = resultados.map(r => r.item); drop.innerHTML = '';
+            
+            if(clientesBusquedaActual.length === 0) { drop.innerHTML = `<div class="p-2 text-[9px] text-gray-500 text-center">Cliente no existe.</div>`; } else { clientesBusquedaActual.forEach((c, index) => { drop.innerHTML += `<div class="p-1.5 border-b border-gray-100 hover:bg-blue-50 cursor-pointer cliente-dropdown-item transition-all" onclick="seleccionarClienteIndex(${index})"><div class="font-bold text-primary text-[9px] truncate uppercase">${c.nombre_razon_social}</div><div class="text-[8px] text-gray-500 font-mono">${c.documento_identidad}</div></div>`; }); }
+            drop.classList.remove('hidden');
+        }
+
+        function seleccionarClienteIndex(index) { const c = clientesBusquedaActual[index]; if(!c) return; ejecutarSeleccionCliente(c); }
+
+        function ejecutarSeleccionCliente(c) {
+            document.getElementById('txt-cli-nom').innerText = c.nombre_razon_social; document.getElementById('txt-cli-doc').innerText = c.documento_identidad; 
+            const elTel = document.getElementById('txt-cli-tel'); if(elTel) elTel.innerText = c.telefono_principal || 'N/A'; 
+            document.getElementById('txt-cli-dir').innerText = c.direccion_fiscal || c.direccion_principal || 'SIN DIRECCIÓN FISCAL CARGADA'; document.getElementById('txt-cli-tipo').innerText = c.tipo_contribuyente || 'NATURAL'; document.getElementById('txt-cli-precio').innerText = c.nivel_precio || 'GENERAL'; 
+            document.getElementById('pos-id-cliente').value = c.id; document.getElementById('pos-nivel-precio-cliente').value = c.nivel_precio || 'GENERAL';
+            document.getElementById('dropdown-clientes').classList.add('hidden'); document.getElementById('pos-buscador-cliente').value = ''; 
+            document.getElementById('info-cliente-seleccionado').classList.remove('hidden'); document.getElementById('pos-buscador-cliente').classList.add('hidden');
+            actualizarUI_Carrito();
+        }
+
+        function limpiarCliente() { document.getElementById('info-cliente-seleccionado').classList.add('hidden'); document.getElementById('pos-buscador-cliente').classList.remove('hidden'); document.getElementById('pos-id-cliente').value = ''; document.getElementById('pos-nivel-precio-cliente').value = 'GENERAL'; actualizarUI_Carrito(); }
+        function abrirModalNuevoCliente() { document.getElementById('form-cliente-rapido').reset(); document.getElementById('modal-nuevo-cliente').classList.remove('hidden'); document.getElementById('modal-nuevo-cliente').classList.add('flex'); }
+        function cerrarModalNuevoCliente() { document.getElementById('modal-nuevo-cliente').classList.add('hidden'); }
+        function abrirModalFichaCompleta() { document.getElementById('form-ficha-completa').reset(); document.getElementById('modal-ficha-completa').classList.remove('hidden'); document.getElementById('modal-ficha-completa').classList.add('flex'); }
+        function cerrarModalFichaCompleta() { document.getElementById('modal-ficha-completa').classList.add('hidden'); }
+        function cerrarDropdownCliente(e) { if(e.target.id !== 'pos-buscador-cliente') { document.getElementById('dropdown-clientes').classList.add('hidden'); } }
+
+        async function guardarClienteRapido(e) { 
+            e.preventDefault(); const btn = document.getElementById('btn-guardar-cli-rap'); btn.innerHTML = `...`; btn.disabled = true; 
+            try { const payload = { id_empresa: empresaActual, tipo_persona: 'CLIENTE', documento_identidad: document.getElementById('cli-rap-doc').value.trim().toUpperCase(), nombre_razon_social: document.getElementById('cli-rap-nom').value.trim().toUpperCase(), direccion_principal: document.getElementById('cli-rap-dir').value.trim().toUpperCase(), telefono_principal: document.getElementById('cli-rap-tel').value.trim(), tipo_contribuyente: document.getElementById('cli-rap-tipo').value, estatus: 'ACTIVO' }; const res = await fetch(`${SUPABASE_URL}/rest/v1/directorio_maestro`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, body: JSON.stringify(payload) }); if(!res.ok) throw new Error("Doc duplicado o error."); const data = await res.json(); dbClientes.push(data[0]); fuseClientes.setCollection(dbClientes); ejecutarSeleccionCliente(data[0]); cerrarModalNuevoCliente(); } catch(e) { alert(e.message); } finally { btn.innerHTML = `<i class="fa-solid fa-save mr-1 text-white"></i> Guardar y Usar`; btn.disabled = false; } 
+        }
+
+        async function guardarFichaCompleta(e) { 
+            e.preventDefault(); const btn = document.getElementById('btn-guardar-fc'); btn.innerHTML = `...`; btn.disabled = true; 
+            try { const payload = { id_empresa: empresaActual, tipo_persona: 'CLIENTE', documento_identidad: document.getElementById('fc-doc').value.trim().toUpperCase(), nombre_razon_social: document.getElementById('fc-nombre').value.trim().toUpperCase(), direccion_principal: document.getElementById('fc-dir-p').value.trim().toUpperCase(), telefono_principal: document.getElementById('fc-tel1').value.trim(), correo_electronico: document.getElementById('fc-email').value.trim(), tipo_contribuyente: document.getElementById('fc-tipo').value, nivel_precio: document.getElementById('fc-precio').value, estatus: 'ACTIVO' }; const res = await fetch(`${SUPABASE_URL}/rest/v1/directorio_maestro`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, body: JSON.stringify(payload) }); if(!res.ok) throw new Error("Doc duplicado o error."); const data = await res.json(); dbClientes.push(data[0]); fuseClientes.setCollection(dbClientes); ejecutarSeleccionCliente(data[0]); cerrarModalFichaCompleta(); } catch(e) { alert(e.message); } finally { btn.innerHTML = `Guardar`; btn.disabled = false; } 
+        }
+
+        // LÓGICA DEL CARRITO DE COMPRAS (CON EDICIÓN BIMONETARIA)
         function calcularPrecioUnitario(prod, cantidad) { 
             if (prod.precio_manual_usd !== undefined && prod.precio_manual_usd !== "") return Number(prod.precio_manual_usd);
             let pU = prod.pUsd !== undefined ? prod.pUsd : (prod.pre && prod.pre.es_precio_fijo_bs ? (Number(prod.pre.precio_fijo_bs) / tasaBCV) : (Number(prod.pre ? prod.pre.precio_general_usd : 0) || 0)); 
@@ -723,7 +847,7 @@
             contenedorFiscal.dataset.baseTotalUsd = bG + bR1 + bR2; contenedorFiscal.dataset.exentoTotalUsd = bE;
         }
 
-        // ================= MODAL DE COBRO Y GUARDADO DB =================
+        // ================= FINALIZAR VENTA Y COBRO =================
         function verificarIGTF() {
             const metodo = document.getElementById('cobro-metodo').value; const aplica = (metodo === 'EFECTIVO_USD' || metodo === 'ZELLE');
             document.getElementById('caja-igtf').classList.toggle('hidden', !aplica);
@@ -732,21 +856,14 @@
         }
         function abrirCobro() { verificarIGTF(); document.getElementById('modal-cobro').classList.remove('hidden'); document.getElementById('modal-cobro').classList.add('flex'); }
         function cerrarCobro() { document.getElementById('modal-cobro').classList.add('hidden'); }
-        function mostrarCarga(t,d,e=false) { const ol=document.getElementById('loading-overlay'); document.getElementById('loading-text').innerText=t; document.getElementById('loading-error').innerText=d; if(e) { document.getElementById('loading-error').classList.remove('hidden'); document.getElementById('error-actions').classList.remove('hidden'); } else { document.getElementById('loading-error').classList.add('hidden'); document.getElementById('error-actions').classList.add('hidden'); } ol.classList.remove('hidden');ol.classList.add('flex'); }
-        function cerrarErrorCarga() { document.getElementById('loading-overlay').classList.add('hidden'); document.getElementById('error-actions').classList.add('hidden'); }
 
         async function procesarVenta() {
-            const btn = document.getElementById('btn-confirmar'); btn.disabled = true; mostrarCarga("Procesando...", "Registrando venta en la base de datos");
+            const btn = document.getElementById('btn-confirmar'); btn.disabled = true; 
+            mostrarCarga("Procesando...", "Registrando venta en la base de datos");
             try {
                 const metodo = document.getElementById('cobro-metodo').value; const formatoPrint = document.getElementById('cobro-formato-impresion').value; const condicionSel = document.getElementById('pos-condicion'); const condicion = condicionSel.options[condicionSel.selectedIndex].text; const nroFactura = document.getElementById('pos-nro-factura').value.trim().toUpperCase(); const nroControl = document.getElementById('pos-nro-control').value.trim().toUpperCase(); const fechaVenc = document.getElementById('pos-fecha-vencimiento').value; const fechaEmision = document.getElementById('pos-fecha-emision').value + 'T12:00:00Z';
-                
-                const aplicaIgtf = (metodo === 'EFECTIVO_USD' || metodo === 'ZELLE');
-                const igtfVal = aplicaIgtf ? pypIgtf * 100 : 0;
-                const totalBsFinal = (granTotalUsd * tasaBCV) + (aplicaIgtf ? (granTotalUsd * tasaBCV * pypIgtf) : 0);
-                const totalUsdFinal = totalBsFinal / tasaBCV;
-                
-                const baseImpUsd = parseFloat(document.getElementById('contenedor-totales-fiscales').dataset.baseTotalUsd) || 0; 
-                const exentoUsd = parseFloat(document.getElementById('contenedor-totales-fiscales').dataset.exentoTotalUsd) || 0;
+                const aplicaIgtf = (metodo === 'EFECTIVO_USD' || metodo === 'ZELLE'); const igtfVal = aplicaIgtf ? pypIgtf * 100 : 0; const totalBsFinal = (granTotalUsd * tasaBCV) + (aplicaIgtf ? (granTotalUsd * tasaBCV * pypIgtf) : 0); const totalUsdFinal = totalBsFinal / tasaBCV;
+                const baseImpUsd = parseFloat(document.getElementById('contenedor-totales-fiscales').dataset.baseTotalUsd) || 0; const exentoUsd = parseFloat(document.getElementById('contenedor-totales-fiscales').dataset.exentoTotalUsd) || 0;
 
                 const payloadFactura = { 
                     id_empresa: empresaActual || null, 
@@ -813,7 +930,7 @@
             }
         }
 
-        // ================= TASAS Y CONEXIÓN A API BCV =================
+        // ================= SINCRONIZACIÓN DE API BCV=================
         async function guardarTasaManual(moneda, valor) { 
             const t = parseFloat(valor); if(isNaN(t) || t <= 0) return; 
             if(moneda === 'USD') tasaBCV = t; if(moneda === 'EUR') tasaBCVEur = t; 
@@ -872,53 +989,6 @@
                 btn.disabled = false; icon.classList.remove('fa-spin');
             }
         }
-        
-        // Carga y vinculación de Vistas y Búsqueda
-        function cambiarVistaPos(v) { posVistaActual = v; localStorage.setItem('pyp_pos_vista_inventario', v); actualizarBotonesVistaPos(); buscarProductos(); }
-        function actualizarBotonesVistaPos() {
-            const btnT = document.getElementById('btn-vista-tabla-pos');
-            const btnG = document.getElementById('btn-vista-grid-pos');
-            if(btnT && btnG) {
-                btnT.className = posVistaActual === 'tabla' ? 'px-2 py-0.5 rounded text-tertiary bg-white shadow-sm transition text-xs' : 'px-2 py-0.5 rounded text-gray-500 hover:text-tertiary transition text-xs';
-                btnG.className = posVistaActual === 'grid' ? 'px-2 py-0.5 rounded text-tertiary bg-white shadow-sm transition text-xs' : 'px-2 py-0.5 rounded text-gray-500 hover:text-tertiary transition text-xs';
-            }
-        }
-        
-        function buscarProductos() {
-            let query = document.getElementById('buscador-pos').value.trim(); const cat = document.getElementById('filtro-cat-pos').value; const stockFilter = document.getElementById('filtro-stock-pos').value;
-            let data = dbInventario;
-            if (query !== '') { const queryNormalizada = query.normalize("NFD").replace(/[\u0300-\u036f]/g, ""); data = fuseInventario.search(queryNormalizada).map(r => r.item); }
-            if (cat !== 'TODAS') data = data.filter(p => p.categoria_del_producto === cat);
-            if (stockFilter === 'DISPONIBLE') data = data.filter(p => p.stock_actual > 0 || p.permitir_negativo);
-
-            const grid = document.getElementById('grid-productos'); let html = '';
-            if (data.length === 0) { grid.className = "flex flex-col gap-1"; grid.innerHTML = `<div class="col-span-full p-10 text-center text-gray-400 font-medium text-xs">Sin resultados.</div>`; return; }
-
-            if (posVistaActual === 'tabla') {
-                grid.className = "dynamic-grid-table"; 
-                html = `<div class="bg-white rounded shadow-sm border border-gray-200 overflow-hidden"><table class="w-full text-left text-[9px] whitespace-nowrap"><thead class="bg-primary text-white uppercase tracking-wider sticky top-0"><tr><th class="py-1.5 px-2">Info</th><th class="py-1.5 px-2">SKU</th><th class="py-1.5 px-2">Producto</th><th class="py-1.5 px-2 text-center">Stock</th><th class="py-1.5 px-2 text-right">Precio ($)</th><th class="py-1.5 px-2 text-center">Acción</th></tr></thead><tbody class="divide-y divide-gray-100">`;
-                data.slice(0, 50).forEach(p => {
-                    const pUsd = p.pre && p.pre.es_precio_fijo_bs ? (p.pre.precio_fijo_bs / tasaBCV) : (p.pre ? p.pre.precio_general_usd : 0);
-                    const prodStr = encodeURIComponent(JSON.stringify({...p, pUsd: pUsd}));
-                    const bStkColor = p.stock_actual > 0 ? "text-gray-900 font-bold" : "text-red-600 font-bold";
-                    html += `<tr class="hover:bg-blue-50 transition cursor-pointer" onclick="agregarAlCarrito('${prodStr}')"><td class="py-1 px-2 text-center"><button onclick="event.stopPropagation(); abrirInfoProducto('${prodStr}')" class="text-tertiary hover:opacity-80 transition"><i class="fa-solid fa-info-circle text-xs"></i></button></td><td class="py-1 px-2 font-mono text-gray-500">${p.id_producto_sku}</td><td class="py-1 px-2 font-bold text-primary truncate max-w-[150px]">${p.nombre}</td><td class="py-1 px-2 text-center ${bStkColor}">${p.stock_actual}</td><td class="py-1 px-2 text-right font-black text-primary">$${fmt(pUsd)}</td><td class="py-1 px-2 text-center"><button class="bg-secondary text-white px-2 py-0.5 rounded text-[8px] font-bold">Agregar</button></td></tr>`;
-                });
-                html += `</tbody></table></div>`;
-            } else {
-                grid.className = "dynamic-grid-grid"; 
-                data.slice(0, 40).forEach(p => {
-                    const img = p.imagen_principal || imgDefecto; 
-                    const pUsd = p.pre && p.pre.es_precio_fijo_bs ? (p.pre.precio_fijo_bs / tasaBCV) : (p.pre ? p.pre.precio_general_usd : 0); 
-                    const pBs = pUsd * tasaBCV; 
-                    const prodStr = encodeURIComponent(JSON.stringify({...p, pUsd: pUsd}));
-                    let btnInfo = `<button onclick="event.stopPropagation(); abrirInfoProducto('${prodStr}')" class="absolute top-1 left-1 bg-tertiary text-white w-5 h-5 rounded flex items-center justify-center transition shadow hover:opacity-90 z-10"><i class="fa-solid fa-info text-[8px]"></i></button>`;
-                    const bStkColor = p.stock_actual > 0 ? "text-gray-900 bg-gray-100 border border-gray-200" : "text-red-600 bg-red-50 border border-red-200";
-                    html += `<div class="bg-white border border-gray-200 rounded-lg p-1.5 flex flex-col shadow-sm hover:shadow-md transition cursor-pointer active:scale-95 fade-in relative" onclick="agregarAlCarrito('${prodStr}')">${btnInfo}<div class="h-16 w-full mb-1 bg-white flex items-center justify-center rounded"><img src="${img}" class="max-h-full max-w-full object-contain"></div><div class="flex-1 flex flex-col justify-between min-w-0"><h4 class="text-[9px] font-bold text-primary leading-tight line-clamp-2 mb-1 uppercase">${p.nombre}</h4><div class="mt-auto pt-1 border-t border-gray-100"><div class="flex items-baseline mb-0.5"><span class="text-[8px] font-bold text-gray-900 mr-0.5">Bs.</span><span class="text-sm font-black text-gray-900 leading-none">${fmt(pBs)}</span></div><div class="text-[8px] font-bold text-tertiary">$${fmt(pUsd)}</div><div class="text-right text-[7px] font-bold ${bStkColor} px-1 rounded w-fit ml-auto mt-0.5">${p.stock_actual} und</div></div></div></div>`;
-                });
-            }
-            grid.innerHTML = html;
-        }
-
     </script>
 </body>
 </html>
