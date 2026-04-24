@@ -3,271 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>P&P Admin | Terminal POS</title>
-    
+    <title>P&P Soluciones - Punto de Venta (POS)</title>
     <script src="https://cdn.tailwindcss.com"></script>
-
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0/dist/fuse.basic.min.js"></script>
     <script>
-        const cPri = localStorage.getItem('pyp_color_primario') || '#143B62';
-        const cSec = localStorage.getItem('pyp_color_secundario') || '#E67E22';
-        const cTer = localStorage.getItem('pyp_color_terciario') || '#64748b';
-        const fontFam = localStorage.getItem('pyp_fuente') || "'Inter', sans-serif";
-        const fontSiz = localStorage.getItem('pyp_tamano') || "14px";
-        
-        document.documentElement.style.setProperty('--color-primary', cPri);
-        document.documentElement.style.setProperty('--color-secondary', cSec);
-        document.documentElement.style.setProperty('--color-tertiary', cTer);
-        document.documentElement.style.setProperty('--font-global', fontFam);
-        document.documentElement.style.setProperty('--size-global', fontSiz);
-        
-        tailwind.config = { theme: { extend: { colors: { primary: 'var(--color-primary)', secondary: 'var(--color-secondary)', tertiary: 'var(--color-tertiary)' } } } };
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1e3a8a', // Azul Oscuro Principal
+                        secondary: '#f59e0b', // Amarillo/Naranja Secundario
+                        tertiary: '#10b981', // Verde Éxito
+                        bodybg: '#f4f6f8'
+                    }
+                }
+            }
+        }
     </script>
-
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;900&family=Poppins:wght@300;400;500;700;900&family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.js"></script>
-    
     <style>
-        body { font-family: var(--font-global); font-size: var(--size-global); }
-        .bg-primary { background-color: var(--color-primary) !important; }
-        .text-primary { color: var(--color-primary) !important; }
-        .bg-secondary { background-color: var(--color-secondary) !important; }
-        .text-secondary { color: var(--color-secondary) !important; }
-        .text-tertiary { color: var(--color-tertiary) !important; }
-        .border-primary { border-color: var(--color-primary) !important; }
-
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f4f6f8; overflow: hidden; }
         .custom-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background-color: var(--color-primary); border-radius: 4px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 10px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #a1a1a1; }
+        .dynamic-grid-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
+        .dynamic-grid-table { display: block; }
         .btn-press:active { transform: scale(0.96); }
-        .fade-in { animation: fadeIn 0.15s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(2px); } to { opacity: 1; transform: translateY(0); } }
         input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-        input[type=date]::-webkit-calendar-picker-indicator { cursor: pointer; opacity: 0.6; transition: 0.2s; }
-        input[type=date]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
-        .dynamic-grid-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.375rem; }
-        @media (min-width: 640px) { .dynamic-grid-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-        @media (min-width: 1024px) { .dynamic-grid-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
-        @media (min-width: 1280px) { .dynamic-grid-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
-        .dynamic-grid-table { display: flex; flex-direction: column; gap: 0.25rem; }
         
         @media print {
             body * { visibility: hidden; }
             #ticket-impresion, #ticket-impresion * { visibility: visible; }
-            #ticket-impresion { position: absolute; left: 0; top: 0; margin: 0; padding: 0; color: #000; background: #fff; }
-            #ticket-impresion.formato-80mm { width: 78mm; font-family: 'Courier New', monospace; font-size: 11px; }
-            #ticket-impresion.formato-58mm { width: 56mm; font-family: 'Courier New', monospace; font-size: 9px; line-height: 1.1; }
-            #ticket-impresion.formato-carta { width: 210mm; font-family: var(--font-global); font-size: 12px; padding: 15mm; }
+            #ticket-impresion { position: absolute; left: 0; top: 0; width: 100%; }
             .no-print { display: none !important; }
-            .print-break { page-break-after: auto; }
         }
     </style>
-    <script src="config.js"></script>
-    <script>if (!localStorage.getItem('pyp_token_seguro')) window.location.href = 'login.html';</script>
 </head>
-<body class="bg-[#f4f6f8] flex h-screen overflow-hidden text-gray-800" onclick="cerrarDropdownCliente(event)">
-
-    <div id="modal-info-producto" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[9999] hidden flex-col items-center justify-center p-4 fade-in" onclick="cerrarInfoProducto()">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-6xl max-h-[95vh] flex flex-col overflow-hidden border border-gray-200 relative" onclick="event.stopPropagation()">
-            <div class="bg-primary text-white px-5 py-3 flex justify-between items-center shrink-0">
-                <h3 class="font-bold text-sm tracking-widest uppercase flex items-center"><i class="fa-solid fa-address-card mr-2 text-tertiary"></i> FICHA TÉCNICA DE PRODUCTO</h3>
-                <button onclick="cerrarInfoProducto()" class="text-gray-300 hover:text-white text-xl transition"><i class="fa-solid fa-times"></i></button>
-            </div>
-            <div class="flex-1 overflow-y-auto custom-scroll p-4 bg-gray-50 flex flex-col gap-4">
-                <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
-                    <div class="lg:col-span-1 space-y-4">
-                        <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
-                            <h4 class="text-[10px] font-bold text-gray-800 uppercase border-b border-gray-100 pb-2 mb-2 tracking-wider">Imagen Principal</h4>
-                            <div class="border border-gray-200 rounded p-1 flex flex-col items-center justify-center bg-gray-50 h-32 relative cursor-pointer group" onclick="if(document.getElementById('info-prod-img-main').src) abrirVisorEnPOS(document.getElementById('info-prod-img-main').src)">
-                                <img id="info-prod-img-main" src="" class="max-h-full max-w-full object-contain bg-white rounded">
-                                <div class="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded"><i class="fa-solid fa-magnifying-glass-plus text-white text-xl"></i></div>
-                            </div>
-                        </div>
-                        <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
-                            <h4 class="text-[10px] font-bold text-secondary uppercase border-b border-gray-100 pb-2 mb-2 tracking-wider">Galería Adicional</h4>
-                            <div id="info-prod-galeria" class="grid grid-cols-3 gap-1 min-h-[44px] items-center justify-center bg-gray-50 rounded border border-gray-100 p-1"></div>
-                        </div>
-                        <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
-                            <h4 class="text-[10px] font-bold text-red-600 uppercase border-b border-gray-100 pb-2 mb-2 tracking-wider"><i class="fa-brands fa-youtube"></i> Video Promocional</h4>
-                            <div class="w-full aspect-video rounded border border-gray-200 flex items-center justify-center bg-gray-50 relative overflow-hidden">
-                                <span class="text-[10px] text-gray-400 font-bold absolute z-0" id="info-prod-video-placeholder">SIN VIDEO</span>
-                                <iframe id="info-prod-video" class="w-full h-full relative z-10 hidden" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="lg:col-span-3 space-y-4">
-                        <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-                            <h4 class="text-[10px] font-bold text-primary uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Identidad del Producto</h4>
-                            <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-3">
-                                <div><label class="block text-[9px] font-medium text-gray-500 uppercase mb-1">Código SKU</label><div id="info-prod-sku" class="w-full border border-gray-200 bg-gray-50 rounded px-2 py-1.5 text-xs font-bold uppercase text-gray-700 min-h-[34px] flex items-center"></div></div>
-                                <div><label class="block text-[9px] font-medium text-gray-500 uppercase mb-1">Código Barra</label><div id="info-prod-barra" class="w-full border border-gray-200 bg-gray-50 rounded px-2 py-1.5 text-xs font-mono uppercase text-gray-700 min-h-[34px] flex items-center"></div></div>
-                                <div class="md:col-span-2"><label class="block text-[9px] font-medium text-gray-500 uppercase mb-1">Nombre / Descripción</label><div id="info-prod-nom" class="w-full border border-gray-200 bg-gray-50 rounded px-2 py-1.5 text-xs font-bold uppercase text-primary min-h-[34px] flex items-center"></div></div>
-                            </div>
-                            <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
-                                <div><label class="block text-[9px] font-medium text-gray-500 uppercase mb-1">Tipo Producto</label><div id="info-prod-tipo" class="w-full border border-gray-200 bg-gray-50 rounded px-2 py-1.5 text-[10px] font-bold uppercase text-gray-700 min-h-[32px] flex items-center"></div></div>
-                                <div><label class="block text-[9px] font-medium text-gray-500 uppercase mb-1">Categoría</label><div id="info-prod-cat" class="w-full border border-gray-200 bg-gray-50 rounded px-2 py-1.5 text-[10px] font-bold uppercase text-gray-700 min-h-[32px] flex items-center"></div></div>
-                                <div><label class="block text-[9px] font-medium text-gray-500 uppercase mb-1">Cat. Venta</label><div id="info-prod-catventa" class="w-full border border-gray-200 bg-gray-50 rounded px-2 py-1.5 text-[10px] font-bold uppercase text-gray-700 min-h-[32px] flex items-center"></div></div>
-                                <div><label class="block text-[9px] font-medium text-gray-500 uppercase mb-1">Marca</label><div id="info-prod-marca" class="w-full border border-gray-200 bg-gray-50 rounded px-2 py-1.5 text-[10px] font-bold uppercase text-gray-700 min-h-[32px] flex items-center"></div></div>
-                                <div><label class="block text-[9px] font-medium text-gray-500 uppercase mb-1">Condición</label><div id="info-prod-condicion" class="w-full border border-gray-200 bg-gray-50 rounded px-2 py-1.5 text-[10px] font-bold uppercase text-gray-700 min-h-[32px] flex items-center"></div></div>
-                            </div>
-                        </div>
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                            <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-                                <h4 class="text-[10px] font-bold text-blue-600 uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Atributos y Logística</h4>
-                                <div class="grid grid-cols-3 gap-2 mb-3">
-                                    <div><label class="block text-[9px] font-medium text-gray-500 uppercase mb-1">Talla</label><div id="info-prod-talla" class="w-full border border-gray-200 bg-gray-50 rounded px-2 py-1.5 text-[10px] font-bold uppercase text-gray-700 min-h-[32px] flex items-center"></div></div>
-                                    <div><label class="block text-[9px] font-medium text-gray-500 uppercase mb-1">Color</label><div id="info-prod-color" class="w-full border border-gray-200 bg-gray-50 rounded px-2 py-1.5 text-[10px] font-bold uppercase text-gray-700 min-h-[32px] flex items-center"></div></div>
-                                    <div><label class="block text-[9px] font-medium text-gray-500 uppercase mb-1">Unidad</label><div id="info-prod-unidad" class="w-full border border-gray-200 bg-gray-50 rounded px-2 py-1.5 text-[10px] font-bold uppercase text-gray-700 min-h-[32px] flex items-center"></div></div>
-                                </div>
-                                <div class="grid grid-cols-3 gap-2">
-                                    <div><label class="block text-[9px] font-medium text-blue-600 uppercase mb-1">Stock Actual</label><div id="info-prod-stock" class="w-full border border-blue-200 bg-blue-50 rounded px-2 py-1.5 text-sm font-bold text-center text-primary min-h-[34px] flex items-center justify-center"></div></div>
-                                    <div><label class="block text-[9px] font-medium text-red-500 uppercase mb-1">Min. Alerta</label><div id="info-prod-min" class="w-full border border-red-200 bg-red-50 rounded px-2 py-1.5 text-xs font-bold text-center text-red-700 min-h-[34px] flex items-center justify-center"></div></div>
-                                    <div><label class="block text-[9px] font-medium text-gray-500 uppercase mb-1">P. Negativo</label><div id="info-prod-negativo" class="w-full border border-gray-200 bg-gray-50 rounded px-2 py-1.5 text-[10px] font-bold uppercase text-gray-700 text-center min-h-[34px] flex items-center justify-center"></div></div>
-                                </div>
-                            </div>
-                            <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm flex flex-col">
-                                <h4 class="text-[10px] font-bold text-gray-600 uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Reglas Sistema</h4>
-                                <div class="grid grid-cols-2 gap-3 mb-3">
-                                    <div><label class="block text-[9px] font-medium text-gray-500 uppercase mb-1">Estado</label><div id="info-prod-estatus" class="w-full border border-gray-200 bg-gray-50 rounded px-2 py-1.5 text-xs font-bold uppercase text-gray-700 min-h-[34px] flex items-center justify-center"></div></div>
-                                    <div><label class="block text-[9px] font-medium text-gray-500 uppercase mb-1">Impuesto</label><div id="info-prod-impuesto" class="w-full border border-gray-200 bg-gray-50 rounded px-2 py-1.5 text-[10px] font-bold uppercase text-gray-700 min-h-[34px] flex items-center justify-center"></div></div>
-                                </div>
-                                <div class="flex-1 flex flex-col">
-                                    <label class="block text-[9px] font-medium text-gray-500 uppercase mb-1">Descripción Interna</label>
-                                    <div id="info-prod-desc" class="w-full border border-gray-200 bg-gray-50 rounded px-2 py-1.5 text-[10px] text-gray-600 custom-scroll flex-1 h-[68px] overflow-y-auto uppercase"></div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 shadow-sm">
-                            <h4 class="text-[10px] font-bold text-primary uppercase border-b border-slate-200 pb-2 mb-3 tracking-wider">Estructura de Precios</h4>
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                                <div class="bg-white p-2 rounded border border-slate-200">
-                                    <label class="block text-[9px] font-bold text-primary uppercase mb-1">P. General (USD)</label>
-                                    <div id="info-prod-precio-usd" class="w-full border border-gray-200 bg-gray-50 rounded px-2 py-1.5 text-base font-black text-primary outline-none flex items-center h-[34px]"></div>
-                                </div>
-                                <div class="bg-white p-2 rounded border border-slate-200">
-                                    <label class="block text-[9px] font-medium text-primary uppercase mb-1">Fijar Precio Bs?</label>
-                                    <div id="info-prod-fijo-bs" class="w-full border border-gray-200 bg-gray-50 rounded px-2 py-1.5 text-[10px] font-bold text-gray-700 outline-none flex items-center h-[34px]"></div>
-                                </div>
-                                <div class="bg-white p-2 rounded border border-slate-200">
-                                    <label class="block text-[9px] font-medium text-primary uppercase mb-1">Monto Fijo Bs</label>
-                                    <div id="info-prod-precio-bs" class="w-full border border-gray-200 bg-gray-50 rounded px-2 py-1.5 text-sm font-bold text-gray-800 outline-none flex items-center h-[34px]"></div>
-                                </div>
-                            </div>
-                            <h4 class="text-[9px] font-bold text-primary uppercase border-b border-slate-200 pb-1 mb-2">Descuentos por Volumen</h4>
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                <div class="flex gap-2"><div class="w-1/2"><label class="block text-[8px] font-medium text-gray-500 uppercase mb-0.5">Req. Precio 1</label><div id="info-req-p1" class="w-full border border-gray-200 bg-white rounded px-2 py-1 text-xs text-center font-bold text-gray-700 outline-none h-[26px] flex items-center justify-center"></div></div><div class="w-1/2"><label class="block text-[8px] font-medium text-primary uppercase mb-0.5">Precio 1 ($)</label><div id="info-usd-p1" class="w-full border border-slate-200 bg-slate-50 rounded px-2 py-1 text-xs text-center font-bold text-primary outline-none h-[26px] flex items-center justify-center"></div></div></div>
-                                <div class="flex gap-2"><div class="w-1/2"><label class="block text-[8px] font-medium text-gray-500 uppercase mb-0.5">Req. Precio 2</label><div id="info-req-p2" class="w-full border border-gray-200 bg-white rounded px-2 py-1 text-xs text-center font-bold text-gray-700 outline-none h-[26px] flex items-center justify-center"></div></div><div class="w-1/2"><label class="block text-[8px] font-medium text-primary uppercase mb-0.5">Precio 2 ($)</label><div id="info-usd-p2" class="w-full border border-slate-200 bg-slate-50 rounded px-2 py-1 text-xs text-center font-bold text-primary outline-none h-[26px] flex items-center justify-center"></div></div></div>
-                                <div class="flex gap-2"><div class="w-1/2"><label class="block text-[8px] font-medium text-gray-500 uppercase mb-0.5">Req. Precio 3</label><div id="info-req-p3" class="w-full border border-gray-200 bg-white rounded px-2 py-1 text-xs text-center font-bold text-gray-700 outline-none h-[26px] flex items-center justify-center"></div></div><div class="w-1/2"><label class="block text-[8px] font-medium text-primary uppercase mb-0.5">Precio 3 ($)</label><div id="info-usd-p3" class="w-full border border-slate-200 bg-slate-50 rounded px-2 py-1 text-xs text-center font-bold text-primary outline-none h-[26px] flex items-center justify-center"></div></div></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="bg-gray-50 border-t border-gray-200 px-5 py-3 flex justify-end shrink-0">
-                <button type="button" onclick="cerrarInfoProducto()" class="px-8 py-2 bg-secondary text-white font-bold rounded text-xs shadow-md hover:opacity-90 transition btn-press uppercase tracking-widest">Cerrar Ficha</button>
-            </div>
-        </div>
-    </div>
-    <div id="media-viewer" class="fixed inset-0 bg-black/95 z-[9999] hidden flex-col items-center justify-center p-4 fade-in" onclick="cerrarVisor()">
-        <button class="absolute top-4 right-4 text-white text-3xl hover:text-gray-300 z-10 transition"><i class="fa-solid fa-times"></i></button>
-        <div class="flex flex-col items-center gap-4 max-w-4xl w-full" onclick="event.stopPropagation()">
-            <img id="viewer-img-main" src="" class="max-w-full max-h-[70vh] object-contain rounded shadow-2xl border-4 border-white/10 bg-white">
-            <div id="viewer-thumbnails" class="flex gap-2 overflow-x-auto p-2 no-scrollbar bg-white/5 rounded-xl"></div>
-        </div>
-    </div>
-
-    <div id="modal-cobro" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4 fade-in">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden flex flex-col border border-gray-200 relative">
-            <div class="bg-primary px-4 py-3 flex justify-between items-center shrink-0">
-                <h3 class="font-bold text-white text-[12px] tracking-wide uppercase"><i class="fa-solid fa-cash-register text-tertiary mr-2"></i> Finalizar Transacción</h3>
-                <button onclick="cerrarCobro()" class="text-gray-300 hover:text-white text-lg transition"><i class="fa-solid fa-times"></i></button>
-            </div>
-            <div class="p-5 bg-gray-50 space-y-3">
-                <div class="bg-slate-100 border border-slate-200 rounded-lg p-3 text-center shadow-inner relative overflow-hidden">
-                    <p class="text-gray-500 text-[8px] font-bold uppercase tracking-widest mb-0.5 z-10 relative">Monto a Liquidar</p>
-                    <h2 class="text-3xl font-black text-primary leading-none mb-1 z-10 relative" id="modal-total-bs-final">Bs. 0.00</h2>
-                    <p class="text-secondary font-black text-[10px] z-10 relative" id="modal-total-usd-final">US$ 0.00</p>
-                </div>
-                <div>
-                    <label class="block text-[9px] font-medium text-gray-500 uppercase mb-1">Método de Pago Principal</label>
-                    <select id="cobro-metodo" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[11px] font-bold text-primary outline-none shadow-sm bg-white focus:border-tertiary transition" onchange="verificarIGTF()">
-                        <option value="EFECTIVO_BS">🇻🇪 Efectivo Bolívares</option>
-                        <option value="PAGO_MOVIL">📱 Pago Móvil</option>
-                        <option value="PUNTO_VENTA">💳 Punto de Venta</option>
-                        <option value="TRANSFERENCIA_BS">🏦 Transferencia Bolívares</option>
-                        <option value="EFECTIVO_USD">💵 Divisas (Aplica IGTF)</option>
-                        <option value="ZELLE">🟣 Zelle (Aplica IGTF)</option>
-                    </select>
-                </div>
-                <div id="caja-igtf" class="hidden bg-yellow-50 border border-yellow-200 p-2 rounded mb-3"><p class="text-[9px] text-yellow-700 font-bold uppercase"><i class="fa-solid fa-triangle-exclamation"></i> Se aplicará 3% de IGTF al monto final</p></div>
-                
-                <div class="bg-gray-100 p-2 rounded border border-gray-200 shadow-inner mb-3">
-                    <label class="block text-[8px] font-bold text-primary uppercase mb-0.5">Formato de Salida / Impresión</label>
-                    <select id="cobro-formato-impresion" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] font-bold text-gray-700 outline-none bg-white focus:border-tertiary transition">
-                        <option value="80mm">Térmica 80mm</option>
-                        <option value="58mm">Térmica 58mm</option>
-                        <option value="carta">Documento Carta (A4)</option>
-                    </select>
-                </div>
-                
-                <button onclick="procesarVenta()" id="btn-confirmar" class="w-full bg-secondary hover:opacity-90 text-white font-bold py-3 rounded-lg shadow-md transition-all text-xs uppercase tracking-wider btn-press flex justify-center items-center gap-2"><i class="fa-solid fa-print text-white"></i> Facturar e Imprimir</button>
+<body class="flex custom-scroll">
+    
+    <div id="loading-overlay" class="fixed inset-0 bg-black/80 z-[100] hidden flex-col items-center justify-center p-6 backdrop-blur-sm transition-opacity duration-300">
+        <div id="loading-box" class="bg-white rounded-2xl p-10 flex flex-col items-center shadow-2xl text-center max-w-sm">
+            <i id="loading-icon" class="fa-solid fa-circle-notch fa-spin text-5xl text-primary mb-5"></i>
+            <h2 id="loading-text" class="text-xl font-extrabold text-primary uppercase tracking-tight mb-2">Procesando Venta</h2>
+            <p id="loading-error" class="text-xs text-gray-600 mb-6 hidden bg-red-50 border border-red-200 p-3 rounded-lg font-mono"></p>
+            <div id="error-actions" class="flex gap-2 hidden">
+                <button onclick="cerrarErrorCarga()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg text-xs font-bold uppercase hover:bg-gray-300 transition btn-press">Cerrar</button>
+                <button onclick="forzarCierreSesion()" class="px-4 py-2 bg-red-600 text-white rounded-lg text-xs font-bold uppercase hover:bg-red-700 transition btn-press"><i class="fa-solid fa-power-off mr-1"></i> Salir del Sistema</button>
             </div>
         </div>
     </div>
 
-    <div id="loading-overlay" class="fixed inset-0 bg-white/95 z-[999] hidden flex-col items-center justify-center p-6 text-center backdrop-blur-sm">
-        <i id="loading-icon" class="fa-solid fa-circle-notch fa-spin text-5xl text-primary mb-4"></i>
-        <h2 id="loading-text" class="text-xl font-black text-primary uppercase mb-2">Procesando...</h2>
-        <p id="loading-error" class="text-xs text-gray-500 font-medium max-w-sm hidden text-center"></p>
-        <div id="error-actions" class="hidden mt-6 flex gap-3">
-            <button onclick="window.location.reload()" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2.5 rounded font-bold uppercase text-xs btn-press transition shadow">Reintentar</button>
-            <button onclick="forzarCierreSesion()" class="bg-secondary hover:opacity-90 text-white px-6 py-2.5 rounded font-bold uppercase text-xs btn-press transition shadow-md"><i class="fa-solid fa-power-off mr-2"></i> Cerrar Sesión</button>
-        </div>
-    </div>
-
-    <div id="modal-nuevo-cliente" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[110] hidden flex items-center justify-center p-4 fade-in">
-        <div class="bg-white rounded-lg shadow-2xl w-full max-w-sm overflow-hidden flex flex-col border border-gray-200">
-            <div class="bg-primary text-white px-3 py-2.5 flex justify-between items-center">
-                <h3 class="font-bold text-[11px] tracking-wide uppercase"><i class="fa-solid fa-user-plus text-tertiary mr-1"></i> Registro Rápido Cliente</h3>
-                <button onclick="cerrarModalNuevoCliente()" class="text-gray-300 hover:text-white transition"><i class="fa-solid fa-times"></i></button>
-            </div>
-            <form id="form-cliente-rapido" onsubmit="guardarClienteRapido(event)" class="p-4 bg-gray-50 space-y-2.5">
-                <div class="grid grid-cols-2 gap-2">
-                    <div class="col-span-2"><label class="block text-[8px] font-medium text-gray-500 uppercase mb-0.5">Doc. Identidad / RIF *</label><input type="text" id="cli-rap-doc" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] font-bold uppercase focus:border-tertiary outline-none bg-white transition"></div>
-                    <div class="col-span-2"><label class="block text-[8px] font-medium text-gray-500 uppercase mb-0.5">Nombre / Razón Social *</label><input type="text" id="cli-rap-nom" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] font-bold uppercase focus:border-tertiary outline-none bg-white transition"></div>
-                    <div class="col-span-2"><label class="block text-[8px] font-medium text-gray-500 uppercase mb-0.5">Dirección Fiscal Exacta *</label><input type="text" id="cli-rap-dir" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] font-bold uppercase focus:border-tertiary outline-none bg-white transition"></div>
-                    <div><label class="block text-[8px] font-medium text-gray-500 uppercase mb-0.5">Celular</label><input type="text" id="cli-rap-tel" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] font-bold focus:border-tertiary outline-none bg-white transition"></div>
-                    <div><label class="block text-[8px] font-medium text-gray-500 uppercase mb-0.5">Contribuyente *</label><select id="cli-rap-tipo" required class="w-full border border-gray-300 rounded px-1.5 py-1.5 text-[10px] font-bold outline-none bg-white focus:border-tertiary transition"><option value="NATURAL">NATURAL</option><option value="JURIDICA">JURÍDICA</option><option value="RETENCION">CONT. ESPECIAL</option></select></div>
-                </div>
-                <button type="submit" id="btn-guardar-cli-rap" class="w-full bg-secondary hover:opacity-90 text-white font-bold py-2 rounded shadow mt-2 btn-press uppercase text-[10px] transition"><i class="fa-solid fa-save mr-1 text-white"></i> Guardar y Usar</button>
-            </form>
-        </div>
-    </div>
-
-    <div id="modal-ficha-completa" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[110] hidden flex items-center justify-center p-4 fade-in">
-        <div class="bg-white rounded-lg shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col border border-gray-200 relative max-h-[90vh]">
-            <div class="bg-primary text-white px-4 py-3 flex justify-between items-center shrink-0">
-                <h3 class="font-bold text-[12px] tracking-wide uppercase"><i class="fa-solid fa-address-book mr-2 text-tertiary"></i> Ficha Completa de Cliente</h3>
-                <button onclick="cerrarModalFichaCompleta()" class="text-gray-300 hover:text-white text-lg transition"><i class="fa-solid fa-times"></i></button>
-            </div>
-            <form id="form-ficha-completa" onsubmit="guardarFichaCompleta(event)" class="p-5 bg-gray-50 overflow-y-auto custom-scroll space-y-3">
-                <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    <div><label class="block text-[9px] font-medium text-gray-500 uppercase mb-0.5">Cédula / RIF *</label><input type="text" id="fc-doc" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] font-bold uppercase outline-none focus:border-tertiary transition bg-white"></div>
-                    <div class="md:col-span-2"><label class="block text-[9px] font-medium text-gray-500 uppercase mb-0.5">Razón Social *</label><input type="text" id="fc-nombre" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] font-bold uppercase outline-none focus:border-tertiary transition bg-white"></div>
-                    <div class="col-span-2 md:col-span-3"><label class="block text-[9px] font-medium text-gray-500 uppercase mb-0.5">Dirección Fiscal *</label><input type="text" id="fc-dir-p" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] outline-none uppercase focus:border-tertiary transition bg-white"></div>
-                    <div><label class="block text-[9px] font-medium text-gray-500 uppercase mb-0.5">Celular Principal</label><input type="text" id="fc-tel1" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] outline-none focus:border-tertiary transition bg-white"></div>
-                    <div><label class="block text-[9px] font-medium text-gray-500 uppercase mb-0.5">Correo</label><input type="email" id="fc-email" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] outline-none focus:border-tertiary transition bg-white"></div>
-                    <div><label class="block text-[9px] font-medium text-gray-500 uppercase mb-0.5">Tipo Contribuyente *</label><select id="fc-tipo" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] outline-none focus:border-tertiary transition bg-white"><option value="NATURAL">NATURAL</option><option value="JURIDICA">JURÍDICA</option><option value="RETENCION">AGENTE RETENCIÓN</option></select></div>
-                    <div><label class="block text-[9px] font-medium text-gray-500 uppercase mb-0.5">Nivel de Precio *</label><select id="fc-precio" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] outline-none focus:border-tertiary transition bg-white"><option value="GENERAL">P. GENERAL</option><option value="P1">MAYORISTA</option><option value="P2">DISTRIBUIDOR</option></select></div>
-                </div>
-                <div class="flex gap-2 justify-end pt-2 mt-2 border-t">
-                    <button type="button" onclick="cerrarModalFichaCompleta()" class="px-4 py-1.5 bg-gray-200 rounded text-[10px] font-bold hover:bg-gray-300 btn-press">Cancelar</button>
-                    <button type="submit" id="btn-guardar-fc" class="px-4 py-1.5 bg-secondary hover:opacity-90 text-white rounded text-[10px] font-bold uppercase btn-press transition">Guardar</button>
-                </div>
-            </form>
-        </div>
+    <div id="media-viewer" class="fixed inset-0 bg-black/90 z-[100] hidden items-center justify-center p-4 backdrop-blur-sm" onclick="cerrarVisor()">
+        <button class="absolute top-4 right-4 text-white/70 hover:text-white text-2xl" onclick="cerrarVisor()"><i class="fa-solid fa-times"></i></button>
+        <img id="viewer-img-main" src="" class="max-w-[90%] max-h-[80%] rounded-lg shadow-2xl object-contain">
+        <div id="viewer-thumbnails" class="absolute bottom-4 left-0 right-0 flex justify-center gap-2 overflow-x-auto p-2 no-scrollbar"></div>
     </div>
 
     <div id="ticket-impresion" class="hidden print:block"></div>
+
     <script src="menu.js"></script>
     <main class="flex-1 flex flex-col h-screen overflow-hidden bg-[#f4f6f8] w-full z-10 relative">
         <header class="bg-white shadow-sm px-4 flex justify-between items-center z-10 shrink-0 border-b border-gray-200 h-10">
@@ -286,7 +81,7 @@
                         <span title="Euro Oficial" class="cursor-help">🇪🇺 EUR:</span>
                         <input type="number" id="input-tasa-eur" step="0.01" class="w-14 bg-white border border-slate-200 rounded px-1 py-0.5 outline-none text-right focus:border-tertiary transition font-black" value="0.00" onchange="guardarTasaManual('EUR', this.value)">
                     </div>
-                    <button onclick="sincronizarBCV()" class="bg-primary hover:opacity-90 text-white w-6 h-6 rounded flex items-center justify-center transition-colors shadow-md btn-press ml-1" title="Sincronizar BCV">
+                    <button onclick="sincronizarBCV()" id="btn-sync-bcv" class="bg-primary hover:opacity-90 text-white w-6 h-6 rounded flex items-center justify-center transition-colors shadow-md btn-press ml-1" title="Sincronizar BCV Manualmente">
                         <i class="fa-solid fa-rotate text-[10px]"></i>
                     </button>
                 </div>
@@ -324,7 +119,7 @@
             <div id="panel-derecho" class="w-full md:w-2/5 lg:w-1/3 h-full flex flex-col bg-white shadow-[-5px_0_15px_rgba(0,0,0,0.03)] z-10 transition-all duration-300">
                 
                 <div class="bg-gray-50 p-2 border-b border-gray-200 shrink-0 flex flex-col gap-1.5 shadow-inner">
-                    <h3 class="text-[9px] font-bold text-primary uppercase tracking-wider border-b border-gray-200 pb-1"><i class="fa-solid fa-file-invoice mr-1 text-tertiary"></i> Cabecera del Documento</h3>
+                    <h3 class="text-[9px] font-bold text-primary uppercase tracking-wider border-b border-gray-200 pb-1"><i class="fa-solid fa-file-invoice mr-1 text-tertiary"></i> Cabecera</h3>
                     
                     <div class="grid grid-cols-3 gap-2">
                         <div>
@@ -343,10 +138,15 @@
                         </div>
                     </div>
                     
-                    <div class="grid grid-cols-[1fr_1fr_auto] gap-2 items-end mt-0.5">
+                    <div class="grid grid-cols-[1.2fr_1fr_auto] gap-2 items-end mt-0.5">
                     <div>
                         <label class="block text-[7px] font-medium text-gray-500 uppercase mb-0.5">Nro Factura (Aut)</label>
-                        <input type="text" id="pos-nro-factura" placeholder="Cargando..." class="w-full border border-red-300 rounded px-1.5 py-1 text-[11px] font-mono text-center font-black text-red-600 outline-none uppercase bg-white shadow-inner" readonly>
+                        <div class="flex gap-1 relative">
+                            <input type="text" id="pos-nro-factura" placeholder="Cargando..." class="w-full border border-red-300 rounded px-1.5 py-1 text-[11px] font-mono text-center font-black text-red-600 outline-none uppercase bg-white shadow-inner" readonly>
+                            <button onclick="toggleEditNroFactura()" id="btn-edit-nro-factura" class="absolute -right-1.5 -top-1.5 bg-gray-400 text-white w-4 h-4 rounded-full flex items-center justify-center shadow hover:bg-gray-500 transition z-10 btn-press" title="Permitir editar número manualmente">
+                                <i class="fa-solid fa-lock text-[8px]"></i>
+                            </button>
+                        </div>
                     </div>
                     <div>
                         <label class="block text-[7px] font-medium text-gray-500 uppercase mb-0.5">Nro Control (Manual)</label>
@@ -356,7 +156,7 @@
                         <label class="block text-[7px] font-medium text-gray-500 uppercase mb-0.5 text-left">Registro Cliente</label>
                         <div class="flex gap-1">
                             <button onclick="abrirModalNuevoCliente()" class="px-2 py-0.5 h-[24px] bg-secondary/10 text-secondary border border-secondary/20 rounded text-[8px] font-bold uppercase hover:bg-secondary/20 transition"><i class="fa-solid fa-bolt"></i> Rápido</button>
-                            <button onclick="abrirModalFichaCompleta()" class="px-2 py-0.5 h-[24px] bg-primary/10 text-primary border border-primary/20 rounded text-[8px] font-bold uppercase hover:bg-primary/20 transition"><i class="fa-solid fa-address-book"></i> Completo</button>
+                            <button onclick="abrirModalFichaCompleta()" class="px-2 py-0.5 h-[24px] bg-primary/10 text-primary border border-primary/ address-book"></i> Completo</button>
                         </div>
                     </div>
                 </div>
@@ -394,48 +194,48 @@
                 </div>
 
                 <div class="bg-white border-t border-gray-200 shrink-0 shadow-[0_-10px_20px_rgba(0,0,0,0.03)] flex flex-col">
-                    <button onclick="toggleAcordeon()" class="w-full py-1.5 flex justify-center items-center gap-2 hover:bg-gray-50 transition border-b border-gray-100 focus:outline-none">
-                        <span id="txt-toggle-acordeon" class="text-[8px] font-black text-gray-400 uppercase tracking-widest">OCULTAR DESGLOSE FISCAL</span>
+                    <button onclick="toggleAcordeon()" class="w-full py-1.5 flex justify-center items-center gap-2 hover:bg-gray-50 transition border-b border-gray-100 focus:outline-none tracking-tighter">
+                        <span id="txt-toggle-acordeon" class="text-[8px] font-black text-gray-400 uppercase">OCULTAR DESGLOSE FISCAL</span>
                         <i id="icon-toggle-acordeon" class="fa-solid fa-chevron-down text-[9px] text-gray-400"></i>
                     </button>
 
-                    <div id="caja-acordeon-totales" class="flex flex-col gap-0.5 p-2.5 pb-0">
-                        <div class="flex justify-between items-center text-[9px] text-gray-500 font-bold uppercase">
+                    <div id="caja-acordeon-totales" class="flex flex-col gap-0.5 p-3 pb-0">
+                        <div class="flex justify-between items-center text-xs text-gray-500 font-bold uppercase">
                             <span>Subtotal Base</span>
-                            <span id="pos-subtotal">Bs. 0.00</span>
+                            <span id="pos-subtotal" class="text-gray-900 font-black">Bs. 0.00</span>
                         </div>
-                        <div class="flex justify-between items-center text-[9px] text-gray-500 font-bold uppercase mt-0.5">
+                        <div class="flex justify-between items-center text-xs text-gray-500 font-bold uppercase mt-0.5">
                             <div class="flex items-center gap-1">
                                 <span>Desc. Gral</span>
-                                <select id="pos-type-desc-general" class="border border-gray-200 rounded text-[8px] p-0.5 outline-none bg-gray-50 font-bold text-primary focus:border-tertiary transition" onchange="actualizarUI_Carrito()">
+                                <select id="pos-type-desc-general" class="border border-gray-200 rounded text-[9px] p-0.5 outline-none bg-gray-50 font-bold text-primary focus:border-tertiary transition" onchange="actualizarUI_Carrito()">
                                     <option value="MONTO_BS" selected>Bs.</option>
                                     <option value="PORCENTAJE">%</option>
                                     <option value="MONTO">$</option>
                                 </select>
-                                <input type="number" id="pos-input-desc-general" placeholder="0" class="border border-gray-200 rounded text-center w-14 py-0.5 text-[9px] font-bold text-gray-700 outline-none shadow-inner focus:border-tertiary transition" onchange="actualizarUI_Carrito()">
+                                <input type="number" id="pos-input-desc-general" placeholder="0" class="border border-gray-200 rounded text-center w-14 py-0.5 text-[10px] font-bold text-gray-700 outline-none shadow-inner focus:border-tertiary transition" onchange="actualizarUI_Carrito()">
                             </div>
-                            <span id="pos-descuento-general-val" class="text-red-500 font-bold">- Bs. 0.00</span>
+                            <span id="pos-descuento-general-val" class="text-red-500 font-black">- Bs. 0.00</span>
                         </div>
-                        <div class="border-t border-gray-100 my-0.5"></div>
-                        <div id="contenedor-totales-fiscales" class="flex flex-col gap-0.5"></div>
                         <div class="border-t border-gray-100 my-1"></div>
+                        <div id="contenedor-totales-fiscales" class="flex flex-col gap-0.5"></div>
+                        <div class="border-t border-gray-100 my-1.5"></div>
                     </div>
 
-                    <div class="px-2.5 pb-2.5 pt-1">
+                    <div class="px-3 pb-3 pt-1">
                         <div class="flex justify-between items-end mb-0.5 mt-1">
-                            <span class="text-[10px] font-bold text-primary uppercase tracking-wider">Total a Pagar Bs</span>
-                            <span class="text-2xl font-black text-primary leading-none" id="pos-total-bs">Bs. 0.00</span>
+                            <span class="text-xs font-bold text-primary uppercase tracking-tight">Total a Pagar Bs</span>
+                            <span class="text-3xl font-black text-primary leading-none" id="pos-total-bs">Bs. 0.00</span>
                         </div>
                         <div class="flex justify-between items-center mb-1.5">
-                            <span class="text-[8px] font-bold text-gray-400 uppercase">Total Divisas</span>
-                            <span class="text-xs font-black text-primary" id="pos-total-usd">US$ 0.00</span>
+                            <span class="text-xs font-bold text-gray-400 uppercase">Total Divisas</span>
+                            <span class="text-lg font-black text-primary" id="pos-total-usd">US$ 0.00</span>
                         </div>
-                        <div class="flex gap-2 h-7 mt-1">
+                        <div class="flex gap-2 h-8 mt-1">
                             <div class="bg-slate-100 rounded flex items-center justify-center border border-slate-200 px-3 shrink-0 shadow-inner">
-                                <span class="text-xs font-black text-gray-900" id="pos-items">0</span>
-                                <span class="text-[7px] font-medium text-gray-500 uppercase ml-1">Art</span>
+                                <span class="text-sm font-black text-gray-900" id="pos-items">0</span>
+                                <span class="text-[8px] font-medium text-gray-500 uppercase ml-1">Art</span>
                             </div>
-                            <button onclick="abrirCobro()" id="btn-cobrar" disabled class="flex-1 bg-secondary hover:opacity-90 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold rounded shadow-sm transition-all text-[10px] uppercase tracking-widest flex justify-center items-center gap-1.5 btn-press">
+                            <button onclick="abrirCobro()" id="btn-cobrar" disabled class="flex-1 bg-secondary hover:opacity-90 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold rounded shadow-sm transition-all text-xs uppercase tracking-widest flex justify-center items-center gap-1.5 btn-press">
                                 <i class="fa-solid fa-hand-holding-dollar text-white"></i> Cobrar
                             </button>
                         </div>
@@ -444,7 +244,8 @@
             </div>
         </div>
     </main>
-  <script>
+
+    <script>
         // ================= CONFIGURACIÓN Y VARIABLES GLOBALES =================
         const TOKEN_JWT = localStorage.getItem('pyp_token_seguro');
         let dbInventario = [], carrito = [], dbClientes = [], fuseInventario = null, fuseClientes = null, empresaActual = null;
@@ -454,6 +255,7 @@
         let imgDefecto = 'https://via.placeholder.com/150/f8fafc/94a3b8?text=P%26P';
         let posVistaActual = 'grid';
         let modoSupermercado = false;
+        let nroFacturaEditable = false; // 🔴 Estado de edición del número
         
         let ultimaFechaFactura = null;
         let correlativoActual = 1;
@@ -477,6 +279,9 @@
             
             await iniciarPuntoVenta();
             await inicializarCorrelativos(); 
+
+            // 🔴 INTENTAR SINCRONIZAR BCV AUTOMÁTICAMENTE AL CARGAR
+            sincronizarBCVSilencioso();
             
             document.addEventListener('keydown', (e) => { 
                 if (e.key === 'Escape') { cerrarCobro(); cerrarModalNuevoCliente(); cerrarModalFichaCompleta(); cerrarVisor(); cerrarInfoProducto(); } 
@@ -492,6 +297,33 @@
                 inputFecha.value = getFechaHoy();
             }
             ajustarFechaVencimiento();
+        }
+
+        // 🔴 FUNCIÓN PARA ACTIVAR/DESACTIVAR EDICIÓN DEL NÚMERO
+        function toggleEditNroFactura() {
+            const inputNro = document.getElementById('pos-nro-factura');
+            const btnEdit = document.getElementById('btn-edit-nro-factura');
+            const icon = btnEdit.querySelector('i');
+            
+            nroFacturaEditable = !nroFacturaEditable;
+            
+            if (nroFacturaEditable) {
+                inputNro.readOnly = false;
+                inputNro.classList.replace('border-red-300', 'border-secondary');
+                inputNro.classList.replace('text-red-600', 'text-secondary');
+                inputNro.focus();
+                btnEdit.classList.replace('bg-gray-400', 'bg-secondary');
+                icon.classList.replace('fa-lock', 'fa-lock-open');
+                btnEdit.title = "Guardar número actual y bloquear";
+            } else {
+                inputNro.readOnly = true;
+                inputNro.value = inputNro.value.trim().toUpperCase(); // Limpiar entrada
+                inputNro.classList.replace('border-secondary', 'border-red-300');
+                inputNro.classList.replace('text-secondary', 'text-red-600');
+                btnEdit.classList.replace('bg-secondary', 'bg-gray-400');
+                icon.classList.replace('fa-lock-open', 'fa-lock');
+                btnEdit.title = "Permitir editar número manualmente";
+            }
         }
 
         function ajustarFechaVencimiento() {
@@ -866,7 +698,10 @@
             let ivaG = bG * pypIva; let ivaR1 = bR1 * pypIvaRed1; let ivaR2 = bR2 * pypIvaRed2;
             granTotalUsd = bG + bR1 + bR2 + bE + ivaG + ivaR1 + ivaR2;
 
-            let htmlTotales = ''; const Fila = (etiqueta, valUsd) => `<div class="flex justify-between items-center text-[9px] text-gray-500 font-bold uppercase"><span>${etiqueta}</span><span class="text-gray-900 font-bold">Bs. ${fmt(valUsd * tasaBCV)}</span></div>`;
+            let htmlTotales = ''; 
+            // 🔴 FILAS FISCALES CON TEXTO MÁS GRANDE (TEXT-XS -> TEXT-SM/BASE)
+            const Fila = (etiqueta, valUsd) => `<div class="flex justify-between items-center text-xs text-gray-500 font-bold uppercase"><span>${etiqueta}</span><span class="text-gray-900 font-black">Bs. ${fmt(valUsd * tasaBCV)}</span></div>`;
+            
             if (bE > 0 || pypMostrarExento === 'SI') htmlTotales += Fila('Monto Exento', bE);
             if (bG > 0 || (bR1===0 && bR2===0)) { htmlTotales += Fila('Base Imponible (G)', bG); htmlTotales += Fila(`IVA (${(pypIva*100).toFixed(0)}%)`, ivaG); }
             if (bR1 > 0) { htmlTotales += Fila('Base Imponible (R1)', bR1); htmlTotales += Fila(`IVA Red. (${(pypIvaRed1*100).toFixed(0)}%)`, ivaR1); }
@@ -953,6 +788,8 @@
                 let empresaPrint = { nombre_empresa: 'P&P SOLUCIONES', rif: 'J-00000000-0', direccion_fiscal: 'SIN DIRECCIÓN FISCAL' };
                 generarHTMLImpresion(formatoPrint, empresaPrint, payloadFactura, carrito); window.print();
                 
+                // Limpiar todo y resetear estados
+                if(nroFacturaEditable) toggleEditNroFactura(); // Bloquear si estaba abierto
                 carrito = []; document.getElementById('pos-input-desc-general').value = ''; document.getElementById('pos-nro-control').value = ''; document.getElementById('pos-condicion').selectedIndex = 0; document.getElementById('pos-fecha-emision').value = getFechaHoy(); ajustarFechaVencimiento(); limpiarCliente(); cerrarCobro(); actualizarUI_Carrito(); await iniciarPuntoVenta(); await inicializarCorrelativos(); cerrarErrorCarga(); 
             } catch(e) { mostrarCarga("Fallo Crítico", e.message, true); } finally { btn.disabled = false; }
         }
@@ -971,9 +808,93 @@
             }
         }
 
-        // ================= MOTOR DE TASAS =================
+        // ================= MOTOR DE TASAS (CORREGIDO) =================
         async function guardarTasaManual(moneda, valor) { const t = parseFloat(valor); if(isNaN(t) || t <= 0) return; if(moneda === 'USD') tasaBCV = t; if(moneda === 'EUR') tasaBCVEur = t; try { await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?moneda=eq.${moneda}`, { method: 'DELETE', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }); await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ moneda: moneda, tasa: t }) }); actualizarUI_Carrito(); } catch(e) { console.error(e); } }
-        async function sincronizarBCV() { mostrarCarga("Sincronizando...", "Extrayendo tasa oficial..."); try { const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent('https://www.bcv.org.ve/')}`); if (!res.ok) throw new Error(""); const html = (await res.json()).contents; const mD = html.match(/<div id="dolar".*?>.*?<strong>\s*(.*?)\s*<\/strong>/is); const mE = html.match(/<div id="euro".*?>.*?<strong>\s*(.*?)\s*<\/strong>/is); if (mD && mE) { tasaBCV = parseFloat(mD[1].replace(/\./g, '').replace(',', '.')); tasaBCVEur = parseFloat(mE[1].replace(/\./g, '').replace(',', '.')); document.getElementById('input-tasa-usd').value = tasaBCV.toFixed(2); document.getElementById('input-tasa-eur').value = tasaBCVEur.toFixed(2); await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?moneda=eq.USD`, { method: 'DELETE', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }); await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ moneda: 'USD', tasa: tasaBCV }) }); actualizarUI_Carrito(); cerrarErrorCarga(); } else throw new Error(""); } catch (e) { mostrarCarga("Error BCV", "Ingresa la tasa manualmente.", true); } }
+        
+        // 🔴 SINCRONIZACIÓN SILENCIOSA AL CARGAR (AUTOMÁTICAdetrás de cámaras)
+        async function sincronizarBCVSilencioso() {
+            try {
+                // Proxy AllOrigins con timestamp para evitar caché
+                const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent('https://www.bcv.org.ve/')}&_=${new Date().getTime()}`;
+                
+                // Fetch con timeout corto (5s) para no bloquear
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
+                
+                const res = await fetch(proxyUrl, { signal: controller.signal });
+                clearTimeout(timeoutId);
+                
+                if (!res.ok) return; // Falló proxy, usar DB
+
+                const html = (await res.json()).contents;
+                // Regex optimizado y más robusto
+                const regex = /<div\s+id="dolar".*?>.*?<strong>\s*([\d,\.]+)\s*<\/strong>/is;
+                const match = html.match(regex);
+
+                if (match && match[1]) {
+                    const nuevaTasa = parseFloat(match[1].replace(/\./g, '').replace(',', '.'));
+                    if(!isNaN(nuevaTasa) && nuevaTasa > 0) {
+                        tasaBCV = nuevaTasa;
+                        document.getElementById('input-tasa-usd').value = tasaBCV.toFixed(2);
+                        // Guardar/Actualizar en DB
+                        await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?moneda=eq.USD`, { method: 'DELETE', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                        await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ moneda: 'USD', tasa: tasaBCV }) });
+                        actualizarUI_Carrito();
+                        console.log("BCV sincronizado automáticamente.");
+                    }
+                }
+            } catch (e) {
+                console.log("Sincronización automática falló (usando tasa DB):", e.message);
+            }
+        }
+
+        // 🔴 BOTÓN MANUAL (MOSTRANDO CARGA)
+        async function sincronizarBCV() { 
+            const btn = document.getElementById('btn-sync-bcv');
+            const icon = btn.querySelector('i');
+            
+            // Estado de carga
+            btn.disabled = true;
+            icon.classList.add('fa-spin');
+            mostrarCarga("Sincronizando...", "Extrayendo tasa oficial del BCV..."); 
+            
+            try { 
+                const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent('https://www.bcv.org.ve/')}&_=${new Date().getTime()}`;
+                
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+                
+                const res = await fetch(proxyUrl, { signal: controller.signal });
+                clearTimeout(timeoutId);
+
+                if (!res.ok) throw new Error("El proxy no responde."); 
+
+                const html = (await res.json()).contents; 
+                const regex = /<div\s+id="dolar".*?>.*?<strong>\s*([\d,\.]+)\s*<\/strong>/is;
+                const match = html.match(regex);
+
+                if (match && match[1]) { 
+                    const nuevaTasa = parseFloat(match[1].replace(/\./g, '').replace(',', '.'));
+                    if(isNaN(nuevaTasa) || nuevaTasa <= 0) throw new Error("Tasa extraída inválida.");
+
+                    tasaBCV = nuevaTasa;
+                    document.getElementById('input-tasa-usd').value = tasaBCV.toFixed(2); 
+                    
+                    // Actualizar DB
+                    await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?moneda=eq.USD`, { method: 'DELETE', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }); 
+                    await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ moneda: 'USD', tasa: tasaBCV }) }); 
+                    
+                    actualizarUI_Carrito(); 
+                    cerrarErrorCarga(); 
+                    alert("Tasa BCV sincronizada exitosamente: " + tasaBCV.toFixed(2) + " Bs.");
+                } else throw new Error("No se pudo encontrar la tasa en la página del BCV (Regex falló)."); 
+            } catch (e) { 
+                mostrarCarga("Error de Sincronización", "El BCV está bloqueando la conexión o el proxy falló. Ingresa la tasa manualmente.", true); 
+            } finally {
+                btn.disabled = false;
+                icon.classList.remove('fa-spin');
+            }
+        }
     </script>
 </body>
 </html>
