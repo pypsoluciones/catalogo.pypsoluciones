@@ -1000,11 +1000,35 @@ function abrirInfoProducto(prodStr) {
             // 7. Manejo de Video Promocional
             const videoCont = document.getElementById('info-prod-video');
             const videoPlaceholder = document.getElementById('info-prod-video-placeholder');
-            if (p.video_url) {
-                videoCont.src = p.video_url.includes('watch?v=') ? p.video_url.replace('watch?v=', 'embed/') : p.video_url;
-                videoCont.classList.remove('hidden');
-                videoPlaceholder.classList.add('hidden');
+            
+            if (p.video_url && p.video_url.trim() !== '') {
+                let videoId = '';
+                const url = p.video_url.trim();
+                
+                // Extractor inteligente de ID de YouTube (Normal, Corto, o Shorts)
+                if (url.includes('youtube.com/watch?v=')) {
+                    videoId = url.split('v=')[1].split('&')[0];
+                } else if (url.includes('youtu.be/')) {
+                    videoId = url.split('youtu.be/')[1].split('?')[0];
+                } else if (url.includes('youtube.com/shorts/')) {
+                    videoId = url.split('shorts/')[1].split('?')[0];
+                } else if (url.includes('youtube.com/embed/')) {
+                    videoId = url.split('embed/')[1].split('?')[0];
+                }
+
+                if (videoId) {
+                    // Forzar el formato Embed oficial de YouTube
+                    videoCont.src = `https://www.youtube.com/embed/${videoId}`;
+                    videoCont.classList.remove('hidden');
+                    videoPlaceholder.classList.add('hidden');
+                } else {
+                    // Fallback de seguridad por si ponen un video externo directo (.mp4)
+                    videoCont.src = url;
+                    videoCont.classList.remove('hidden');
+                    videoPlaceholder.classList.add('hidden');
+                }
             } else {
+                // Limpieza total si no hay video
                 videoCont.src = '';
                 videoCont.classList.add('hidden');
                 videoPlaceholder.classList.remove('hidden');
