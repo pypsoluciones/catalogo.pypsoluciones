@@ -842,6 +842,130 @@
         }
 
         // ================= FINALIZAR VENTA Y COBRO =================
+        // ================= FUNCIONES DE INTERFAZ Y LÓGICA FALTANTES (CORE POS) =================
+        
+        function ajustarFechaVencimiento() {
+            const inputEmision = document.getElementById('pos-fecha-emision').value;
+            const selectCondicion = document.getElementById('pos-condicion').value;
+            const inputVencimiento = document.getElementById('pos-fecha-vencimiento');
+            
+            if (!inputEmision) return;
+            
+            // Sumar días exactos evitando desfases de zona horaria local
+            const fecha = new Date(inputEmision + 'T12:00:00Z');
+            const diasCredito = parseInt(selectCondicion) || 0;
+            fecha.setDate(fecha.getDate() + diasCredito);
+            
+            inputVencimiento.value = fecha.toISOString().split('T')[0];
+        }
+
+        function validarFechaEmision() {
+            ajustarFechaVencimiento(); // Obliga a recalcular si el usuario altera la emisión
+        }
+
+        function mostrarCarga(titulo, msg, error = false) {
+            const overlay = document.getElementById('loading-overlay');
+            const icon = document.getElementById('loading-icon');
+            const errorText = document.getElementById('loading-error');
+            const actions = document.getElementById('error-actions');
+            
+            document.getElementById('loading-text').innerText = titulo;
+            errorText.innerText = msg;
+            errorText.classList.remove('hidden');
+            
+            if (error) {
+                icon.className = "fa-solid fa-circle-xmark text-5xl text-red-500 mb-4";
+                actions.classList.remove('hidden');
+            } else {
+                icon.className = "fa-solid fa-circle-notch fa-spin text-5xl text-primary mb-4";
+                actions.classList.add('hidden');
+            }
+            
+            overlay.classList.remove('hidden');
+            overlay.classList.add('flex');
+        }
+
+        function toggleEditNroFactura() {
+            nroFacturaEditable = !nroFacturaEditable;
+            const input = document.getElementById('pos-nro-factura');
+            const btn = document.getElementById('btn-edit-nro-factura');
+            
+            input.readOnly = !nroFacturaEditable;
+            if (nroFacturaEditable) {
+                input.classList.remove('border-red-300', 'text-red-600', 'bg-white');
+                input.classList.add('border-tertiary', 'text-primary', 'bg-yellow-50');
+                btn.innerHTML = `<i class="fa-solid fa-unlock text-[8px]"></i>`;
+                btn.classList.replace('bg-gray-400', 'bg-tertiary');
+                input.focus();
+            } else {
+                input.classList.add('border-red-300', 'text-red-600', 'bg-white');
+                input.classList.remove('border-tertiary', 'text-primary', 'bg-yellow-50');
+                btn.innerHTML = `<i class="fa-solid fa-lock text-[8px]"></i>`;
+                btn.classList.replace('bg-tertiary', 'bg-gray-400');
+            }
+        }
+
+        function toggleAcordeon() {
+            const caja = document.getElementById('caja-acordeon-totales');
+            const icon = document.getElementById('icon-toggle-acordeon');
+            const txt = document.getElementById('txt-toggle-acordeon');
+            
+            if (caja.classList.contains('hidden')) {
+                caja.classList.remove('hidden');
+                icon.className = "fa-solid fa-chevron-down text-[9px] text-gray-400";
+                txt.innerText = "OCULTAR DESGLOSE FISCAL";
+            } else {
+                caja.classList.add('hidden');
+                icon.className = "fa-solid fa-chevron-up text-[9px] text-gray-400";
+                txt.innerText = "MOSTRAR DESGLOSE FISCAL";
+            }
+        }
+
+        function toggleSupermercado() {
+            modoSupermercado = !modoSupermercado;
+            const panelIzq = document.getElementById('panel-izquierdo');
+            const panelDer = document.getElementById('panel-derecho');
+            const btn = document.getElementById('btn-supermercado');
+            
+            if (modoSupermercado) {
+                panelIzq.style.display = 'none';
+                panelDer.classList.remove('md:w-2/5', 'lg:w-1/3');
+                panelDer.classList.add('w-full');
+                btn.innerHTML = `<i class="fa-solid fa-compress mr-1 text-tertiary"></i> Reducir`;
+            } else {
+                panelIzq.style.display = 'flex';
+                panelDer.classList.add('md:w-2/5', 'lg:w-1/3');
+                panelDer.classList.remove('w-full');
+                btn.innerHTML = `<i class="fa-solid fa-expand mr-1 text-tertiary"></i> Expandir`;
+            }
+        }
+
+        async function guardarTasaManual(moneda, valor) {
+            const val = parseFloat(valor);
+            if (isNaN(val) || val <= 0) return;
+            
+            if (moneda === 'USD') tasaBCV = val;
+            if (moneda === 'EUR') tasaBCVEur = val;
+            
+            actualizarUI_Carrito();
+            actualizarIndicadorTasa(new Date().toISOString());
+        }
+
+        function abrirInfoProducto(prodStr) {
+            const p = JSON.parse(decodeURIComponent(prodStr));
+            document.getElementById('info-prod-img-main').src = p.imagen_principal || imgDefecto;
+            document.getElementById('info-prod-sku').innerText = p.id_producto_sku || 'N/A';
+            document.getElementById('info-prod-nom').innerText = p.nombre || 'N/A';
+            document.getElementById('info-prod-barra').innerText = p.codigo_barras || 'N/A';
+            document.getElementById('info-prod-tipo').innerText = p.tipo_producto || 'N/A';
+            document.getElementById('info-prod-cat').innerText = p.categoria_del_producto || 'N/A';
+            document.getElementById('info-prod-marca').innerText = p.marca || 'N/A';
+            document.getElementById('info-prod-stock').innerText = p.stock_actual || '0';
+            document.getElementById('info-prod-precio-usd').innerText = `$${fmt(p.pUsd)}`;
+            
+            document.getElementById('modal-info-producto').classList.remove('hidden');
+            document.getElementById('modal-info-producto').classList.add('flex');
+        }
         function verificarIGTF() {
             const metodo = document.getElementById('cobro-metodo').value; const aplica = (metodo === 'EFECTIVO_USD' || metodo === 'ZELLE');
             document.getElementById('caja-igtf').classList.toggle('hidden', !aplica);
