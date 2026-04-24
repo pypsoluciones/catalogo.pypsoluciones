@@ -879,27 +879,15 @@ z-10 relative" id="modal-total-usd-final">US$ 0.00</p>
 text-gray-500 uppercase mb-1">Método de Pago Principal</label>
 
 
-                    <select id="cobro-metodo" class="w-full border
-
-border-gray-300 rounded-lg px-3 py-2 text-[11px] font-bold text-primary
-
-outline-none shadow-sm bg-white focus:border-tertiary transition"
-
-onchange="verificarIGTF()">
-
-                        <option value="EFECTIVO_BS">🇻🇪 Efectivo Bolívares</option>
-
-                        <option value="PAGO_MOVIL">📱 Pago Móvil</option>
-
-                        <option value="PUNTO_VENTA">💳 Punto de Venta</option>
-
-                        <option value="TRANSFERENCIA_BS">🏦 Transferencia Bolívares</option>
-
-                        <option value="EFECTIVO_USD">💵 Divisas (Aplica IGTF)</option>
-
-                        <option value="ZELLE">🟣 Zelle (Aplica IGTF)</option>
-
-                    </select>
+                   <select id="cobro-metodo" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[11px] font-bold text-primary outline-none shadow-sm bg-white focus:border-tertiary transition" onchange="verificarIGTF()"> 
+     <option value="EFECTIVO_BS">🇻🇪 Efectivo Bolívares</option> 
+     <option value="PAGO_MOVIL">📱 Pago Móvil</option> 
+     <option value="PUNTO_VENTA">💳 Punto de Venta</option> 
+     <option value="TRANSFERENCIA_BS">🏦 Transferencia Bolívares</option> 
+     <option value="EFECTIVO_USD">💵 Divisas (Aplica IGTF)</option> 
+     <option value="ZELLE">🟣 Zelle (Aplica IGTF)</option> 
+     <option value="POR_PAGAR">⏳ Dejar Por Pagar (Generar Factura)</option> 
+ </select>
 
                 </div>
 
@@ -4133,235 +4121,92 @@ document.getElementById('modal-cobro').classList.add('flex'); }
         function cerrarCobro() { document.getElementById('modal-cobro').classList.add('hidden'); }
 
 
-        async function procesarVenta() {
-
-            const btn = document.getElementById('btn-confirmar'); btn.disabled = true; 
-
-            mostrarCarga("Procesando...", "Registrando venta en la base de datos");
-
-            try {
-
-
-                const metodo =
-
-document.getElementById('cobro-metodo').value; const formatoPrint =
-
-document.getElementById('cobro-formato-impresion').value; const
-
-condicionSel = document.getElementById('pos-condicion'); const condicion
-
-= condicionSel.options[condicionSel.selectedIndex].text; const
-
-nroFactura =
-
-document.getElementById('pos-nro-factura').value.trim().toUpperCase();
-
-const nroControl =
-
-document.getElementById('pos-nro-control').value.trim().toUpperCase();
-
-const fechaVenc =
-
-document.getElementById('pos-fecha-vencimiento').value; const
-
-fechaEmision = document.getElementById('pos-fecha-emision').value +
-
-'T12:00:00Z';
-
-
-                const aplicaIgtf = (metodo === 'EFECTIVO_USD' || metodo
-
-=== 'ZELLE'); const igtfVal = aplicaIgtf ? pypIgtf * 100 : 0; const
-
-totalBsFinal = (granTotalUsd * tasaBCV) + (aplicaIgtf ? (granTotalUsd *
-
-tasaBCV * pypIgtf) : 0); const totalUsdFinal = totalBsFinal / tasaBCV;
-
-
-                const baseImpUsd =
-
-parseFloat(document.getElementById('contenedor-totales-fiscales').dataset.baseTotalUsd)
-
-|| 0; const exentoUsd =
-
-parseFloat(document.getElementById('contenedor-totales-fiscales').dataset.exentoTotalUsd)
-
-|| 0;
-
-
-                const payloadFactura = { 
-
-                    id_empresa: empresaActual || null, 
-
-                    id_cliente: document.getElementById('pos-id-cliente').value || null, 
-
-                    cliente_documento: document.getElementById('txt-cli-doc').innerText,
-
-                    cliente_nombre: document.getElementById('txt-cli-nom').innerText,
-
-                    subtotal_usd: sumSubtotalBasePuroUsd,
-
-                    descuento_usd: descGeneralTotalUsd,
-
-                    total_usd: totalUsdFinal,
-
-                    total_bs: totalBsFinal,
-
-                    tasa_bcv_aplicada: tasaBCV, 
-
-                    metodos_pago: metodo, 
-
-                    condicion_pago: condicion, 
-
-                    iva_porcentaje: pypIva * 100, 
-
-                    igtf_porcentaje: igtfVal, 
-
-                    base_imponible: baseImpUsd * tasaBCV, 
-
-                    monto_exento: exentoUsd * tasaBCV, 
-
-                    nombre_cajero: document.getElementById('txt-cajero-nombre').innerText, 
-
-                    nro_factura_manual: nroFactura || null, 
-
-                    nro_control_manual: nroControl || null, 
-
-                    fecha_vencimiento: fechaVenc, 
-
-                    fecha_emision: fechaEmision,
-
-                    estatus: 'Completada', 
-
-                    tipo_transaccion: 'Venta' 
-
-                };
-
-
-
-                const resF = await
-
-fetch(`${SUPABASE_URL}/rest/v1/facturas`, { method: 'POST', headers: {
-
-'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`,
-
-'Content-Type': 'application/json', 'Prefer': 'return=representation' },
-
-body: JSON.stringify(payloadFactura) });
-
-
-                if(!resF.ok) { const errObj = await resF.json(); throw
-
-new Error(errObj.message || "Fallo al guardar factura. Verifica las
-
-columnas en Supabase."); }
-
-                
-
-                const fId = (await resF.json())[0].id_factura;
-
-                
-
-                const payloadCaja = {
-
-
-                    id_empresa: empresaActual || null, id_factura: fId,
-
-fecha: new Date().toISOString(), tipo: 'INGRESO', concepto: `COBRO
-
-FACTURA NRO: ${nroFactura} - CLIENTE:
-
-${document.getElementById('txt-cli-nom').innerText}`, monto_usd:
-
-totalUsdFinal, monto_bs: totalBsFinal, metodo_pago: metodo, usuario:
-
-document.getElementById('txt-cajero-nombre').innerText
-
-                };
-
-
-                fetch(`${SUPABASE_URL}/rest/v1/caja_movimientos`, {
-
-method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization':
-
-`Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body:
-
-JSON.stringify(payloadCaja) });
-
-
-                const promesas = []; 
-
-                carrito.forEach(i => { 
-
-                    const prAplicado = calcularPrecioUnitario(i, i.cantidad);
-
-
-                   
-
-promesas.push(fetch(`${SUPABASE_URL}/rest/v1/detalles_factura`, {
-
-method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization':
-
-`Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body:
-
-JSON.stringify({ id_empresa: empresaActual || null, factura_id: fId,
-
-producto_sku: i.id_producto_sku, producto_nombre: i.nombre, cantidad:
-
-i.cantidad, precio_unitario_usd: prAplicado, subtotal_usd: prAplicado *
-
-i.cantidad }) })); 
-
-
-                    if(!i.permitir_negativo) {
-
-promesas.push(fetch(`${SUPABASE_URL}/rest/v1/productos?id_producto_sku=eq.${i.id_producto_sku}`,
-
-{ method: 'PATCH', headers: { 'apikey': SUPABASE_KEY, 'Authorization':
-
-`Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body:
-
-JSON.stringify({ stock_actual: i.stock_actual - i.cantidad }) })); } 
-
-                });
-
-                await Promise.all(promesas);
-
-                
-
-
-                let empresaPrint = { nombre_empresa: 'P&P
-
-SOLUCIONES', rif: 'J-00000000-0', direccion_fiscal: 'SIN DIRECCIÓN
-
-FISCAL' };
-
-                generarHTMLImpresion(formatoPrint, empresaPrint, payloadFactura, carrito); window.print();
-
-                
-
-                if(nroFacturaEditable) toggleEditNroFactura();
-
-
-                carrito = [];
-
-document.getElementById('pos-input-desc-general').value = '';
-
-document.getElementById('pos-nro-control').value = '';
-
-document.getElementById('pos-condicion').selectedIndex = 0;
-
-document.getElementById('pos-fecha-emision').value = getFechaHoy();
-
-ajustarFechaVencimiento(); limpiarCliente(); cerrarCobro();
-
-actualizarUI_Carrito(); await iniciarPuntoVenta(); await
-
-inicializarCorrelativos(); cerrarErrorCarga(); 
-
-            } catch(e) { mostrarCarga("Fallo Crítico", e.message, true); } finally { btn.disabled = false; }
-
-        }
+        async function procesarVenta() { 
+     const btn = document.getElementById('btn-confirmar'); btn.disabled = true;  
+     mostrarCarga("Procesando...", "Registrando venta en la base de datos"); 
+     try { 
+         const metodo = document.getElementById('cobro-metodo').value; 
+         const formatoPrint = document.getElementById('cobro-formato-impresion').value; 
+         const condicionSel = document.getElementById('pos-condicion'); 
+         const condicion = condicionSel.options[condicionSel.selectedIndex].text; 
+         const nroFactura = document.getElementById('pos-nro-factura').value.trim().toUpperCase(); 
+         const nroControl = document.getElementById('pos-nro-control').value.trim().toUpperCase(); 
+         const fechaVenc = document.getElementById('pos-fecha-vencimiento').value; 
+         const fechaEmision = document.getElementById('pos-fecha-emision').value + 'T12:00:00Z'; 
+
+         const aplicaIgtf = (metodo === 'EFECTIVO_USD' || metodo === 'ZELLE'); 
+         const igtfVal = aplicaIgtf ? pypIgtf * 100 : 0; 
+         const totalBsFinal = (granTotalUsd * tasaBCV) + (aplicaIgtf ? (granTotalUsd * tasaBCV * pypIgtf) : 0); 
+         const totalUsdFinal = totalBsFinal / tasaBCV; 
+
+         const baseImpUsd = parseFloat(document.getElementById('contenedor-totales-fiscales').dataset.baseTotalUsd) || 0; 
+         const exentoUsd = parseFloat(document.getElementById('contenedor-totales-fiscales').dataset.exentoTotalUsd) || 0; 
+
+         // Determinación dinámica de Estatus
+         const estadoFinal = metodo === 'POR_PAGAR' ? 'Por Pagar' : 'Completada';
+
+         const payloadFactura = {  
+             id_empresa: empresaActual || null,  
+             id_cliente: document.getElementById('pos-id-cliente').value || null,  
+             cliente_documento: document.getElementById('txt-cli-doc').innerText, 
+             cliente_nombre: document.getElementById('txt-cli-nom').innerText, 
+             subtotal_usd: sumSubtotalBasePuroUsd, 
+             descuento_usd: descGeneralTotalUsd, 
+             total_usd: totalUsdFinal, 
+             total_bs: totalBsFinal, 
+             tasa_bcv_aplicada: tasaBCV,  
+             metodos_pago: metodo,  
+             condicion_pago: condicion,  
+             iva_porcentaje: pypIva * 100,  
+             igtf_porcentaje: igtfVal,  
+             base_imponible: baseImpUsd * tasaBCV,  
+             monto_exento: exentoUsd * tasaBCV,  
+             nombre_cajero: document.getElementById('txt-cajero-nombre').innerText,  
+             nro_factura_manual: nroFactura || null,  
+             nro_control_manual: nroControl || null,  
+             fecha_vencimiento: fechaVenc,  
+             fecha_emision: fechaEmision, 
+             estatus: estadoFinal,  
+             tipo_transaccion: 'Venta'  
+         }; 
+
+         const resF = await fetch(`${SUPABASE_URL}/rest/v1/facturas`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, body: JSON.stringify(payloadFactura) }); 
+
+         if(!resF.ok) { const errObj = await resF.json(); throw new Error(errObj.message || "Fallo al guardar factura. Verifica las columnas en Supabase."); } 
+          
+         const fId = (await resF.json())[0].id_factura; 
+          
+         // FILTRO CLASE MUNDIAL: Solo afecta caja si NO es un crédito o "Por Pagar"
+         if (metodo !== 'POR_PAGAR') {
+             const payloadCaja = { 
+                 id_empresa: empresaActual || null, id_factura: fId, fecha: new Date().toISOString(), tipo: 'INGRESO', concepto: `COBRO FACTURA NRO: ${nroFactura} - CLIENTE: ${document.getElementById('txt-cli-nom').innerText}`, monto_usd: totalUsdFinal, monto_bs: totalBsFinal, metodo_pago: metodo, usuario: document.getElementById('txt-cajero-nombre').innerText 
+             }; 
+             fetch(`${SUPABASE_URL}/rest/v1/caja_movimientos`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify(payloadCaja) }); 
+         }
+
+         const promesas = [];  
+         carrito.forEach(i => {  
+             const prAplicado = calcularPrecioUnitario(i, i.cantidad); 
+             promesas.push(fetch(`${SUPABASE_URL}/rest/v1/detalles_factura`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ id_empresa: empresaActual || null, factura_id: fId, producto_sku: i.id_producto_sku, producto_nombre: i.nombre, cantidad: i.cantidad, precio_unitario_usd: prAplicado, subtotal_usd: prAplicado * i.cantidad }) }));  
+
+             if(!i.permitir_negativo) { promesas.push(fetch(`${SUPABASE_URL}/rest/v1/productos?id_producto_sku=eq.${i.id_producto_sku}`, { method: 'PATCH', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ stock_actual: i.stock_actual - i.cantidad }) })); }  
+         }); 
+         await Promise.all(promesas); 
+          
+         let empresaPrint = { nombre_empresa: 'P&P SOLUCIONES', rif: 'J-00000000-0', direccion_fiscal: 'SIN DIRECCIÓN FISCAL' }; 
+         generarHTMLImpresion(formatoPrint, empresaPrint, payloadFactura, carrito); window.print(); 
+          
+         if(nroFacturaEditable) toggleEditNroFactura(); 
+
+         carrito = []; 
+         document.getElementById('pos-input-desc-general').value = ''; 
+         document.getElementById('pos-nro-control').value = ''; 
+         document.getElementById('pos-condicion').selectedIndex = 0; 
+         document.getElementById('pos-fecha-emision').value = getFechaHoy(); 
+         ajustarFechaVencimiento(); limpiarCliente(); cerrarCobro(); 
+         actualizarUI_Carrito(); await iniciarPuntoVenta(); await inicializarCorrelativos(); cerrarErrorCarga();  
+     } catch(e) { mostrarCarga("Fallo Crítico", e.message, true); } finally { btn.disabled = false; } 
+ }
 
 
         // ================= MOTOR DE IMPRESIÓN =================
