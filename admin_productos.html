@@ -4,18 +4,53 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>P&P Admin | Inventario</title>
+
+    <script>
+        const cPri = localStorage.getItem('pyp_color_primario') || '#143B62';
+        const cSec = localStorage.getItem('pyp_color_secundario') || '#E67E22';
+        const cTer = localStorage.getItem('pyp_color_terciario') || '#64748b';
+        const fontFam = localStorage.getItem('pyp_fuente') || "'Inter', sans-serif";
+        const fontSiz = localStorage.getItem('pyp_tamano') || "14px";
+
+        document.documentElement.style.setProperty('--color-primary', cPri);
+        document.documentElement.style.setProperty('--color-secondary', cSec);
+        document.documentElement.style.setProperty('--color-tertiary', cTer);
+        document.documentElement.style.setProperty('--font-global', fontFam);
+        document.documentElement.style.setProperty('--size-global', fontSiz);
+    </script>
+
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        window.tailwind = {
+            config: {
+                theme: {
+                    extend: {
+                        colors: { primary: 'var(--color-primary)', secondary: 'var(--color-secondary)', tertiary: 'var(--color-tertiary)' }
+                    }
+                }
+            }
+        };
+    </script>
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=Poppins:wght@300;400;500;700;900&family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.js"></script>
+    
     <style>
-        body { font-family: 'Inter', sans-serif; }
+        body { font-family: var(--font-global); font-size: var(--size-global); }
+        .bg-primary { background-color: var(--color-primary) !important; }
+        .text-primary { color: var(--color-primary) !important; }
+        .bg-secondary { background-color: var(--color-secondary) !important; }
+        .text-secondary { color: var(--color-secondary) !important; }
+        .text-tertiary { color: var(--color-tertiary) !important; }
+        .border-primary { border-color: var(--color-primary) !important; }
+
         .custom-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background-color: var(--color-primary); border-radius: 4px; }
         .btn-press:active { transform: scale(0.96); }
         .fade-in { animation: fadeIn 0.2s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-        .btn-vista.active { background-color: #e2e8f0; color: #143B62; border-color: #cbd5e1; }
+        .btn-vista.active { background-color: var(--color-primary); color: white; border-color: var(--color-primary); }
         input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
     </style>
     <script src="config.js"></script>
@@ -36,11 +71,11 @@
     <main class="flex-1 flex flex-col h-screen overflow-hidden bg-[#f4f6f8] w-full z-10 relative">
         <header class="bg-white shadow-sm px-4 py-3 flex justify-between items-center z-10 shrink-0 border-b border-gray-200">
             <div class="flex items-center gap-3">
-                <button onclick="toggleMobileMenu()" class="md:hidden text-gray-600 hover:text-[#143B62] text-xl transition px-2"><i class="fa-solid fa-bars"></i></button>
-                <h1 class="text-base font-black text-[#143B62] uppercase flex items-center gap-2"><i class="fa-solid fa-boxes-stacked text-[#E67E22]"></i> Gestión de Inventario</h1>
+                <button onclick="toggleMobileMenu()" class="md:hidden text-gray-600 hover:text-primary text-xl transition px-2"><i class="fa-solid fa-bars"></i></button>
+                <h1 class="text-base font-black text-primary uppercase flex items-center gap-2"><i class="fa-solid fa-boxes-stacked text-tertiary"></i> Gestión de Inventario</h1>
             </div>
             <div class="text-[11px] font-semibold text-gray-500 bg-gray-100 px-3 py-1 rounded border border-gray-200 uppercase tracking-wide hidden md:block">
-                <i class="fa-solid fa-user-tie text-[#143B62] mr-1"></i> <span id="nombre-usuario">Admin</span>
+                <i class="fa-solid fa-user-tie text-tertiary mr-1"></i> <span id="nombre-usuario">Admin</span>
             </div>
         </header>
 
@@ -51,22 +86,22 @@
                     <div class="w-full xl:w-4/5 grid grid-cols-1 md:grid-cols-5 gap-2">
                         <div class="relative md:col-span-2">
                             <i class="fa-solid fa-search absolute left-3 top-2.5 text-gray-400"></i>
-                            <input type="text" id="buscador-inv" oninput="filtrarInventario()" placeholder="Buscar SKU, Barras o nombre..." class="w-full border border-gray-300 rounded-lg pl-9 pr-4 py-1.5 text-xs focus:outline-none focus:border-[#143B62] uppercase transition font-bold shadow-inner">
+                            <input type="text" id="buscador-inv" oninput="filtrarInventario()" placeholder="Buscar SKU, Barras o nombre..." class="w-full border border-gray-300 rounded-lg pl-9 pr-4 py-1.5 text-xs focus:outline-none focus:border-tertiary uppercase transition font-bold shadow-inner">
                         </div>
-                        <select id="filtro-cat-inv" onchange="filtrarInventario()" class="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-[10px] font-bold text-[#143B62] outline-none bg-gray-50 uppercase"><option value="TODAS">CATEGORÍA: TODAS</option></select>
-                        <select id="filtro-marca-inv" onchange="filtrarInventario()" class="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-[10px] font-bold text-[#143B62] outline-none bg-gray-50 uppercase"><option value="TODAS">MARCA: TODAS</option></select>
-                        <select id="filtro-estatus-inv" onchange="filtrarInventario()" class="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-[10px] font-bold text-[#143B62] outline-none bg-gray-50 uppercase"><option value="TODOS">ESTATUS: TODOS</option><option value="ACTIVO">ACTIVOS</option><option value="INACTIVO">INACTIVOS</option></select>
+                        <select id="filtro-cat-inv" onchange="filtrarInventario()" class="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-[10px] font-bold text-primary outline-none bg-gray-50 uppercase focus:border-tertiary transition"><option value="TODAS">CATEGORÍA: TODAS</option></select>
+                        <select id="filtro-marca-inv" onchange="filtrarInventario()" class="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-[10px] font-bold text-primary outline-none bg-gray-50 uppercase focus:border-tertiary transition"><option value="TODAS">MARCA: TODAS</option></select>
+                        <select id="filtro-estatus-inv" onchange="filtrarInventario()" class="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-[10px] font-bold text-primary outline-none bg-gray-50 uppercase focus:border-tertiary transition"><option value="TODOS">ESTATUS: TODOS</option><option value="ACTIVO">ACTIVOS</option><option value="INACTIVO">INACTIVOS</option></select>
                     </div>
                     
                     <div class="flex gap-2 w-full xl:w-auto justify-end shrink-0">
-                        <select id="filtro-stock-inv" onchange="filtrarInventario()" class="border border-red-300 text-red-700 rounded-lg px-2 py-1.5 text-[10px] font-bold outline-none bg-red-50 uppercase">
+                        <select id="filtro-stock-inv" onchange="filtrarInventario()" class="border border-red-300 text-red-700 rounded-lg px-2 py-1.5 text-[10px] font-bold outline-none bg-red-50 uppercase focus:border-red-400 transition">
                             <option value="TODOS">STOCK: TODOS</option><option value="CRITICO">STOCK CRÍTICO</option><option value="DISPONIBLE">CON DISPONIBILIDAD</option>
                         </select>
                         <div class="flex bg-gray-50 rounded-lg border border-gray-300 p-0.5 shadow-inner">
-                            <button id="btn-vista-tabla" onclick="cambiarVista('tabla')" class="btn-vista active px-3 py-1 rounded text-gray-500 hover:text-[#143B62] transition text-sm"><i class="fa-solid fa-list"></i></button>
-                            <button id="btn-vista-grid" onclick="cambiarVista('grid')" class="btn-vista px-3 py-1 rounded text-gray-500 hover:text-[#143B62] transition text-sm"><i class="fa-solid fa-border-all"></i></button>
+                            <button id="btn-vista-tabla" onclick="cambiarVista('tabla')" class="btn-vista active px-3 py-1 rounded text-gray-500 transition text-sm"><i class="fa-solid fa-list"></i></button>
+                            <button id="btn-vista-grid" onclick="cambiarVista('grid')" class="btn-vista px-3 py-1 rounded text-gray-500 transition text-sm"><i class="fa-solid fa-border-all"></i></button>
                         </div>
-                        <button onclick="abrirModalProducto()" class="bg-[#25D366] hover:bg-[#1ebd5c] text-white px-4 py-1.5 rounded-lg font-black text-[11px] shadow-sm transition btn-press uppercase tracking-wider flex justify-center items-center gap-2 whitespace-nowrap">
+                        <button onclick="abrirModalProducto()" class="bg-secondary hover:opacity-90 text-white px-4 py-1.5 rounded-lg font-black text-[11px] shadow-sm transition btn-press uppercase tracking-wider flex justify-center items-center gap-2 whitespace-nowrap">
                             <i class="fa-solid fa-plus"></i> Nuevo
                         </button>
                     </div>
@@ -74,15 +109,14 @@
             </div>
 
             <div id="contenedor-inventario" class="flex-1 bg-transparent">
-                <div class="p-10 text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin text-4xl mb-3 block text-[#143B62]"></i><p class="font-bold uppercase tracking-widest text-xs">Cargando Base de Datos...</p></div>
+                <div class="p-10 text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin text-4xl mb-3 block text-tertiary"></i><p class="font-bold uppercase tracking-widest text-xs">Cargando Base de Datos...</p></div>
             </div>
         </div>
     </main>
-
     <div id="modal-producto" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4 fade-in">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-6xl max-h-[95vh] flex flex-col overflow-hidden border border-gray-200 relative">
-            <div class="bg-[#143B62] text-white px-5 py-3 flex justify-between items-center shrink-0">
-                <h3 class="font-black text-sm tracking-widest uppercase flex items-center" id="modal-titulo"><i class="fa-solid fa-box mr-2 text-[#E67E22]"></i> FICHA DE PRODUCTO</h3>
+            <div class="bg-primary text-white px-5 py-3 flex justify-between items-center shrink-0">
+                <h3 class="font-black text-sm tracking-widest uppercase flex items-center" id="modal-titulo"><i class="fa-solid fa-box mr-2 text-tertiary"></i> FICHA DE PRODUCTO</h3>
                 <button onclick="cerrarModalProducto()" class="text-gray-300 hover:text-white text-xl transition"><i class="fa-solid fa-times"></i></button>
             </div>
             
@@ -101,19 +135,19 @@
                             </div>
                             <input type="hidden" id="url-img-principal">
                             <input type="file" id="file-img-principal" accept="image/*" class="hidden" onchange="subirImagenUnica(event, 'url-img-principal', 'preview-img-principal', 'icon-img-principal')">
-                            <button type="button" onclick="document.getElementById('file-img-principal').click()" class="w-full bg-blue-50 text-blue-700 font-bold py-1.5 rounded text-[10px] uppercase tracking-wider hover:bg-blue-100 transition border border-blue-200"><i class="fa-solid fa-cloud-arrow-up mr-1"></i> Subir Principal</button>
+                            <button type="button" onclick="document.getElementById('file-img-principal').click()" class="w-full bg-blue-50 text-primary font-bold py-1.5 rounded text-[10px] uppercase tracking-wider hover:bg-blue-100 transition border border-blue-200"><i class="fa-solid fa-cloud-arrow-up mr-1"></i> Subir Principal</button>
                         </div>
 
                         <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
-                            <h4 class="text-[10px] font-black text-[#E67E22] uppercase border-b border-gray-100 pb-2 mb-2 tracking-wider">Galería Adicional</h4>
+                            <h4 class="text-[10px] font-black text-secondary uppercase border-b border-gray-100 pb-2 mb-2 tracking-wider">Galería Adicional</h4>
                             <div id="contenedor-galeria" class="grid grid-cols-3 gap-1 mb-2"></div>
                             <input type="file" id="file-img-galeria" accept="image/*" multiple class="hidden" onchange="subirImagenesGaleria(event)">
-                            <button type="button" onclick="document.getElementById('file-img-galeria').click()" class="w-full bg-orange-50 text-[#E67E22] font-bold py-1.5 rounded text-[10px] uppercase tracking-wider hover:bg-orange-100 transition border border-orange-200"><i class="fa-solid fa-images mr-1"></i> Añadir Fotos</button>
+                            <button type="button" onclick="document.getElementById('file-img-galeria').click()" class="w-full bg-orange-50 text-secondary font-bold py-1.5 rounded text-[10px] uppercase tracking-wider hover:bg-orange-100 transition border border-orange-200"><i class="fa-solid fa-images mr-1"></i> Añadir Fotos</button>
                         </div>
 
                         <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
                             <h4 class="text-[10px] font-black text-red-600 uppercase border-b border-gray-100 pb-2 mb-2 tracking-wider"><i class="fa-brands fa-youtube"></i> Video Promocional</h4>
-                            <input type="url" id="prod-video" placeholder="Link de YouTube..." class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] outline-none focus:border-red-400 mb-2" oninput="actualizarVideo(this.value)">
+                            <input type="url" id="prod-video" placeholder="Link de YouTube..." class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] outline-none focus:border-red-400 transition mb-2" oninput="actualizarVideo(this.value)">
                             <div id="video-container" class="hidden w-full aspect-video rounded border border-gray-200 overflow-hidden bg-black">
                                 <iframe id="video-iframe" class="w-full h-full" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
                             </div>
@@ -123,18 +157,18 @@
                     <div class="lg:col-span-3 space-y-4">
                         
                         <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-                            <h4 class="text-[10px] font-black text-[#143B62] uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Identidad del Producto</h4>
+                            <h4 class="text-[10px] font-black text-primary uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Identidad del Producto</h4>
                             <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-3">
-                                <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Código SKU *</label><input type="text" id="prod-sku" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-black uppercase focus:border-[#143B62] outline-none"></div>
-                                <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Código Barra (Números)</label><input type="number" id="prod-cod-barra" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-mono uppercase focus:border-[#143B62] outline-none"></div>
-                                <div class="md:col-span-2"><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Nombre / Descripción *</label><input type="text" id="prod-nombre" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-bold uppercase focus:border-[#143B62] outline-none"></div>
+                                <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Código SKU *</label><input type="text" id="prod-sku" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-black uppercase focus:border-tertiary transition outline-none"></div>
+                                <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Código Barra (Números)</label><input type="number" id="prod-cod-barra" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-mono uppercase focus:border-tertiary transition outline-none"></div>
+                                <div class="md:col-span-2"><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Nombre / Descripción *</label><input type="text" id="prod-nombre" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-bold uppercase focus:border-tertiary transition outline-none"></div>
                             </div>
                             <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
-                                <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Tipo Producto</label><select id="prod-tipo" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] font-bold uppercase outline-none"></select></div>
-                                <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Categoría</label><select id="prod-categoria" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] font-bold uppercase outline-none"></select></div>
-                                <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Cat. Venta</label><select id="prod-cat-venta" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] font-bold uppercase outline-none"></select></div>
-                                <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Marca</label><select id="prod-marca" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] font-bold uppercase outline-none"></select></div>
-                                <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Condición</label><select id="prod-condicion" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] font-bold uppercase outline-none"></select></div>
+                                <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Tipo Producto</label><select id="prod-tipo" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] font-bold uppercase outline-none focus:border-tertiary transition"></select></div>
+                                <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Categoría</label><select id="prod-categoria" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] font-bold uppercase outline-none focus:border-tertiary transition"></select></div>
+                                <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Cat. Venta</label><select id="prod-cat-venta" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] font-bold uppercase outline-none focus:border-tertiary transition"></select></div>
+                                <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Marca</label><select id="prod-marca" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] font-bold uppercase outline-none focus:border-tertiary transition"></select></div>
+                                <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Condición</label><select id="prod-condicion" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] font-bold uppercase outline-none focus:border-tertiary transition"></select></div>
                             </div>
                         </div>
 
@@ -142,48 +176,48 @@
                             <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
                                 <h4 class="text-[10px] font-black text-blue-600 uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Atributos y Logística</h4>
                                 <div class="grid grid-cols-3 gap-2 mb-3">
-                                    <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Talla</label><select id="prod-talla" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] font-bold uppercase outline-none"></select></div>
-                                    <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Color</label><select id="prod-color" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] font-bold uppercase outline-none"></select></div>
-                                    <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Unidad</label><select id="prod-unidad" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] font-bold uppercase outline-none"></select></div>
+                                    <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Talla</label><select id="prod-talla" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] font-bold uppercase outline-none focus:border-tertiary transition"></select></div>
+                                    <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Color</label><select id="prod-color" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] font-bold uppercase outline-none focus:border-tertiary transition"></select></div>
+                                    <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Unidad</label><select id="prod-unidad" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] font-bold uppercase outline-none focus:border-tertiary transition"></select></div>
                                 </div>
                                 <div class="grid grid-cols-3 gap-2">
-                                    <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1 text-blue-600">Stock Actual</label><input type="number" id="prod-stock" value="0" class="w-full border border-gray-300 bg-blue-50 rounded px-2 py-1.5 text-xs font-black text-center outline-none"></div>
-                                    <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1 text-red-500">Min. Alerta</label><input type="number" id="prod-stock-min" value="0" class="w-full border border-gray-300 bg-red-50 rounded px-2 py-1.5 text-xs font-bold text-center outline-none"></div>
-                                    <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">P. Negativo</label><select id="prod-negativo" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] font-bold uppercase outline-none"><option value="FALSE">NO</option><option value="TRUE">SÍ</option></select></div>
+                                    <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1 text-blue-600">Stock Actual</label><input type="number" id="prod-stock" value="0" class="w-full border border-gray-300 bg-blue-50 rounded px-2 py-1.5 text-xs font-black text-center outline-none focus:border-tertiary transition"></div>
+                                    <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1 text-red-500">Min. Alerta</label><input type="number" id="prod-stock-min" value="0" class="w-full border border-gray-300 bg-red-50 rounded px-2 py-1.5 text-xs font-bold text-center outline-none focus:border-tertiary transition"></div>
+                                    <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">P. Negativo</label><select id="prod-negativo" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] font-bold uppercase outline-none focus:border-tertiary transition"><option value="FALSE">NO</option><option value="TRUE">SÍ</option></select></div>
                                 </div>
                             </div>
 
                             <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
                                 <h4 class="text-[10px] font-black text-gray-600 uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Reglas Sistema</h4>
                                 <div class="grid grid-cols-2 gap-3 mb-3">
-                                    <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Estado del Producto</label><select id="prod-estatus" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-bold uppercase outline-none"><option value="ACTIVO">ACTIVO</option><option value="INACTIVO">INACTIVO</option></select></div>
-                                    <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Tipo de Impuesto</label><select id="prod-impuesto" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-bold uppercase outline-none"></select></div>
+                                    <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Estado del Producto</label><select id="prod-estatus" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-bold uppercase outline-none focus:border-tertiary transition"><option value="ACTIVO">ACTIVO</option><option value="INACTIVO">INACTIVO</option></select></div>
+                                    <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Tipo de Impuesto</label><select id="prod-impuesto" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-bold uppercase outline-none focus:border-tertiary transition"></select></div>
                                 </div>
-                                <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Descripción Interna</label><textarea id="prod-desc" rows="2" class="w-full border border-gray-300 rounded px-2 py-1 text-xs outline-none custom-scroll"></textarea></div>
+                                <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Descripción Interna</label><textarea id="prod-desc" rows="2" class="w-full border border-gray-300 rounded px-2 py-1 text-xs outline-none custom-scroll focus:border-tertiary transition"></textarea></div>
                             </div>
                         </div>
 
                         <div class="bg-emerald-50 p-4 rounded-lg border border-emerald-200 shadow-sm">
                             <h4 class="text-[10px] font-black text-emerald-700 uppercase border-b border-emerald-200 pb-2 mb-3 tracking-wider">Estructura de Precios</h4>
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                                <div class="bg-white p-2 rounded border border-emerald-100"><label class="block text-[9px] font-black text-emerald-600 uppercase mb-1">P. General (USD) *</label><input type="number" id="prod-precio-usd" step="0.01" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-base font-black text-emerald-700 outline-none"></div>
-                                <div class="bg-white p-2 rounded border border-emerald-100"><label class="block text-[9px] font-bold text-emerald-600 uppercase mb-1">Fijar Precio Bs?</label><select id="prod-fijo-bs" onchange="togglePrecioBsFijo()" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] font-bold outline-none"><option value="NO">NO (Automático)</option><option value="SI">SÍ (Congelar)</option></select></div>
-                                <div class="bg-white p-2 rounded border border-emerald-100 hidden" id="caja-precio-bs-fijo"><label class="block text-[9px] font-bold text-emerald-600 uppercase mb-1">Monto Fijo Bs</label><input type="number" id="prod-precio-bs" step="0.01" class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm font-black text-gray-800 outline-none"></div>
+                                <div class="bg-white p-2 rounded border border-emerald-100"><label class="block text-[9px] font-black text-emerald-600 uppercase mb-1">P. General (USD) *</label><input type="number" id="prod-precio-usd" step="0.01" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-base font-black text-emerald-700 outline-none focus:border-emerald-500 transition"></div>
+                                <div class="bg-white p-2 rounded border border-emerald-100"><label class="block text-[9px] font-bold text-emerald-600 uppercase mb-1">Fijar Precio Bs?</label><select id="prod-fijo-bs" onchange="togglePrecioBsFijo()" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] font-bold outline-none focus:border-emerald-500 transition"><option value="NO">NO (Automático)</option><option value="SI">SÍ (Congelar)</option></select></div>
+                                <div class="bg-white p-2 rounded border border-emerald-100 hidden" id="caja-precio-bs-fijo"><label class="block text-[9px] font-bold text-emerald-600 uppercase mb-1">Monto Fijo Bs</label><input type="number" id="prod-precio-bs" step="0.01" class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm font-black text-gray-800 outline-none focus:border-emerald-500 transition"></div>
                             </div>
 
                             <h4 class="text-[9px] font-black text-emerald-700 uppercase border-b border-emerald-100 pb-1 mb-2">Descuentos por Volumen</h4>
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                                 <div class="flex gap-2">
-                                    <div class="w-1/2"><label class="block text-[8px] font-bold text-gray-500 uppercase mb-0.5">Req. Precio 1</label><input type="number" id="req-p1" value="0" class="w-full border border-gray-300 rounded px-2 py-1 text-xs text-center outline-none"></div>
-                                    <div class="w-1/2"><label class="block text-[8px] font-bold text-emerald-600 uppercase mb-0.5">Precio 1 ($)</label><input type="number" id="usd-p1" step="0.01" value="0" class="w-full border border-gray-300 rounded px-2 py-1 text-xs text-center font-bold text-emerald-700 outline-none"></div>
+                                    <div class="w-1/2"><label class="block text-[8px] font-bold text-gray-500 uppercase mb-0.5">Req. Precio 1</label><input type="number" id="req-p1" value="0" class="w-full border border-gray-300 rounded px-2 py-1 text-xs text-center outline-none focus:border-emerald-500 transition"></div>
+                                    <div class="w-1/2"><label class="block text-[8px] font-bold text-emerald-600 uppercase mb-0.5">Precio 1 ($)</label><input type="number" id="usd-p1" step="0.01" value="0" class="w-full border border-gray-300 rounded px-2 py-1 text-xs text-center font-bold text-emerald-700 outline-none focus:border-emerald-500 transition"></div>
                                 </div>
                                 <div class="flex gap-2">
-                                    <div class="w-1/2"><label class="block text-[8px] font-bold text-gray-500 uppercase mb-0.5">Req. Precio 2</label><input type="number" id="req-p2" value="0" class="w-full border border-gray-300 rounded px-2 py-1 text-xs text-center outline-none"></div>
-                                    <div class="w-1/2"><label class="block text-[8px] font-bold text-emerald-600 uppercase mb-0.5">Precio 2 ($)</label><input type="number" id="usd-p2" step="0.01" value="0" class="w-full border border-gray-300 rounded px-2 py-1 text-xs text-center font-bold text-emerald-700 outline-none"></div>
+                                    <div class="w-1/2"><label class="block text-[8px] font-bold text-gray-500 uppercase mb-0.5">Req. Precio 2</label><input type="number" id="req-p2" value="0" class="w-full border border-gray-300 rounded px-2 py-1 text-xs text-center outline-none focus:border-emerald-500 transition"></div>
+                                    <div class="w-1/2"><label class="block text-[8px] font-bold text-emerald-600 uppercase mb-0.5">Precio 2 ($)</label><input type="number" id="usd-p2" step="0.01" value="0" class="w-full border border-gray-300 rounded px-2 py-1 text-xs text-center font-bold text-emerald-700 outline-none focus:border-emerald-500 transition"></div>
                                 </div>
                                 <div class="flex gap-2">
-                                    <div class="w-1/2"><label class="block text-[8px] font-bold text-gray-500 uppercase mb-0.5">Req. Precio 3</label><input type="number" id="req-p3" value="0" class="w-full border border-gray-300 rounded px-2 py-1 text-xs text-center outline-none"></div>
-                                    <div class="w-1/2"><label class="block text-[8px] font-bold text-emerald-600 uppercase mb-0.5">Precio 3 ($)</label><input type="number" id="usd-p3" step="0.01" value="0" class="w-full border border-gray-300 rounded px-2 py-1 text-xs text-center font-bold text-emerald-700 outline-none"></div>
+                                    <div class="w-1/2"><label class="block text-[8px] font-bold text-gray-500 uppercase mb-0.5">Req. Precio 3</label><input type="number" id="req-p3" value="0" class="w-full border border-gray-300 rounded px-2 py-1 text-xs text-center outline-none focus:border-emerald-500 transition"></div>
+                                    <div class="w-1/2"><label class="block text-[8px] font-bold text-emerald-600 uppercase mb-0.5">Precio 3 ($)</label><input type="number" id="usd-p3" step="0.01" value="0" class="w-full border border-gray-300 rounded px-2 py-1 text-xs text-center font-bold text-emerald-700 outline-none focus:border-emerald-500 transition"></div>
                                 </div>
                             </div>
                         </div>
@@ -196,19 +230,18 @@
                 <button type="button" onclick="eliminarProducto()" id="btn-eliminar-prod" class="text-[10px] font-black text-red-500 hover:text-red-700 uppercase tracking-wider hidden bg-red-50 px-3 py-1.5 rounded border border-red-100"><i class="fa-solid fa-trash mr-1"></i> Eliminar</button>
                 <div class="flex gap-3 ml-auto">
                     <button type="button" onclick="cerrarModalProducto()" class="px-6 py-2 bg-white border border-gray-300 text-gray-700 font-bold rounded text-xs shadow-sm hover:bg-gray-100 transition btn-press uppercase tracking-wider">Cancelar</button>
-                    <button type="submit" form="form-producto" id="btn-guardar-prod" class="px-8 py-2 bg-[#25D366] text-white font-black rounded text-xs shadow-md hover:bg-[#1ebd5c] transition uppercase tracking-widest btn-press"><i class="fa-solid fa-save mr-2"></i> Guardar Ficha</button>
+                    <button type="submit" form="form-producto" id="btn-guardar-prod" class="px-8 py-2 bg-secondary hover:opacity-90 text-white font-black rounded text-xs shadow-md transition uppercase tracking-widest btn-press"><i class="fa-solid fa-save mr-2"></i> Guardar Ficha</button>
                 </div>
             </div>
         </div>
     </div>
 
     <div id="loading-overlay" class="fixed inset-0 bg-slate-900/90 z-[999] hidden flex-col items-center justify-center p-6 text-center backdrop-blur-sm">
-        <i id="loading-icon" class="fa-solid fa-cloud-arrow-up text-5xl text-[#E67E22] mb-4 animate-bounce"></i>
+        <i id="loading-icon" class="fa-solid fa-cloud-arrow-up text-5xl text-tertiary mb-4 animate-bounce"></i>
         <h2 id="loading-text" class="text-xl font-black text-white uppercase mb-2 tracking-widest">Sincronizando...</h2>
         <p id="loading-desc" class="text-xs text-gray-400 font-bold max-w-lg mb-6">Asegurando los datos en el servidor</p>
-        <button onclick="cerrarErrorCarga()" id="btn-cerrar-carga" class="hidden bg-[#E67E22] text-white px-8 py-3 rounded font-black uppercase text-xs btn-press tracking-widest hover:scale-105 transition">Entendido</button>
+        <button onclick="cerrarErrorCarga()" id="btn-cerrar-carga" class="hidden bg-secondary hover:opacity-90 text-white px-8 py-3 rounded font-black uppercase text-xs btn-press tracking-widest transition">Entendido</button>
     </div>
-
     <script>
         const TOKEN_JWT = localStorage.getItem('pyp_token_seguro');
         let dbInventario = [], fuseInventario = null, empresaActual = null;
@@ -328,7 +361,7 @@ function renderizarInventario() {
             if(data.length === 0) { c.innerHTML = `<div class="p-10 text-center text-gray-400 font-bold uppercase"><i class="fa-solid fa-box-open text-4xl mb-3 block opacity-50"></i> Sin Resultados</div>`; return; }
 
             if(vistaActual === 'tabla') {
-                let html = `<div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"><div class="overflow-x-auto custom-scroll"><table class="w-full text-left text-[10px] whitespace-nowrap"><thead class="bg-[#143B62] text-white text-[9px] uppercase tracking-wider sticky top-0"><tr><th class="py-2 px-3 text-center">Img</th><th class="py-2 px-3">SKU / Barra</th><th class="py-2 px-3">Producto</th><th class="py-2 px-3 text-center">Categoría</th><th class="py-2 px-3 text-center">Stock</th><th class="py-2 px-3 text-right">Precio (USD)</th><th class="py-2 px-3 text-center">Estado</th><th class="py-2 px-3 text-center">Acción</th></tr></thead><tbody class="divide-y divide-gray-100">`;
+                let html = `<div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"><div class="overflow-x-auto custom-scroll"><table class="w-full text-left text-[10px] whitespace-nowrap"><thead class="bg-primary text-white text-[9px] uppercase tracking-wider sticky top-0"><tr><th class="py-2 px-3 text-center">Img</th><th class="py-2 px-3">SKU / Barra</th><th class="py-2 px-3">Producto</th><th class="py-2 px-3 text-center">Categoría</th><th class="py-2 px-3 text-center">Stock</th><th class="py-2 px-3 text-right">Precio (USD)</th><th class="py-2 px-3 text-center">Estado</th><th class="py-2 px-3 text-center">Acción</th></tr></thead><tbody class="divide-y divide-gray-100">`;
                 
                 data.slice(0, 150).forEach(p => {
                     const img = p.imagen_principal || imgDefecto;
@@ -340,10 +373,10 @@ function renderizarInventario() {
                     html += `<tr class="hover:bg-gray-50 transition border-b border-gray-50">
                         <td class="py-1.5 px-3 text-center"><img src="${img}" class="w-8 h-8 rounded object-contain border bg-white"></td>
                         <td class="py-1.5 px-3 font-mono font-bold text-gray-500">${p.id_producto_sku}<br><span class="text-[8px] text-gray-400">${p.codigo_barras || ''}</span></td>
-                        <td class="py-1.5 px-3 font-bold text-[#143B62] truncate max-w-[200px]">${p.nombre}</td>
+                        <td class="py-1.5 px-3 font-bold text-primary truncate max-w-[200px]">${p.nombre}</td>
                         <td class="py-1.5 px-3 text-center"><span class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded uppercase font-bold">${p.categoria_del_producto || '-'}</span></td>
                         <td class="py-1.5 px-3 text-center bg-gray-50/50">${bStk}</td>
-                        <td class="py-1.5 px-3 text-right font-black text-[#25D366] text-xs">$${pUsd.toFixed(2)}</td>
+                        <td class="py-1.5 px-3 text-right font-black text-secondary text-xs">$${pUsd.toFixed(2)}</td>
                         <td class="py-1.5 px-3 text-center">${bEst}</td>
                         <td class="py-1.5 px-3 text-center"><button onclick="abrirModalProducto('${pStr}')" class="text-blue-500 hover:bg-blue-50 px-2 py-1 rounded transition shadow-sm border border-transparent hover:border-blue-200"><i class="fa-solid fa-pen-to-square"></i></button></td>
                     </tr>`;
@@ -367,9 +400,9 @@ function renderizarInventario() {
                         <div class="h-24 w-full mb-2 bg-white flex items-center justify-center rounded">
                             <img src="${img}" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300">
                         </div>
-                        <h3 class="text-[9px] font-black text-[#143B62] leading-tight line-clamp-2 mb-2 uppercase">${p.nombre}</h3>
+                        <h3 class="text-[9px] font-black text-primary leading-tight line-clamp-2 mb-2 uppercase">${p.nombre}</h3>
                         <div class="mt-auto border-t border-gray-50 pt-1.5 flex justify-between items-end">
-                            <div><p class="text-[7px] text-gray-400 font-bold uppercase mb-0.5">Precio</p><p class="text-[11px] font-black text-[#25D366]">$${pUsd.toFixed(2)}</p></div>
+                            <div><p class="text-[7px] text-gray-400 font-bold uppercase mb-0.5">Precio</p><p class="text-[11px] font-black text-secondary">$${pUsd.toFixed(2)}</p></div>
                             <div class="text-right"><p class="text-[7px] text-gray-400 font-bold uppercase mb-0.5">Stock</p><p class="text-[10px] bg-gray-50 px-1.5 rounded border border-gray-100">${bStk}</p></div>
                         </div>
                     </div>`;
@@ -389,7 +422,7 @@ function renderizarInventario() {
                 tt.classList.replace('text-white', 'text-red-400');
                 bt.classList.remove('hidden');
             } else {
-                ic.className = "fa-solid fa-cloud-arrow-up text-5xl text-[#E67E22] mb-4 animate-bounce";
+                ic.className = "fa-solid fa-cloud-arrow-up text-5xl text-tertiary mb-4 animate-bounce";
                 tt.classList.replace('text-red-400', 'text-white');
                 bt.classList.add('hidden');
             }
@@ -428,7 +461,7 @@ function renderizarInventario() {
             
             if(allImgs.length > 1) {
                 allImgs.forEach(u => {
-                    thumbs.innerHTML += `<img src="${u}" class="w-12 h-12 rounded border-2 border-transparent hover:border-[#E67E22] cursor-pointer object-contain bg-white/10" onclick="document.getElementById('viewer-img-main').src='${u}'">`;
+                    thumbs.innerHTML += `<img src="${u}" class="w-12 h-12 rounded border-2 border-transparent hover:border-tertiary cursor-pointer object-contain bg-white/10" onclick="document.getElementById('viewer-img-main').src='${u}'">`;
                 });
             }
             document.getElementById('media-viewer').classList.remove('hidden');
@@ -517,7 +550,7 @@ function renderizarInventario() {
 
             if (pStr) {
                 const p = JSON.parse(decodeURIComponent(pStr));
-                document.getElementById('modal-titulo').innerHTML = `<i class="fa-solid fa-pen-to-square mr-2 text-[#E67E22]"></i> EDITAR FICHA`;
+                document.getElementById('modal-titulo').innerHTML = `<i class="fa-solid fa-pen-to-square mr-2 text-tertiary"></i> EDITAR FICHA`;
                 document.getElementById('prod-modo-edicion').value = "true"; document.getElementById('prod-sku-original').value = p.id_producto_sku;
                 
                 document.getElementById('prod-sku').value = p.id_producto_sku; 
@@ -550,7 +583,7 @@ function renderizarInventario() {
 
                 togglePrecioBsFijo(); document.getElementById('prod-sku').readOnly = true; document.getElementById('prod-sku').classList.add('bg-gray-200');
             } else {
-                document.getElementById('modal-titulo').innerHTML = `<i class="fa-solid fa-plus mr-2 text-[#25D366]"></i> NUEVO REGISTRO`;
+                document.getElementById('modal-titulo').innerHTML = `<i class="fa-solid fa-plus mr-2 text-secondary"></i> NUEVO REGISTRO`;
                 document.getElementById('prod-modo-edicion').value = "false";
                 document.getElementById('prod-sku').readOnly = false; document.getElementById('prod-sku').classList.remove('bg-gray-200');
             }
@@ -625,3 +658,4 @@ function renderizarInventario() {
     </script>
 </body>
 </html>
+    
