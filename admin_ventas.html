@@ -1075,6 +1075,26 @@ function abrirInfoProducto(prodStr) {
             document.getElementById('modal-info-producto').classList.remove('hidden');
             document.getElementById('modal-info-producto').classList.add('flex');
         }
+        function limpiarVentaPOS() {
+            if(carrito.length === 0) return;
+            if(confirm("⚠️ ¿Estás seguro de limpiar la pantalla y cancelar esta venta actual?")) {
+                carrito = [];
+                limpiarCliente();
+                document.getElementById('pos-input-desc-general').value = '';
+                document.getElementById('pos-nro-control').value = '';
+                document.getElementById('pos-condicion').selectedIndex = 0;
+                document.getElementById('pos-fecha-emision').value = getFechaHoy();
+                ajustarFechaVencimiento();
+                actualizarUI_Carrito();
+            }
+        }
+
+        function guardarVentaEnEspera() {
+            if(carrito.length === 0) return;
+            // Lógica estructural Fase 2:
+            alert("SISTEMA P&P: Se guardará como 'EN ESPERA' o 'PRESUPUESTO'.\n\nNo gasta número de factura fiscal ni afecta cajas. Limpia la pantalla para el siguiente cliente.");
+            // Aquí inyectaremos el POST a Supabase con estatus 'Borrador'
+        }
        
         function verificarIGTF() {
             const metodo = document.getElementById('cobro-metodo').value; const aplica = (metodo === 'EFECTIVO_USD' || metodo === 'ZELLE');
