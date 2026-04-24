@@ -954,22 +954,83 @@ html += `
             actualizarUI_Carrito();
             actualizarIndicadorTasa(new Date().toISOString());
         }
-
-        function abrirInfoProducto(prodStr) {
+function abrirInfoProducto(prodStr) {
             const p = JSON.parse(decodeURIComponent(prodStr));
+            const pre = p.pre || {}; // Objeto de precios anidado
+
+            // 1. Identidad y Clasificación
             document.getElementById('info-prod-img-main').src = p.imagen_principal || imgDefecto;
             document.getElementById('info-prod-sku').innerText = p.id_producto_sku || 'N/A';
-            document.getElementById('info-prod-nom').innerText = p.nombre || 'N/A';
             document.getElementById('info-prod-barra').innerText = p.codigo_barras || 'N/A';
+            document.getElementById('info-prod-nom').innerText = p.nombre || 'N/A';
             document.getElementById('info-prod-tipo').innerText = p.tipo_producto || 'N/A';
             document.getElementById('info-prod-cat').innerText = p.categoria_del_producto || 'N/A';
+            document.getElementById('info-prod-catventa').innerText = p.categoria_venta || 'N/A';
             document.getElementById('info-prod-marca').innerText = p.marca || 'N/A';
+            document.getElementById('info-prod-condicion').innerText = p.condicion || 'N/A';
+
+            // 2. Logística
+            document.getElementById('info-prod-talla').innerText = p.talla || 'N/A';
+            document.getElementById('info-prod-color').innerText = p.color || 'N/A';
+            document.getElementById('info-prod-unidad').innerText = p.unidad_medida || p.unidad || 'N/A';
             document.getElementById('info-prod-stock').innerText = p.stock_actual || '0';
-            document.getElementById('info-prod-precio-usd').innerText = `$${fmt(p.pUsd)}`;
-            
+            document.getElementById('info-prod-min').innerText = p.stock_minimo || p.min_alerta || '0';
+            document.getElementById('info-prod-negativo').innerText = p.permitir_negativo ? 'SÍ' : 'NO';
+
+            // 3. Reglas y Descripción
+            document.getElementById('info-prod-estatus').innerText = p.estado_producto || 'N/A';
+            document.getElementById('info-prod-impuesto').innerText = p.tipo_impuesto || 'N/A';
+            document.getElementById('info-prod-desc').innerText = p.descripcion || 'SIN DESCRIPCIÓN';
+
+            // 4. Precios Generales
+            document.getElementById('info-prod-precio-usd').innerText = `$${fmt(p.pUsd)}`; 
+            document.getElementById('info-prod-fijo-bs').innerText = pre.es_precio_fijo_bs ? 'SÍ' : 'NO';
+            document.getElementById('info-prod-precio-bs').innerText = pre.precio_fijo_bs ? `Bs. ${fmt(pre.precio_fijo_bs)}` : 'N/A';
+
+            // 5. Descuentos por Volumen (Cantidades Requeridas)
+            document.getElementById('info-req-p1').innerText = p.requerido_precio_1 || '-';
+            document.getElementById('info-req-p2').innerText = p.requerido_precio_2 || '-';
+            document.getElementById('info-req-p3').innerText = p.requerido_precio_3 || '-';
+
+            // 6. Descuentos por Volumen (Precios en USD)
+            document.getElementById('info-usd-p1').innerText = pre.precio_1_usd ? `$${fmt(pre.precio_1_usd)}` : '-';
+            document.getElementById('info-usd-p2').innerText = pre.precio_2_usd ? `$${fmt(pre.precio_2_usd)}` : '-';
+            document.getElementById('info-usd-p3').innerText = pre.precio_3_usd ? `$${fmt(pre.precio_3_usd)}` : '-';
+
+            // 7. Manejo de Video Promocional
+            const videoCont = document.getElementById('info-prod-video');
+            const videoPlaceholder = document.getElementById('info-prod-video-placeholder');
+            if (p.url_video) {
+                // Transforma URL normal de YouTube a formato Embed automáticamente
+                videoCont.src = p.url_video.includes('watch?v=') ? p.url_video.replace('watch?v=', 'embed/') : p.url_video;
+                videoCont.classList.remove('hidden');
+                videoPlaceholder.classList.add('hidden');
+            } else {
+                videoCont.src = '';
+                videoCont.classList.add('hidden');
+                videoPlaceholder.classList.remove('hidden');
+            }
+
+            // 8. Manejo de Galería Adicional
+            const galeriaCont = document.getElementById('info-prod-galeria');
+            galeriaCont.innerHTML = '';
+            if (p.galeria_imagenes) {
+                // Soporta tanto array como strings separados por coma
+                let imagenes = Array.isArray(p.galeria_imagenes) ? p.galeria_imagenes : p.galeria_imagenes.split(',');
+                imagenes.slice(0, 3).forEach(img => {
+                    if(img.trim() !== '') {
+                        galeriaCont.innerHTML += `<div class="h-10 w-full bg-white border border-gray-200 rounded flex items-center justify-center overflow-hidden cursor-pointer hover:border-primary transition" onclick="abrirVisorEnPOS('${img.trim()}')"><img src="${img.trim()}" class="max-h-full max-w-full object-contain"></div>`;
+                    }
+                });
+            } else {
+                galeriaCont.innerHTML = `<span class="col-span-3 text-[9px] font-bold text-gray-400 text-center w-full uppercase tracking-widest mt-3">Sin Galería</span>`;
+            }
+
+            // Ejecuta apertura
             document.getElementById('modal-info-producto').classList.remove('hidden');
             document.getElementById('modal-info-producto').classList.add('flex');
         }
+       
         function verificarIGTF() {
             const metodo = document.getElementById('cobro-metodo').value; const aplica = (metodo === 'EFECTIVO_USD' || metodo === 'ZELLE');
             document.getElementById('caja-igtf').classList.toggle('hidden', !aplica);
