@@ -213,6 +213,16 @@
         </div>
     </div>
 
+    <div id="loading-overlay" class="fixed inset-0 bg-white/95 z-[999] hidden flex-col items-center justify-center p-6 text-center backdrop-blur-sm">
+        <i id="loading-icon" class="fa-solid fa-circle-notch fa-spin text-5xl text-primary mb-4"></i>
+        <h2 id="loading-text" class="text-xl font-black text-primary uppercase mb-2">Procesando...</h2>
+        <p id="loading-error" class="text-xs text-gray-500 font-medium max-w-sm hidden text-center"></p>
+        <div id="error-actions" class="hidden mt-6 flex gap-3">
+            <button onclick="window.location.reload()" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2.5 rounded font-bold uppercase text-xs btn-press transition shadow">Reintentar</button>
+            <button onclick="forzarCierreSesion()" class="bg-secondary hover:opacity-90 text-white px-6 py-2.5 rounded font-bold uppercase text-xs btn-press transition shadow-md"><i class="fa-solid fa-power-off mr-2"></i> Cerrar Sesión</button>
+        </div>
+    </div>
+
     <div id="modal-nuevo-cliente" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[110] hidden flex items-center justify-center p-4 fade-in">
         <div class="bg-white rounded-lg shadow-2xl w-full max-w-sm overflow-hidden flex flex-col border border-gray-200">
             <div class="bg-primary text-white px-3 py-2.5 flex justify-between items-center">
@@ -255,6 +265,8 @@
             </form>
         </div>
     </div>
+
+    <div id="ticket-impresion" class="hidden print:block"></div>
 
     <script src="menu.js"></script>
     <main class="flex-1 flex flex-col h-screen overflow-hidden bg-[#f4f6f8] w-full z-10 relative">
@@ -741,7 +753,7 @@
             try { const payload = { id_empresa: empresaActual, tipo_persona: 'CLIENTE', documento_identidad: document.getElementById('fc-doc').value.trim().toUpperCase(), nombre_razon_social: document.getElementById('fc-nombre').value.trim().toUpperCase(), direccion_principal: document.getElementById('fc-dir-p').value.trim().toUpperCase(), telefono_principal: document.getElementById('fc-tel1').value.trim(), correo_electronico: document.getElementById('fc-email').value.trim(), tipo_contribuyente: document.getElementById('fc-tipo').value, nivel_precio: document.getElementById('fc-precio').value, estatus: 'ACTIVO' }; const res = await fetch(`${SUPABASE_URL}/rest/v1/directorio_maestro`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, body: JSON.stringify(payload) }); if(!res.ok) throw new Error("Doc duplicado o error."); const data = await res.json(); dbClientes.push(data[0]); fuseClientes.setCollection(dbClientes); ejecutarSeleccionCliente(data[0]); cerrarModalFichaCompleta(); } catch(e) { alert(e.message); } finally { btn.innerHTML = `Guardar`; btn.disabled = false; } 
         }
 
-        // LÓGICA DEL CARRITO DE COMPRAS (CON EDICIÓN BIMONETARIA)
+        // LÓGICA DEL CARRITO DE COMPRAS
         function calcularPrecioUnitario(prod, cantidad) { 
             if (prod.precio_manual_usd !== undefined && prod.precio_manual_usd !== "") return Number(prod.precio_manual_usd);
             let pU = prod.pUsd !== undefined ? prod.pUsd : (prod.pre && prod.pre.es_precio_fijo_bs ? (Number(prod.pre.precio_fijo_bs) / tasaBCV) : (Number(prod.pre ? prod.pre.precio_general_usd : 0) || 0)); 
@@ -930,7 +942,7 @@
             }
         }
 
-        // ================= SINCRONIZACIÓN DE API BCV=================
+        // ================= MOTOR DE TASAS (API ACTUALIZADA Y MEJORADA) =================
         async function guardarTasaManual(moneda, valor) { 
             const t = parseFloat(valor); if(isNaN(t) || t <= 0) return; 
             if(moneda === 'USD') tasaBCV = t; if(moneda === 'EUR') tasaBCVEur = t; 
