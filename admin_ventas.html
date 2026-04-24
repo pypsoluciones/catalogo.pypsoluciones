@@ -586,11 +586,28 @@
                 pypMostrarExento = getC('POS_MOSTRAR_EXENTO', 'SI');
                 
                 const strCond = getC('CONDICIONES_PAGO', 'CONTADO|0');
-                let htmlCond = '';
+                let arrCond = [];
+                
+                // 1. Extraer y estructurar datos
                 strCond.split(',').forEach(c => {
                     const p = c.split('|');
-                    if(p[0]) htmlCond += `<option value="${p[1] ? p[1].trim() : '0'}">${p[0].trim().toUpperCase()}</option>`;
+                    if(p[0]) {
+                        arrCond.push({ 
+                            nombre: p[0].trim().toUpperCase(), 
+                            dias: parseInt(p[1] ? p[1].trim() : '0') || 0 
+                        });
+                    }
                 });
+
+                // 2. Forzar ordenamiento matemático estricto (de menor a mayor)
+                arrCond.sort((a, b) => a.dias - b.dias);
+
+                // 3. Renderizar opciones ordenadas
+                let htmlCond = '';
+                arrCond.forEach(c => {
+                    htmlCond += `<option value="${c.dias}">${c.nombre}</option>`;
+                });
+                
                 document.getElementById('pos-condicion').innerHTML = htmlCond;
                 ajustarFechaVencimiento();
 
