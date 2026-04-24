@@ -4,22 +4,60 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>P&P Admin | Directorio Maestro</title>
+    
+    <script>
+        const cPri = localStorage.getItem('pyp_color_primario') || '#143B62';
+        const cSec = localStorage.getItem('pyp_color_secundario') || '#E67E22';
+        const cTer = localStorage.getItem('pyp_color_terciario') || '#64748b';
+        const fontFam = localStorage.getItem('pyp_fuente') || "'Inter', sans-serif";
+        const fontSiz = localStorage.getItem('pyp_tamano') || "14px";
+
+        document.documentElement.style.setProperty('--color-primary', cPri);
+        document.documentElement.style.setProperty('--color-secondary', cSec);
+        document.documentElement.style.setProperty('--color-tertiary', cTer);
+        document.documentElement.style.setProperty('--font-global', fontFam);
+        document.documentElement.style.setProperty('--size-global', fontSiz);
+    </script>
+
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        window.tailwind = {
+            config: {
+                theme: {
+                    extend: {
+                        colors: { primary: 'var(--color-primary)', secondary: 'var(--color-secondary)', tertiary: 'var(--color-tertiary)' }
+                    }
+                }
+            }
+        };
+    </script>
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.js"></script>
+    
     <style>
-        body { font-family: 'Inter', sans-serif; }
+        body { font-family: var(--font-global); font-size: var(--size-global); }
+        .bg-primary { background-color: var(--color-primary) !important; }
+        .text-primary { color: var(--color-primary) !important; }
+        .bg-secondary { background-color: var(--color-secondary) !important; }
+        .text-secondary { color: var(--color-secondary) !important; }
+        .text-tertiary { color: var(--color-tertiary) !important; }
+        .border-primary { border-color: var(--color-primary) !important; }
+
         .custom-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background-color: var(--color-primary); border-radius: 4px; }
         .btn-press:active { transform: scale(0.97); }
         .fade-in { animation: fadeIn 0.2s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-        .tab-active { border-bottom: 3px solid #E67E22; color: #143B62; font-weight: 800; }
+        
+        /* Pestañas personalizadas a la Marca Blanca */
+        .tab-active { border-bottom: 3px solid var(--color-secondary); color: var(--color-primary); font-weight: 800; }
         .tab-inactive { color: #64748b; font-weight: 500; border-bottom: 3px solid transparent; }
-        .btn-vista.active { background-color: #e2e8f0; color: #143B62; border-color: #cbd5e1; }
+        .btn-vista.active { background-color: var(--color-primary); color: white; border-color: var(--color-primary); }
         .param-label { font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; }
     </style>
+    
     <script src="config.js"></script>
     <script>if (!localStorage.getItem('pyp_token_seguro')) window.location.href = 'login.html';</script>
 </head>
@@ -30,13 +68,13 @@
     <main class="flex-1 flex flex-col h-screen overflow-hidden bg-[#f4f6f8] w-full z-10 relative">
         <header class="bg-white shadow-sm px-4 py-2 flex justify-between items-center z-10 shrink-0 border-b border-gray-200 h-14">
             <div class="flex items-center gap-3">
-                <button onclick="toggleMobileMenu()" class="md:hidden text-gray-600 hover:text-[#143B62] text-xl transition px-2"><i class="fa-solid fa-bars"></i></button>
-                <h1 class="text-base font-semibold text-[#143B62] flex items-center gap-2"><i class="fa-solid fa-address-book text-[#E67E22]"></i> Directorio Maestro</h1>
+                <button onclick="toggleMobileMenu()" class="md:hidden text-gray-600 hover:text-primary text-xl transition px-2"><i class="fa-solid fa-bars"></i></button>
+                <h1 class="text-base font-semibold text-primary flex items-center gap-2"><i class="fa-solid fa-address-book text-tertiary"></i> Directorio Maestro</h1>
             </div>
             <div class="flex items-center gap-3 shrink-0">
-                <button onclick="window.location.reload()" class="md:hidden text-blue-600 bg-blue-50 w-8 h-8 rounded-full flex items-center justify-center hover:bg-blue-100 transition shadow-sm btn-press"><i class="fa-solid fa-rotate-right"></i></button>
+                <button onclick="window.location.reload()" class="md:hidden text-primary bg-slate-100 w-8 h-8 rounded-full flex items-center justify-center hover:bg-slate-200 transition shadow-sm btn-press"><i class="fa-solid fa-rotate-right"></i></button>
                 <div class="text-[11px] font-semibold text-gray-500 bg-gray-100 px-3 py-1 rounded border border-gray-200 uppercase tracking-wide hidden sm:block">
-                    <i class="fa-solid fa-user-tie text-[#143B62] mr-1"></i> <span id="nombre-usuario">Admin</span>
+                    <i class="fa-solid fa-user-tie text-tertiary mr-1"></i> <span id="nombre-usuario">Admin</span>
                 </div>
             </div>
         </header>
@@ -52,33 +90,32 @@
                 <div class="w-full sm:w-2/3 flex flex-col sm:flex-row gap-2">
                     <div class="relative flex-1">
                         <i class="fa-solid fa-search absolute left-3 top-2.5 text-gray-400 text-sm"></i>
-                        <input type="text" id="buscador" oninput="filtrarContactos()" placeholder="Buscar (Ignora acentos)..." class="w-full border border-gray-300 rounded-md pl-9 pr-4 py-1.5 text-xs focus:outline-none focus:border-[#143B62] uppercase transition font-bold">
+                        <input type="text" id="buscador" oninput="filtrarContactos()" placeholder="Buscar (Ignora acentos)..." class="w-full border border-gray-300 rounded-md pl-9 pr-4 py-1.5 text-xs focus:outline-none focus:border-tertiary uppercase transition font-bold">
                     </div>
-                    <select id="filtro-categoria" onchange="filtrarContactos()" class="w-full sm:w-1/3 border border-gray-300 rounded-md px-3 py-1.5 text-xs text-[#143B62] font-semibold focus:outline-none focus:border-[#E67E22] bg-gray-50">
+                    <select id="filtro-categoria" onchange="filtrarContactos()" class="w-full sm:w-1/3 border border-gray-300 rounded-md px-3 py-1.5 text-xs text-primary font-semibold focus:outline-none focus:border-tertiary transition bg-gray-50">
                         <option value="TODAS">TODAS</option>
                     </select>
                 </div>
                 
                 <div class="flex gap-2 w-full sm:w-auto justify-end">
                     <div class="flex bg-gray-50 rounded-md border border-gray-300 p-0.5 shadow-inner">
-                        <button id="btn-vista-tabla" onclick="cambiarVista('tabla')" class="btn-vista active px-3 py-1 rounded text-gray-500 hover:text-[#143B62] transition text-sm"><i class="fa-solid fa-list"></i></button>
-                        <button id="btn-vista-grid" onclick="cambiarVista('grid')" class="btn-vista px-3 py-1 rounded text-gray-500 hover:text-[#143B62] transition text-sm"><i class="fa-solid fa-border-all"></i></button>
+                        <button id="btn-vista-tabla" onclick="cambiarVista('tabla')" class="btn-vista active px-3 py-1 rounded text-gray-500 transition text-sm"><i class="fa-solid fa-list"></i></button>
+                        <button id="btn-vista-grid" onclick="cambiarVista('grid')" class="btn-vista px-3 py-1 rounded text-gray-500 transition text-sm"><i class="fa-solid fa-border-all"></i></button>
                     </div>
-                    <button onclick="abrirModalContacto()" class="bg-[#25D366] hover:bg-[#1ebd5c] text-white px-4 py-1.5 rounded-md font-bold text-[12px] shadow-sm transition btn-press flex justify-center items-center gap-2 whitespace-nowrap">
+                    <button onclick="abrirModalContacto()" class="bg-secondary hover:opacity-90 text-white px-4 py-1.5 rounded-md font-bold text-[12px] shadow-sm transition btn-press flex justify-center items-center gap-2 whitespace-nowrap">
                         <i class="fa-solid fa-plus"></i> <span id="lbl-btn-nuevo">NUEVO CLIENTE</span>
                     </button>
                 </div>
             </div>
 
             <div id="contenedor-contactos" class="flex-1 bg-white border border-gray-200 border-t-0 rounded-b-xl shadow-sm flex flex-col min-h-[400px]">
-                <div class="p-10 text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin text-2xl mb-2 block"></i> Sincronizando...</div>
+                <div class="p-10 text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin text-2xl mb-2 block text-tertiary"></i> Sincronizando...</div>
             </div>
         </div>
     </main>
-
     <div id="modal-contacto" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4 fade-in">
         <div class="bg-white rounded-lg shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden border border-gray-200 relative">
-            <div class="bg-[#143B62] text-white px-5 py-3 flex justify-between items-center shrink-0">
+            <div class="bg-primary text-white px-5 py-3 flex justify-between items-center shrink-0">
                 <h3 class="font-medium text-sm tracking-wide flex items-center uppercase" id="modal-titulo">REGISTRO</h3>
                 <button onclick="cerrarModalContacto()" class="text-gray-300 hover:text-white text-lg transition"><i class="fa-solid fa-times"></i></button>
             </div>
@@ -88,34 +125,34 @@
                 <input type="hidden" id="cont-id-original" value="">
                 
                 <div class="bg-white p-4 rounded border border-gray-200 shadow-sm mb-4">
-                    <h4 class="text-[11px] font-bold text-[#E67E22] uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Identificación Legal</h4>
+                    <h4 class="text-[11px] font-bold text-secondary uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Identificación Legal</h4>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
-                        <div><label class="block param-label mb-1">Doc. Identidad / RIF *</label><input type="text" id="cont-doc" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-bold focus:border-[#143B62] outline-none uppercase"></div>
-                        <div><label class="block param-label mb-1">Nombre o Razón Social *</label><input type="text" id="cont-nombre" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-bold focus:border-[#143B62] outline-none uppercase"></div>
+                        <div><label class="block param-label mb-1">Doc. Identidad / RIF *</label><input type="text" id="cont-doc" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-bold focus:border-tertiary transition outline-none uppercase"></div>
+                        <div><label class="block param-label mb-1">Nombre o Razón Social *</label><input type="text" id="cont-nombre" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-bold focus:border-tertiary transition outline-none uppercase"></div>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div class="md:col-span-2"><label class="block param-label mb-1">Dirección Fiscal / Principal</label><input type="text" id="cont-dir-p" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none uppercase"></div>
-                        <div><label id="lbl-cont-categoria" class="block param-label mb-1 text-purple-600">Categoría</label><select id="cont-categoria" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-semibold focus:border-purple-500 outline-none bg-purple-50"><option value="">SIN ASIGNAR</option></select></div>
+                        <div class="md:col-span-2"><label class="block param-label mb-1">Dirección Fiscal / Principal</label><input type="text" id="cont-dir-p" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none focus:border-tertiary transition uppercase"></div>
+                        <div><label id="lbl-cont-categoria" class="block param-label mb-1 text-purple-600">Categoría</label><select id="cont-categoria" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-semibold focus:border-purple-500 outline-none bg-purple-50 transition"><option value="">SIN ASIGNAR</option></select></div>
                     </div>
                 </div>
 
                 <div class="bg-white p-4 rounded border border-gray-200 shadow-sm mb-4">
-                    <h4 class="text-[11px] font-bold text-[#143B62] uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Comunicación Directa</h4>
+                    <h4 class="text-[11px] font-bold text-primary uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Comunicación Directa</h4>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
-                        <div><label class="block param-label mb-1" id="lbl-tel1">Celular Principal *</label><input type="text" id="cont-tel1" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-bold focus:border-[#143B62] outline-none bg-blue-50" placeholder="Ej: 04141234567"></div>
-                        <div><label class="block param-label mb-1">Teléfono Alternativo</label><input type="text" id="cont-tel2" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none"></div>
-                        <div><label class="block param-label mb-1">Correo Electrónico</label><input type="email" id="cont-email" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none"></div>
+                        <div><label class="block param-label mb-1" id="lbl-tel1">Celular Principal *</label><input type="text" id="cont-tel1" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-bold focus:border-tertiary transition outline-none bg-blue-50" placeholder="Ej: 04141234567"></div>
+                        <div><label class="block param-label mb-1">Teléfono Alternativo</label><input type="text" id="cont-tel2" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none focus:border-tertiary transition"></div>
+                        <div><label class="block param-label mb-1">Correo Electrónico</label><input type="email" id="cont-email" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none focus:border-tertiary transition"></div>
                     </div>
-                    <div class="w-1/3"><label class="block param-label mb-1">Estatus</label><select id="cont-estatus" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-bold outline-none"><option value="ACTIVO">ACTIVO</option><option value="INACTIVO">INACTIVO</option></select></div>
+                    <div class="w-1/3"><label class="block param-label mb-1">Estatus</label><select id="cont-estatus" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-bold outline-none focus:border-tertiary transition"><option value="ACTIVO">ACTIVO</option><option value="INACTIVO">INACTIVO</option></select></div>
                 </div>
 
                 <div id="caja-cliente" class="bg-white p-4 rounded border border-gray-200 shadow-sm border-l-4 border-l-emerald-500">
                     <h4 class="text-[11px] font-bold text-emerald-600 uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Parámetros de Venta (Cliente)</h4>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div><label class="block param-label mb-1">Dirección de Entrega</label><input type="text" id="cli-dir-sec" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none uppercase"></div>
+                        <div><label class="block param-label mb-1">Dirección de Entrega</label><input type="text" id="cli-dir-sec" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none focus:border-emerald-500 transition uppercase"></div>
                         <div class="grid grid-cols-2 gap-2">
-                            <div><label class="block param-label mb-1">Tipo Persona</label><select id="cli-tipo" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none"><option value="NATURAL">NATURAL</option><option value="JURIDICA">JURÍDICA</option></select></div>
-                            <div><label class="block param-label mb-1">Nivel de Precio</label><select id="cli-nivel" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none"><option value="GENERAL">GENERAL</option><option value="P1">MAYOR (P1)</option><option value="P2">GRAN MAYOR (P2)</option></select></div>
+                            <div><label class="block param-label mb-1">Tipo Persona</label><select id="cli-tipo" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none focus:border-emerald-500 transition"><option value="NATURAL">NATURAL</option><option value="JURIDICA">JURÍDICA</option></select></div>
+                            <div><label class="block param-label mb-1">Nivel de Precio</label><select id="cli-nivel" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none focus:border-emerald-500 transition"><option value="GENERAL">GENERAL</option><option value="P1">MAYOR (P1)</option><option value="P2">GRAN MAYOR (P2)</option></select></div>
                         </div>
                     </div>
                 </div>
@@ -123,15 +160,15 @@
                 <div id="caja-proveedor" class="bg-white p-4 rounded border border-gray-200 shadow-sm border-l-4 border-l-purple-500 hidden">
                     <h4 class="text-[11px] font-bold text-purple-600 uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Parámetros de Compra (Proveedor)</h4>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
-                        <div class="md:col-span-2"><label class="block param-label mb-1">Dirección Sucursal</label><input type="text" id="prov-dir-sec" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none uppercase"></div>
-                        <div><label class="block param-label mb-1">Contribuyente</label><select id="prov-clas" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none"><option value="ORDINARIO">ORDINARIO</option><option value="ESPECIAL">ESPECIAL</option></select></div>
+                        <div class="md:col-span-2"><label class="block param-label mb-1">Dirección Sucursal</label><input type="text" id="prov-dir-sec" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none focus:border-purple-500 transition uppercase"></div>
+                        <div><label class="block param-label mb-1">Contribuyente</label><select id="prov-clas" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none focus:border-purple-500 transition"><option value="ORDINARIO">ORDINARIO</option><option value="ESPECIAL">ESPECIAL</option></select></div>
                     </div>
                 </div>
             </form>
 
             <div class="bg-gray-50 border-t border-gray-200 px-4 py-3 flex gap-3 justify-end shrink-0">
                 <button type="button" onclick="cerrarModalContacto()" class="px-5 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-md text-[12px] shadow-sm hover:bg-gray-100 transition btn-press">Cancelar</button>
-                <button type="submit" form="form-contacto" id="btn-guardar-cont" class="px-5 py-2 bg-[#143B62] text-white font-medium rounded-md text-[12px] shadow-sm hover:bg-[#0f2d4a] transition flex items-center gap-2 btn-press"><i class="fa-solid fa-save"></i> Guardar</button>
+                <button type="submit" form="form-contacto" id="btn-guardar-cont" class="px-5 py-2 bg-secondary text-white hover:opacity-90 font-medium rounded-md text-[12px] shadow-sm transition flex items-center gap-2 btn-press"><i class="fa-solid fa-save"></i> Guardar</button>
             </div>
         </div>
     </div>
@@ -153,6 +190,15 @@
                     fetch(`${SUPABASE_URL}/rest/v1/directorio_maestro?select=*&order=nombre_razon_social.asc`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
                     fetch(`${SUPABASE_URL}/rest/v1/parametros_inventario?select=*&grupo=in.(CATEGORIA_CLIENTE,RUBRO_PROVEEDOR)&estatus=eq.ACTIVO`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } })
                 ]);
+                
+                // 🛡️ BLINDAJE: Si el token caducó (401), cerrar sesión automáticamente
+                if (!resDir.ok) {
+                    localStorage.removeItem('pyp_token_seguro');
+                    localStorage.removeItem('pyp_usuario_nombre');
+                    window.location.href = 'login.html';
+                    return;
+                }
+
                 dbDirectorio = await resDir.json();
                 const pars = await resPar.json();
                 catClientes = pars.filter(p => p.grupo === 'CATEGORIA_CLIENTE');
@@ -202,17 +248,17 @@
             if(data.length === 0) { c.innerHTML = `<div class="p-10 text-center text-gray-400 font-medium">No se encontraron registros.</div>`; return; }
 
             if(vistaActual === 'tabla') {
-                let html = `<div class="overflow-x-auto flex-1 custom-scroll"><table class="w-full text-left text-xs whitespace-nowrap"><thead class="bg-[#143B62] text-white text-[10px] uppercase tracking-wider sticky top-0"><tr><th class="py-3 px-4">Doc / RIF</th><th class="py-3 px-4">Razón Social</th><th class="py-3 px-4">${tipoActual==='CLIENTE'?'Categoría':'Rubro'}</th><th class="py-3 px-4">Celular</th><th class="py-3 px-4">Dirección</th><th class="py-3 px-4 text-center">Acción</th></tr></thead><tbody class="divide-y divide-gray-100">`;
+                let html = `<div class="overflow-x-auto flex-1 custom-scroll"><table class="w-full text-left text-xs whitespace-nowrap"><thead class="bg-primary text-white text-[10px] uppercase tracking-wider sticky top-0"><tr><th class="py-3 px-4">Doc / RIF</th><th class="py-3 px-4">Razón Social</th><th class="py-3 px-4">${tipoActual==='CLIENTE'?'Categoría':'Rubro'}</th><th class="py-3 px-4">Celular</th><th class="py-3 px-4">Dirección</th><th class="py-3 px-4 text-center">Acción</th></tr></thead><tbody class="divide-y divide-gray-100">`;
                 data.forEach(item => {
                     const iStr = encodeURIComponent(JSON.stringify(item));
-                    html += `<tr class="hover:bg-gray-50 border-b border-gray-50"><td class="py-2.5 px-4 font-mono font-semibold text-gray-500">${item.documento_identidad || '-'}</td><td class="py-2.5 px-4 font-bold text-[#143B62]">${item.nombre_razon_social}</td><td class="py-2.5 px-4"><span class="bg-purple-50 text-purple-600 border border-purple-100 text-[9px] font-bold px-2 py-0.5 rounded uppercase">${item.categoria_contacto || 'N/A'}</span></td><td class="py-2.5 px-4 text-gray-600">${item.telefono_principal || '-'}</td><td class="py-2.5 px-4 text-gray-400 truncate max-w-[200px]">${item.direccion_principal || '-'}</td><td class="py-2.5 px-4 text-center"><button onclick="abrirModalContacto('${iStr}')" class="text-blue-500 hover:bg-blue-50 px-2 py-1 rounded transition"><i class="fa-solid fa-pen-to-square"></i></button></td></tr>`;
+                    html += `<tr class="hover:bg-gray-50 border-b border-gray-50"><td class="py-2.5 px-4 font-mono font-semibold text-gray-500">${item.documento_identidad || '-'}</td><td class="py-2.5 px-4 font-bold text-primary">${item.nombre_razon_social}</td><td class="py-2.5 px-4"><span class="bg-purple-50 text-purple-600 border border-purple-100 text-[9px] font-bold px-2 py-0.5 rounded uppercase">${item.categoria_contacto || 'N/A'}</span></td><td class="py-2.5 px-4 text-gray-600">${item.telefono_principal || '-'}</td><td class="py-2.5 px-4 text-gray-400 truncate max-w-[200px]">${item.direccion_principal || '-'}</td><td class="py-2.5 px-4 text-center"><button onclick="abrirModalContacto('${iStr}')" class="text-blue-500 hover:bg-blue-50 px-2 py-1 rounded transition"><i class="fa-solid fa-pen-to-square"></i></button></td></tr>`;
                 });
                 html += `</tbody></table></div>`; c.innerHTML = html;
             } else {
                 let html = `<div class="p-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 overflow-y-auto custom-scroll">`;
                 data.forEach(item => {
                     const iStr = encodeURIComponent(JSON.stringify(item));
-                    html += `<div class="bg-white border border-gray-200 rounded-lg p-3 flex flex-col shadow-sm relative hover:border-[#E67E22] transition fade-in"><div class="flex justify-between items-start mb-2"><div class="bg-gray-100 px-2 py-1 rounded font-mono text-[9px] font-bold text-gray-600">${item.documento_identidad || '-'}</div>${item.categoria_contacto ? `<div class="bg-purple-50 text-purple-600 border border-purple-100 px-2 py-0.5 rounded text-[8px] font-bold uppercase">${item.categoria_contacto}</div>` : ''}</div><h3 class="font-black text-[#143B62] text-xs leading-tight mb-2 uppercase">${item.nombre_razon_social}</h3><div class="text-[10px] text-gray-500 space-y-1 mb-3 flex-1"><p><i class="fa-solid fa-phone w-4 text-gray-300"></i> ${item.telefono_principal || '-'}</p><p class="truncate"><i class="fa-solid fa-location-dot w-4 text-gray-300"></i> ${item.direccion_principal || '-'}</p></div><button onclick="abrirModalContacto('${iStr}')" class="text-[9px] bg-blue-50 text-blue-700 font-bold py-1.5 rounded uppercase tracking-wider hover:bg-blue-100 transition"><i class="fa-solid fa-pen-to-square mr-1"></i> Editar Ficha</button></div>`;
+                    html += `<div class="bg-white border border-gray-200 rounded-lg p-3 flex flex-col shadow-sm relative hover:border-secondary transition fade-in"><div class="flex justify-between items-start mb-2"><div class="bg-gray-100 px-2 py-1 rounded font-mono text-[9px] font-bold text-gray-600">${item.documento_identidad || '-'}</div>${item.categoria_contacto ? `<div class="bg-purple-50 text-purple-600 border border-purple-100 px-2 py-0.5 rounded text-[8px] font-bold uppercase">${item.categoria_contacto}</div>` : ''}</div><h3 class="font-black text-primary text-xs leading-tight mb-2 uppercase">${item.nombre_razon_social}</h3><div class="text-[10px] text-gray-500 space-y-1 mb-3 flex-1"><p><i class="fa-solid fa-phone w-4 text-gray-300"></i> ${item.telefono_principal || '-'}</p><p class="truncate"><i class="fa-solid fa-location-dot w-4 text-gray-300"></i> ${item.direccion_principal || '-'}</p></div><button onclick="abrirModalContacto('${iStr}')" class="text-[9px] bg-blue-50 text-blue-700 font-bold py-1.5 rounded uppercase tracking-wider hover:bg-blue-100 transition"><i class="fa-solid fa-pen-to-square mr-1"></i> Editar Ficha</button></div>`;
                 });
                 html += `</div>`; c.innerHTML = html;
             }
