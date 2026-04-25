@@ -1,315 +1,471 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>P&P Admin | Caja y Tesorería</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
-        .btn-press:active { transform: scale(0.95); }
-    </style>
-    <script>
-        if (localStorage.getItem('pyp_sesion_activa') !== 'true') window.location.href = 'login.html';
-    </script>
-</head>
-<body class="bg-[#f0f2f5] font-sans flex h-screen overflow-hidden text-gray-800">
-     <main class="flex-1 flex flex-col h-screen overflow-hidden bg-gray-50">
+<!DOCTYPE html> 
+<html lang="es"> 
+<head> 
+    <meta charset="UTF-8"> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+    <title>P&P Admin | Control de Caja</title> 
+    <script src="https://cdn.tailwindcss.com"></script> 
+    <script> 
+        const cPri = localStorage.getItem('pyp_color_primario') || '#143B62'; 
+        const cSec = localStorage.getItem('pyp_color_secundario') || '#E67E22'; 
+        const cTer = localStorage.getItem('pyp_color_terciario') || '#64748b'; 
+        const fontFam = localStorage.getItem('pyp_fuente') || "'Inter', sans-serif"; 
+        const fontSiz = localStorage.getItem('pyp_tamano') || "14px"; 
         
-        <header class="bg-white shadow-sm px-6 py-4 flex justify-between items-center z-10 shrink-0">
-            <h1 class="text-xl font-bold text-[#143B62]"><i class="fa-solid fa-vault mr-2"></i> Flujo de Caja Diario</h1>
-            <div class="text-sm font-bold bg-blue-50 text-[#143B62] px-4 py-1.5 rounded border border-blue-200 shadow-sm flex items-center gap-2">
-                <i class="fa-regular fa-calendar"></i> <span id="fecha-hoy">Cargando...</span>
-            </div>
-        </header>
+        document.documentElement.style.setProperty('--color-primary', cPri); 
+        document.documentElement.style.setProperty('--color-secondary', cSec); 
+        document.documentElement.style.setProperty('--color-tertiary', cTer); 
+        document.documentElement.style.setProperty('--font-global', fontFam); 
+        document.documentElement.style.setProperty('--size-global', fontSiz); 
+        
+        tailwind.config = { theme: { extend: { colors: { primary: 'var(--color-primary)', secondary: 'var(--color-secondary)', tertiary: 'var(--color-tertiary)' } } } }; 
+    </script> 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"> 
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;900&display=swap" rel="stylesheet"> 
+    <style> 
+        body { font-family: var(--font-global); font-size: var(--size-global); } 
+        .bg-primary { background-color: var(--color-primary) !important; } 
+        .text-primary { color: var(--color-primary) !important; } 
+        .bg-secondary { background-color: var(--color-secondary) !important; } 
+        .text-secondary { color: var(--color-secondary) !important; } 
+        .text-tertiary { color: var(--color-tertiary) !important; } 
+        .custom-scroll::-webkit-scrollbar { width: 5px; height: 5px; } 
+        .custom-scroll::-webkit-scrollbar-thumb { background-color: var(--color-primary); border-radius: 4px; } 
+        .btn-press:active { transform: scale(0.96); } 
+        .fade-in { animation: fadeIn 0.15s ease-in-out; } 
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(2px); } to { opacity: 1; transform: translateY(0); } } 
+        
+        @media print { 
+            body * { visibility: hidden; } 
+            #ticket-impresion, #ticket-impresion * { visibility: visible; } 
+            #ticket-impresion { position: absolute; left: 0; top: 0; margin: 0; padding: 0; color: #000; background: #fff; width: 78mm; font-family: 'Courier New', monospace; font-size: 11px; } 
+        } 
+    </style> 
+</head> 
+<body class="bg-[#f4f6f8] flex h-screen overflow-hidden text-gray-800"> 
 
-        <div class="flex-1 overflow-y-auto p-4 md:p-6 custom-scroll flex flex-col xl:flex-row gap-6">
-            
-            <div class="w-full xl:w-1/3 flex flex-col gap-6 shrink-0">
-                
-                <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                    <h3 class="text-sm font-bold text-[#143B62] uppercase tracking-wider mb-4 border-l-4 border-[#E67E22] pl-2">Registrar Movimiento Extra</h3>
-                    <p class="text-xs text-gray-500 mb-5">Usa esto para registrar pagos de servicios, almuerzos, o ingresos que no sean por ventas.</p>
-                    
-                    <form id="form-movimiento" onsubmit="procesarMovimiento(event)" class="space-y-4">
-                        <div>
-                            <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Tipo de Movimiento</label>
-                            <div class="grid grid-cols-2 gap-2">
-                                <label class="flex items-center justify-center gap-2 border border-red-200 bg-red-50 text-red-700 py-2 rounded cursor-pointer font-bold text-sm">
-                                    <input type="radio" name="tipo_mov" value="Egreso" checked class="accent-red-600"> Retiro / Gasto
-                                </label>
-                                <label class="flex items-center justify-center gap-2 border border-green-200 bg-green-50 text-green-700 py-2 rounded cursor-pointer font-bold text-sm">
-                                    <input type="radio" name="tipo_mov" value="Ingreso" class="accent-green-600"> Ingreso Extra
-                                </label>
-                            </div>
-                        </div>
+    <div id="loading-overlay" class="fixed inset-0 bg-white/95 z-[9999] hidden flex-col items-center justify-center p-6 text-center backdrop-blur-sm"> 
+        <i id="loading-icon" class="fa-solid fa-circle-notch fa-spin text-5xl text-primary mb-4"></i> 
+        <h2 id="loading-text" class="text-xl font-black text-primary uppercase mb-2">Cargando...</h2> 
+        <p id="loading-error" class="text-xs text-gray-500 font-medium max-w-sm hidden text-center"></p> 
+        <div id="error-actions" class="hidden mt-6 flex gap-3"> 
+            <button onclick="cerrarErrorCarga()" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2.5 rounded font-bold uppercase text-xs btn-press transition shadow">Cerrar</button> 
+        </div> 
+    </div> 
 
-                        <div>
-                            <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Concepto / Razón</label>
-                            <input type="text" id="mov-concepto" required placeholder="Ej: Compra de botellón de agua" class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-[#E67E22]">
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Monto ($)</label>
-                                <input type="number" id="mov-usd" step="0.01" value="0" class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-[#E67E22] font-bold text-gray-700">
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Monto (Bs)</label>
-                                <input type="number" id="mov-bs" step="0.01" value="0" class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-[#E67E22] font-bold text-gray-700">
-                            </div>
-                        </div>
-
-                        <div>
-                            <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">De dónde salió / entró</label>
-                            <select id="mov-metodo" class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none font-semibold text-gray-700">
-                                <option value="Efectivo USD">Efectivo USD (Caja Física)</option>
-                                <option value="Efectivo Bs">Efectivo Bs (Caja Física)</option>
-                                <option value="Pago Móvil">Pago Móvil (Banco)</option>
-                                <option value="Zelle">Zelle</option>
-                            </select>
-                        </div>
-
-                        <button type="submit" id="btn-movimiento" class="w-full bg-[#143B62] text-white font-bold py-3 rounded-lg shadow-md hover:bg-[#0f2d4a] transition btn-press mt-2">
-                            Guardar Movimiento
-                        </button>
-                    </form>
+    <div id="modal-abrir-caja" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[9990] hidden flex items-center justify-center p-4 fade-in"> 
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden flex flex-col border border-gray-200"> 
+            <div class="bg-primary px-4 py-3 flex justify-between items-center shrink-0"> 
+                <h3 class="font-bold text-white text-[12px] tracking-wide uppercase"><i class="fa-solid fa-door-open text-tertiary mr-2"></i> Apertura de Turno</h3> 
+                <button onclick="cerrarModalApertura()" class="text-gray-300 hover:text-white text-lg transition"><i class="fa-solid fa-times"></i></button> 
+            </div> 
+            <div class="p-5 bg-gray-50 space-y-4 text-center"> 
+                <div class="bg-blue-50 border border-blue-200 rounded p-3 text-[10px] text-primary font-bold uppercase">
+                    Ingrese el fondo de caja o saldo inicial en efectivo para iniciar las operaciones.
                 </div>
-            </div>
+                <div class="text-left"> 
+                    <label class="block text-[10px] font-bold text-gray-600 uppercase mb-1">Fondo Inicial (USD)</label> 
+                    <div class="relative">
+                        <span class="absolute left-3 top-2.5 text-gray-500 font-bold">$</span>
+                        <input type="number" id="input-fondo-usd" step="0.01" class="w-full border border-gray-300 rounded-lg pl-7 pr-3 py-2 text-xl font-black text-primary outline-none shadow-sm bg-white focus:border-tertiary transition text-center" value="0.00"> 
+                    </div>
+                </div> 
+                <button onclick="procesarAperturaCaja()" id="btn-procesar-apertura" class="w-full bg-secondary hover:opacity-90 text-white font-bold py-3 mt-2 rounded-lg shadow-md transition-all text-xs uppercase tracking-wider btn-press flex justify-center items-center gap-2"><i class="fa-solid fa-play text-white"></i> Iniciar Turno</button> 
+            </div> 
+        </div> 
+    </div> 
 
-            <div class="flex-1 flex flex-col gap-6">
-                
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm relative overflow-hidden">
-                        <div class="absolute -right-4 -top-4 w-16 h-16 bg-blue-50 rounded-full opacity-50"></div>
-                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Ingresos por Ventas (Hoy)</p>
-                        <h3 class="text-2xl font-black text-[#143B62]" id="res-ventas-usd">US$ 0.00</h3>
-                        <p class="text-sm font-bold text-gray-500" id="res-ventas-bs">Bs. 0.00</p>
-                    </div>
-                    
-                    <div class="bg-white p-5 rounded-xl border border-red-200 shadow-sm relative overflow-hidden">
-                        <div class="absolute -right-4 -top-4 w-16 h-16 bg-red-50 rounded-full opacity-50"></div>
-                        <p class="text-[10px] font-bold text-red-400 uppercase tracking-wider mb-1">Egresos / Gastos (Hoy)</p>
-                        <h3 class="text-2xl font-black text-red-600" id="res-gastos-usd">US$ 0.00</h3>
-                        <p class="text-sm font-bold text-red-400" id="res-gastos-bs">Bs. 0.00</p>
-                    </div>
-
-                    <div class="bg-[#143B62] p-5 rounded-xl shadow-lg text-white relative overflow-hidden">
-                        <div class="absolute -right-4 -bottom-4 w-16 h-16 bg-white/10 rounded-full opacity-50"></div>
-                        <p class="text-[10px] font-bold text-blue-200 uppercase tracking-wider mb-1">Efectivo Total Esperado</p>
-                        <h3 class="text-3xl font-black text-yellow-400" id="res-neto-usd">US$ 0.00</h3>
-                        <p class="text-sm font-bold text-white" id="res-neto-bs">Bs. 0.00</p>
-                    </div>
+    <div id="modal-cerrar-caja" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[9990] hidden flex items-center justify-center p-4 fade-in"> 
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col border border-gray-200"> 
+            <div class="bg-red-600 px-4 py-3 flex justify-between items-center shrink-0"> 
+                <h3 class="font-bold text-white text-[12px] tracking-wide uppercase"><i class="fa-solid fa-lock text-white mr-2"></i> Declaración de Cierre (Reporte Z)</h3> 
+                <button onclick="cerrarModalCierre()" class="text-white hover:text-gray-200 text-lg transition"><i class="fa-solid fa-times"></i></button> 
+            </div> 
+            <div class="p-5 bg-gray-50 space-y-3 max-h-[80vh] overflow-y-auto custom-scroll"> 
+                <div class="bg-yellow-50 border border-yellow-200 rounded p-2 text-[9px] text-yellow-800 font-bold uppercase text-center mb-2">
+                    Declare exactamente el dinero que hay en la gaveta y cuentas bancarias. El sistema calculará el descuadre.
                 </div>
 
-                <div class="flex-1 bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col overflow-hidden">
-                    <div class="p-4 bg-gray-50 border-b flex justify-between items-center">
-                        <h3 class="text-sm font-bold text-gray-700 uppercase tracking-wider">Historial de Movimientos (Hoy)</h3>
-                        <button onclick="cargarDatosDia()" class="text-gray-500 hover:text-[#143B62] transition"><i class="fa-solid fa-rotate-right"></i></button>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-white p-2 rounded border border-gray-200 shadow-sm">
+                        <label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Efectivo USD Físico</label>
+                        <input type="number" id="dec-efectivo-usd" step="0.01" class="w-full border-b border-gray-300 px-2 py-1 text-sm font-black text-green-700 outline-none focus:border-tertiary transition text-right bg-transparent" placeholder="0.00">
                     </div>
-                    
-                    <div class="flex-1 overflow-auto custom-scroll">
-                        <table class="w-full text-left border-collapse text-sm">
-                            <thead class="bg-white text-gray-400 text-[10px] uppercase border-b border-gray-100 sticky top-0">
+                    <div class="bg-white p-2 rounded border border-gray-200 shadow-sm">
+                        <label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Efectivo BS Físico</label>
+                        <input type="number" id="dec-efectivo-bs" step="0.01" class="w-full border-b border-gray-300 px-2 py-1 text-sm font-black text-primary outline-none focus:border-tertiary transition text-right bg-transparent" placeholder="0.00">
+                    </div>
+                    <div class="bg-white p-2 rounded border border-gray-200 shadow-sm">
+                        <label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Punto de Venta (Lote BS)</label>
+                        <input type="number" id="dec-punto-bs" step="0.01" class="w-full border-b border-gray-300 px-2 py-1 text-sm font-black text-primary outline-none focus:border-tertiary transition text-right bg-transparent" placeholder="0.00">
+                    </div>
+                    <div class="bg-white p-2 rounded border border-gray-200 shadow-sm">
+                        <label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Pago Móvil / Transf. (BS)</label>
+                        <input type="number" id="dec-transf-bs" step="0.01" class="w-full border-b border-gray-300 px-2 py-1 text-sm font-black text-primary outline-none focus:border-tertiary transition text-right bg-transparent" placeholder="0.00">
+                    </div>
+                    <div class="bg-white p-2 rounded border border-gray-200 shadow-sm col-span-2">
+                        <label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Zelle / Transferencias Ext (USD)</label>
+                        <input type="number" id="dec-zelle-usd" step="0.01" class="w-full border-b border-gray-300 px-2 py-1 text-sm font-black text-green-700 outline-none focus:border-tertiary transition text-right bg-transparent" placeholder="0.00">
+                    </div>
+                </div>
+
+                <div class="mt-2">
+                    <label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Observaciones del Cajero</label>
+                    <textarea id="dec-observaciones" rows="2" class="w-full border border-gray-300 rounded p-2 text-xs outline-none focus:border-tertiary transition uppercase shadow-sm" placeholder="Justifique si falta o sobra dinero..."></textarea>
+                </div>
+
+                <button onclick="procesarCierreCaja()" id="btn-procesar-cierre" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 mt-4 rounded-lg shadow-md transition-all text-xs uppercase tracking-wider btn-press flex justify-center items-center gap-2"><i class="fa-solid fa-lock text-white"></i> Declarar y Cerrar Caja</button> 
+            </div> 
+        </div> 
+    </div> 
+
+    <div id="ticket-impresion" class="hidden print:block"></div> 
+
+    <script src="menu.js"></script> 
+    
+    <main class="flex-1 flex flex-col h-screen overflow-hidden w-full z-10 relative"> 
+        <header class="bg-white shadow-sm px-4 flex justify-between items-center z-10 shrink-0 border-b border-gray-200 h-12"> 
+            <div class="flex items-center gap-3"> 
+                <button onclick="toggleMobileMenu()" class="md:hidden text-gray-600 hover:text-primary text-lg px-2"><i class="fa-solid fa-bars"></i></button> 
+                <h1 class="text-xs font-bold text-primary flex items-center gap-2 uppercase tracking-tighter"><i class="fa-solid fa-vault text-tertiary"></i> Control de Caja</h1> 
+            </div> 
+            <div class="flex items-center gap-3"> 
+                <div id="status-caja-badge" class="text-[9px] font-bold uppercase tracking-wider bg-gray-100 text-gray-500 border border-gray-300 shadow-sm px-2 py-1 rounded flex items-center gap-1">
+                    <i class="fa-solid fa-circle-notch fa-spin"></i> VERIFICANDO TURNO...
+                </div>
+            </div> 
+        </header> 
+
+        <div class="flex-1 overflow-y-auto p-4 custom-scroll relative"> 
+            <div id="panel-caja-cerrada" class="hidden absolute inset-0 bg-[#f4f6f8] flex flex-col items-center justify-center p-4 z-20">
+                <i class="fa-solid fa-lock text-6xl text-gray-300 mb-4"></i>
+                <h2 class="text-2xl font-black text-gray-500 uppercase tracking-widest mb-1">Caja Cerrada</h2>
+                <p class="text-xs text-gray-400 font-bold mb-6 text-center max-w-sm">No puedes realizar ventas ni cobros hasta aperturar un nuevo turno de caja.</p>
+                <button onclick="abrirModalApertura()" class="bg-secondary hover:opacity-90 text-white font-black py-3 px-8 rounded-lg shadow-lg transition-all text-sm uppercase tracking-widest btn-press flex justify-center items-center gap-2">
+                    <i class="fa-solid fa-key"></i> Abrir Turno
+                </button>
+            </div>
+
+            <div id="panel-caja-abierta" class="hidden flex-col h-full">
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4 shrink-0">
+                    <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm flex flex-col">
+                        <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Fondo Inicial</p>
+                        <h2 class="text-xl font-black text-primary mt-1" id="metric-fondo">$0.00</h2>
+                    </div>
+                    <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm flex flex-col border-l-4 border-l-green-500">
+                        <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Ingresos del Turno</p>
+                        <h2 class="text-xl font-black text-green-600 mt-1" id="metric-ingresos">$0.00</h2>
+                    </div>
+                    <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm flex flex-col border-l-4 border-l-red-500">
+                        <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Egresos / Retiros</p>
+                        <h2 class="text-xl font-black text-red-600 mt-1" id="metric-egresos">$0.00</h2>
+                    </div>
+                    <div class="bg-slate-800 p-4 rounded-lg border border-slate-900 shadow-md flex flex-col items-center justify-center cursor-pointer hover:bg-slate-700 transition btn-press" onclick="abrirModalCierre()">
+                        <i class="fa-solid fa-lock text-white text-xl mb-1"></i>
+                        <span class="text-xs font-black text-white uppercase tracking-widest">Cerrar Caja</span>
+                    </div>
+                </div>
+
+                <div class="flex-1 bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden flex flex-col"> 
+                    <div class="bg-gray-50 px-4 py-3 border-b border-gray-200 flex justify-between items-center shrink-0">
+                        <h3 class="text-xs font-bold text-gray-700 uppercase tracking-widest"><i class="fa-solid fa-list-ul mr-2"></i> Movimientos del Turno Actual</h3>
+                    </div>
+                    <div class="overflow-y-auto custom-scroll flex-1 p-2">
+                        <table class="w-full text-left text-[10px] whitespace-nowrap">
+                            <thead class="text-gray-400 uppercase tracking-wider border-b border-gray-100">
                                 <tr>
-                                    <th class="p-3 pl-4">Hora</th>
-                                    <th class="p-3">Tipo</th>
-                                    <th class="p-3">Concepto</th>
-                                    <th class="p-3">Método</th>
-                                    <th class="p-3 text-right">Monto USD</th>
-                                    <th class="p-3 text-right pr-4">Monto Bs</th>
+                                    <th class="py-2 px-2 font-bold">Hora</th>
+                                    <th class="py-2 px-2 font-bold">Concepto</th>
+                                    <th class="py-2 px-2 font-bold">Método</th>
+                                    <th class="py-2 px-2 font-bold text-right">Monto ($)</th>
                                 </tr>
                             </thead>
-                            <tbody id="tabla-movimientos" class="divide-y divide-gray-50">
-                                <tr><td colspan="6" class="p-8 text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin text-xl"></i> Cargando datos del día...</td></tr>
-                            </tbody>
+                            <tbody class="divide-y divide-gray-50" id="tabla-movimientos">
+                                </tbody>
                         </table>
                     </div>
-                </div>
-
+                </div> 
             </div>
-        </div>
+        </div> 
     </main>
-
-    <script>
-        const SUPABASE_URL = 'https://icvfmdvvochzaktugqvj.supabase.co';
+    <script> 
+        const SUPABASE_URL = 'https://icvfmdvvochzaktugqvj.supabase.co'; 
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImljdmZtZHZ2b2NoemFrdHVncXZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyNDEzMzEsImV4cCI6MjA5MTgxNzMzMX0.gO3D39piT6KGbMMOzrPGWXUp5-g_nOBAgJ-nwPv8IcQ';
+        const TOKEN_JWT = localStorage.getItem('pyp_token_seguro'); 
+        
+        let empresaActual = null; 
+        let turnoActivo = null; // Guardará el objeto del turno si está abierto
+        let tasaBCV = 1;
 
-        // Setear Fecha Visual
-        const opciones = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-        document.getElementById('fecha-hoy').innerText = new Date().toLocaleDateString('es-ES', opciones).toUpperCase();
+        window.onload = async () => { 
+            try { 
+                await iniciarModuloCaja(); 
+            } catch(e) { 
+                mostrarErrorConexion("Fallo al conectar con la base de datos."); 
+            } 
+        }; 
 
-        window.onload = () => { cargarDatosDia(); };
+        function fmt(num) { return parseFloat(num || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); } 
 
-        async function cargarDatosDia() {
-            try {
-                const hoy = new Date().toISOString().split('T')[0]; // "YYYY-MM-DD"
+        function mostrarErrorConexion(msg) { 
+            document.getElementById('loading-text').innerText = "Error"; 
+            document.getElementById('loading-error').innerText = msg;  
+            document.getElementById('loading-error').classList.remove('hidden'); 
+            document.getElementById('error-actions').classList.remove('hidden'); 
+            document.getElementById('loading-icon').className = "fa-solid fa-wifi text-5xl text-red-500 mb-4";  
+            document.getElementById('loading-overlay').classList.remove('hidden'); document.getElementById('loading-overlay').classList.add('flex'); 
+        } 
+        function cerrarErrorCarga() { document.getElementById('loading-overlay').classList.add('hidden'); document.getElementById('loading-overlay').classList.remove('flex'); } 
+        function mostrarCarga(txt) {
+            document.getElementById('loading-text').innerText = txt;
+            document.getElementById('loading-error').classList.add('hidden'); 
+            document.getElementById('error-actions').classList.add('hidden'); 
+            document.getElementById('loading-icon').className = "fa-solid fa-circle-notch fa-spin text-5xl text-primary mb-4";  
+            document.getElementById('loading-overlay').classList.remove('hidden'); document.getElementById('loading-overlay').classList.add('flex'); 
+        }
+
+        async function iniciarModuloCaja() { 
+            mostrarCarga("Verificando Sesión de Caja...");
+            try { 
+                const resUser = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?select=id_empresa&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }); 
+                if (!resUser.ok) throw new Error("Sesión inválida."); 
+                empresaActual = (await resUser.json())[0]?.id_empresa || null; 
+
+                const resTasa = await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?moneda=eq.USD&select=tasa&order=fecha_actualizacion.desc&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }); 
+                if (resTasa.ok) { const dataT = await resTasa.json(); if(dataT.length > 0) tasaBCV = dataT[0].tasa; }
+
+                await verificarTurnoActivo();
+                cerrarErrorCarga();
+            } catch(e) { mostrarErrorConexion(e.message); } 
+        } 
+
+        async function verificarTurnoActivo() {
+            const filtroEmpresa = empresaActual ? `id_empresa=eq.${empresaActual}&` : `id_empresa=is.null&`; 
+            const usuario = localStorage.getItem('pyp_usuario_nombre') || 'SISTEMA';
+            
+            // Busca si hay un turno ABIERTO para este usuario/empresa
+            const res = await fetch(`${SUPABASE_URL}/rest/v1/cierres_caja?${filtroEmpresa}usuario_cajero=eq.${usuario}&estatus=eq.ABIERTA&select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }); 
+            if (!res.ok) throw new Error("Fallo al leer estado de caja."); 
+            
+            const data = await res.json(); 
+            const badge = document.getElementById('status-caja-badge');
+
+            if (data.length > 0) {
+                // CAJA ABIERTA
+                turnoActivo = data[0];
+                document.getElementById('panel-caja-cerrada').classList.add('hidden');
+                document.getElementById('panel-caja-abierta').classList.remove('hidden');
+                document.getElementById('panel-caja-abierta').classList.add('flex');
                 
-                // 1. Buscar Ventas de Hoy
-                const resVentas = await fetch(`${SUPABASE_URL}/rest/v1/facturas?select=*&estatus=eq.Completada&tipo_transaccion=eq.Venta`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${localStorage.getItem('pyp_token_seguro')}` } });
-                const todasFacturas = await resVentas.json();
+                badge.className = "text-[9px] font-bold uppercase tracking-wider bg-green-50 text-green-600 border border-green-200 shadow-sm px-2 py-1 rounded flex items-center gap-1";
+                badge.innerHTML = `<i class="fa-solid fa-lock-open"></i> TURNO ABIERTO`;
                 
-                // Filtrar las de hoy manualmente por la zona horaria
-                const facturasHoy = todasFacturas.filter(f => new Date(f.fecha_emision).toISOString().split('T')[0] === hoy);
+                document.getElementById('metric-fondo').innerText = `$${fmt(turnoActivo.monto_apertura_usd)}`;
+                
+                await cargarMovimientosTurno(turnoActivo.id_cierre);
 
-                // 2. Buscar Movimientos Manuales de Hoy
-                const resMovs = await fetch(`${SUPABASE_URL}/rest/v1/caja_movimientos?select=*&order=fecha.desc`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${localStorage.getItem('pyp_token_seguro')});
-                const todosMovs = await resMovs.json();
-                const movsHoy = todosMovs.filter(m => new Date(m.fecha).toISOString().split('T')[0] === hoy);
-
-                calcularTotales(facturasHoy, movsHoy);
-                dibujarTablaMovimientos(facturasHoy, movsHoy);
-
-            } catch (error) {
-                console.error(error);
-                alert("Error cargando los datos del cierre de caja.");
+            } else {
+                // CAJA CERRADA
+                turnoActivo = null;
+                document.getElementById('panel-caja-cerrada').classList.remove('hidden');
+                document.getElementById('panel-caja-abierta').classList.add('hidden');
+                document.getElementById('panel-caja-abierta').classList.remove('flex');
+                
+                badge.className = "text-[9px] font-bold uppercase tracking-wider bg-red-50 text-red-600 border border-red-200 shadow-sm px-2 py-1 rounded flex items-center gap-1";
+                badge.innerHTML = `<i class="fa-solid fa-lock"></i> CAJA CERRADA`;
             }
         }
 
-        function calcularTotales(facturas, movimientos) {
-            let ventasUsd = 0; let ventasBs = 0;
-            let egresosUsd = 0; let egresosBs = 0;
-            let ingresosUsd = 0; let ingresosBs = 0;
-
-            // Sumar Facturas
-            facturas.forEach(f => {
-                ventasUsd += Number(f.total_usd) || 0;
-                ventasBs += Number(f.total_bs) || 0;
-            });
-
-            // Sumar Movimientos
-            movimientos.forEach(m => {
-                if (m.tipo === 'Egreso') {
-                    egresosUsd += Number(m.monto_usd) || 0;
-                    egresosBs += Number(m.monto_bs) || 0;
-                } else if (m.tipo === 'Ingreso') {
-                    ingresosUsd += Number(m.monto_usd) || 0;
-                    ingresosBs += Number(m.monto_bs) || 0;
-                }
-            });
-
-            const netoUsd = (ventasUsd + ingresosUsd) - egresosUsd;
-            const netoBs = (ventasBs + ingresosBs) - egresosBs;
-
-            // Pintar Tarjetas
-            document.getElementById('res-ventas-usd').innerText = `US$ ${ventasUsd.toFixed(2)}`;
-            document.getElementById('res-ventas-bs').innerText = `Bs. ${ventasBs.toFixed(2)}`;
-            
-            document.getElementById('res-gastos-usd').innerText = `US$ ${egresosUsd.toFixed(2)}`;
-            document.getElementById('res-gastos-bs').innerText = `Bs. ${egresosBs.toFixed(2)}`;
-
-            document.getElementById('res-neto-usd').innerText = `US$ ${netoUsd.toFixed(2)}`;
-            document.getElementById('res-neto-bs').innerText = `Bs. ${netoBs.toFixed(2)}`;
+        // ================= APERTURA DE CAJA =================
+        function abrirModalApertura() {
+            document.getElementById('input-fondo-usd').value = '0.00';
+            document.getElementById('modal-abrir-caja').classList.remove('hidden');
+            document.getElementById('modal-abrir-caja').classList.add('flex');
+            setTimeout(() => document.getElementById('input-fondo-usd').focus(), 100);
         }
 
-        function dibujarTablaMovimientos(facturas, movimientos) {
+        function cerrarModalApertura() {
+            document.getElementById('modal-abrir-caja').classList.add('hidden');
+            document.getElementById('modal-abrir-caja').classList.remove('flex');
+        }
+
+        async function procesarAperturaCaja() {
+            const fondo = parseFloat(document.getElementById('input-fondo-usd').value) || 0;
+            const btn = document.getElementById('btn-procesar-apertura'); btn.disabled = true;
+            mostrarCarga("Aperturando Turno...");
+
+            try {
+                const usuario = localStorage.getItem('pyp_usuario_nombre') || 'SISTEMA';
+                const payload = {
+                    id_empresa: empresaActual || null,
+                    usuario_cajero: usuario,
+                    estatus: 'ABIERTA',
+                    monto_apertura_usd: fondo
+                };
+
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/cierres_caja`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, body: JSON.stringify(payload) }); 
+                if(!res.ok) throw new Error("No se pudo aperturar la caja.");
+                
+                cerrarModalApertura();
+                await verificarTurnoActivo();
+                cerrarErrorCarga();
+            } catch(e) { mostrarErrorConexion(e.message); } finally { btn.disabled = false; }
+        }
+
+        // ================= CARGA DE MOVIMIENTOS EN VIVO =================
+        async function cargarMovimientosTurno(idCierre) {
+            const res = await fetch(`${SUPABASE_URL}/rest/v1/caja_movimientos?id_cierre=eq.${idCierre}&select=*&order=fecha.desc`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }); 
+            if (!res.ok) return; 
+            
+            const movs = await res.json();
             const tbody = document.getElementById('tabla-movimientos');
             let html = '';
+            let sumIngresos = 0, sumEgresos = 0;
 
-            // Mezclar facturas y movimientos en una sola lista para el historial
-            let historial = [];
-            
-            facturas.forEach(f => {
-                historial.push({
-                    fecha: new Date(f.fecha_emision),
-                    tipo: 'Venta',
-                    concepto: `Factura #00${f.correlativo} - ${f.cliente_nombre}`,
-                    metodo: f.metodos_pago,
-                    monto_usd: f.total_usd,
-                    monto_bs: f.total_bs
+            if(movs.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-gray-400 font-bold text-[10px] uppercase">Sin transacciones aún.</td></tr>`;
+            } else {
+                movs.forEach(m => {
+                    const hora = new Date(m.fecha).toLocaleTimeString('es-VE', {hour: '2-digit', minute:'2-digit'});
+                    const color = m.tipo === 'INGRESO' ? 'text-green-600' : 'text-red-600';
+                    const signo = m.tipo === 'INGRESO' ? '+' : '-';
+                    
+                    if(m.tipo === 'INGRESO') sumIngresos += parseFloat(m.monto_usd);
+                    if(m.tipo === 'EGRESO') sumEgresos += parseFloat(m.monto_usd);
+
+                    html += `<tr class="hover:bg-blue-50 transition border-b border-gray-50">
+                        <td class="py-2 px-2 text-[9px] font-bold text-gray-500">${hora}</td>
+                        <td class="py-2 px-2 font-bold text-primary truncate max-w-[200px] text-[10px]">${m.concepto}</td>
+                        <td class="py-2 px-2 font-mono text-[9px] text-gray-500">${m.metodo_pago.replace('_', ' ')}</td>
+                        <td class="py-2 px-2 text-right font-black ${color} text-[11px]">${signo} $${fmt(m.monto_usd)}</td>
+                    </tr>`;
                 });
-            });
-
-            movimientos.forEach(m => {
-                historial.push({
-                    fecha: new Date(m.fecha),
-                    tipo: m.tipo,
-                    concepto: m.concepto,
-                    metodo: m.metodo_pago,
-                    monto_usd: m.monto_usd,
-                    monto_bs: m.monto_bs
-                });
-            });
-
-            // Ordenar por hora (más reciente arriba)
-            historial.sort((a, b) => b.fecha - a.fecha);
-
-            if (historial.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-gray-400">No hay movimientos registrados hoy.</td></tr>`;
-                return;
+                tbody.innerHTML = html;
             }
 
-            historial.forEach(h => {
-                const hora = h.fecha.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-                let badgeTipo = '';
-                let colorMonto = 'text-gray-800';
-                let signo = '';
-
-                if (h.tipo === 'Venta' || h.tipo === 'Ingreso') {
-                    badgeTipo = `<span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-[10px] font-bold">${h.tipo}</span>`;
-                    colorMonto = 'text-green-600';
-                    signo = '+';
-                } else {
-                    badgeTipo = `<span class="bg-red-100 text-red-700 px-2 py-0.5 rounded text-[10px] font-bold">Gasto</span>`;
-                    colorMonto = 'text-red-600';
-                    signo = '-';
-                }
-
-                html += `
-                <tr class="hover:bg-gray-50 transition">
-                    <td class="p-3 pl-4 text-xs text-gray-500 font-semibold">${hora}</td>
-                    <td class="p-3">${badgeTipo}</td>
-                    <td class="p-3 text-xs font-bold text-gray-700 line-clamp-1">${h.concepto}</td>
-                    <td class="p-3 text-[10px] font-bold text-gray-500 uppercase">${h.metodo}</td>
-                    <td class="p-3 text-right text-xs font-black ${colorMonto}">${signo} $${Number(h.monto_usd).toFixed(2)}</td>
-                    <td class="p-3 text-right pr-4 text-xs font-bold ${colorMonto}">${signo} Bs.${Number(h.monto_bs).toFixed(2)}</td>
-                </tr>`;
-            });
-
-            tbody.innerHTML = html;
+            document.getElementById('metric-ingresos').innerText = `$${fmt(sumIngresos)}`;
+            document.getElementById('metric-egresos').innerText = `$${fmt(sumEgresos)}`;
+            
+            // Guardamos esto en el objeto activo para el Cuadre Z
+            turnoActivo.sumIngresos = sumIngresos;
+            turnoActivo.sumEgresos = sumEgresos;
+            turnoActivo.totalCalculadoSistema = parseFloat(turnoActivo.monto_apertura_usd) + sumIngresos - sumEgresos;
         }
 
-        async function procesarMovimiento(e) {
-            e.preventDefault();
+        // ================= CIERRE DE CAJA (CUADRE Z) =================
+        function abrirModalCierre() {
+            document.getElementById('dec-efectivo-usd').value = '';
+            document.getElementById('dec-efectivo-bs').value = '';
+            document.getElementById('dec-punto-bs').value = '';
+            document.getElementById('dec-transf-bs').value = '';
+            document.getElementById('dec-zelle-usd').value = '';
+            document.getElementById('dec-observaciones').value = '';
             
-            const tipo = document.querySelector('input[name="tipo_mov"]:checked').value;
-            const concepto = document.getElementById('mov-concepto').value.trim();
-            const usd = parseFloat(document.getElementById('mov-usd').value) || 0;
-            const bs = parseFloat(document.getElementById('mov-bs').value) || 0;
-            const metodo = document.getElementById('mov-metodo').value;
+            document.getElementById('modal-cerrar-caja').classList.remove('hidden');
+            document.getElementById('modal-cerrar-caja').classList.add('flex');
+        }
 
-            if (usd === 0 && bs === 0) return alert("Debe ingresar un monto válido en USD o Bs.");
+        function cerrarModalCierre() {
+            document.getElementById('modal-cerrar-caja').classList.add('hidden');
+            document.getElementById('modal-cerrar-caja').classList.remove('flex');
+        }
 
-            const btn = document.getElementById('btn-movimiento');
-            const htmlOrg = btn.innerHTML;
-            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Guardando...`;
-            btn.disabled = true;
+        async function procesarCierreCaja() {
+            const btn = document.getElementById('btn-procesar-cierre'); btn.disabled = true;
+            
+            if(!confirm("¿Está seguro que desea CERRAR EL TURNO? Se imprimirá el Reporte Z y la caja quedará bloqueada.")) { btn.disabled = false; return; }
+            
+            mostrarCarga("Cuadrando Caja y Generando Reporte Z...");
 
             try {
-                const data = { tipo: tipo, concepto: concepto, monto_usd: usd, monto_bs: bs, metodo_pago: metodo, usuario: 'Admin' };
-                
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/caja_movimientos`, {
-                    method: 'POST',
-                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${localStorage.getItem('pyp_token_seguro')}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
+                // 1. Recoger Declaración del Cajero
+                const decEfvoUsd = parseFloat(document.getElementById('dec-efectivo-usd').value) || 0;
+                const decEfvoBs = parseFloat(document.getElementById('dec-efectivo-bs').value) || 0;
+                const decPuntoBs = parseFloat(document.getElementById('dec-punto-bs').value) || 0;
+                const decTransfBs = parseFloat(document.getElementById('dec-transf-bs').value) || 0;
+                const decZelleUsd = parseFloat(document.getElementById('dec-zelle-usd').value) || 0;
+                const obs = document.getElementById('dec-observaciones').value.trim();
 
-                if (!res.ok) throw new Error("Error en base de datos");
-
-                document.getElementById('form-movimiento').reset();
-                await cargarDatosDia(); // Refrescar tarjetas y tabla
+                // 2. Convertir todo a USD para el cuadre matemático
+                const totalDeclaradoUsd = decEfvoUsd + decZelleUsd + (decEfvoBs / tasaBCV) + (decPuntoBs / tasaBCV) + (decTransfBs / tasaBCV);
                 
-            } catch (error) {
-                alert("Error guardando el movimiento.");
-            } finally {
-                btn.innerHTML = htmlOrg;
-                btn.disabled = false;
-            }
+                // 3. Calcular Descuadre (Lo que el sistema dice vs Lo que el cajero declara)
+                const descuadreUsd = totalDeclaradoUsd - turnoActivo.totalCalculadoSistema;
+
+                const desglosePagos = {
+                    efectivo_usd: decEfvoUsd,
+                    efectivo_bs: decEfvoBs,
+                    punto_bs: decPuntoBs,
+                    transferencias_bs: decTransfBs,
+                    zelle_usd: decZelleUsd
+                };
+
+                const payload = {
+                    estatus: 'CERRADA',
+                    fecha_cierre: new Date().toISOString(),
+                    total_calculado_sistema_usd: turnoActivo.totalCalculadoSistema,
+                    total_declarado_cajero_usd: totalDeclaradoUsd,
+                    descuadre_usd: descuadreUsd,
+                    desglose_pagos: desglosePagos,
+                    observaciones: obs || null
+                };
+
+                // 4. Actualizar tabla de cierres (Sellar)
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/cierres_caja?id_cierre=eq.${turnoActivo.id_cierre}`, { method: 'PATCH', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, body: JSON.stringify(payload) }); 
+                if(!res.ok) throw new Error("Fallo al sellar la caja.");
+                
+                const datosCierreFinal = (await res.json())[0];
+
+                // 5. Imprimir Ticket Z
+                imprimirReporteZ(datosCierreFinal);
+
+                cerrarModalCierre();
+                await verificarTurnoActivo();
+                cerrarErrorCarga();
+            } catch(e) { mostrarErrorConexion(e.message); } finally { btn.disabled = false; }
         }
-      
-    </script>
-    <script src="menu.js"></script>
-</body>
+
+        function imprimirReporteZ(cierre) {
+            const contenedor = document.getElementById('ticket-impresion');
+            const fechaApertura = new Date(cierre.fecha_apertura).toLocaleString('es-VE');
+            const fechaCierre = new Date(cierre.fecha_cierre).toLocaleString('es-VE');
+            const descColor = cierre.descuadre_usd < -0.1 ? 'color: red;' : (cierre.descuadre_usd > 0.1 ? 'color: green;' : 'color: black;');
+            
+            contenedor.innerHTML = `
+                <div style="text-align: center; margin-bottom: 10px; border-bottom: 1px dashed #000; padding-bottom: 5px;">
+                    <strong style="font-size: 1.3em;">REPORTE Z (CIERRE CAJA)</strong><br>
+                    ID: ${cierre.id_cierre.split('-')[0].toUpperCase()}<br>
+                    Cajero: ${cierre.usuario_cajero}
+                </div>
+                <div style="margin-bottom: 10px; font-size: 0.9em;">
+                    <strong>Apertura:</strong> ${fechaApertura}<br>
+                    <strong>Cierre:</strong> ${fechaCierre}
+                </div>
+                <div style="border-top: 1px dashed #000; border-bottom: 1px dashed #000; margin-bottom: 10px; padding: 5px 0;">
+                    <div style="display: flex; justify-content: space-between;"><span>Fondo Inicial:</span><strong>$${fmt(cierre.monto_apertura_usd)}</strong></div>
+                    <div style="display: flex; justify-content: space-between;"><span>Ingresos Turno:</span><strong>+$${fmt(turnoActivo.sumIngresos)}</strong></div>
+                    <div style="display: flex; justify-content: space-between;"><span>Retiros/Egresos:</span><strong>-$${fmt(turnoActivo.sumEgresos)}</strong></div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 5px; font-weight: bold; border-top: 1px solid #000;"><span>TOTAL SISTEMA:</span><span>$${fmt(cierre.total_calculado_sistema_usd)}</span></div>
+                </div>
+                <div style="margin-bottom: 10px; padding: 5px 0;">
+                    <strong style="text-decoration: underline;">DECLARACIÓN CAJERO (USD/BS)</strong>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.9em;"><span>Efectivo $:</span><span>$${fmt(cierre.desglose_pagos.efectivo_usd)}</span></div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.9em;"><span>Zelle $:</span><span>$${fmt(cierre.desglose_pagos.zelle_usd)}</span></div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.9em;"><span>Efectivo Bs:</span><span>Bs. ${fmt(cierre.desglose_pagos.efectivo_bs)}</span></div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.9em;"><span>Punto Bs:</span><span>Bs. ${fmt(cierre.desglose_pagos.punto_bs)}</span></div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.9em;"><span>P. Móvil Bs:</span><span>Bs. ${fmt(cierre.desglose_pagos.transferencias_bs)}</span></div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 5px; font-weight: bold; border-top: 1px solid #000;"><span>TOTAL DECLARADO:</span><span>$${fmt(cierre.total_declarado_cajero_usd)}</span></div>
+                </div>
+                <div style="text-align: center; border: 1px solid #000; padding: 5px; font-weight: bold; font-size: 1.1em; ${descColor}">
+                    DESCUADRE (FALTANTE/SOBRANTE)<br>
+                    $${fmt(cierre.descuadre_usd)}
+                </div>
+                <div style="text-align: center; margin-top: 15px; font-size: 0.8em; color: #555;">
+                    Tasa Referencia Cierre: Bs. ${fmt(tasaBCV)}
+                </div>`;
+            window.print();
+        }
+    </script> 
+</body> 
 </html>
