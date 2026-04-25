@@ -788,136 +788,161 @@
 
         let sumSubtotalBasePuroUsd = 0, descGeneralTotalUsd = 0, granTotalUsd = 0; 
 
+       // ================= MOTOR MATEMÁTICO ESTRICTO =================
+        function redondear(num) {
+            return Math.round((num + Number.EPSILON) * 100) / 100;
+        }
+
+        let sumSubtotalBasePuroUsd = 0, descGeneralTotalUsd = 0, granTotalUsd = 0; 
+        let sumSubtotalBasePuroBs = 0, descGeneralTotalBs = 0, granTotalBs = 0; // Acumuladores estrictos en BS
+
         function actualizarUI_Carrito() { 
-            const lista = document.getElementById('lista-carrito'); const nivelCli = document.getElementById('pos-nivel-precio-cliente').value || 'GENERAL'; const contenedorFiscal = document.getElementById('contenedor-totales-fiscales'); 
+            const lista = document.getElementById('lista-carrito'); 
+            const nivelCli = document.getElementById('pos-nivel-precio-cliente').value || 'GENERAL'; 
+            const contenedorFiscal = document.getElementById('contenedor-totales-fiscales'); 
             
             if (carrito.length === 0) {  
                 lista.innerHTML = `<div class="h-full flex flex-col items-center justify-center text-gray-300 opacity-50"><i class="fa-solid fa-cart-arrow-down text-4xl mb-2"></i><p class="font-bold text-[10px] uppercase tracking-widest">Venta Vacía</p></div>`;  
-                document.getElementById('pos-subtotal').innerText = 'Bs. 0.00'; document.getElementById('pos-descuento-general-val').innerText = '- Bs. 0.00'; contenedorFiscal.innerHTML = ''; document.getElementById('pos-total-bs').innerText = 'Bs. 0.00'; document.getElementById('pos-total-usd').innerText = 'US$ 0.00'; document.getElementById('pos-items').innerText = '0'; 
+                document.getElementById('pos-subtotal').innerText = 'Bs. 0.00'; 
+                document.getElementById('pos-descuento-general-val').innerText = '- Bs. 0.00'; 
+                contenedorFiscal.innerHTML = ''; 
+                document.getElementById('pos-total-bs').innerText = 'Bs. 0.00'; 
+                document.getElementById('pos-total-usd').innerText = 'US$ 0.00'; 
+                document.getElementById('pos-items').innerText = '0'; 
                 document.getElementById('btn-cobrar').disabled = true; 
                 document.getElementById('btn-guardar').disabled = true; 
                 return;  
             } 
 
-            let html = ''; let itemsTotal = 0; sumSubtotalBasePuroUsd = 0; 
-            let bases = { 'GENERAL': 0, 'REDUCIDO_1': 0, 'REDUCIDO_2': 0, 'EXENTO': 0 }; 
+            let html = ''; let itemsTotal = 0; 
+            sumSubtotalBasePuroUsd = 0; sumSubtotalBasePuroBs = 0;
+            
+            let basesUsd = { 'GENERAL': 0, 'REDUCIDO_1': 0, 'REDUCIDO_2': 0, 'EXENTO': 0 }; 
+            let basesBs = { 'GENERAL': 0, 'REDUCIDO_1': 0, 'REDUCIDO_2': 0, 'EXENTO': 0 };
 
             carrito.forEach(item => { 
-                let baseUsd = calcularPrecioUnitario(item, item.cantidad); 
-                const lineaBaseUsd = baseUsd * item.cantidad;  
-                let descLineaUsd = 0; if(item.desc_tipo === 'PORCENTAJE') { descLineaUsd = lineaBaseUsd * (item.desc_val / 100); } else if(item.desc_tipo === 'MONTO') { descLineaUsd = item.desc_val; } else if(item.desc_tipo === 'MONTO_BS') { descLineaUsd = item.desc_val / tasaBCV; } 
+                // 1. Cálculos de Línea con Redondeo Estricto
+                let baseUsd = redondear(calcularPrecioUnitario(item, item.cantidad)); 
+                const lineaBaseUsd = redondear(baseUsd * item.cantidad);  
+                const lineaBaseBs = redondear(lineaBaseUsd * tasaBCV);
+
+                let descLineaUsd = 0; 
+                if(item.desc_tipo === 'PORCENTAJE') { descLineaUsd = redondear(lineaBaseUsd * (item.desc_val / 100)); } 
+                else if(item.desc_tipo === 'MONTO') { descLineaUsd = redondear(item.desc_val); } 
+                else if(item.desc_tipo === 'MONTO_BS') { descLineaUsd = redondear(item.desc_val / tasaBCV); } 
+                
                 if (descLineaUsd > lineaBaseUsd) descLineaUsd = lineaBaseUsd;  
+                const descLineaBs = redondear(descLineaUsd * tasaBCV);
                 
-                const totalLineaNetaUsd = lineaBaseUsd - descLineaUsd; sumSubtotalBasePuroUsd += totalLineaNetaUsd; 
+                const totalLineaNetaUsd = redondear(lineaBaseUsd - descLineaUsd); 
+                const totalLineaNetaBs = redondear(lineaBaseBs - descLineaBs);
+
+                // 2. Acumulación Directa en RAM (Evita pérdida de céntimos)
+                sumSubtotalBasePuroUsd = redondear(sumSubtotalBasePuroUsd + totalLineaNetaUsd); 
+                sumSubtotalBasePuroBs = redondear(sumSubtotalBasePuroBs + totalLineaNetaBs);
+
                 const impItem = item.tipo_impuesto || 'GENERAL';  
-                if(bases[impItem] !== undefined) bases[impItem] += totalLineaNetaUsd; else bases['GENERAL'] += totalLineaNetaUsd; 
+                if(basesUsd[impItem] !== undefined) {
+                    basesUsd[impItem] = redondear(basesUsd[impItem] + totalLineaNetaUsd); 
+                    basesBs[impItem] = redondear(basesBs[impItem] + totalLineaNetaBs); 
+                } else {
+                    basesUsd['GENERAL'] = redondear(basesUsd['GENERAL'] + totalLineaNetaUsd);
+                    basesBs['GENERAL'] = redondear(basesBs['GENERAL'] + totalLineaNetaBs);
+                }
                 
-                itemsTotal += item.cantidad; const tieneDesc = descLineaUsd > 0; const precioUnidadFinalUsd = item.cantidad > 0 ? (totalLineaNetaUsd / item.cantidad) : 0; 
+                itemsTotal += item.cantidad; 
                 const valorInputDesc = item.desc_val > 0 ? item.desc_val : ''; 
 
-                html += `<div class="bg-white border border-gray-200 rounded p-1 mb-1.5 shadow-sm flex flex-col fade-in relative group min-h-[58px]"><div class="flex gap-2 h-full"><div class="flex-1 min-w-0 pr-2 border-r border-gray-100 flex flex-col justify-between"><h4 class="text-[10px] font-black text-primary truncate uppercase leading-tight mb-1 pr-4">${item.nombre}</h4><div class="flex items-center gap-2 mt-0.5"><div class="flex items-center"><span class="text-[10px] font-bold text-gray-500 mr-0.5">US$</span><input type="number" step="0.01" class="w-16 border-b border-gray-300 text-[12px] font-black text-secondary px-1 outline-none focus:border-tertiary text-center transition bg-transparent" value="${baseUsd.toFixed(2)}" onchange="actualizarPrecioManualItem('${item.id_producto_sku}', 'USD', this.value)" title="Modificar Precio USD"></div><div class="flex items-center"><span class="text-[10px] font-bold text-gray-500 mr-0.5">Bs.</span><input type="number" step="0.01" class="w-[70px] border-b border-gray-300 text-[12px] font-black text-primary px-1 outline-none focus:border-tertiary text-center transition bg-transparent" value="${(baseUsd * tasaBCV).toFixed(2)}" onchange="actualizarPrecioManualItem('${item.id_producto_sku}', 'BS', this.value)" title="Modificar Precio Bs"></div></div><div class="flex items-center gap-1 mt-1 pt-1 border-t border-gray-100"><span class="text-[8px] text-red-500 font-bold uppercase">Desc:</span><select class="border border-red-200 rounded text-[9px] p-0.5 outline-none bg-red-50 text-red-700 font-bold" onchange="actualizarDescItem('${item.id_producto_sku}', 'tipo', this.value)"><option value="MONTO_BS" ${item.desc_tipo === 'MONTO_BS'?'selected':''}>Bs.</option><option value="PORCENTAJE" ${item.desc_tipo === 'PORCENTAJE'?'selected':''}>%</option><option value="MONTO" ${item.desc_tipo === 'MONTO'?'selected':''}>$</option></select><input type="number" min="0" placeholder="0" class="border border-red-200 rounded text-[10px] p-0.5 w-14 text-center outline-none bg-white font-black" value="${valorInputDesc}" onchange="actualizarDescItem('${item.id_producto_sku}', 'val', this.value)"></div></div><div class="shrink-0 flex flex-col items-center justify-center border border-gray-200 rounded overflow-hidden shadow-inner h-[54px] w-9"><button onclick="modificarCantidad('${item.id_producto_sku}', 1)" class="bg-gray-100 text-gray-600 font-black h-1/3 w-full hover:bg-gray-200 flex items-center justify-center transition-colors"><i class="fa-solid fa-plus text-[13px]"></i></button><span class="text-[15px] font-black bg-white w-full text-center h-1/3 flex items-center justify-center text-primary border-y border-gray-200">${item.cantidad}</span><button onclick="modificarCantidad('${item.id_producto_sku}', -1)" class="bg-gray-100 text-gray-600 font-black h-1/3 w-full hover:bg-gray-200 flex items-center justify-center transition-colors"><i class="fa-solid fa-minus text-[13px]"></i></button></div><div class="shrink-0 w-[120px] flex flex-col items-end justify-center text-[11px] font-mono leading-tight pl-2"><div class="flex justify-between w-full text-gray-400"><span>Base:</span> <span>${fmt(lineaBaseUsd*tasaBCV)}</span></div>${descLineaUsd > 0 ? `<div class="flex justify-between w-full text-red-500"><span>Desc:</span> <span>-${fmt(descLineaUsd*tasaBCV)}</span></div>` : ''}<div class="flex justify-between w-full text-gray-900 font-bold border-t border-gray-200 mt-0.5 pt-0.5"><span>Neto:</span> <span class="text-[12px] font-black text-primary">${fmt(totalLineaNetaUsd*tasaBCV)}</span></div></div></div><button onclick="eliminarDelCarrito('${item.id_producto_sku}')" class="absolute -top-2 -right-2 bg-red-500 text-white w-6 h-6 rounded-full flex items-center justify-center shadow-md hover:bg-red-600 transition hover:scale-110 z-10 opacity-0 group-hover:opacity-100" title="Remover Producto"><i class="fa-solid fa-trash-can text-[10px]"></i></button></div>`; 
+                html += `<div class="bg-white border border-gray-200 rounded p-1 mb-1.5 shadow-sm flex flex-col fade-in relative group min-h-[58px]">
+                    <div class="flex gap-2 h-full">
+                        <div class="flex-1 min-w-0 pr-2 border-r border-gray-100 flex flex-col justify-between">
+                            <h4 class="text-[10px] font-black text-primary truncate uppercase leading-tight mb-1 pr-4">${item.nombre}</h4>
+                            <div class="flex items-center gap-2 mt-0.5">
+                                <div class="flex items-center"><span class="text-[10px] font-bold text-gray-500 mr-0.5">US$</span><input type="number" step="0.01" class="w-16 border-b border-gray-300 text-[12px] font-black text-secondary px-1 outline-none focus:border-tertiary text-center transition bg-transparent" value="${baseUsd.toFixed(2)}" onchange="actualizarPrecioManualItem('${item.id_producto_sku}', 'USD', this.value)" title="Modificar Precio USD"></div>
+                                <div class="flex items-center"><span class="text-[10px] font-bold text-gray-500 mr-0.5">Bs.</span><input type="number" step="0.01" class="w-[70px] border-b border-gray-300 text-[12px] font-black text-primary px-1 outline-none focus:border-tertiary text-center transition bg-transparent" value="${redondear(baseUsd * tasaBCV).toFixed(2)}" onchange="actualizarPrecioManualItem('${item.id_producto_sku}', 'BS', this.value)" title="Modificar Precio Bs"></div>
+                            </div>
+                            <div class="flex items-center gap-1 mt-1 pt-1 border-t border-gray-100">
+                                <span class="text-[8px] text-red-500 font-bold uppercase">Desc:</span>
+                                <select class="border border-red-200 rounded text-[9px] p-0.5 outline-none bg-red-50 text-red-700 font-bold" onchange="actualizarDescItem('${item.id_producto_sku}', 'tipo', this.value)"><option value="MONTO_BS" ${item.desc_tipo === 'MONTO_BS'?'selected':''}>Bs.</option><option value="PORCENTAJE" ${item.desc_tipo === 'PORCENTAJE'?'selected':''}>%</option><option value="MONTO" ${item.desc_tipo === 'MONTO'?'selected':''}>$</option></select>
+                                <input type="number" min="0" placeholder="0" class="border border-red-200 rounded text-[10px] p-0.5 w-14 text-center outline-none bg-white font-black" value="${valorInputDesc}" onchange="actualizarDescItem('${item.id_producto_sku}', 'val', this.value)">
+                            </div>
+                        </div>
+                        <div class="shrink-0 flex flex-col items-center justify-center border border-gray-200 rounded overflow-hidden shadow-inner h-[54px] w-9">
+                            <button onclick="modificarCantidad('${item.id_producto_sku}', 1)" class="bg-gray-100 text-gray-600 font-black h-1/3 w-full hover:bg-gray-200 flex items-center justify-center transition-colors"><i class="fa-solid fa-plus text-[13px]"></i></button>
+                            <span class="text-[15px] font-black bg-white w-full text-center h-1/3 flex items-center justify-center text-primary border-y border-gray-200">${item.cantidad}</span>
+                            <button onclick="modificarCantidad('${item.id_producto_sku}', -1)" class="bg-gray-100 text-gray-600 font-black h-1/3 w-full hover:bg-gray-200 flex items-center justify-center transition-colors"><i class="fa-solid fa-minus text-[13px]"></i></button>
+                        </div>
+                        <div class="shrink-0 w-[120px] flex flex-col items-end justify-center text-[11px] font-mono leading-tight pl-2">
+                            <div class="flex justify-between w-full text-gray-400"><span>Base:</span> <span>${fmt(lineaBaseBs)}</span></div>
+                            ${descLineaBs > 0 ? `<div class="flex justify-between w-full text-red-500"><span>Desc:</span> <span>-${fmt(descLineaBs)}</span></div>` : ''}
+                            <div class="flex justify-between w-full text-gray-900 font-bold border-t border-gray-200 mt-0.5 pt-0.5"><span>Neto:</span> <span class="text-[12px] font-black text-primary">${fmt(totalLineaNetaBs)}</span></div>
+                        </div>
+                    </div>
+                    <button onclick="eliminarDelCarrito('${item.id_producto_sku}')" class="absolute -top-2 -right-2 bg-red-500 text-white w-6 h-6 rounded-full flex items-center justify-center shadow-md hover:bg-red-600 transition hover:scale-110 z-10 opacity-0 group-hover:opacity-100" title="Remover Producto"><i class="fa-solid fa-trash-can text-[10px]"></i></button>
+                </div>`; 
             }); 
             lista.innerHTML = html; 
             
-            const typeDescGeneral = document.getElementById('pos-type-desc-general').value; const inputDescGeneral = parseFloat(document.getElementById('pos-input-desc-general').value) || 0; 
-            let sumNetoItemsUsd = bases['GENERAL'] + bases['REDUCIDO_1'] + bases['REDUCIDO_2'] + bases['EXENTO']; descGeneralTotalUsd = 0;  
-            if (typeDescGeneral === 'PORCENTAJE' && inputDescGeneral > 0) { descGeneralTotalUsd = sumNetoItemsUsd * (inputDescGeneral / 100); } else if (typeDescGeneral === 'MONTO' && inputDescGeneral > 0) { descGeneralTotalUsd = inputDescGeneral; } else if (typeDescGeneral === 'MONTO_BS' && inputDescGeneral > 0) { descGeneralTotalUsd = inputDescGeneral / tasaBCV; } 
-            if (descGeneralTotalUsd > sumNetoItemsUsd) descGeneralTotalUsd = sumNetoItemsUsd; 
-
-            let factor = 1; if(sumNetoItemsUsd > 0 && descGeneralTotalUsd > 0) factor = 1 - (descGeneralTotalUsd / sumNetoItemsUsd); 
-            let bG = (bases['GENERAL'] * factor) || 0; let bR1 = (bases['REDUCIDO_1'] * factor) || 0; let bR2 = (bases['REDUCIDO_2'] * factor) || 0; let bE = (bases['EXENTO'] * factor) || 0; 
+            // 3. Descuentos Generales (Proporcionalidad Matemática)
+            const typeDescGeneral = document.getElementById('pos-type-desc-general').value; 
+            const inputDescGeneral = parseFloat(document.getElementById('pos-input-desc-general').value) || 0; 
             
-            let ivaG = bG * pypIva; let ivaR1 = bR1 * pypIvaRed1; let ivaR2 = bR2 * pypIvaRed2; 
-            granTotalUsd = bG + bR1 + bR2 + bE + ivaG + ivaR1 + ivaR2; 
+            let sumNetoItemsUsd = redondear(basesUsd['GENERAL'] + basesUsd['REDUCIDO_1'] + basesUsd['REDUCIDO_2'] + basesUsd['EXENTO']); 
+            descGeneralTotalUsd = 0;  
+            
+            if (typeDescGeneral === 'PORCENTAJE' && inputDescGeneral > 0) { descGeneralTotalUsd = redondear(sumNetoItemsUsd * (inputDescGeneral / 100)); } 
+            else if (typeDescGeneral === 'MONTO' && inputDescGeneral > 0) { descGeneralTotalUsd = inputDescGeneral; } 
+            else if (typeDescGeneral === 'MONTO_BS' && inputDescGeneral > 0) { descGeneralTotalUsd = redondear(inputDescGeneral / tasaBCV); } 
+            
+            if (descGeneralTotalUsd > sumNetoItemsUsd) descGeneralTotalUsd = sumNetoItemsUsd; 
+            descGeneralTotalBs = redondear(descGeneralTotalUsd * tasaBCV);
 
-            let htmlTotales = ''; const Fila = (etiqueta, valUsd) => `<div class="flex justify-between items-center text-xs text-gray-500 font-bold uppercase"><span>${etiqueta}</span><span class="text-gray-900 font-black">Bs. ${fmt(valUsd * tasaBCV)}</span></div>`; 
-            if (bE > 0 || pypMostrarExento === 'SI') htmlTotales += Fila('Monto Exento', bE); 
-            if (bG > 0 || (bR1===0 && bR2===0)) { htmlTotales += Fila('Base Imponible (G)', bG); htmlTotales += Fila(`IVA ${(pypIva*100).toFixed(0)}%`, ivaG); } 
-            if (bR1 > 0) { htmlTotales += Fila('Base Imponible (R1)', bR1); htmlTotales += Fila(`IVA Red. ${(pypIvaRed1*100).toFixed(0)}%`, ivaR1); } 
-            if (bR2 > 0) { htmlTotales += Fila('Base Imponible (R2)', bR2); htmlTotales += Fila(`IVA Red. ${(pypIvaRed2*100).toFixed(0)}%`, ivaR2); } 
+            let factor = 1; 
+            if(sumNetoItemsUsd > 0 && descGeneralTotalUsd > 0) factor = 1 - (descGeneralTotalUsd / sumNetoItemsUsd); 
+
+            // 4. Repartición de Bases Definitivas
+            let bG_Usd = redondear(basesUsd['GENERAL'] * factor); 
+            let bR1_Usd = redondear(basesUsd['REDUCIDO_1'] * factor); 
+            let bR2_Usd = redondear(basesUsd['REDUCIDO_2'] * factor); 
+            let bE_Usd = redondear(basesUsd['EXENTO'] * factor); 
+
+            let bG_Bs = redondear(basesBs['GENERAL'] * factor); 
+            let bR1_Bs = redondear(basesBs['REDUCIDO_1'] * factor); 
+            let bR2_Bs = redondear(basesBs['REDUCIDO_2'] * factor); 
+            let bE_Bs = redondear(basesBs['EXENTO'] * factor); 
+            
+            let ivaG_Usd = redondear(bG_Usd * pypIva); let ivaR1_Usd = redondear(bR1_Usd * pypIvaRed1); let ivaR2_Usd = redondear(bR2_Usd * pypIvaRed2); 
+            let ivaG_Bs = redondear(bG_Bs * pypIva); let ivaR1_Bs = redondear(bR1_Bs * pypIvaRed1); let ivaR2_Bs = redondear(bR2_Bs * pypIvaRed2); 
+
+            granTotalUsd = redondear(bG_Usd + bR1_Usd + bR2_Usd + bE_Usd + ivaG_Usd + ivaR1_Usd + ivaR2_Usd); 
+            granTotalBs = redondear(bG_Bs + bR1_Bs + bR2_Bs + bE_Bs + ivaG_Bs + ivaR1_Bs + ivaR2_Bs); 
+
+            // 5. Inyectar Totales sin arrastrar céntimos flotantes
+            let htmlTotales = ''; 
+            const Fila = (etiqueta, valBs) => `<div class="flex justify-between items-center text-xs text-gray-500 font-bold uppercase"><span>${etiqueta}</span><span class="text-gray-900 font-black">Bs. ${fmt(valBs)}</span></div>`; 
+            
+            if (bE_Bs > 0 || pypMostrarExento === 'SI') htmlTotales += Fila('Monto Exento', bE_Bs); 
+            if (bG_Bs > 0 || (bR1_Bs===0 && bR2_Bs===0)) { htmlTotales += Fila('Base Imponible (G)', bG_Bs); htmlTotales += Fila(`IVA ${(pypIva*100).toFixed(0)}%`, ivaG_Bs); } 
+            if (bR1_Bs > 0) { htmlTotales += Fila('Base Imponible (R1)', bR1_Bs); htmlTotales += Fila(`IVA Red. ${(pypIvaRed1*100).toFixed(0)}%`, ivaR1_Bs); } 
+            if (bR2_Bs > 0) { htmlTotales += Fila('Base Imponible (R2)', bR2_Bs); htmlTotales += Fila(`IVA Red. ${(pypIvaRed2*100).toFixed(0)}%`, ivaR2_Bs); } 
             contenedorFiscal.innerHTML = htmlTotales; 
 
-            document.getElementById('pos-subtotal').innerText = `Bs. ${fmt(sumSubtotalBasePuroUsd * tasaBCV)}`; document.getElementById('pos-descuento-general-val').innerText = `- Bs. ${fmt(descGeneralTotalUsd * tasaBCV)}`; 
-            document.getElementById('pos-items').innerText = itemsTotal; document.getElementById('pos-total-bs').innerText = `Bs. ${fmt(granTotalUsd * tasaBCV)}`; document.getElementById('pos-total-usd').innerText = `US$ ${fmt(granTotalUsd)}`; 
+            document.getElementById('pos-subtotal').innerText = `Bs. ${fmt(sumSubtotalBasePuroBs)}`; 
+            document.getElementById('pos-descuento-general-val').innerText = `- Bs. ${fmt(descGeneralTotalBs)}`; 
+            document.getElementById('pos-items').innerText = itemsTotal; 
+            document.getElementById('pos-total-bs').innerText = `Bs. ${fmt(granTotalBs)}`; 
+            document.getElementById('pos-total-usd').innerText = `US$ ${fmt(granTotalUsd)}`; 
             
-            // Habilita AMBOS botones
             document.getElementById('btn-cobrar').disabled = false; 
             document.getElementById('btn-guardar').disabled = false; 
             
-            contenedorFiscal.dataset.baseTotalUsd = bG + bR1 + bR2; contenedorFiscal.dataset.exentoTotalUsd = bE; 
+            contenedorFiscal.dataset.baseTotalUsd = redondear(bG_Usd + bR1_Usd + bR2_Usd); 
+            contenedorFiscal.dataset.exentoTotalUsd = bE_Usd; 
             actualizarContadorPausadas();
-        }
-
-        function ajustarFechaVencimiento() { 
-            const inputEmision = document.getElementById('pos-fecha-emision').value; const selectCondicion = document.getElementById('pos-condicion').value; const inputVencimiento = document.getElementById('pos-fecha-vencimiento'); 
-            if (!inputEmision) return; 
-            const fecha = new Date(inputEmision + 'T12:00:00Z'); const diasCredito = parseInt(selectCondicion) || 0; fecha.setDate(fecha.getDate() + diasCredito); 
-            inputVencimiento.value = fecha.toISOString().split('T')[0]; 
-        } 
-        function validarFechaEmision() { ajustarFechaVencimiento(); } 
-
-        function mostrarCarga(titulo, msg, error = false) { 
-            const overlay = document.getElementById('loading-overlay'); const icon = document.getElementById('loading-icon'); const errorText = document.getElementById('loading-error'); const actions = document.getElementById('error-actions'); 
-            document.getElementById('loading-text').innerText = titulo; errorText.innerText = msg; errorText.classList.remove('hidden'); 
-            if (error) { icon.className = "fa-solid fa-circle-xmark text-5xl text-red-500 mb-4"; actions.classList.remove('hidden'); } else { icon.className = "fa-solid fa-circle-notch fa-spin text-5xl text-primary mb-4"; actions.classList.add('hidden'); } 
-            overlay.classList.remove('hidden'); overlay.classList.add('flex'); 
         } 
 
-        function toggleEditNroFactura() { 
-            nroFacturaEditable = !nroFacturaEditable; const input = document.getElementById('pos-nro-factura'); const btn = document.getElementById('btn-edit-nro-factura'); 
-            input.readOnly = !nroFacturaEditable; 
-            if (nroFacturaEditable) { input.classList.remove('border-red-300', 'text-red-600', 'bg-white'); input.classList.add('border-tertiary', 'text-primary', 'bg-yellow-50'); btn.innerHTML = `<i class="fa-solid fa-unlock text-[8px]"></i>`; btn.classList.replace('bg-gray-400', 'bg-tertiary'); input.focus(); } else { input.classList.add('border-red-300', 'text-red-600', 'bg-white'); input.classList.remove('border-tertiary', 'text-primary', 'bg-yellow-50'); btn.innerHTML = `<i class="fa-solid fa-lock text-[8px]"></i>`; btn.classList.replace('bg-tertiary', 'bg-gray-400'); } 
-        } 
-
-        function toggleAcordeon() { 
-            const caja = document.getElementById('caja-acordeon-totales'); const icon = document.getElementById('icon-toggle-acordeon'); const txt = document.getElementById('txt-toggle-acordeon'); 
-            if (caja.classList.contains('hidden')) { caja.classList.remove('hidden'); icon.className = "fa-solid fa-chevron-down text-[9px] text-gray-400"; txt.innerText = "OCULTAR DESGLOSE FISCAL"; } else { caja.classList.add('hidden'); icon.className = "fa-solid fa-chevron-up text-[9px] text-gray-400"; txt.innerText = "MOSTRAR DESGLOSE FISCAL"; } 
-        } 
-
-        function toggleSupermercado() { 
-            modoSupermercado = !modoSupermercado; const panelIzq = document.getElementById('panel-izquierdo'); const panelDer = document.getElementById('panel-derecho'); const btn = document.getElementById('btn-supermercado'); 
-            if (modoSupermercado) { panelIzq.style.display = 'none'; panelDer.classList.remove('md:w-2/5', 'lg:w-1/3'); panelDer.classList.add('w-full'); btn.innerHTML = `<i class="fa-solid fa-compress mr-1 text-tertiary"></i> Reducir`; } else { panelIzq.style.display = 'flex'; panelDer.classList.add('md:w-2/5', 'lg:w-1/3'); panelDer.classList.remove('w-full'); btn.innerHTML = `<i class="fa-solid fa-expand mr-1 text-tertiary"></i> Expandir`; } 
-        } 
-
-        async function guardarTasaManual(moneda, valor) { 
-            const val = parseFloat(valor); if (isNaN(val) || val <= 0) return; 
-            if (moneda === 'USD') tasaBCV = val; if (moneda === 'EUR') tasaBCVEur = val; 
-            actualizarUI_Carrito(); actualizarIndicadorTasa(new Date().toISOString()); 
-        } 
-
-        function abrirInfoProducto(prodStr) { 
-            const p = JSON.parse(decodeURIComponent(prodStr)); const pre = p.pre || {}; 
-            document.getElementById('info-prod-img-main').src = p.imagen_principal || imgDefecto; document.getElementById('info-prod-sku').innerText = p.id_producto_sku || 'N/A'; document.getElementById('info-prod-barra').innerText = p.codigo_barras || 'N/A'; document.getElementById('info-prod-nom').innerText = p.nombre || 'N/A'; document.getElementById('info-prod-tipo').innerText = p.tipo_producto || 'N/A'; document.getElementById('info-prod-cat').innerText = p.categoria_del_producto || 'N/A'; document.getElementById('info-prod-catventa').innerText = p.categoria_venta || 'N/A'; document.getElementById('info-prod-marca').innerText = p.marca || 'N/A'; document.getElementById('info-prod-condicion').innerText = p.condicion_producto || 'N/A'; 
-            document.getElementById('info-prod-talla').innerText = p.talla || 'N/A'; document.getElementById('info-prod-color').innerText = p.color || 'N/A'; document.getElementById('info-prod-unidad').innerText = p.unidad_medida || 'N/A'; document.getElementById('info-prod-stock').innerText = p.stock_actual || '0'; document.getElementById('info-prod-min').innerText = p.stock_minimo || '0'; document.getElementById('info-prod-negativo').innerText = p.permitir_negativo ? 'SÍ' : 'NO'; 
-            document.getElementById('info-prod-estatus').innerText = p.estado_producto || 'N/A'; document.getElementById('info-prod-impuesto').innerText = p.tipo_impuesto || 'N/A'; document.getElementById('info-prod-desc').innerText = p.descripcion || 'SIN DESCRIPCIÓN'; 
-            document.getElementById('info-prod-precio-usd').innerText = `$${fmt(p.pUsd)}`;  
-            document.getElementById('info-prod-fijo-bs').innerText = pre.es_precio_fijo_bs ? 'SÍ' : 'NO'; document.getElementById('info-prod-precio-bs').innerText = pre.precio_fijo_bs ? `Bs. ${fmt(pre.precio_fijo_bs)}` : 'N/A'; 
-            document.getElementById('info-req-p1').innerText = p.requerido_precio_1 || '-'; document.getElementById('info-req-p2').innerText = p.requerido_precio_2 || '-'; document.getElementById('info-req-p3').innerText = p.requerido_precio_3 || '-'; 
-            document.getElementById('info-usd-p1').innerText = pre.precio_1_usd ? `$${fmt(pre.precio_1_usd)}` : '-'; document.getElementById('info-usd-p2').innerText = pre.precio_2_usd ? `$${fmt(pre.precio_2_usd)}` : '-'; document.getElementById('info-usd-p3').innerText = pre.precio_3_usd ? `$${fmt(pre.precio_3_usd)}` : '-'; 
-
-            const videoCont = document.getElementById('info-prod-video'); const videoPlaceholder = document.getElementById('info-prod-video-placeholder'); 
-            if (p.video_url && p.video_url.trim() !== '') { 
-                let videoId = ''; const url = p.video_url.trim(); 
-                if (url.includes('youtube.com/watch?v=')) { videoId = url.split('v=')[1].split('&')[0]; } else if (url.includes('youtu.be/')) { videoId = url.split('youtu.be/')[1].split('?')[0]; } else if (url.includes('youtube.com/shorts/')) { videoId = url.split('shorts/')[1].split('?')[0]; } else if (url.includes('youtube.com/embed/')) { videoId = url.split('embed/')[1].split('?')[0]; } 
-                if (videoId) { videoCont.src = `https://www.youtube.com/embed/${videoId}`; videoCont.classList.remove('hidden'); videoPlaceholder.classList.add('hidden'); } else { videoCont.src = url; videoCont.classList.remove('hidden'); videoPlaceholder.classList.add('hidden'); } 
-            } else { videoCont.src = ''; videoCont.classList.add('hidden'); videoPlaceholder.classList.remove('hidden'); } 
-
-            const galeriaCont = document.getElementById('info-prod-galeria'); galeriaCont.innerHTML = ''; 
-            if (p.galeria_imagenes) { 
-                try { 
-                    let imagenes = typeof p.galeria_imagenes === 'string' ? JSON.parse(p.galeria_imagenes) : p.galeria_imagenes; 
-                    if (Array.isArray(imagenes)) { imagenes.slice(0, 3).forEach(img => { if(img.trim() !== '') { galeriaCont.innerHTML += `<div class="h-10 w-full bg-white border border-gray-200 rounded flex items-center justify-center overflow-hidden cursor-pointer hover:border-primary transition" onclick="abrirVisorEnPOS('${img.trim()}')"><img src="${img.trim()}" class="max-h-full max-w-full object-contain"></div>`; } }); } 
-                } catch(e) { galeriaCont.innerHTML = `<span class="col-span-3 text-[9px] font-bold text-gray-400 text-center w-full uppercase tracking-widest mt-3">Sin Galería</span>`; } 
-            } else { galeriaCont.innerHTML = `<span class="col-span-3 text-[9px] font-bold text-gray-400 text-center w-full uppercase tracking-widest mt-3">Sin Galería</span>`; } 
-            document.getElementById('modal-info-producto').classList.remove('hidden'); document.getElementById('modal-info-producto').classList.add('flex'); 
-        } 
-
-        function limpiarVentaPOS() { 
-            if(carrito.length === 0) return; 
-            if(confirm("⚠️ ¿Estás seguro de limpiar la pantalla y cancelar esta venta actual?")) { carrito = []; limpiarCliente(); document.getElementById('pos-input-desc-general').value = ''; document.getElementById('pos-nro-control').value = ''; document.getElementById('pos-condicion').selectedIndex = 0; document.getElementById('pos-fecha-emision').value = getFechaHoy(); ajustarFechaVencimiento(); actualizarUI_Carrito(); } 
-        } 
-
-       function guardarVentaEnEspera() { 
+        // LÓGICA DE VENTAS PAUSADAS (MEMORIA LOCAL CLASE MUNDIAL)
+        function guardarVentaEnEspera() { 
             if(carrito.length === 0) return; 
             
             const objPausada = {
@@ -988,7 +1013,6 @@
             if (index > -1) {
                 const rec = pausadas[index];
                 carrito = rec.carrito_data;
-                // Si es un cliente cargado (no el general)
                 if(rec.id_cliente) {
                     const cliFalso = { id: rec.id_cliente, documento_identidad: rec.doc_cliente, nombre_razon_social: rec.nom_cliente, tipo_contribuyente: 'NATURAL', nivel_precio: 'GENERAL', direccion_fiscal: 'CARGADO DESDE PAUSA' };
                     ejecutarSeleccionCliente(cliFalso);
@@ -1001,13 +1025,18 @@
                 actualizarUI_Carrito();
             }
         }
-    function verificarIGTF() { 
-            const metodo = document.getElementById('cobro-metodo').value; const aplica = (metodo === 'EFECTIVO_USD' || metodo === 'ZELLE'); 
-            document.getElementById('caja-igtf').classList.toggle('hidden', !aplica); 
-            const tBs = granTotalUsd * tasaBCV; const igtfBs = aplica ? tBs * pypIgtf : 0; 
-            document.getElementById('modal-total-bs-final').innerText = `Bs. ${fmt(tBs + igtfBs)}`; document.getElementById('modal-total-usd-final').innerText = `US$ ${fmt((tBs + igtfBs)/tasaBCV)}`; 
-        }
 
+        function verificarIGTF() { 
+            const metodo = document.getElementById('cobro-metodo').value; 
+            const aplica = (metodo === 'EFECTIVO_USD' || metodo === 'ZELLE'); 
+            document.getElementById('caja-igtf').classList.toggle('hidden', !aplica); 
+            
+            const tBs = granTotalBs; 
+            const igtfBs = aplica ? redondear(tBs * pypIgtf) : 0; 
+            
+            document.getElementById('modal-total-bs-final').innerText = `Bs. ${fmt(tBs + igtfBs)}`; 
+            document.getElementById('modal-total-usd-final').innerText = `US$ ${fmt(redondear((tBs + igtfBs)/tasaBCV))}`; 
+        }
        function abrirCobro() { verificarIGTF(); document.getElementById('modal-cobro').classList.remove('hidden'); document.getElementById('modal-cobro').classList.add('flex'); } 
         function cerrarCobro() { document.getElementById('modal-cobro').classList.add('hidden'); } 
 
@@ -1045,7 +1074,7 @@
                 
                 const aplicaIgtf = (metodo === 'EFECTIVO_USD' || metodo === 'ZELLE'); 
                 const igtfVal = aplicaIgtf ? pypIgtf * 100 : 0; 
-                const totalBsFinal = (granTotalUsd * tasaBCV) + (aplicaIgtf ? (granTotalUsd * tasaBCV * pypIgtf) : 0); 
+               const totalBsFinal = redondear(granTotalBs + (aplicaIgtf ? redondear(granTotalBs * pypIgtf) : 0));
                 const totalUsdFinal = totalBsFinal / tasaBCV; 
                 const baseImpUsd = parseFloat(document.getElementById('contenedor-totales-fiscales').dataset.baseTotalUsd) || 0; 
                 const exentoUsd = parseFloat(document.getElementById('contenedor-totales-fiscales').dataset.exentoTotalUsd) || 0; 
