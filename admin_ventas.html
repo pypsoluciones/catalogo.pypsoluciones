@@ -727,27 +727,34 @@
             } catch(e) { mostrarErrorConexion(e.message); } 
         }
 
-        async function inicializarCorrelativos() { 
+       async function inicializarCorrelativos() { 
             const inputNroFactura = document.getElementById('pos-nro-factura'); inputNroFactura.value = "Cargando..."; 
             try { 
                 const resConf = await fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?parametro=eq.CORRELATIVO_INICIAL&select=valor`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }); 
-                let corrInicial = 0; if(resConf.ok) { const dConf = await resConf.json(); if(dConf.length > 0) corrInicial = parseInt(dConf[0].valor) || 0; } 
+                let corrInicial = 0; if(resConf.ok) { const dConf = await resConf.json(); if(dConf.length > 0) corrInicial = parseInt(dConf[0].valor, 10) || 0; } 
+                
                 const filtroEmpresa = empresaActual ? `id_empresa=eq.${empresaActual}` : `id_empresa=is.null`; 
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/facturas?${filtroEmpresa}&select=correlativo,nro_factura_manual,fecha_emision&order=fecha_emision.desc&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }); 
+                // ORDENAMOS POR FECHA DE CREACIÓN REAL EN BASE DE DATOS PARA EVITAR SALTOS
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/facturas?${filtroEmpresa}&select=correlativo,nro_factura_manual&order=created_at.desc&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }); 
                 
                 if (res.ok) {  
                     const data = await res.json();  
                     if (data.length > 0) {  
-                        ultimaFechaFactura = new Date(data[0].fecha_emision).toISOString().split('T')[0]; 
-                        let maxCorr = data[0].correlativo || 0; 
-                        if (data[0].nro_factura_manual) { const soloNums = data[0].nro_factura_manual.replace(/\D/g, ''); if(soloNums !== '') { let mNum = parseInt(soloNums); if(mNum > maxCorr) maxCorr = mNum; } } 
+                        let maxCorr = parseInt(data[0].correlativo, 10) || 0; 
+                        if (data[0].nro_factura_manual) { 
+                            const soloNums = data[0].nro_factura_manual.replace(/\D/g, ''); 
+                            if(soloNums !== '') { 
+                                let mNum = parseInt(soloNums, 10); // FORZAMOS BASE 10 DECIMAL
+                                if(mNum > maxCorr) maxCorr = mNum; 
+                            } 
+                        } 
                         correlativoActual = Math.max(maxCorr, corrInicial) + 1;  
                     } else { correlativoActual = corrInicial > 0 ? corrInicial + 1 : 1; } 
                 } else { correlativoActual = corrInicial > 0 ? corrInicial + 1 : 1; } 
                 
                 inputNroFactura.value = String(correlativoActual).padStart(6, '0'); 
             } catch (e) { inputNroFactura.value = ""; inputNroFactura.placeholder = "Ej: 000001"; inputNroFactura.readOnly = false; } 
-        } 
+        }
 
         function cambiarVistaPos(v) { posVistaActual = v; localStorage.setItem('pyp_pos_vista_inventario', v); actualizarBotonesVistaPos(); buscarProductos(); } 
         
@@ -882,7 +889,7 @@
         let sumSubtotalBasePuroUsd = 0, descGeneralTotalUsd = 0, granTotalUsd = 0; 
         let sumSubtotalBasePuroBs = 0, descGeneralTotalBs = 0, granTotalBs = 0; // Acumuladores estrictos en BS
 
-        function actualizarUI_Carrito() { 
+       function actualizarUI_Carrito() { 
             const lista = document.getElementById('lista-carrito'); 
             const nivelCli = document.getElementById('pos-nivel-precio-cliente').value || 'GENERAL'; 
             const contenedorFiscal = document.getElementById('contenedor-totales-fiscales'); 
@@ -937,6 +944,7 @@
                 itemsTotal += item.cantidad; 
                 const valorInputDesc = item.desc_val > 0 ? item.desc_val : ''; 
 
+                // SE CAMBIÓ w-14 POR w-16 Y step="any" PARA EVITAR CORTES EN LOS DECIMALES
                 html += `<div class="bg-white border border-gray-200 rounded p-1 mb-1.5 shadow-sm flex flex-col fade-in relative group min-h-[58px]">
                     <div class="flex gap-2 h-full">
                         <div class="flex-1 min-w-0 pr-2 border-r border-gray-100 flex flex-col justify-between">
@@ -948,7 +956,7 @@
                             <div class="flex items-center gap-1 mt-1 pt-1 border-t border-gray-100">
                                 <span class="text-[8px] text-red-500 font-bold uppercase">Desc:</span>
                                 <select class="border border-red-200 rounded text-[9px] p-0.5 outline-none bg-red-50 text-red-700 font-bold" onchange="actualizarDescItem('${item.id_producto_sku}', 'tipo', this.value)"><option value="MONTO_BS" ${item.desc_tipo === 'MONTO_BS'?'selected':''}>Bs.</option><option value="PORCENTAJE" ${item.desc_tipo === 'PORCENTAJE'?'selected':''}>%</option><option value="MONTO" ${item.desc_tipo === 'MONTO'?'selected':''}>$</option></select>
-                                <input type="number" min="0" placeholder="0" class="border border-red-200 rounded text-[10px] p-0.5 w-14 text-center outline-none bg-white font-black" value="${valorInputDesc}" onchange="actualizarDescItem('${item.id_producto_sku}', 'val', this.value)">
+                                <input type="number" step="any" min="0" placeholder="0" class="border border-red-200 rounded text-[10px] p-0.5 w-16 text-center outline-none bg-white font-black" value="${valorInputDesc}" onchange="actualizarDescItem('${item.id_producto_sku}', 'val', this.value)">
                             </div>
                         </div>
                         <div class="shrink-0 flex flex-col items-center justify-center border border-gray-200 rounded overflow-hidden shadow-inner h-[54px] w-9">
@@ -970,34 +978,47 @@
             const typeDescGeneral = document.getElementById('pos-type-desc-general').value; 
             const inputDescGeneral = parseFloat(document.getElementById('pos-input-desc-general').value) || 0; 
             
-            let sumNetoItemsUsd = redondear(basesUsd['GENERAL'] + basesUsd['REDUCIDO_1'] + basesUsd['REDUCIDO_2'] + basesUsd['EXENTO']); 
-            descGeneralTotalUsd = 0;  
+            descGeneralTotalBs = 0;
             
-            if (typeDescGeneral === 'PORCENTAJE' && inputDescGeneral > 0) { descGeneralTotalUsd = redondear(sumNetoItemsUsd * (inputDescGeneral / 100)); } 
-            else if (typeDescGeneral === 'MONTO' && inputDescGeneral > 0) { descGeneralTotalUsd = inputDescGeneral; } 
-            else if (typeDescGeneral === 'MONTO_BS' && inputDescGeneral > 0) { descGeneralTotalUsd = redondear(inputDescGeneral / tasaBCV); } 
+            if (typeDescGeneral === 'PORCENTAJE' && inputDescGeneral > 0) { descGeneralTotalBs = redondear(sumSubtotalBasePuroBs * (inputDescGeneral / 100)); } 
+            else if (typeDescGeneral === 'MONTO_BS' && inputDescGeneral > 0) { descGeneralTotalBs = inputDescGeneral; } 
+            else if (typeDescGeneral === 'MONTO' && inputDescGeneral > 0) { descGeneralTotalBs = redondear(inputDescGeneral * tasaBCV); } 
             
-            if (descGeneralTotalUsd > sumNetoItemsUsd) descGeneralTotalUsd = sumNetoItemsUsd; 
-            descGeneralTotalBs = redondear(descGeneralTotalUsd * tasaBCV);
-
+            if (descGeneralTotalBs > sumSubtotalBasePuroBs) descGeneralTotalBs = sumSubtotalBasePuroBs; 
+            
+            // Factor de prorrateo exacto
             let factor = 1; 
-            if(sumNetoItemsUsd > 0 && descGeneralTotalUsd > 0) factor = 1 - (descGeneralTotalUsd / sumNetoItemsUsd); 
-
-            let bG_Usd = redondear(basesUsd['GENERAL'] * factor); 
-            let bR1_Usd = redondear(basesUsd['REDUCIDO_1'] * factor); 
-            let bR2_Usd = redondear(basesUsd['REDUCIDO_2'] * factor); 
-            let bE_Usd = redondear(basesUsd['EXENTO'] * factor); 
+            if(sumSubtotalBasePuroBs > 0 && descGeneralTotalBs > 0) factor = 1 - (descGeneralTotalBs / sumSubtotalBasePuroBs); 
 
             let bG_Bs = redondear(basesBs['GENERAL'] * factor); 
             let bR1_Bs = redondear(basesBs['REDUCIDO_1'] * factor); 
             let bR2_Bs = redondear(basesBs['REDUCIDO_2'] * factor); 
             let bE_Bs = redondear(basesBs['EXENTO'] * factor); 
+
+            // CÁLCULO DE AJUSTE: FORZAR CUADRE EXACTO DE CÉNTIMOS EN EL PRORRATEO
+            let totalBasesProrrateadasBs = redondear(bG_Bs + bR1_Bs + bR2_Bs + bE_Bs);
+            let baseObjetivoBs = redondear(sumSubtotalBasePuroBs - descGeneralTotalBs);
+            let diferenciaBs = redondear(baseObjetivoBs - totalBasesProrrateadasBs);
+
+            if (diferenciaBs !== 0) {
+                // Le inyectamos el céntimo perdido a la base que tenga mayor peso
+                let maxBase = Math.max(bG_Bs, bR1_Bs, bR2_Bs, bE_Bs);
+                if (maxBase === bG_Bs) bG_Bs = redondear(bG_Bs + diferenciaBs);
+                else if (maxBase === bR1_Bs) bR1_Bs = redondear(bR1_Bs + diferenciaBs);
+                else if (maxBase === bR2_Bs) bR2_Bs = redondear(bR2_Bs + diferenciaBs);
+                else if (maxBase === bE_Bs) bE_Bs = redondear(bE_Bs + diferenciaBs);
+            }
             
-            let ivaG_Usd = redondear(bG_Usd * pypIva); let ivaR1_Usd = redondear(bR1_Usd * pypIvaRed1); let ivaR2_Usd = redondear(bR2_Usd * pypIvaRed2); 
             let ivaG_Bs = redondear(bG_Bs * pypIva); let ivaR1_Bs = redondear(bR1_Bs * pypIvaRed1); let ivaR2_Bs = redondear(bR2_Bs * pypIvaRed2); 
 
-            granTotalUsd = redondear(bG_Usd + bR1_Usd + bR2_Usd + bE_Usd + ivaG_Usd + ivaR1_Usd + ivaR2_Usd); 
             granTotalBs = redondear(bG_Bs + bR1_Bs + bR2_Bs + bE_Bs + ivaG_Bs + ivaR1_Bs + ivaR2_Bs); 
+
+            // CONVERSIÓN INVERSA ESTRICTA A DÓLARES (Evita sumar redondeos)
+            granTotalUsd = redondear(granTotalBs / tasaBCV);
+            descGeneralTotalUsd = redondear(descGeneralTotalBs / tasaBCV);
+
+            // Variables de base en USD para BD
+            let bG_Usd = redondear(bG_Bs / tasaBCV); let bR1_Usd = redondear(bR1_Bs / tasaBCV); let bR2_Usd = redondear(bR2_Bs / tasaBCV); let bE_Usd = redondear(bE_Bs / tasaBCV);
 
             let htmlTotales = ''; 
             const Fila = (etiqueta, valBs) => `<div class="flex justify-between items-center text-xs text-gray-500 font-bold uppercase"><span>${etiqueta}</span><span class="text-gray-900 font-black">Bs. ${fmt(valBs)}</span></div>`; 
@@ -1020,7 +1041,7 @@
             contenedorFiscal.dataset.baseTotalUsd = redondear(bG_Usd + bR1_Usd + bR2_Usd); 
             contenedorFiscal.dataset.exentoTotalUsd = bE_Usd; 
             actualizarContadorPausadas();
-        } 
+        }
 
         function guardarVentaEnEspera() { 
             if(carrito.length === 0) return; 
