@@ -3,13 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>P&P Soluciones | Iniciar Sesión</title>
+    <title>SaaS | Iniciar Sesión</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="P&P Admin">
-    <meta name="theme-color" content="#143B62">
+    <meta name="apple-mobile-web-app-title" content="Admin">
     
+    <script>
+        // Inyectar variables de Marca Blanca antes de renderizar
+        const cPri = localStorage.getItem('pyp_color_primario') || '#143B62';
+        const cSec = localStorage.getItem('pyp_color_secundario') || '#E67E22';
+        document.documentElement.style.setProperty('--color-primary', cPri);
+        document.documentElement.style.setProperty('--color-secondary', cSec);
+        document.querySelector('meta[name="theme-color"]')?.setAttribute("content", cPri);
+    </script>
+
     <link rel="manifest" href="admin_manifest.json">
     <link rel="apple-touch-icon" href="https://i.ibb.co/Y7kFmQbj/Favicon-P-P-Soluciones-Tinified.png">
     <link rel="shortcut icon" type="image/png" href="https://i.ibb.co/Y7kFmQbj/Favicon-P-P-Soluciones-Tinified.png">
@@ -26,12 +34,23 @@
         .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
         @keyframes shake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-5px); } 40%, 80% { transform: translateX(5px); } }
 
+        /* Consumir CSS Vars para Tailwind dinámico */
+        .text-primary { color: var(--color-primary); }
+        .bg-primary { background-color: var(--color-primary); }
+        .border-primary { border-color: var(--color-primary); }
+        .border-secondary { border-color: var(--color-secondary); }
+        .focus-ring-secondary:focus { border-color: var(--color-secondary); box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-secondary) 20%, transparent); }
+        
+        .grad-bg { background: radial-gradient(circle at 0% 0%, var(--color-primary), color-mix(in srgb, var(--color-primary) 30%, transparent) 70%); }
+        .grad-accent { background: radial-gradient(circle at 100% 100%, var(--color-secondary), transparent 60%); }
+        .grad-line { background: linear-gradient(to right, var(--color-primary), var(--color-secondary), var(--color-primary)); }
+
         /* Estilos del Cartel de Instalación PWA */
-        #cartel-instalacion { position: fixed; top: 0; left: 0; width: 100%; background-color: #E67E22; color: white; box-shadow: 0 10px 25px rgba(0,0,0,0.2); padding: 16px 24px; box-sizing: border-box; display: flex; justify-content: space-between; align-items: center; z-index: 9999; transform: translateY(-150%); transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1); border-bottom-left-radius: 15px; border-bottom-right-radius: 15px; }
+        #cartel-instalacion { position: fixed; top: 0; left: 0; width: 100%; background-color: var(--color-secondary); color: white; box-shadow: 0 10px 25px rgba(0,0,0,0.2); padding: 16px 24px; box-sizing: border-box; display: flex; justify-content: space-between; align-items: center; z-index: 9999; transform: translateY(-150%); transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1); border-bottom-left-radius: 15px; border-bottom-right-radius: 15px; }
         #cartel-instalacion.mostrar { transform: translateY(0); }
         .texto-instalar { font-size: 14px; line-height: 1.4; flex-grow: 1; padding-right: 15px; font-weight: 500; }
         .botones-instalar { display: flex; align-items: center; gap: 12px; }
-        .btn-accion { background-color: #143B62; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px; text-transform: uppercase; box-shadow: 0 4px 6px rgba(20, 59, 98, 0.3); transition: transform 0.2s; }
+        .btn-accion { background-color: var(--color-primary); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px; text-transform: uppercase; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3); transition: transform 0.2s; }
         .btn-accion:active { transform: scale(0.95); }
         .btn-cerrar { background: rgba(255,255,255,0.2); border: none; font-size: 16px; color: white; cursor: pointer; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
     </style>
@@ -39,12 +58,12 @@
 <body class="bg-[#f0f2f5] font-sans h-screen flex items-center justify-center relative overflow-hidden">
 
     <div class="absolute inset-0 z-0 overflow-hidden hidden md:block">
-        <div class="absolute -top-[20%] -left-[10%] w-[50%] h-[70%] bg-gradient-to-br from-[#143B62] to-[#1a4a7a] rounded-full blur-[100px] opacity-60"></div>
-        <div class="absolute top-[40%] -right-[10%] w-[40%] h-[60%] bg-gradient-to-tl from-[#E67E22] to-yellow-400 rounded-full blur-[100px] opacity-20"></div>
+        <div class="absolute -top-[20%] -left-[10%] w-[50%] h-[70%] grad-bg rounded-full blur-[100px] opacity-60"></div>
+        <div class="absolute top-[40%] -right-[10%] w-[40%] h-[60%] grad-accent rounded-full blur-[100px] opacity-20"></div>
     </div>
 
     <div id="cartel-instalacion">
-        <div class="texto-instalar"><i class="fa-solid fa-mobile-screen mr-2"></i> Instala el <b>P&P Admin</b> en tu celular.</div>
+        <div class="texto-instalar"><i class="fa-solid fa-mobile-screen mr-2"></i> Instala la <b>App</b> en tu celular.</div>
         <div class="botones-instalar">
             <button id="btn-instalar" class="btn-accion">Instalar</button>
             <button id="btn-cerrar-cartel" class="btn-cerrar">✕</button>
@@ -53,24 +72,24 @@
 
     <div class="w-full max-w-md p-6 z-10 slide-up">
         
-        <div class="text-center mb-8">
+        <div class="text-center mb-8" id="contenedor-branding">
             <div class="inline-flex items-center justify-center w-20 h-20 bg-white rounded-2xl shadow-lg mb-4">
-                <i class="fa-solid fa-layer-group text-[#E67E22] text-5xl"></i>
+                <i class="fa-solid fa-layer-group text-primary text-5xl" style="color: var(--color-secondary);"></i>
             </div>
-            <h1 class="text-3xl font-black text-[#143B62] tracking-tight">P&P Admin</h1>
-            <p class="text-gray-500 text-sm mt-1 font-medium">Sistema de Gestión Empresarial</p>
+            <h1 class="text-3xl font-black text-primary tracking-tight">Acceso Privado</h1>
+            <p class="text-gray-500 text-sm mt-1 font-medium">Sistema ERP</p>
         </div>
 
         <div class="glass rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] border border-white/50 p-8 relative overflow-hidden">
-            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#143B62] via-[#E67E22] to-[#143B62]"></div>
-            <h2 class="text-xl font-bold text-gray-800 mb-6 border-l-4 border-[#143B62] pl-3">Iniciar Sesión</h2>
+            <div class="absolute top-0 left-0 w-full h-1 grad-line"></div>
+            <h2 class="text-xl font-bold text-gray-800 mb-6 border-l-4 border-primary pl-3">Iniciar Sesión</h2>
 
             <form id="form-login" onsubmit="procesarLogin(event)" class="space-y-5">
                 <div>
                     <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Usuario / Email</label>
                     <div class="relative">
                         <i class="fa-solid fa-user absolute left-4 top-3.5 text-gray-400"></i>
-                        <input type="text" id="login-user" required placeholder="ej: lesme02@gmail.com" class="w-full bg-gray-50 border border-gray-200 rounded-xl pl-11 pr-4 py-3 focus:outline-none focus:border-[#E67E22] focus:bg-white focus:ring-2 focus:ring-[#E67E22]/20 transition text-gray-700 font-bold">
+                        <input type="text" id="login-user" required placeholder="ej: usuario@empresa.com" class="w-full bg-gray-50 border border-gray-200 rounded-xl pl-11 pr-4 py-3 focus:outline-none focus-ring-secondary transition text-gray-700 font-bold">
                     </div>
                 </div>
 
@@ -78,7 +97,7 @@
                     <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Contraseña</label>
                     <div class="relative">
                         <i class="fa-solid fa-lock absolute left-4 top-3.5 text-gray-400"></i>
-                        <input type="password" id="login-pass" required placeholder="••••••••" class="w-full bg-gray-50 border border-gray-200 rounded-xl pl-11 pr-10 py-3 focus:outline-none focus:border-[#E67E22] focus:bg-white focus:ring-2 focus:ring-[#E67E22]/20 transition text-gray-700 font-bold">
+                        <input type="password" id="login-pass" required placeholder="••••••••" class="w-full bg-gray-50 border border-gray-200 rounded-xl pl-11 pr-10 py-3 focus:outline-none focus-ring-secondary transition text-gray-700 font-bold">
                         <button type="button" onclick="togglePassword()" class="absolute right-4 top-3.5 text-gray-400 hover:text-gray-600 transition"><i id="icono-ojo" class="fa-solid fa-eye"></i></button>
                     </div>
                 </div>
@@ -87,7 +106,7 @@
                     <i class="fa-solid fa-triangle-exclamation"></i> <span id="txt-error">Credenciales incorrectas.</span>
                 </div>
 
-                <button type="submit" id="btn-submit" class="w-full bg-[#143B62] hover:bg-[#0f2d4a] text-white font-bold py-3.5 rounded-xl shadow-lg shadow-[#143B62]/30 transition-all btn-press mt-4 flex justify-center items-center gap-2 text-lg">
+                <button type="submit" id="btn-submit" class="w-full bg-primary hover:opacity-90 text-white font-bold py-3.5 rounded-xl shadow-lg transition-all btn-press mt-4 flex justify-center items-center gap-2 text-lg">
                     Entrar al Sistema <i class="fa-solid fa-arrow-right-to-bracket"></i>
                 </button>
             </form>
@@ -97,6 +116,16 @@
     <script>
         const SUPABASE_URL = 'https://icvfmdvvochzaktugqvj.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImljdmZtZHZ2b2NoemFrdHVncXZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyNDEzMzEsImV4cCI6MjA5MTgxNzMzMX0.gO3D39piT6KGbMMOzrPGWXUp5-g_nOBAgJ-nwPv8IcQ';
+
+        // LÓGICA DE LOGO DINÁMICO AL CARGAR
+        document.addEventListener("DOMContentLoaded", () => {
+            const logoLogin = localStorage.getItem('pyp_logo_login_url');
+            if (logoLogin && logoLogin.trim() !== '') {
+                document.getElementById('contenedor-branding').innerHTML = `
+                    <img src="${logoLogin}" alt="Logo Empresa" class="mx-auto max-h-24 w-auto object-contain mb-4 fade-in">
+                `;
+            }
+        });
 
         // --- LÓGICA PWA ---
         let eventoInstalacionDiferido;
@@ -127,9 +156,7 @@
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js')
-                .then(reg => console.log('SW Admin registrado'))
-                .catch(err => console.log('Error SW Admin: ', err));
+                navigator.serviceWorker.register('sw.js').catch(err => console.log('Error SW:', err));
             });
         }
 
@@ -157,9 +184,7 @@
             e.preventDefault();
             
             let user = document.getElementById('login-user').value.trim().toLowerCase();
-            if (!user.includes('@')) {
-                user = user + '@pypsoluciones.com'; 
-            }
+            if (!user.includes('@')) { user = user + '@pypsoluciones.com'; }
             
             const pass = document.getElementById('login-pass').value.trim();
             const btn = document.getElementById('btn-submit');
@@ -171,10 +196,7 @@
             try {
                 const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
                     method: 'POST',
-                    headers: { 
-                        'apikey': SUPABASE_KEY, 
-                        'Content-Type': 'application/json' 
-                    },
+                    headers: { 'apikey': SUPABASE_KEY, 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email: user, password: pass })
                 });
                 
@@ -191,14 +213,22 @@
                 localStorage.setItem('pyp_usuario_nombre', user.split('@')[0]);
                 
                 btn.innerHTML = `<i class="fa-solid fa-check text-xl"></i> ¡Bienvenido!`;
-                btn.classList.replace('bg-[#143B62]', 'bg-green-500');
-                btn.classList.replace('shadow-[#143B62]/30', 'shadow-green-500/30');
+                btn.classList.replace('bg-primary', 'bg-green-500');
+                
+                // Recargar variables globales desde Supabase de forma transparente antes de entrar
+                const resConf = await fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${data.access_token}` } });
+                if(resConf.ok) {
+                    const dataConf = await resConf.json();
+                    const getV = (p) => dataConf.find(c => c.parametro === p)?.valor;
+                    if(getV('COLOR_PRIMARIO')) localStorage.setItem('pyp_color_primario', getV('COLOR_PRIMARIO'));
+                    if(getV('COLOR_SECUNDARIO')) localStorage.setItem('pyp_color_secundario', getV('COLOR_SECUNDARIO'));
+                    if(getV('LOGO_LOGIN')) localStorage.setItem('pyp_logo_login_url', getV('LOGO_LOGIN'));
+                    if(getV('LOGO_SIDEBAR')) localStorage.setItem('pyp_logo_pc_url', getV('LOGO_SIDEBAR'));
+                }
                 
                 setTimeout(() => { window.location.href = 'admin_dashboard.html'; }, 500);
 
-            } catch (error) {
-                mostrarError("Error conectando al servidor.");
-            }
+            } catch (error) { mostrarError("Error conectando al servidor."); }
         }
     </script>
 </body>
