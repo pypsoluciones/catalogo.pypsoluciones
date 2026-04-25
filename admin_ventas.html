@@ -727,33 +727,26 @@
             } catch(e) { mostrarErrorConexion(e.message); } 
         }
 
-       async function inicializarCorrelativos() { 
-            const inputNroFactura = document.getElementById('pos-nro-factura'); inputNroFactura.value = "Cargando..."; 
+      async function inicializarCorrelativos() { 
+            const inputNroFactura = document.getElementById('pos-nro-factura'); 
+            inputNroFactura.value = "Cargando..."; 
             try { 
                 const resConf = await fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?parametro=eq.CORRELATIVO_INICIAL&select=valor`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }); 
                 let corrInicial = 0; if(resConf.ok) { const dConf = await resConf.json(); if(dConf.length > 0) corrInicial = parseInt(dConf[0].valor, 10) || 0; } 
                 
                 const filtroEmpresa = empresaActual ? `id_empresa=eq.${empresaActual}` : `id_empresa=is.null`; 
-                // ORDENAMOS POR FECHA DE CREACIÓN REAL EN BASE DE DATOS PARA EVITAR SALTOS
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/facturas?${filtroEmpresa}&select=correlativo,nro_factura_manual&order=created_at.desc&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }); 
+                // Cambiamos el orden a correlativo desc para traer el número más alto
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/facturas?${filtroEmpresa}&select=correlativo&order=correlativo.desc&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }); 
                 
                 if (res.ok) {  
                     const data = await res.json();  
                     if (data.length > 0) {  
-                        let maxCorr = parseInt(data[0].correlativo, 10) || 0; 
-                        if (data[0].nro_factura_manual) { 
-                            const soloNums = data[0].nro_factura_manual.replace(/\D/g, ''); 
-                            if(soloNums !== '') { 
-                                let mNum = parseInt(soloNums, 10); // FORZAMOS BASE 10 DECIMAL
-                                if(mNum > maxCorr) maxCorr = mNum; 
-                            } 
-                        } 
-                        correlativoActual = Math.max(maxCorr, corrInicial) + 1;  
-                    } else { correlativoActual = corrInicial > 0 ? corrInicial + 1 : 1; } 
-                } else { correlativoActual = corrInicial > 0 ? corrInicial + 1 : 1; } 
+                        correlativoActual = (parseInt(data[0].correlativo, 10) || corrInicial) + 1;  
+                    } else { correlativoActual = corrInicial + 1; } 
+                } else { correlativoActual = corrInicial + 1; } 
                 
                 inputNroFactura.value = String(correlativoActual).padStart(6, '0'); 
-            } catch (e) { inputNroFactura.value = ""; inputNroFactura.placeholder = "Ej: 000001"; inputNroFactura.readOnly = false; } 
+            } catch (e) { inputNroFactura.value = ""; inputNroFactura.placeholder = "000001"; inputNroFactura.readOnly = false; } 
         }
 
         function cambiarVistaPos(v) { posVistaActual = v; localStorage.setItem('pyp_pos_vista_inventario', v); actualizarBotonesVistaPos(); buscarProductos(); } 
