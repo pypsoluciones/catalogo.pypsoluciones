@@ -1,7 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
     const currentPage = window.location.pathname.split('/').pop() || 'admin_dashboard.html';
 
-    // 🎨 Definición de estilos Premium para evitar el "naranja feo"
+    // 🎨 Definición de estilos Premium
     const estiloActivoSub = "bg-white/10 text-white font-bold border-l-4 border-secondary pl-2 shadow-inner backdrop-blur-sm";
     const estiloInactivoSub = "text-gray-400 hover:text-white hover:bg-white/5 pl-2";
 
@@ -39,8 +39,9 @@ document.addEventListener("DOMContentLoaded", () => {
                     <i class="fa-solid fa-chevron-down text-[10px]"></i>
                 </button>
                 <div id="submenu-fin" class="pl-6 space-y-1 mt-1 ${currentPage.includes('admin_cxc') || currentPage.includes('admin_caja') ? '' : 'hidden'}">
+                    <a href="admin_caja.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_caja.html' ? estiloActivoSub : estiloInactivoSub}">Control de Caja</a>
                     <a href="admin_cxc.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_cxc.html' ? estiloActivoSub : estiloInactivoSub}">Cuentas por Cobrar</a>
-                    </div>
+                </div>
             </div>
             
             <div class="space-y-1 pt-1">
