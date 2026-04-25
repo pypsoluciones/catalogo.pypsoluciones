@@ -38,7 +38,6 @@
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;900&family=Poppins:wght@300;400;500;700;900&family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
-    <script src="config.js"></script>
     <script>if (!localStorage.getItem('pyp_token_seguro')) window.location.href = 'login.html';</script>
     
     <style>
@@ -72,6 +71,7 @@
 
         <div class="flex-1 overflow-y-auto p-4 md:p-6 custom-scroll">
             <div class="max-w-5xl mx-auto space-y-6 pb-20">
+                
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                     <div class="bg-primary px-4 py-2.5 text-white font-bold text-xs uppercase tracking-widest flex items-center gap-2">
                         <i class="fa-solid fa-money-bill-wave text-white/70"></i> Moneda y Tasa de Cambio
@@ -118,16 +118,18 @@
                         <input type="hidden" id="conf-condiciones">
                     </div>
                 </div>
+
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                     <div class="bg-primary px-4 py-2.5 text-white font-bold text-xs uppercase tracking-widest flex items-center gap-2">
                         <i class="fa-solid fa-palette text-white/70"></i> Identidad Corporativa y Colores
                     </div>
                     <div class="p-6">
+                        
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 border-b border-gray-100 pb-8">
                             <div>
                                 <label class="block text-[10px] font-black text-gray-500 uppercase mb-2 tracking-widest">Logo Principal (Pantalla Login)</label>
                                 <input type="url" id="conf-logo-login" placeholder="Ej: https://ejemplo.com/logo.png" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm font-bold text-primary outline-none focus:border-tertiary transition bg-white">
-                                <p class="text-[8px] text-gray-400 font-bold leading-tight mt-1">Sube la imagen a un hosting o Discord y pega el enlace aquí. (Recomendado: Cuadrado PNG)</p>
+                                <p class="text-[8px] text-gray-400 font-bold leading-tight mt-1">Aparecerá en el Login. (Recomendado: Cuadrado PNG)</p>
                             </div>
                             <div>
                                 <label class="block text-[10px] font-black text-gray-500 uppercase mb-2 tracking-widest">Logo Menú Lateral (PC)</label>
@@ -135,103 +137,7 @@
                                 <p class="text-[8px] text-gray-400 font-bold leading-tight mt-1">Aparecerá arriba a la izquierda en todo el sistema. (Recomendado: Horizontal PNG transparente)</p>
                             </div>
                         </div>
-                        ```
 
-### PASO 2: Lógica de Configuración (Guardar los Logos)
-
-En el mismo archivo **`admin_configuracion.html`**, baja hasta las funciones de JavaScript. Debes modificar `cargarConfig()` y `guardarTodo(event)` para que procesen estas nuevas variables. 
-
-**Reemplaza tus funciones `cargarConfig()` y `guardarTodo(event)` por estas:**
-
-```javascript
-        async function cargarConfig() {
-            const [resTasa, resConf] = await Promise.all([
-                fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?moneda=eq.USD&select=tasa&order=fecha_actualizacion.desc&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
-                fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } })
-            ]);
-            
-            const dataTasa = await resTasa.json(); if(dataTasa.length > 0) document.getElementById('conf-tasa').value = dataTasa[0].tasa;
-            const dataConf = await resConf.json();
-            const validRow = dataConf.find(c => c.id_empresa !== null); if (validRow && !empId) empId = validRow.id_empresa;
-
-            const fill = (id, param) => { const items = dataConf.filter(c => c.parametro === param); if(items.length > 0) { const el = document.getElementById(id); if(el) el.value = items[items.length - 1].valor; } };
-            
-            fill('conf-iva', 'IVA_GENERAL'); fill('conf-igtf', 'IGTF'); fill('conf-iva-r1', 'IVA_REDUCIDO_1'); fill('conf-iva-r2', 'IVA_REDUCIDO_2'); fill('conf-exento', 'POS_MOSTRAR_EXENTO'); 
-            
-            const cItem = dataConf.find(c => c.parametro === 'CONDICIONES_PAGO');
-            cargarCondicionesUI(cItem ? cItem.valor : 'CONTADO|0, CRÉDITO 15 DÍAS|15');
-
-            // CARGA DE MARCA BLANCA (COLORES Y LOGOS)
-            const cP = dataConf.find(c => c.parametro === 'COLOR_PRIMARIO')?.valor || localStorage.getItem('pyp_color_primario') || '#143B62';
-            const cS = dataConf.find(c => c.parametro === 'COLOR_SECUNDARIO')?.valor || localStorage.getItem('pyp_color_secundario') || '#E67E22';
-            const cT = dataConf.find(c => c.parametro === 'COLOR_TERCIARIO')?.valor || localStorage.getItem('pyp_color_terciario') || '#64748b';
-            
-            document.getElementById('conf-color-primario').value = cP;
-            document.getElementById('conf-color-secundario').value = cS;
-            document.getElementById('conf-color-terciario').value = cT;
-            
-            document.getElementById('hex-pri').value = cP.replace('#', '').toUpperCase();
-            document.getElementById('hex-sec').value = cS.replace('#', '').toUpperCase();
-            document.getElementById('hex-ter').value = cT.replace('#', '').toUpperCase();
-            
-            document.getElementById('conf-fuente').value = dataConf.find(c => c.parametro === 'FUENTE_FAMILIA')?.valor || localStorage.getItem('pyp_fuente') || "'Inter', sans-serif";
-            document.getElementById('conf-tamano').value = dataConf.find(c => c.parametro === 'FUENTE_TAMAÑO')?.valor || localStorage.getItem('pyp_tamano') || "14px";
-            
-            // Carga de Logos
-            document.getElementById('conf-logo-login').value = dataConf.find(c => c.parametro === 'LOGO_LOGIN')?.valor || localStorage.getItem('pyp_logo_login_url') || '';
-            document.getElementById('conf-logo-sidebar').value = dataConf.find(c => c.parametro === 'LOGO_SIDEBAR')?.valor || localStorage.getItem('pyp_logo_pc_url') || '';
-
-            // Forzar actualización inicial
-            sincronizarColorALabel('pri', cP); sincronizarColorALabel('sec', cS); sincronizarColorALabel('ter', cT);
-        }
-
-        async function guardarTodo(event) {
-            const btn = event.currentTarget; btn.disabled = true;
-            document.getElementById('loading-overlay-config').classList.remove('hidden'); document.getElementById('loading-overlay-config').classList.add('flex');
-
-            const cP = document.getElementById('conf-color-primario').value;
-            const cS = document.getElementById('conf-color-secundario').value;
-            const cT = document.getElementById('conf-color-terciario').value;
-            const fF = document.getElementById('conf-fuente').value; 
-            const fS = document.getElementById('conf-tamano').value;
-            
-            // Capturar Logos
-            const logL = document.getElementById('conf-logo-login').value.trim();
-            const logS = document.getElementById('conf-logo-sidebar').value.trim();
-
-            const configs = [ 
-                { parametro: 'COLOR_PRIMARIO', valor: cP }, 
-                { parametro: 'COLOR_SECUNDARIO', valor: cS }, 
-                { parametro: 'COLOR_TERCIARIO', valor: cT }, 
-                { parametro: 'FUENTE_FAMILIA', valor: fF }, 
-                { parametro: 'FUENTE_TAMAÑO', valor: fS },
-                { parametro: 'LOGO_LOGIN', valor: logL },
-                { parametro: 'LOGO_SIDEBAR', valor: logS }
-            ];
-
-            const configsExtra = [
-                { parametro: 'IVA_GENERAL', valor: document.getElementById('conf-iva').value }, 
-                { parametro: 'IGTF', valor: document.getElementById('conf-igtf').value }, 
-                { parametro: 'IVA_REDUCIDO_1', valor: document.getElementById('conf-iva-r1').value }, 
-                { parametro: 'IVA_REDUCIDO_2', valor: document.getElementById('conf-iva-r2').value }, 
-                { parametro: 'POS_MOSTRAR_EXENTO', valor: document.getElementById('conf-exento').value }, 
-                { parametro: 'CONDICIONES_PAGO', valor: document.getElementById('conf-condiciones').value }
-            ];
-
-            try {
-                for (let c of [...configs, ...configsExtra]) { 
-                    await fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?parametro=eq.${c.parametro}`, { method: 'DELETE', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }); 
-                    const payload = { parametro: c.parametro, valor: String(c.valor) }; if (empId) payload.id_empresa = empId; 
-                    await fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); 
-                }
-                
-                // Setear todo en memoria local para velocidad inyectada
-                localStorage.setItem('pyp_color_primario', cP); localStorage.setItem('pyp_color_secundario', cS); localStorage.setItem('pyp_color_terciario', cT); localStorage.setItem('pyp_fuente', fF); localStorage.setItem('pyp_tamano', fS);
-                localStorage.setItem('pyp_logo_login_url', logL); localStorage.setItem('pyp_logo_pc_url', logS);
-                
-                alert("Marca Blanca Guardada Correctamente."); location.reload();
-            } catch (error) { alert("Error al guardar."); btn.disabled = false; }
-        }
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                             <div class="bg-slate-50 p-4 rounded-xl border border-gray-100 flex flex-col h-full">
                                 <label class="block text-[10px] font-black text-gray-500 uppercase mb-3 tracking-widest">Primario (Fondos)</label>
@@ -299,11 +205,15 @@ En el mismo archivo **`admin_configuracion.html`**, baja hasta las funciones de 
             </div>
         </div>
     </main>
+
     <div id="loading-overlay-config" class="fixed inset-0 bg-slate-900/80 z-[999] hidden flex-col items-center justify-center p-6 text-center backdrop-blur-sm">
         <i class="fa-solid fa-cloud-arrow-up text-5xl text-white mb-4 animate-bounce"></i>
         <h2 id="loading-text-config" class="text-xl font-black text-white uppercase mt-2 tracking-widest">Sincronizando Marca Blanca...</h2>
     </div>
+
     <script>
+        const SUPABASE_URL = 'https://icvfmdvvochzaktugqvj.supabase.co'; 
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImljdmZtZHZ2b2NoemFrdHVncXZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyNDEzMzEsImV4cCI6MjA5MTgxNzMzMX0.gO3D39piT6KGbMMOzrPGWXUp5-g_nOBAgJ-nwPv8IcQ';
         const TOKEN_JWT = localStorage.getItem('pyp_token_seguro');
         let empId = null; let listaCondiciones = [];
 
@@ -335,7 +245,6 @@ En el mismo archivo **`admin_configuracion.html`**, baja hasta las funciones de 
             }
         }
 
-        // Fuerza a Tailwind a reconocer la variable inyectando CSS crudo
         function actualizarEstiloTemporal(tipo, valor) {
             const styleId = `style-preview-${tipo}`;
             let styleTag = document.getElementById(styleId);
@@ -348,7 +257,7 @@ En el mismo archivo **`admin_configuracion.html`**, baja hasta las funciones de 
             styleTag.innerHTML = css;
         }
 
-// ================= CONSTRUCTOR DE CRÉDITOS =================
+        // ================= CONSTRUCTOR DE CRÉDITOS =================
         function cargarCondicionesUI(str) {
             listaCondiciones = [];
             if (str && str.trim() !== '') { 
@@ -359,7 +268,6 @@ En el mismo archivo **`admin_configuracion.html`**, baja hasta las funciones de 
             }
             if (listaCondiciones.length === 0) listaCondiciones.push({ nombre: 'CONTADO', dias: 0 });
             
-            // Ordenar de menor a mayor al cargar la página en la interfaz
             listaCondiciones.sort((a, b) => a.dias - b.dias);
             renderCondicionesUI();
         }
@@ -392,8 +300,6 @@ En el mismo archivo **`admin_configuracion.html`**, baja hasta las funciones de 
         }
         
         function sincronizarInputOculto() { 
-            // Clonamos la lista y la ordenamos ESTRICTAMENTE por cantidad de días antes de inyectarla al string oculto.
-            // Esto evita que los campos "salten" mientras escribes, pero asegura un guardado impecable en BD.
             const listaOrdenada = [...listaCondiciones].sort((a, b) => a.dias - b.dias);
             document.getElementById('conf-condiciones').value = listaOrdenada.filter(c => c.nombre.trim() !== '').map(c => `${c.nombre}|${c.dias}`).join(','); 
         }
@@ -439,6 +345,7 @@ En el mismo archivo **`admin_configuracion.html`**, baja hasta las funciones de 
             // Forzar actualización inicial
             sincronizarColorALabel('pri', cP); sincronizarColorALabel('sec', cS); sincronizarColorALabel('ter', cT);
         }
+
         async function guardarTasaManual() {
             const t = parseFloat(document.getElementById('conf-tasa').value); if(isNaN(t) || t <= 0) return;
             try { await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?moneda=eq.USD`, { method: 'DELETE', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }); await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ moneda: 'USD', tasa: t }) }); alert("Tasa guardada."); } catch(e) { alert("Error."); }
@@ -490,7 +397,7 @@ En el mismo archivo **`admin_configuracion.html`**, baja hasta las funciones de 
                     await fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); 
                 }
                 
-                // Setear todo en memoria local para velocidad inyectada
+                // Setear todo en memoria local
                 localStorage.setItem('pyp_color_primario', cP); localStorage.setItem('pyp_color_secundario', cS); localStorage.setItem('pyp_color_terciario', cT); localStorage.setItem('pyp_fuente', fF); localStorage.setItem('pyp_tamano', fS);
                 localStorage.setItem('pyp_logo_login_url', logL); localStorage.setItem('pyp_logo_pc_url', logS);
                 
