@@ -1,7 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
     const currentPage = window.location.pathname.split('/').pop() || 'admin_dashboard.html';
 
-    // 🎨 Definición de estilos Premium
     const estiloActivoSub = "bg-white/10 text-white font-bold border-l-4 border-secondary pl-2 shadow-inner backdrop-blur-sm";
     const estiloInactivoSub = "text-gray-400 hover:text-white hover:bg-white/5 pl-2";
 
@@ -23,12 +22,13 @@ document.addEventListener("DOMContentLoaded", () => {
             <a href="admin_dashboard.html" class="flex items-center p-2 rounded-md transition text-sm ${currentPage === 'admin_dashboard.html' ? 'bg-white text-primary font-black shadow-md' : 'text-gray-300 hover:bg-white/10'}"><i class="fa-solid fa-chart-pie mr-3 w-4"></i> Dashboard</a>
             
             <div class="space-y-1 pt-1">
-                <button type="button" onclick="document.getElementById('submenu-ven').classList.toggle('hidden')" class="w-full flex items-center justify-between p-2 rounded-md transition text-sm ${currentPage.includes('admin_ventas') ? 'bg-white/5 text-white font-bold' : 'text-gray-300 hover:bg-white/10'}">
+                <button type="button" onclick="document.getElementById('submenu-ven').classList.toggle('hidden')" class="w-full flex items-center justify-between p-2 rounded-md transition text-sm ${currentPage.includes('admin_ventas') || currentPage.includes('admin_historial') ? 'bg-white/5 text-white font-bold' : 'text-gray-300 hover:bg-white/10'}">
                     <div class="flex items-center"><i class="fa-solid fa-cash-register mr-3 w-4"></i> Ventas (POS)</div>
                     <i class="fa-solid fa-chevron-down text-[10px]"></i>
                 </button>
-                <div id="submenu-ven" class="pl-6 space-y-1 mt-1 ${currentPage.includes('admin_ventas') ? '' : 'hidden'}">
+                <div id="submenu-ven" class="pl-6 space-y-1 mt-1 ${currentPage.includes('admin_ventas') || currentPage.includes('admin_historial') ? '' : 'hidden'}">
                     <a href="admin_ventas.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_ventas.html' ? estiloActivoSub : estiloInactivoSub}">Terminal POS</a>
+                    <a href="admin_historial_ventas.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_historial_ventas.html' ? estiloActivoSub : estiloInactivoSub}">Historial de Ventas</a>
                     <a href="admin_ventas_parametros.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_ventas_parametros.html' ? estiloActivoSub : estiloInactivoSub}">Parámetros</a>
                 </div>
             </div>
@@ -76,7 +76,6 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
     </aside>
     `;
-    
     document.body.insertAdjacentHTML('afterbegin', menuHTML);
     cargarBrandingGlobal();
 });
