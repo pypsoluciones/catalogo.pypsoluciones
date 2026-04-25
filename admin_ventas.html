@@ -786,9 +786,7 @@
         function eliminarDelCarrito(sku) { carrito = carrito.filter(i => i.id_producto_sku !== sku); actualizarUI_Carrito(); } 
         function actualizarDescItem(sku, campo, valor) { const idx = carrito.findIndex(i => i.id_producto_sku === sku); if (idx === -1) return; if(campo === 'tipo') carrito[idx].desc_tipo = valor; if(campo === 'val') carrito[idx].desc_val = parseFloat(valor) || 0; actualizarUI_Carrito(); } 
 
-        let sumSubtotalBasePuroUsd = 0, descGeneralTotalUsd = 0, granTotalUsd = 0; 
-
-       // ================= MOTOR MATEMÁTICO ESTRICTO =================
+        // ================= MOTOR MATEMÁTICO ESTRICTO =================
         function redondear(num) {
             return Math.round((num + Number.EPSILON) * 100) / 100;
         }
@@ -1037,10 +1035,10 @@
             document.getElementById('modal-total-bs-final').innerText = `Bs. ${fmt(tBs + igtfBs)}`; 
             document.getElementById('modal-total-usd-final').innerText = `US$ ${fmt(redondear((tBs + igtfBs)/tasaBCV))}`; 
         }
-       function abrirCobro() { verificarIGTF(); document.getElementById('modal-cobro').classList.remove('hidden'); document.getElementById('modal-cobro').classList.add('flex'); } 
+
+        function abrirCobro() { verificarIGTF(); document.getElementById('modal-cobro').classList.remove('hidden'); document.getElementById('modal-cobro').classList.add('flex'); } 
         function cerrarCobro() { document.getElementById('modal-cobro').classList.add('hidden'); } 
 
-        // LÓGICA DUAL DE GUARDADO DIRECTO O PROCESAMIENTO (CON SEGURIDAD DE CAJA)
         // LÓGICA DUAL DE GUARDADO DIRECTO O PROCESAMIENTO (CON SEGURIDAD DE CAJA)
         async function procesarVenta(modo = 'NORMAL') { 
             const btnCobrar = document.getElementById('btn-cobrar'); 
@@ -1074,7 +1072,7 @@
                 
                 const aplicaIgtf = (metodo === 'EFECTIVO_USD' || metodo === 'ZELLE'); 
                 const igtfVal = aplicaIgtf ? pypIgtf * 100 : 0; 
-               const totalBsFinal = redondear(granTotalBs + (aplicaIgtf ? redondear(granTotalBs * pypIgtf) : 0));
+                const totalBsFinal = redondear(granTotalBs + (aplicaIgtf ? redondear(granTotalBs * pypIgtf) : 0));
                 const totalUsdFinal = totalBsFinal / tasaBCV; 
                 const baseImpUsd = parseFloat(document.getElementById('contenedor-totales-fiscales').dataset.baseTotalUsd) || 0; 
                 const exentoUsd = parseFloat(document.getElementById('contenedor-totales-fiscales').dataset.exentoTotalUsd) || 0; 
@@ -1111,7 +1109,7 @@
 
                 carrito = []; document.getElementById('pos-input-desc-general').value = ''; document.getElementById('pos-nro-control').value = ''; document.getElementById('pos-condicion').selectedIndex = 0; document.getElementById('pos-fecha-emision').value = getFechaHoy(); ajustarFechaVencimiento(); limpiarCliente(); cerrarCobro(); actualizarUI_Carrito(); await iniciarPuntoVenta(); await inicializarCorrelativos(); cerrarErrorCarga();  
             } catch(e) { mostrarCarga("Fallo de Seguridad", e.message, true); } finally { btnCobrar.disabled = false; btnGuardar.disabled = false; } 
-        }
+        } 
 
         function generarHTMLImpresion(formato, empresa, factura, items) { 
             const contenedor = document.getElementById('ticket-impresion'); contenedor.className = `hidden print:block formato-${formato}`; 
