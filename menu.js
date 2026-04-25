@@ -79,28 +79,33 @@ document.addEventListener("DOMContentLoaded", () => {
     `;
     document.body.insertAdjacentHTML('afterbegin', menuHTML);
 
-    // 2. INYECCIÓN DEL WIDGET FLOTANTE DE NOTIFICACIONES (MERCADOLIBRE STYLE)
-    const notifHTML = `
-    <div class="fixed bottom-6 right-6 z-[9999] flex flex-col items-end">
-        <div id="panel-notif" class="hidden mb-4 w-72 md:w-80 bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden" style="animation: fadeIn 0.2s ease-out;">
-            <div class="bg-primary px-4 py-3 text-white font-bold text-[11px] uppercase tracking-widest flex justify-between items-center">
-                <span><i class="fa-solid fa-bell mr-2 text-secondary"></i> Centro de Alertas</span>
-                <button onclick="toggleNotif()" class="text-white/50 hover:text-white"><i class="fa-solid fa-times"></i></button>
-            </div>
-            <div id="lista-notif" class="max-h-64 overflow-y-auto custom-scroll bg-slate-50 p-3 space-y-2">
-                <div class="text-center text-gray-400 text-[10px] font-bold uppercase py-4"><i class="fa-solid fa-spinner fa-spin text-xl mb-1 block"></i> Sincronizando...</div>
+    // 2. INYECCIÓN DE CAMPANITA DIRECTO EN EL HEADER (CERO ESTORBO)
+    const headerRight = document.querySelector('header > div:last-child');
+    if (headerRight) {
+        const notifHTML = `
+        <div class="relative flex items-center justify-center z-[9990] mr-2">
+            <button onclick="toggleNotif()" class="text-gray-400 hover:text-secondary transition text-xl relative btn-press px-1" title="Centro de Alertas">
+                <i class="fa-solid fa-bell"></i>
+                <span id="badge-notif" class="absolute top-0 right-0 bg-red-600 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-sm hidden">0</span>
+            </button>
+            
+            <div id="panel-notif" class="hidden absolute top-10 right-0 w-72 md:w-80 bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden" style="animation: fadeIn 0.2s ease-out; transform-origin: top right;">
+                <div class="bg-primary px-4 py-3 text-white font-bold text-[11px] uppercase tracking-widest flex justify-between items-center">
+                    <span><i class="fa-solid fa-bell mr-2 text-secondary"></i> Alertas del Sistema</span>
+                    <button onclick="toggleNotif()" class="text-white/50 hover:text-white"><i class="fa-solid fa-times"></i></button>
+                </div>
+                <div id="lista-notif" class="max-h-64 overflow-y-auto custom-scroll bg-slate-50 p-3 space-y-2 text-left">
+                    <div class="text-center text-gray-400 text-[10px] font-bold uppercase py-4"><i class="fa-solid fa-spinner fa-spin text-xl mb-1 block"></i> Sincronizando...</div>
+                </div>
             </div>
         </div>
-        <button onclick="toggleNotif()" class="bg-secondary hover:opacity-90 text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center text-xl relative transition-transform hover:scale-105 active:scale-95 border-4 border-[#f4f6f8]">
-            <i class="fa-solid fa-bell"></i>
-            <span id="badge-notif" class="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] font-black w-6 h-6 rounded-full flex items-center justify-center border-2 border-white hidden shadow-sm">0</span>
-        </button>
-    </div>
-    `;
-    document.body.insertAdjacentHTML('beforeend', notifHTML);
+        `;
+        // Lo inyectamos al principio de la botonera derecha del header para que empuje lo demás
+        headerRight.insertAdjacentHTML('afterbegin', notifHTML);
+    }
 
     cargarBrandingGlobal();
-    ejecutarMotorNotificaciones(); // Lanza el chequeo en segundo plano
+    ejecutarMotorNotificaciones();
 });
 
 window.toggleMobileMenu = function() { document.getElementById('sidebar').classList.toggle('-translate-x-full'); document.getElementById('mobile-overlay').classList.toggle('hidden'); };
@@ -114,19 +119,25 @@ window.toggleNotif = function() {
     panel.classList.toggle('hidden');
 };
 
+// Cerrar panel si hacen clic afuera
+document.addEventListener('click', function(event) {
+    const panel = document.getElementById('panel-notif');
+    if (panel && !panel.classList.contains('hidden')) {
+        const isClickInside = panel.contains(event.target) || event.target.closest('button[onclick="toggleNotif()"]');
+        if (!isClickInside) panel.classList.add('hidden');
+    }
+});
+
 window.ejecutarMotorNotificaciones = async function() {
-    // Si no hay acceso a SUPABASE en la ventana global (porque el archivo HTML no lo declaró), aborta silenciosamente.
     if(typeof SUPABASE_URL === 'undefined') return; 
     
     const TOKEN_JWT = localStorage.getItem('pyp_token_seguro');
     if(!TOKEN_JWT) return;
 
     try {
-        // 1. Buscar facturas vencidas
         const hoyIso = new Date().toISOString().split('T')[0];
         const resCxC = await fetch(`${SUPABASE_URL}/rest/v1/facturas?estatus=eq.Por Pagar&saldo_pendiente_usd=gt.0&fecha_vencimiento=lt.${hoyIso}T12:00:00&select=id_factura`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
         
-        // 2. Revisar si la caja está abierta
         const usuario = localStorage.getItem('pyp_usuario_nombre');
         const resCaja = await fetch(`${SUPABASE_URL}/rest/v1/cierres_caja?usuario_cajero=eq.${usuario}&estatus=eq.ABIERTA&select=id_cierre`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
         
@@ -138,9 +149,9 @@ window.ejecutarMotorNotificaciones = async function() {
             if (deudas.length > 0) {
                 count++;
                 htmlAlertas += `
-                <a href="admin_cxc.html" class="block bg-red-50 border border-red-200 rounded p-3 shadow-sm hover:bg-red-100 transition cursor-pointer">
-                    <h4 class="text-[10px] font-black text-red-700 uppercase mb-0.5"><i class="fa-solid fa-triangle-exclamation"></i> Cuentas por Cobrar</h4>
-                    <p class="text-[9px] text-red-600 font-medium">Existen <b>${deudas.length} facturas</b> vencidas. Haz clic para gestionar la cobranza.</p>
+                <a href="admin_cxc.html" class="block bg-red-50 border border-red-200 rounded p-3 shadow-sm hover:bg-red-100 transition cursor-pointer" style="text-decoration: none;">
+                    <h4 class="text-[10px] font-black text-red-700 uppercase mb-0.5"><i class="fa-solid fa-triangle-exclamation"></i> CxC Vencidas</h4>
+                    <p class="text-[9px] text-red-600 font-medium">Existen <b>${deudas.length} facturas</b> vencidas en la calle. Haz clic para gestionar.</p>
                 </a>`;
             }
         }
@@ -150,15 +161,15 @@ window.ejecutarMotorNotificaciones = async function() {
             if (cajas.length === 0) {
                 count++;
                 htmlAlertas += `
-                <a href="admin_caja.html" class="block bg-yellow-50 border border-yellow-300 rounded p-3 shadow-sm hover:bg-yellow-100 transition cursor-pointer">
-                    <h4 class="text-[10px] font-black text-yellow-700 uppercase mb-0.5"><i class="fa-solid fa-lock"></i> Turno de Caja Cerrado</h4>
-                    <p class="text-[9px] text-yellow-700 font-medium">No podrás facturar ni registrar abonos hasta aperturar un turno.</p>
+                <a href="admin_caja.html" class="block bg-yellow-50 border border-yellow-300 rounded p-3 shadow-sm hover:bg-yellow-100 transition cursor-pointer" style="text-decoration: none;">
+                    <h4 class="text-[10px] font-black text-yellow-700 uppercase mb-0.5"><i class="fa-solid fa-lock"></i> Turno Inactivo</h4>
+                    <p class="text-[9px] text-yellow-700 font-medium">Tu caja está cerrada. No podrás facturar ni cobrar hasta abrirla.</p>
                 </a>`;
             }
         }
 
         if (count === 0) {
-            htmlAlertas = `<div class="text-center py-6 text-gray-400"><i class="fa-solid fa-shield-check text-4xl text-green-400 mb-2"></i><p class="text-[10px] font-bold uppercase">Todo en orden</p></div>`;
+            htmlAlertas = `<div class="text-center py-6 text-gray-400"><i class="fa-solid fa-shield-check text-4xl text-green-400 mb-2"></i><p class="text-[10px] font-bold uppercase tracking-widest">Todo en orden</p></div>`;
         }
 
         document.getElementById('lista-notif').innerHTML = htmlAlertas;
