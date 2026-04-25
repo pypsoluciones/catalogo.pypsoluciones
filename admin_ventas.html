@@ -512,6 +512,81 @@
         function getFechaHoy() { const hoy = new Date(); return hoy.toISOString().split('T')[0]; } 
         function fmt(num) { return parseFloat(num || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); } 
 
+// --- INICIO DE FUNCIONES DE INTERFAZ RECUPERADAS ---
+        function ajustarFechaVencimiento() {
+            const emisionStr = document.getElementById('pos-fecha-emision').value;
+            if(!emisionStr) return;
+            const dias = parseInt(document.getElementById('pos-condicion').value) || 0;
+            const emision = new Date(emisionStr + 'T12:00:00Z');
+            emision.setDate(emision.getDate() + dias);
+            document.getElementById('pos-fecha-vencimiento').value = emision.toISOString().split('T')[0];
+        }
+
+        function validarFechaEmision() {
+            if(!document.getElementById('pos-fecha-emision').value) document.getElementById('pos-fecha-emision').value = getFechaHoy();
+            ajustarFechaVencimiento();
+        }
+
+        function toggleEditNroFactura() {
+            nroFacturaEditable = !nroFacturaEditable;
+            const input = document.getElementById('pos-nro-factura');
+            const icon = document.querySelector('#btn-edit-nro-factura i');
+            if(nroFacturaEditable) {
+                input.readOnly = false;
+                input.classList.replace('border-red-300', 'border-blue-500');
+                icon.className = "fa-solid fa-unlock text-[8px]";
+                input.focus();
+            } else {
+                input.readOnly = true;
+                input.classList.replace('border-blue-500', 'border-red-300');
+                icon.className = "fa-solid fa-lock text-[8px]";
+                inicializarCorrelativos(); 
+            }
+        }
+
+        function toggleSupermercado() {
+            modoSupermercado = !modoSupermercado;
+            const panelIzq = document.getElementById('panel-izquierdo');
+            const panelDer = document.getElementById('panel-derecho');
+            const btn = document.getElementById('btn-supermercado');
+            if (modoSupermercado) {
+                panelDer.classList.add('hidden');
+                panelIzq.classList.replace('md:w-3/5', 'w-full');
+                panelIzq.classList.replace('lg:w-2/3', 'w-full');
+                btn.innerHTML = `<i class="fa-solid fa-compress mr-1 text-tertiary"></i> Contraer`;
+            } else {
+                panelDer.classList.remove('hidden');
+                panelIzq.classList.replace('w-full', 'md:w-3/5');
+                panelIzq.classList.replace('w-full', 'lg:w-2/3');
+                btn.innerHTML = `<i class="fa-solid fa-expand mr-1 text-tertiary"></i> Expandir`;
+            }
+        }
+
+        function toggleAcordeon() {
+            const caja = document.getElementById('caja-acordeon-totales');
+            const icon = document.getElementById('icon-toggle-acordeon');
+            const txt = document.getElementById('txt-toggle-acordeon');
+            if(caja.classList.contains('hidden')) {
+                caja.classList.remove('hidden');
+                icon.classList.replace('fa-chevron-up', 'fa-chevron-down');
+                txt.innerText = 'OCULTAR DESGLOSE FISCAL';
+            } else {
+                caja.classList.add('hidden');
+                icon.classList.replace('fa-chevron-down', 'fa-chevron-up');
+                txt.innerText = 'MOSTRAR DESGLOSE FISCAL';
+            }
+        }
+
+        function limpiarVentaPOS() {
+            if(carrito.length === 0) return;
+            if(confirm("¿Estás seguro de vaciar la venta actual?")) {
+                carrito = [];
+                limpiarCliente();
+                actualizarUI_Carrito();
+            }
+        }
+        // --- FIN DE FUNCIONES DE INTERFAZ RECUPERADAS ---
+        
         // NUEVA FUNCIÓN PARA MOSTRAR CARGA (EL SPINNER AL FACTURAR)
         function mostrarCarga(titulo, subtitulo = "") {
             const ol = document.getElementById('loading-overlay');
