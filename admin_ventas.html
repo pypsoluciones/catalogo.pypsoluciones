@@ -511,13 +511,19 @@
         function getFechaHoy() { const hoy = new Date(); return hoy.toISOString().split('T')[0]; } 
         function fmt(num) { return parseFloat(num || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); } 
 
-        function mostrarErrorConexion(msg) { 
+       function mostrarErrorConexion(msg) { 
+            // 🛡️ Filtro Cero Soporte: Si el error es de sesión, expulsa al login silenciosamente
+            if(msg.includes("Sesión") || msg.includes("token") || msg.includes("JWT") || msg.includes("inválida")) {
+                forzarCierreSesion();
+                return;
+            }
+
             const ol = document.getElementById('loading-overlay'); 
-            document.getElementById('loading-text').innerText = "Fallo de Sistema"; 
-            document.getElementById('loading-error').innerText = msg;  
+            document.getElementById('loading-text').innerText = "Error de Red"; 
+            document.getElementById('loading-error').innerText = "Verifica tu conexión a Internet o contacta a soporte si el problema persiste.";  
             document.getElementById('loading-error').classList.remove('hidden'); 
             document.getElementById('error-actions').classList.remove('hidden'); 
-            document.getElementById('loading-icon').className = "fa-solid fa-wifi text-5xl text-red-500 mb-4";  
+            document.getElementById('loading-icon').className = "fa-solid fa-wifi text-5xl text-gray-400 mb-4";  
             ol.classList.remove('hidden'); ol.classList.add('flex'); 
         } 
         
@@ -526,7 +532,11 @@
             document.getElementById('error-actions').classList.add('hidden');  
         } 
 
-        function forzarCierreSesion() { localStorage.removeItem('pyp_token_seguro'); localStorage.removeItem('pyp_usuario_nombre'); window.location.href = 'login.html'; } 
+        function forzarCierreSesion() { 
+            localStorage.removeItem('pyp_token_seguro'); 
+            localStorage.removeItem('pyp_usuario_nombre'); 
+            window.location.href = 'login.html'; 
+        } 
 
         function actualizarIndicadorTasa(fechaIsoStr) { 
             const badge = document.getElementById('status-tasa-badge'); 
@@ -553,10 +563,17 @@
 
         async function iniciarPuntoVenta() { 
             try { 
+                // Verificación de token maestro
                 const resUser = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?select=id_empresa&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }); 
-                if (!resUser.ok) throw new Error("Sesión inválida."); 
+                
+                // Si el servidor rechaza el token (401 o 403), redirigir de inmediato al login
+                if (resUser.status === 401 || resUser.status === 403 || !TOKEN_JWT) {
+                    forzarCierreSesion();
+                    return;
+                }
+                if (!resUser.ok) throw new Error("Error de comunicación con la base de datos."); 
+                
                 const dataUser = await resUser.json(); 
-
                 if (dataUser.length > 0 && dataUser[0].id_empresa) { empresaActual = dataUser[0].id_empresa; } else { empresaActual = null; } 
 
                 const [resTasa, resProd, resPre, resCli, resConf] = await Promise.all([ 
@@ -620,7 +637,7 @@
                 
                 buscarProductos();  
             } catch(e) { mostrarErrorConexion(e.message); } 
-        } 
+        }
 
         async function inicializarCorrelativos() { 
             const inputNroFactura = document.getElementById('pos-nro-factura'); inputNroFactura.value = "Cargando..."; 
