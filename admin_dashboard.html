@@ -23,152 +23,152 @@
     <script>
         window.tailwind = { 
             config: { 
-                theme: { extend: { colors: { primary: 'var(--color-primary)', secondary: 'var(--color-secondary)', tertiary: 'var(--color-tertiary)' } } } 
+                theme: { 
+                    extend: { 
+                        colors: { primary: 'var(--color-primary)', secondary: 'var(--color-secondary)', tertiary: 'var(--color-tertiary)' } 
+                    } 
+                } 
             } 
         };
     </script>
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;900&family=Poppins:wght@300;400;500;700;900&family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
-    <script>if (!localStorage.getItem('pyp_token_seguro')) window.location.href = 'login.html';</script>
-
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;700;900&family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    
     <style>
         body { font-family: var(--font-global); font-size: var(--size-global); }
-        .bg-primary { background-color: var(--color-primary) !important; }
+        
+        /* 🛡️ CLASES BLINDADAS */
         .text-primary { color: var(--color-primary) !important; }
-        .bg-secondary { background-color: var(--color-secondary) !important; }
+        .bg-primary { background-color: var(--color-primary) !important; }
         .text-secondary { color: var(--color-secondary) !important; }
         .text-tertiary { color: var(--color-tertiary) !important; }
+
         .custom-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
         .custom-scroll::-webkit-scrollbar-thumb { background-color: var(--color-primary); border-radius: 4px; }
-        .btn-press:active { transform: scale(0.96); }
+        .btn-press:active { transform: scale(0.97); }
         .fade-in { animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         
-        .semaforo-card { transition: all 0.2s; border-left-width: 6px; }
-        .semaforo-card:hover { transform: translateY(-2px); shadow: lg; }
+        .dato-sensible { transition: filter 0.3s ease; }
+        .modo-privado .dato-sensible { filter: blur(6px); user-select: none; pointer-events: none; }
+        
+        #watermark-bg { background-size: 50%; background-position: center; background-repeat: no-repeat; opacity: 0.04; pointer-events: none; z-index: 0; }
+        .semaforo-card { transition: transform 0.2s; border-left-width: 6px; }
+        .semaforo-card:hover { transform: translateY(-2px); }
     </style>
+    
+    <script>if (!localStorage.getItem('pyp_token_seguro')) window.location.href = 'login.html';</script>
 </head>
-<body class="bg-[#f4f6f8] flex h-screen overflow-hidden text-gray-800">
-    <script src="menu.js"></script>
+<body class="bg-[#f4f6f8] flex h-screen overflow-hidden text-gray-800 relative modo-privado" id="body-dashboard">
 
-    <main class="flex-1 flex flex-col h-screen overflow-hidden bg-[#f4f6f8] w-full z-10 relative">
-        <header class="bg-white shadow-sm px-6 py-3 flex justify-between items-center z-10 border-b border-gray-200">
-            <div class="flex items-center gap-3"> 
-                <button onclick="toggleMobileMenu()" class="md:hidden text-gray-600 hover:text-primary text-lg px-2"><i class="fa-solid fa-bars"></i></button> 
-                <h1 class="text-lg font-black text-primary flex items-center gap-2 tracking-tight">Centro de Comando</h1>
+    <div id="watermark-bg" class="absolute inset-0"></div>
+
+    <main class="flex-1 flex flex-col h-screen overflow-hidden w-full relative z-10">
+        <header class="bg-white/90 backdrop-blur shadow-sm px-4 md:px-6 py-3 flex justify-between items-center z-10 shrink-0 border-b border-gray-200">
+            <div class="flex items-center gap-3 min-w-0">
+                <button onclick="toggleMobileMenu()" class="md:hidden text-gray-600 hover:text-primary text-xl transition btn-press shrink-0"><i class="fa-solid fa-bars"></i></button>
+                <h1 class="text-lg md:text-xl font-bold text-primary flex items-center gap-2 truncate">
+                    <i class="fa-solid fa-chart-pie text-tertiary shrink-0"></i> 
+                    <span class="truncate">Resumen Gerencial</span>
+                </h1>
             </div>
-            <div class="flex items-center gap-4">
-                <span class="text-xs font-bold text-gray-500 hidden md:block">Bienvenido, <span id="dash-user" class="text-primary uppercase">Cargando...</span></span>
+            <div class="flex items-center gap-3 shrink-0">
+                <button onclick="window.location.reload()" class="md:hidden text-primary bg-slate-100 w-8 h-8 rounded-full flex items-center justify-center hover:bg-slate-200 transition shadow-sm btn-press" title="Actualizar Pantalla"><i class="fa-solid fa-rotate-right"></i></button>
+                <button onclick="togglePrivacidad()" id="btn-privacidad" class="text-gray-400 hover:text-primary transition text-lg btn-press" title="Ocultar/Mostrar Valores"><i class="fa-solid fa-eye-slash"></i></button>
+                <div class="bg-gray-50 px-3 py-1.5 rounded-md border border-gray-200 hidden sm:flex items-center gap-2 text-[11px] font-semibold text-gray-600 tracking-wide uppercase">
+                    <i class="fa-solid fa-user-tie text-tertiary"></i> <span id="nombre-usuario">Admin</span>
+                </div>
             </div>
         </header>
 
-        <div class="flex-1 overflow-y-auto p-4 md:p-6 custom-scroll">
-            <div class="max-w-7xl mx-auto space-y-6 pb-10">
-
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 fade-in">
-                    
-                    <div class="bg-gradient-to-br from-primary to-[#1a4a7a] rounded-2xl shadow-lg p-5 text-white flex flex-col justify-between relative overflow-hidden">
-                        <i class="fa-solid fa-money-bill-transfer absolute -right-4 -bottom-4 text-white/10 text-8xl"></i>
-                        <div>
-                            <h3 class="text-xs font-bold text-white/70 uppercase tracking-widest mb-1">Tasa Oficial BCV (USD)</h3>
-                            <div class="flex items-end gap-2">
-                                <span class="text-4xl font-black tracking-tighter" id="dash-tasa">Bs. 0.00</span>
-                            </div>
-                        </div>
-                        <div class="mt-4 flex items-center gap-2 text-[10px] font-medium text-white/80 bg-white/10 w-fit px-2 py-1 rounded">
-                            <i class="fa-solid fa-clock"></i> Última actualización: <span id="dash-tasa-fecha">---</span>
-                        </div>
-                    </div>
-
-                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 flex flex-col justify-between fade-in">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Tu Turno de Caja</h3>
-                                <h2 class="text-2xl font-black text-gray-800" id="dash-caja-status">Verificando...</h2>
-                            </div>
-                            <div id="dash-caja-icon" class="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-xl text-gray-400">
-                                <i class="fa-solid fa-vault"></i>
-                            </div>
-                        </div>
-                        <div class="mt-4">
-                            <a href="admin_caja.html" class="text-xs font-bold text-tertiary hover:text-primary transition uppercase flex items-center gap-1">Ir a Control de Caja <i class="fa-solid fa-arrow-right"></i></a>
-                        </div>
-                    </div>
-
-                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 flex flex-col justify-between fade-in">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Facturado Hoy</h3>
-                                <h2 class="text-2xl font-black text-green-600" id="dash-ventas-hoy">$0.00</h2>
-                            </div>
-                            <div class="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center text-xl text-green-500">
-                                <i class="fa-solid fa-chart-line"></i>
-                            </div>
-                        </div>
-                        <div class="mt-4">
-                            <a href="admin_ventas_historial.html" class="text-xs font-bold text-green-600 hover:text-green-800 transition uppercase flex items-center gap-1">Ver Historial <i class="fa-solid fa-arrow-right"></i></a>
-                        </div>
-                    </div>
+        <div class="flex-1 overflow-auto p-4 md:p-6 custom-scroll pb-20 fade-in">
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div class="bg-white/80 backdrop-blur rounded-xl border border-gray-200 p-5 shadow-sm flex items-center gap-4 hover:shadow-md transition cursor-default">
+                    <div class="w-12 h-12 rounded-full bg-slate-100 text-tertiary flex items-center justify-center text-xl shrink-0"><i class="fa-solid fa-cash-register"></i></div>
+                    <div><p class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-0.5">Ventas Hoy</p><h3 class="text-2xl font-black text-primary dato-sensible" id="dash-ventas-hoy">$0.00</h3></div>
                 </div>
-
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden fade-in" style="animation-delay: 0.1s;">
-                    <div class="bg-gray-50 border-b border-gray-200 px-5 py-3 flex justify-between items-center">
-                        <h2 class="text-xs font-black text-gray-700 uppercase tracking-widest flex items-center gap-2">
-                            <i class="fa-solid fa-traffic-light text-tertiary"></i> Semáforo Cuentas por Cobrar (CxC)
-                        </h2>
-                        <a href="admin_cxc.html" class="text-[10px] font-bold bg-white border border-gray-300 px-3 py-1 rounded text-primary hover:bg-gray-100 transition shadow-sm uppercase">Gestionar CxC</a>
-                    </div>
-                    
-                    <div class="p-5 grid grid-cols-1 md:grid-cols-3 gap-4">
-                        
-                        <div class="semaforo-card bg-red-50 border-red-500 rounded-xl p-4 shadow-sm relative overflow-hidden">
-                            <i class="fa-solid fa-triangle-exclamation absolute -right-2 -bottom-2 text-red-200 text-6xl opacity-50"></i>
-                            <h3 class="text-[10px] font-black text-red-700 uppercase tracking-widest mb-1">Crítico: Deuda Vencida</h3>
-                            <div class="text-2xl font-black text-red-600 mb-1" id="sem-rojo-monto">$0.00</div>
-                            <p class="text-[10px] font-bold text-red-500"><span id="sem-rojo-cant">0</span> facturas fuera de plazo.</p>
-                        </div>
-
-                        <div class="semaforo-card bg-yellow-50 border-yellow-400 rounded-xl p-4 shadow-sm relative overflow-hidden">
-                            <i class="fa-regular fa-clock absolute -right-2 -bottom-2 text-yellow-200 text-6xl opacity-50"></i>
-                            <h3 class="text-[10px] font-black text-yellow-700 uppercase tracking-widest mb-1">Alerta: Por Vencer (3 Días)</h3>
-                            <div class="text-2xl font-black text-yellow-600 mb-1" id="sem-amarillo-monto">$0.00</div>
-                            <p class="text-[10px] font-bold text-yellow-600"><span id="sem-amarillo-cant">0</span> facturas por vencerse.</p>
-                        </div>
-
-                        <div class="semaforo-card bg-green-50 border-green-500 rounded-xl p-4 shadow-sm relative overflow-hidden">
-                            <i class="fa-solid fa-shield-halved absolute -right-2 -bottom-2 text-green-200 text-6xl opacity-50"></i>
-                            <h3 class="text-[10px] font-black text-green-700 uppercase tracking-widest mb-1">Óptimo: Deuda Sana</h3>
-                            <div class="text-2xl font-black text-green-600 mb-1" id="sem-verde-monto">$0.00</div>
-                            <p class="text-[10px] font-bold text-green-600"><span id="sem-verde-cant">0</span> facturas a tiempo.</p>
-                        </div>
-
-                    </div>
+                <div class="bg-white/80 backdrop-blur rounded-xl border border-gray-200 p-5 shadow-sm flex items-center gap-4 hover:shadow-md transition cursor-default">
+                    <div class="w-12 h-12 rounded-full bg-slate-100 text-tertiary flex items-center justify-center text-xl shrink-0"><i class="fa-solid fa-boxes-stacked"></i></div>
+                    <div><p class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-0.5">Prod. Activos</p><h3 class="text-2xl font-black text-primary dato-sensible" id="indicador-productos">0</h3></div>
                 </div>
-
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 fade-in" style="animation-delay: 0.2s;">
-                    <a href="admin_ventas.html" class="bg-secondary text-white rounded-xl p-4 flex flex-col items-center justify-center gap-2 hover:opacity-90 transition shadow-md btn-press">
-                        <i class="fa-solid fa-cash-register text-2xl"></i>
-                        <span class="text-[10px] font-black uppercase tracking-widest">Punto de Venta</span>
-                    </a>
-                    <a href="admin_productos.html" class="bg-white border border-gray-200 text-primary rounded-xl p-4 flex flex-col items-center justify-center gap-2 hover:bg-gray-50 transition shadow-sm btn-press">
-                        <i class="fa-solid fa-boxes-stacked text-2xl text-tertiary"></i>
-                        <span class="text-[10px] font-black uppercase tracking-widest">Inventario</span>
-                    </a>
-                    <a href="admin_contactos.html" class="bg-white border border-gray-200 text-primary rounded-xl p-4 flex flex-col items-center justify-center gap-2 hover:bg-gray-50 transition shadow-sm btn-press">
-                        <i class="fa-solid fa-users text-2xl text-tertiary"></i>
-                        <span class="text-[10px] font-black uppercase tracking-widest">Clientes</span>
-                    </a>
-                    <a href="admin_configuracion.html" class="bg-slate-800 text-white rounded-xl p-4 flex flex-col items-center justify-center gap-2 hover:bg-slate-700 transition shadow-md btn-press">
-                        <i class="fa-solid fa-gear text-2xl"></i>
-                        <span class="text-[10px] font-black uppercase tracking-widest">Configuración</span>
-                    </a>
+                <div class="bg-white/80 backdrop-blur rounded-xl border border-gray-200 p-5 shadow-sm flex items-center gap-4 hover:shadow-md transition cursor-default">
+                    <div class="w-12 h-12 rounded-full bg-slate-100 text-tertiary flex items-center justify-center text-xl shrink-0"><i class="fa-solid fa-screwdriver-wrench"></i></div>
+                    <div><p class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-0.5">Equipos Taller</p><h3 class="text-2xl font-black text-primary dato-sensible">0</h3></div>
                 </div>
-
+                <div class="bg-white/80 backdrop-blur rounded-xl border border-gray-200 p-5 shadow-sm flex items-center gap-4 hover:shadow-md transition cursor-default">
+                    <div class="w-12 h-12 rounded-full bg-slate-100 text-tertiary flex items-center justify-center text-xl shrink-0"><i class="fa-solid fa-users"></i></div>
+                    <div><p class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-0.5">Clientes</p><h3 class="text-2xl font-black text-primary dato-sensible" id="indicador-clientes">0</h3></div>
+                </div>
             </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div class="md:col-span-2 bg-white/80 backdrop-blur rounded-xl shadow-sm border border-gray-200 p-5 flex flex-col justify-between overflow-hidden relative">
+                    <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Mercado Cambiario Oficial (BCV)</h3>
+                    <div class="grid grid-cols-2 gap-4 z-10">
+                        <div class="border-r border-gray-100">
+                            <span class="text-[10px] font-bold text-gray-500 mb-1 block"><i class="fa-solid fa-flag-usa text-blue-500"></i> Dólar (USD)</span>
+                            <span class="text-3xl font-black text-primary dato-sensible tracking-tighter" id="dash-tasa-usd">Bs. 0.00</span>
+                        </div>
+                        <div>
+                            <span class="text-[10px] font-bold text-gray-500 mb-1 block"><i class="fa-solid fa-earth-europe text-blue-800"></i> Euro (EUR)</span>
+                            <span class="text-3xl font-black text-primary dato-sensible tracking-tighter" id="dash-tasa-eur">Bs. 0.00</span>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-money-bill-transfer absolute -right-6 -bottom-6 text-gray-100 text-8xl z-0"></i>
+                </div>
+
+                <div class="bg-white/80 backdrop-blur rounded-xl shadow-sm border border-gray-200 p-5 flex flex-col justify-between">
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Tu Turno de Caja</h3>
+                            <h2 class="text-xl font-black text-gray-800" id="dash-caja-status">Verificando...</h2>
+                        </div>
+                        <div id="dash-caja-icon" class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-lg text-gray-400 shrink-0">
+                            <i class="fa-solid fa-vault"></i>
+                        </div>
+                    </div>
+                    <a href="admin_caja.html" class="text-[10px] font-bold bg-primary text-white text-center py-2 rounded-lg hover:opacity-90 transition uppercase shadow-sm">Gestionar Caja</a>
+                </div>
+            </div>
+
+            <div class="bg-white/80 backdrop-blur rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6">
+                <div class="bg-primary/5 border-b border-gray-200 px-5 py-3 flex justify-between items-center">
+                    <h2 class="text-[11px] font-black text-primary uppercase tracking-widest flex items-center gap-2">
+                        <i class="fa-solid fa-traffic-light text-tertiary"></i> Semáforo Cuentas por Cobrar (CxC)
+                    </h2>
+                    <a href="admin_cxc.html" class="text-[9px] font-bold bg-white border border-gray-300 px-2 py-1 rounded text-primary hover:bg-gray-100 transition shadow-sm uppercase">Ver Todo</a>
+                </div>
+                
+                <div class="p-5 grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="semaforo-card bg-red-50 border-red-500 rounded-xl p-4 shadow-sm relative overflow-hidden">
+                        <i class="fa-solid fa-triangle-exclamation absolute -right-2 -bottom-2 text-red-200 text-5xl opacity-50"></i>
+                        <h3 class="text-[9px] font-black text-red-700 uppercase tracking-widest mb-1">Vencidas (Crítico)</h3>
+                        <div class="text-xl font-black text-red-600 mb-1 dato-sensible" id="sem-rojo-monto">$0.00</div>
+                        <p class="text-[9px] font-bold text-red-500"><span id="sem-rojo-cant">0</span> facturas fuera de plazo.</p>
+                    </div>
+
+                    <div class="semaforo-card bg-yellow-50 border-yellow-400 rounded-xl p-4 shadow-sm relative overflow-hidden">
+                        <i class="fa-regular fa-clock absolute -right-2 -bottom-2 text-yellow-200 text-5xl opacity-50"></i>
+                        <h3 class="text-[9px] font-black text-yellow-700 uppercase tracking-widest mb-1">Por Vencer (3 Días)</h3>
+                        <div class="text-xl font-black text-yellow-600 mb-1 dato-sensible" id="sem-amarillo-monto">$0.00</div>
+                        <p class="text-[9px] font-bold text-yellow-600"><span id="sem-amarillo-cant">0</span> facturas por vencerse.</p>
+                    </div>
+
+                    <div class="semaforo-card bg-green-50 border-green-500 rounded-xl p-4 shadow-sm relative overflow-hidden">
+                        <i class="fa-solid fa-shield-halved absolute -right-2 -bottom-2 text-green-200 text-5xl opacity-50"></i>
+                        <h3 class="text-[9px] font-black text-green-700 uppercase tracking-widest mb-1">Deuda Sana</h3>
+                        <div class="text-xl font-black text-green-600 mb-1 dato-sensible" id="sem-verde-monto">$0.00</div>
+                        <p class="text-[9px] font-bold text-green-600"><span id="sem-verde-cant">0</span> facturas a tiempo.</p>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </main>
 
+    <script src="menu.js"></script>
     <script>
         const SUPABASE_URL = 'https://icvfmdvvochzaktugqvj.supabase.co'; 
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImljdmZtZHZ2b2NoemFrdHVncXZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyNDEzMzEsImV4cCI6MjA5MTgxNzMzMX0.gO3D39piT6KGbMMOzrPGWXUp5-g_nOBAgJ-nwPv8IcQ';
@@ -177,138 +177,128 @@
         let empresaActual = null;
 
         function fmt(num) { return parseFloat(num || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); } 
-        
-        function forzarCierreSesion() { 
-            localStorage.removeItem('pyp_token_seguro'); 
-            localStorage.removeItem('pyp_usuario_nombre'); 
-            window.location.href = 'login.html'; 
-        }
 
         window.onload = async () => {
-            const user = localStorage.getItem('pyp_usuario_nombre') || 'SISTEMA';
-            document.getElementById('dash-user').innerText = user;
+            const nombre = localStorage.getItem('pyp_usuario_nombre') || 'SISTEMA';
+            document.getElementById('nombre-usuario').innerText = nombre.split(' ')[0];
+            
+            if(localStorage.getItem('pyp_privacidad') === 'false') { togglePrivacidad(); }
+            
+            await cargarConfiguracionGlobal(); // Trae fondos y logo
+            await cargarIndicadoresGlobales(nombre); // Trae toda la info financiera
+        };
 
+        async function cargarConfiguracionGlobal() {
             try {
-                // Filtro Cero Soporte: Validación de Sesión Silenciosa
-                const resUser = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?select=id_empresa&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }); 
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                if(res.ok) {
+                    const config = await res.json();
+                    const fondoObj = config.find(c => c.parametro === 'FONDO_URL');
+                    if(fondoObj && fondoObj.valor) {
+                        localStorage.setItem('pyp_fondo_url', fondoObj.valor);
+                        document.getElementById('watermark-bg').style.backgroundImage = `url('${fondoObj.valor}')`;
+                    }
+                }
+            } catch(e) {}
+        }
+
+        function togglePrivacidad() {
+            const body = document.getElementById('body-dashboard');
+            const icon = document.querySelector('#btn-privacidad i');
+            if(body.classList.contains('modo-privado')) {
+                body.classList.remove('modo-privado');
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
+                icon.classList.add('text-secondary'); 
+                localStorage.setItem('pyp_privacidad', 'false');
+            } else {
+                body.classList.add('modo-privado');
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
+                icon.classList.remove('text-secondary');
+                localStorage.setItem('pyp_privacidad', 'true');
+            }
+        }
+
+        async function cargarIndicadoresGlobales(usuario) {
+            try {
+                // 1. Filtro Seguridad (Si expira token, salta al login silenciosamente)
+                const resUser = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?select=id_empresa&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
                 if (resUser.status === 401 || resUser.status === 403 || !TOKEN_JWT) { forzarCierreSesion(); return; }
-                
                 const dataUser = await resUser.json(); 
                 if (dataUser.length > 0) empresaActual = dataUser[0].id_empresa;
 
-                await Promise.all([
-                    cargarTasa(),
-                    verificarCaja(user),
-                    cargarVentasHoy(),
-                    cargarSemaforoCxC()
+                const filtroEmpresa = empresaActual ? `id_empresa=eq.${empresaActual}&` : `id_empresa=is.null&`; 
+
+                // 2. Ejecutar Promesas en Paralelo para velocidad extrema
+                const hoyIso = new Date().toISOString().split('T')[0];
+                const [resProd, resCli, resTasa, resCaja, resVen, resCxC] = await Promise.all([
+                    fetch(`${SUPABASE_URL}/rest/v1/productos?select=id_producto_sku&estado_producto=eq.ACTIVO`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
+                    fetch(`${SUPABASE_URL}/rest/v1/directorio_maestro?select=id&tipo_persona=eq.CLIENTE`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
+                    fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
+                    fetch(`${SUPABASE_URL}/rest/v1/cierres_caja?${filtroEmpresa}usuario_cajero=eq.${usuario}&estatus=eq.ABIERTA&select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
+                    fetch(`${SUPABASE_URL}/rest/v1/facturas?${filtroEmpresa}fecha_emision=gte.${hoyIso}T00:00:00Z&estatus=neq.Anulada&select=total_usd,tipo_transaccion`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
+                    fetch(`${SUPABASE_URL}/rest/v1/facturas?${filtroEmpresa}estatus=eq.Por Pagar&saldo_pendiente_usd=gt.0&select=saldo_pendiente_usd,fecha_vencimiento`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } })
                 ]);
 
-            } catch (e) {
-                console.error("Error cargando dashboard:", e);
-            }
-        };
+                // Procesar TUS indicadores
+                if(resProd.ok) document.getElementById('indicador-productos').innerText = (await resProd.json()).length;
+                if(resCli.ok) document.getElementById('indicador-clientes').innerText = (await resCli.json()).length;
 
-        async function cargarTasa() {
-            const res = await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?moneda=eq.USD&select=tasa,fecha_actualizacion&order=fecha_actualizacion.desc&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
-            if (res.ok) {
-                const data = await res.json();
-                if (data.length > 0) {
-                    document.getElementById('dash-tasa').innerText = `Bs. ${data[0].tasa.toFixed(2)}`;
-                    document.getElementById('dash-tasa-fecha').innerText = new Date(data[0].fecha_actualizacion).toLocaleString('es-VE');
+                // Procesar Tasas (USD y EUR)
+                if(resTasa.ok) {
+                    const dataTasa = await resTasa.json();
+                    const usd = dataTasa.find(t => t.moneda === 'USD');
+                    const eur = dataTasa.find(t => t.moneda === 'EUR');
+                    if(usd) document.getElementById('dash-tasa-usd').innerText = `Bs. ${usd.tasa.toFixed(2)}`;
+                    if(eur) document.getElementById('dash-tasa-eur').innerText = `Bs. ${eur.tasa.toFixed(2)}`;
                 }
-            }
-        }
 
-        async function verificarCaja(usuario) {
-            const filtroEmpresa = empresaActual ? `id_empresa=eq.${empresaActual}&` : `id_empresa=is.null&`; 
-            const res = await fetch(`${SUPABASE_URL}/rest/v1/cierres_caja?${filtroEmpresa}usuario_cajero=eq.${usuario}&estatus=eq.ABIERTA&select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }); 
-            const data = await res.json();
-            
-            const statusEl = document.getElementById('dash-caja-status');
-            const iconEl = document.getElementById('dash-caja-icon');
-
-            if (data.length > 0) {
-                statusEl.innerText = "Abierta (En Curso)";
-                statusEl.className = "text-xl font-black text-green-600";
-                iconEl.className = "w-12 h-12 rounded-full bg-green-50 flex items-center justify-center text-xl text-green-500";
-                iconEl.innerHTML = `<i class="fa-solid fa-lock-open"></i>`;
-            } else {
-                statusEl.innerText = "Cerrada";
-                statusEl.className = "text-xl font-black text-red-600";
-                iconEl.className = "w-12 h-12 rounded-full bg-red-50 flex items-center justify-center text-xl text-red-500";
-                iconEl.innerHTML = `<i class="fa-solid fa-lock"></i>`;
-            }
-        }
-
-        async function cargarVentasHoy() {
-            const hoyIso = new Date().toISOString().split('T')[0]; // Fecha YYYY-MM-DD
-            const filtroEmpresa = empresaActual ? `id_empresa=eq.${empresaActual}&` : `id_empresa=is.null&`; 
-            // Filtramos facturas mayores a la medianoche de hoy
-            const res = await fetch(`${SUPABASE_URL}/rest/v1/facturas?${filtroEmpresa}fecha_emision=gte.${hoyIso}T00:00:00Z&estatus=neq.Anulada&select=total_usd,tipo_transaccion`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }); 
-            if (res.ok) {
-                const data = await res.json();
-                let totalDia = 0;
-                data.forEach(f => {
-                    // Si es nota de crédito, resta; si es venta, suma.
-                    if (f.tipo_transaccion === 'Nota de Credito') {
-                        totalDia -= Math.abs(parseFloat(f.total_usd));
+                // Procesar Caja
+                if(resCaja.ok) {
+                    const dataCaja = await resCaja.json();
+                    const s = document.getElementById('dash-caja-status'); const i = document.getElementById('dash-caja-icon');
+                    if (dataCaja.length > 0) {
+                        s.innerText = "Abierta"; s.className = "text-xl font-black text-green-600";
+                        i.className = "w-10 h-10 rounded-full bg-green-50 flex items-center justify-center text-lg text-green-500 shrink-0";
+                        i.innerHTML = `<i class="fa-solid fa-lock-open"></i>`;
                     } else {
-                        totalDia += parseFloat(f.total_usd);
+                        s.innerText = "Cerrada"; s.className = "text-xl font-black text-red-600";
+                        i.className = "w-10 h-10 rounded-full bg-red-50 flex items-center justify-center text-lg text-red-500 shrink-0";
+                        i.innerHTML = `<i class="fa-solid fa-lock"></i>`;
                     }
-                });
-                document.getElementById('dash-ventas-hoy').innerText = `$${fmt(totalDia)}`;
-            }
-        }
+                }
 
-        async function cargarSemaforoCxC() {
-            const filtroEmpresa = empresaActual ? `id_empresa=eq.${empresaActual}&` : `id_empresa=is.null&`; 
-            // Extraer TODAS las facturas Por Pagar. Es ultrarrápido porque es un solo query simple.
-            const res = await fetch(`${SUPABASE_URL}/rest/v1/facturas?${filtroEmpresa}estatus=eq.Por Pagar&saldo_pendiente_usd=gt.0&select=saldo_pendiente_usd,fecha_vencimiento`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }); 
-            
-            if (res.ok) {
-                const data = await res.json();
-                
-                let rojoMonto = 0, rojoCant = 0;
-                let amarilloMonto = 0, amarilloCant = 0;
-                let verdeMonto = 0, verdeCant = 0;
+                // Procesar Ventas Hoy
+                if(resVen.ok) {
+                    const dataVen = await resVen.json();
+                    let totalDia = 0;
+                    dataVen.forEach(f => {
+                        if (f.tipo_transaccion === 'Nota de Credito') totalDia -= Math.abs(parseFloat(f.total_usd));
+                        else totalDia += parseFloat(f.total_usd);
+                    });
+                    document.getElementById('dash-ventas-hoy').innerText = `$${fmt(totalDia)}`;
+                }
 
-                const hoy = new Date();
-                hoy.setHours(0,0,0,0); // Normalizamos a la medianoche para evitar ruidos de horas
+                // Procesar Semáforo CxC
+                if(resCxC.ok) {
+                    const dataCxC = await resCxC.json();
+                    let rM=0, rC=0, aM=0, aC=0, vM=0, vC=0;
+                    const hoy = new Date(); hoy.setHours(0,0,0,0);
+                    const diaAlerta = new Date(); diaAlerta.setDate(hoy.getDate() + 3); diaAlerta.setHours(23,59,59,999);
 
-                const diaAlerta = new Date();
-                diaAlerta.setDate(hoy.getDate() + 3);
-                diaAlerta.setHours(23,59,59,999);
+                    dataCxC.forEach(f => {
+                        const fechaV = new Date(f.fecha_vencimiento + 'T12:00:00');
+                        const saldo = parseFloat(f.saldo_pendiente_usd);
+                        if (fechaV < hoy) { rM += saldo; rC++; }
+                        else if (fechaV >= hoy && fechaV <= diaAlerta) { aM += saldo; aC++; }
+                        else { vM += saldo; vC++; }
+                    });
 
-                data.forEach(f => {
-                    // fecha_vencimiento de BD viene como "YYYY-MM-DD"
-                    // Le agregamos T12:00:00 para evitar desfases de zona horaria al instanciar Date
-                    const fechaV = new Date(f.fecha_vencimiento + 'T12:00:00');
-                    const saldo = parseFloat(f.saldo_pendiente_usd);
+                    document.getElementById('sem-rojo-monto').innerText = `$${fmt(rM)}`; document.getElementById('sem-rojo-cant').innerText = rC;
+                    document.getElementById('sem-amarillo-monto').innerText = `$${fmt(aM)}`; document.getElementById('sem-amarillo-cant').innerText = aC;
+                    document.getElementById('sem-verde-monto').innerText = `$${fmt(vM)}`; document.getElementById('sem-verde-cant').innerText = vC;
+                }
 
-                    if (fechaV < hoy) {
-                        // VENCIDAS (ROJO)
-                        rojoMonto += saldo;
-                        rojoCant++;
-                    } else if (fechaV >= hoy && fechaV <= diaAlerta) {
-                        // POR VENCER EN <= 3 DÍAS (AMARILLO)
-                        amarilloMonto += saldo;
-                        amarilloCant++;
-                    } else {
-                        // SANA / AL DÍA (VERDE)
-                        verdeMonto += saldo;
-                        verdeCant++;
-                    }
-                });
-
-                document.getElementById('sem-rojo-monto').innerText = `$${fmt(rojoMonto)}`;
-                document.getElementById('sem-rojo-cant').innerText = rojoCant;
-
-                document.getElementById('sem-amarillo-monto').innerText = `$${fmt(amarilloMonto)}`;
-                document.getElementById('sem-amarillo-cant').innerText = amarilloCant;
-
-                document.getElementById('sem-verde-monto').innerText = `$${fmt(verdeMonto)}`;
-                document.getElementById('sem-verde-cant').innerText = verdeCant;
-            }
+            } catch (e) {}
         }
     </script>
 </body>
