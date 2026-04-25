@@ -329,53 +329,58 @@
             document.getElementById('lbl-abono-bs').innerText = `Bs. ${fmt(abonoUsd * tasaBCV)}`;
         }
 
-        async function procesarAbono() {
+       async function procesarAbono() {
             const abonoUsd = parseFloat(document.getElementById('input-abono-usd').value) || 0;
             if (abonoUsd <= 0 || !facturaSeleccionada) return alert("Ingrese un monto válido superior a 0.");
             
             const btn = document.getElementById('btn-procesar-abono'); btn.disabled = true;
-            mostrarCarga("Registrando Abono Financiero...");
+            mostrarCarga("Verificando Turno de Caja...");
 
             try {
+                // BLOQUE DE SEGURIDAD CLASE MUNDIAL: Verificar caja abierta
+                const usuario = localStorage.getItem('pyp_usuario_nombre') || 'SISTEMA';
+                const resTurno = await fetch(`${SUPABASE_URL}/rest/v1/cierres_caja?id_empresa=${empresaActual ? 'eq.'+empresaActual : 'is.null'}&usuario_cajero=eq.${usuario}&estatus=eq.ABIERTA&select=id_cierre`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                const dataTurno = await resTurno.json();
+                if (dataTurno.length === 0) {
+                    throw new Error("CAJA CERRADA: Debes ir a 'Finanzas > Control de Caja' y abrir tu turno antes de procesar este cobro.");
+                }
+                const idCierreActivo = dataTurno[0].id_cierre;
+
                 const metodo = document.getElementById('abono-metodo').value;
                 const ref = document.getElementById('abono-ref').value.trim().toUpperCase();
                 const abonoBs = abonoUsd * tasaBCV;
                 const nuevoSaldo = facturaSeleccionada.saldo_pendiente_usd - abonoUsd;
-                const usuario = localStorage.getItem('pyp_usuario_nombre') || 'SISTEMA';
 
-                // 1. Inyectar a Caja Chica
-                const payloadCaja = { id_empresa: empresaActual || null, id_factura: facturaSeleccionada.id_factura, fecha: new Date().toISOString(), tipo: 'INGRESO', concepto: `ABONO/COBRO CxC FACT: ${facturaSeleccionada.nro_factura_manual || 'S/N'} - CLI: ${facturaSeleccionada.cliente_nombre}`, monto_usd: abonoUsd, monto_bs: abonoBs, metodo_pago: metodo, usuario: usuario }; 
+                // 1. Inyectar a Caja Chica con ID de Cierre
+                const payloadCaja = { id_empresa: empresaActual || null, id_factura: facturaSeleccionada.id_factura, id_cierre: idCierreActivo, fecha: new Date().toISOString(), tipo: 'INGRESO', concepto: `ABONO/COBRO CxC FACT: ${facturaSeleccionada.nro_factura_manual || 'S/N'} - CLI: ${facturaSeleccionada.cliente_nombre}`, monto_usd: abonoUsd, monto_bs: abonoBs, metodo_pago: metodo, usuario: usuario }; 
                 
                 const resCaja = await fetch(`${SUPABASE_URL}/rest/v1/caja_movimientos`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, body: JSON.stringify(payloadCaja) }); 
                 if(!resCaja.ok) throw new Error("Fallo al insertar en Caja.");
                 const idMovCaja = (await resCaja.json())[0].id_movimiento;
 
-                // 2. Registrar en cxc_abonos (Arquitectura Relacional Perfecta)
+                // 2. Registrar en cxc_abonos 
                 const payloadAbono = { id_empresa: empresaActual || null, id_factura: facturaSeleccionada.id_factura, monto_usd: abonoUsd, monto_bs: abonoBs, tasa_bcv_aplicada: tasaBCV, metodo_pago: metodo, referencia_pago: ref || null, id_caja_movimiento: idMovCaja, cajero: usuario };
                 
                 const resAbono = await fetch(`${SUPABASE_URL}/rest/v1/cxc_abonos`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, body: JSON.stringify(payloadAbono) });
                 if(!resAbono.ok) throw new Error("Fallo al crear el recibo CxC.");
                 const reciboGenerado = (await resAbono.json())[0];
 
-                // 3. Actualizar la Factura Principal (Restar Saldo)
-                const estadoNuevo = nuevoSaldo <= 0.01 ? 'Completada' : 'Por Pagar'; // .01 de tolerancia flotante
+                // 3. Actualizar la Factura Principal 
+                const estadoNuevo = nuevoSaldo <= 0.01 ? 'Completada' : 'Por Pagar'; 
                 const payloadUpdFactura = { saldo_pendiente_usd: nuevoSaldo <= 0.01 ? 0 : nuevoSaldo, estatus: estadoNuevo };
                 
                 await fetch(`${SUPABASE_URL}/rest/v1/facturas?id_factura=eq.${facturaSeleccionada.id_factura}`, { method: 'PATCH', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify(payloadUpdFactura) });
 
-                // 4. Generar e Imprimir Recibo
                 imprimirReciboCxC(facturaSeleccionada, reciboGenerado, nuevoSaldo);
 
-                // 5. Refrescar interfaz
                 cerrarModalAbono();
                 await cargarDataCxC();
                 cerrarErrorCarga();
 
             } catch (e) {
-                mostrarErrorConexion(e.message);
+                mostrarCarga("Acción Denegada", e.message, true);
             } finally { btn.disabled = false; }
         }
-
         function imprimirReciboCxC(factura, recibo, saldoRestante) {
             const contenedor = document.getElementById('ticket-impresion');
             const fechaRecibo = new Date(recibo.fecha_abono).toLocaleString('es-VE');
