@@ -994,15 +994,29 @@
        function abrirCobro() { verificarIGTF(); document.getElementById('modal-cobro').classList.remove('hidden'); document.getElementById('modal-cobro').classList.add('flex'); } 
         function cerrarCobro() { document.getElementById('modal-cobro').classList.add('hidden'); } 
 
-        // LÓGICA DUAL DE GUARDADO DIRECTO O PROCESAMIENTO
+        // LÓGICA DUAL DE GUARDADO DIRECTO O PROCESAMIENTO (CON SEGURIDAD DE CAJA)
         async function procesarVenta(modo = 'NORMAL') { 
             const btnCobrar = document.getElementById('btn-cobrar'); 
             const btnGuardar = document.getElementById('btn-guardar'); 
             btnCobrar.disabled = true; btnGuardar.disabled = true;
 
-            mostrarCarga(modo === 'DIRECTO' ? "Guardando..." : "Procesando...", "Registrando en la base de datos"); 
+            mostrarCarga(modo === 'DIRECTO' ? "Guardando..." : "Procesando...", "Verificando Turno de Caja..."); 
             try { 
                 const metodo = modo === 'DIRECTO' ? 'POR_PAGAR' : document.getElementById('cobro-metodo').value; 
+                
+                // BLOQUE DE SEGURIDAD CLASE MUNDIAL: Verificar si el cajero tiene la caja abierta
+                const usuario = localStorage.getItem('pyp_usuario_nombre') || 'SISTEMA';
+                let idCierreActivo = null;
+
+                if (metodo !== 'POR_PAGAR') {
+                    const resTurno = await fetch(`${SUPABASE_URL}/rest/v1/cierres_caja?id_empresa=${empresaActual ? 'eq.'+empresaActual : 'is.null'}&usuario_cajero=eq.${usuario}&estatus=eq.ABIERTA&select=id_cierre`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                    const dataTurno = await resTurno.json();
+                    if (dataTurno.length === 0) {
+                        throw new Error("CAJA CERRADA: Debes ir a 'Finanzas > Control de Caja' y abrir tu turno antes de facturar y cobrar.");
+                    }
+                    idCierreActivo = dataTurno[0].id_cierre;
+                }
+
                 const formatoPrint = document.getElementById('cobro-formato-impresion').value; 
                 const condicionSel = document.getElementById('pos-condicion'); 
                 const condicion = condicionSel.options[condicionSel.selectedIndex].text; 
@@ -1021,7 +1035,7 @@
                 const estadoFinal = metodo === 'POR_PAGAR' ? 'Por Pagar' : 'Completada';
 
                 const payloadFactura = {  
-                    id_empresa: empresaActual || null, id_cliente: document.getElementById('pos-id-cliente').value || null, cliente_documento: document.getElementById('txt-cli-doc').innerText, cliente_nombre: document.getElementById('txt-cli-nom').innerText, subtotal_usd: sumSubtotalBasePuroUsd, descuento_usd: descGeneralTotalUsd, total_usd: totalUsdFinal, total_bs: totalBsFinal, tasa_bcv_aplicada: tasaBCV, metodos_pago: metodo, condicion_pago: condicion, iva_porcentaje: pypIva * 100, igtf_porcentaje: igtfVal, base_imponible: baseImpUsd * tasaBCV, monto_exento: exentoUsd * tasaBCV, nombre_cajero: document.getElementById('txt-cajero-nombre').innerText, nro_factura_manual: nroFactura || null, nro_control_manual: nroControl || null, fecha_vencimiento: fechaVenc, fecha_emision: fechaEmision, estatus: estadoFinal, tipo_transaccion: 'Venta'  
+                    id_empresa: empresaActual || null, id_cliente: document.getElementById('pos-id-cliente').value || null, cliente_documento: document.getElementById('txt-cli-doc').innerText, cliente_nombre: document.getElementById('txt-cli-nom').innerText, subtotal_usd: sumSubtotalBasePuroUsd, descuento_usd: descGeneralTotalUsd, total_usd: totalUsdFinal, total_bs: totalBsFinal, tasa_bcv_aplicada: tasaBCV, metodos_pago: metodo, condicion_pago: condicion, iva_porcentaje: pypIva * 100, igtf_porcentaje: igtfVal, base_imponible: baseImpUsd * tasaBCV, monto_exento: exentoUsd * tasaBCV, nombre_cajero: usuario, nro_factura_manual: nroFactura || null, nro_control_manual: nroControl || null, fecha_vencimiento: fechaVenc, fecha_emision: fechaEmision, estatus: estadoFinal, tipo_transaccion: 'Venta', saldo_pendiente_usd: estadoFinal === 'Por Pagar' ? totalUsdFinal : 0  
                 }; 
 
                 const resF = await fetch(`${SUPABASE_URL}/rest/v1/facturas`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, body: JSON.stringify(payloadFactura) }); 
@@ -1029,7 +1043,7 @@
                 const fId = (await resF.json())[0].id_factura; 
                 
                 if (metodo !== 'POR_PAGAR') {
-                    const payloadCaja = { id_empresa: empresaActual || null, id_factura: fId, fecha: new Date().toISOString(), tipo: 'INGRESO', concepto: `COBRO FACTURA NRO: ${nroFactura} - CLIENTE: ${document.getElementById('txt-cli-nom').innerText}`, monto_usd: totalUsdFinal, monto_bs: totalBsFinal, metodo_pago: metodo, usuario: document.getElementById('txt-cajero-nombre').innerText }; 
+                    const payloadCaja = { id_empresa: empresaActual || null, id_factura: fId, id_cierre: idCierreActivo, fecha: new Date().toISOString(), tipo: 'INGRESO', concepto: `COBRO FACTURA NRO: ${nroFactura} - CLIENTE: ${document.getElementById('txt-cli-nom').innerText}`, monto_usd: totalUsdFinal, monto_bs: totalBsFinal, metodo_pago: metodo, usuario: usuario }; 
                     fetch(`${SUPABASE_URL}/rest/v1/caja_movimientos`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify(payloadCaja) }); 
                 }
 
@@ -1041,7 +1055,6 @@
                 }); 
                 await Promise.all(promesas); 
                 
-                // Filtro: Solo manda a imprimir si NO es modo directo
                 if (modo !== 'DIRECTO') {
                     let empresaPrint = { nombre_empresa: 'P&P SOLUCIONES', rif: 'J-00000000-0', direccion_fiscal: 'SIN DIRECCIÓN FISCAL' }; 
                     generarHTMLImpresion(formatoPrint, empresaPrint, payloadFactura, carrito); window.print(); 
@@ -1050,7 +1063,7 @@
                 if(nroFacturaEditable) toggleEditNroFactura(); 
 
                 carrito = []; document.getElementById('pos-input-desc-general').value = ''; document.getElementById('pos-nro-control').value = ''; document.getElementById('pos-condicion').selectedIndex = 0; document.getElementById('pos-fecha-emision').value = getFechaHoy(); ajustarFechaVencimiento(); limpiarCliente(); cerrarCobro(); actualizarUI_Carrito(); await iniciarPuntoVenta(); await inicializarCorrelativos(); cerrarErrorCarga();  
-            } catch(e) { mostrarCarga("Fallo Crítico", e.message, true); } finally { btnCobrar.disabled = false; btnGuardar.disabled = false; } 
+            } catch(e) { mostrarCarga("Fallo de Seguridad", e.message, true); } finally { btnCobrar.disabled = false; btnGuardar.disabled = false; } 
         }
 
         function generarHTMLImpresion(formato, empresa, factura, items) { 
