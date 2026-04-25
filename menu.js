@@ -1,10 +1,10 @@
 document.addEventListener("DOMContentLoaded", () => {
     const currentPage = window.location.pathname.split('/').pop() || 'admin_dashboard.html';
 
-    // 🎨 Definición de estilos Premium
     const estiloActivoSub = "bg-white/10 text-white font-bold border-l-4 border-secondary pl-2 shadow-inner backdrop-blur-sm";
     const estiloInactivoSub = "text-gray-400 hover:text-white hover:bg-white/5 pl-2";
 
+    // 1. INYECCIÓN DEL MENÚ LATERAL
     const menuHTML = `
     <div id="mobile-overlay" onclick="toggleMobileMenu()" class="fixed inset-0 bg-gray-900/60 z-40 hidden backdrop-blur-sm md:hidden transition-opacity"></div>
     <aside id="sidebar" class="w-64 md:w-56 bg-primary text-white flex flex-col fixed inset-y-0 left-0 z-50 transform -translate-x-full md:translate-x-0 md:relative transition-transform duration-300 shadow-2xl md:shadow-xl">
@@ -77,12 +77,99 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
     </aside>
     `;
-    
     document.body.insertAdjacentHTML('afterbegin', menuHTML);
+
+    // 2. INYECCIÓN DEL WIDGET FLOTANTE DE NOTIFICACIONES (MERCADOLIBRE STYLE)
+    const notifHTML = `
+    <div class="fixed bottom-6 right-6 z-[9999] flex flex-col items-end">
+        <div id="panel-notif" class="hidden mb-4 w-72 md:w-80 bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden" style="animation: fadeIn 0.2s ease-out;">
+            <div class="bg-primary px-4 py-3 text-white font-bold text-[11px] uppercase tracking-widest flex justify-between items-center">
+                <span><i class="fa-solid fa-bell mr-2 text-secondary"></i> Centro de Alertas</span>
+                <button onclick="toggleNotif()" class="text-white/50 hover:text-white"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <div id="lista-notif" class="max-h-64 overflow-y-auto custom-scroll bg-slate-50 p-3 space-y-2">
+                <div class="text-center text-gray-400 text-[10px] font-bold uppercase py-4"><i class="fa-solid fa-spinner fa-spin text-xl mb-1 block"></i> Sincronizando...</div>
+            </div>
+        </div>
+        <button onclick="toggleNotif()" class="bg-secondary hover:opacity-90 text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center text-xl relative transition-transform hover:scale-105 active:scale-95 border-4 border-[#f4f6f8]">
+            <i class="fa-solid fa-bell"></i>
+            <span id="badge-notif" class="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] font-black w-6 h-6 rounded-full flex items-center justify-center border-2 border-white hidden shadow-sm">0</span>
+        </button>
+    </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', notifHTML);
+
     cargarBrandingGlobal();
+    ejecutarMotorNotificaciones(); // Lanza el chequeo en segundo plano
 });
 
 window.toggleMobileMenu = function() { document.getElementById('sidebar').classList.toggle('-translate-x-full'); document.getElementById('mobile-overlay').classList.toggle('hidden'); };
 window.cerrarSesion = function() { if(confirm("¿Seguro que deseas salir?")) forzarCierreSesion(); };
 window.forzarCierreSesion = function() { localStorage.removeItem('pyp_token_seguro'); window.location.href = 'login.html'; };
 window.cargarBrandingGlobal = function() { const logoPc = localStorage.getItem('pyp_logo_pc_url'); if(logoPc) { const imgSidebar = document.getElementById('app-logo-sidebar'); const txtSidebar = document.getElementById('app-text-sidebar'); if(imgSidebar) { imgSidebar.src = logoPc; imgSidebar.classList.remove('hidden'); } if(txtSidebar) txtSidebar.classList.add('hidden'); } };
+
+// LÓGICA DE ALERTAS GLOBALES
+window.toggleNotif = function() { 
+    const panel = document.getElementById('panel-notif');
+    panel.classList.toggle('hidden');
+};
+
+window.ejecutarMotorNotificaciones = async function() {
+    // Si no hay acceso a SUPABASE en la ventana global (porque el archivo HTML no lo declaró), aborta silenciosamente.
+    if(typeof SUPABASE_URL === 'undefined') return; 
+    
+    const TOKEN_JWT = localStorage.getItem('pyp_token_seguro');
+    if(!TOKEN_JWT) return;
+
+    try {
+        // 1. Buscar facturas vencidas
+        const hoyIso = new Date().toISOString().split('T')[0];
+        const resCxC = await fetch(`${SUPABASE_URL}/rest/v1/facturas?estatus=eq.Por Pagar&saldo_pendiente_usd=gt.0&fecha_vencimiento=lt.${hoyIso}T12:00:00&select=id_factura`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+        
+        // 2. Revisar si la caja está abierta
+        const usuario = localStorage.getItem('pyp_usuario_nombre');
+        const resCaja = await fetch(`${SUPABASE_URL}/rest/v1/cierres_caja?usuario_cajero=eq.${usuario}&estatus=eq.ABIERTA&select=id_cierre`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+        
+        let htmlAlertas = '';
+        let count = 0;
+
+        if (resCxC.ok) {
+            const deudas = await resCxC.json();
+            if (deudas.length > 0) {
+                count++;
+                htmlAlertas += `
+                <a href="admin_cxc.html" class="block bg-red-50 border border-red-200 rounded p-3 shadow-sm hover:bg-red-100 transition cursor-pointer">
+                    <h4 class="text-[10px] font-black text-red-700 uppercase mb-0.5"><i class="fa-solid fa-triangle-exclamation"></i> Cuentas por Cobrar</h4>
+                    <p class="text-[9px] text-red-600 font-medium">Existen <b>${deudas.length} facturas</b> vencidas. Haz clic para gestionar la cobranza.</p>
+                </a>`;
+            }
+        }
+
+        if (resCaja.ok) {
+            const cajas = await resCaja.json();
+            if (cajas.length === 0) {
+                count++;
+                htmlAlertas += `
+                <a href="admin_caja.html" class="block bg-yellow-50 border border-yellow-300 rounded p-3 shadow-sm hover:bg-yellow-100 transition cursor-pointer">
+                    <h4 class="text-[10px] font-black text-yellow-700 uppercase mb-0.5"><i class="fa-solid fa-lock"></i> Turno de Caja Cerrado</h4>
+                    <p class="text-[9px] text-yellow-700 font-medium">No podrás facturar ni registrar abonos hasta aperturar un turno.</p>
+                </a>`;
+            }
+        }
+
+        if (count === 0) {
+            htmlAlertas = `<div class="text-center py-6 text-gray-400"><i class="fa-solid fa-shield-check text-4xl text-green-400 mb-2"></i><p class="text-[10px] font-bold uppercase">Todo en orden</p></div>`;
+        }
+
+        document.getElementById('lista-notif').innerHTML = htmlAlertas;
+        
+        const badge = document.getElementById('badge-notif');
+        if (count > 0) {
+            badge.innerText = count;
+            badge.classList.remove('hidden');
+        } else {
+            badge.classList.add('hidden');
+        }
+
+    } catch(e) { console.warn("Motor de notificaciones en reposo."); }
+};
