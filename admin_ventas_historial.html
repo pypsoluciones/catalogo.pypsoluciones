@@ -1,0 +1,390 @@
+<!DOCTYPE html> 
+<html lang="es"> 
+<head> 
+    <meta charset="UTF-8"> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+    <title>P&P Admin | Historial de Ventas</title> 
+    <script src="https://cdn.tailwindcss.com"></script> 
+    <script> 
+        const cPri = localStorage.getItem('pyp_color_primario') || '#143B62'; 
+        const cSec = localStorage.getItem('pyp_color_secundario') || '#E67E22'; 
+        const cTer = localStorage.getItem('pyp_color_terciario') || '#64748b'; 
+        const fontFam = localStorage.getItem('pyp_fuente') || "'Inter', sans-serif"; 
+        const fontSiz = localStorage.getItem('pyp_tamano') || "14px"; 
+        
+        document.documentElement.style.setProperty('--color-primary', cPri); 
+        document.documentElement.style.setProperty('--color-secondary', cSec); 
+        document.documentElement.style.setProperty('--color-tertiary', cTer); 
+        document.documentElement.style.setProperty('--font-global', fontFam); 
+        document.documentElement.style.setProperty('--size-global', fontSiz); 
+        
+        tailwind.config = { theme: { extend: { colors: { primary: 'var(--color-primary)', secondary: 'var(--color-secondary)', tertiary: 'var(--color-tertiary)' } } } }; 
+    </script> 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"> 
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;900&display=swap" rel="stylesheet"> 
+    <script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.js"></script> 
+    <style> 
+        body { font-family: var(--font-global); font-size: var(--size-global); } 
+        .bg-primary { background-color: var(--color-primary) !important; } 
+        .text-primary { color: var(--color-primary) !important; } 
+        .bg-secondary { background-color: var(--color-secondary) !important; } 
+        .text-secondary { color: var(--color-secondary) !important; } 
+        .text-tertiary { color: var(--color-tertiary) !important; } 
+        .custom-scroll::-webkit-scrollbar { width: 5px; height: 5px; } 
+        .custom-scroll::-webkit-scrollbar-thumb { background-color: var(--color-primary); border-radius: 4px; } 
+        .btn-press:active { transform: scale(0.96); } 
+        .fade-in { animation: fadeIn 0.15s ease-in-out; } 
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(2px); } to { opacity: 1; transform: translateY(0); } } 
+    </style> 
+</head> 
+<body class="bg-[#f4f6f8] flex h-screen overflow-hidden text-gray-800"> 
+
+    <div id="loading-overlay" class="fixed inset-0 bg-white/95 z-[9999] hidden flex-col items-center justify-center p-6 text-center backdrop-blur-sm"> 
+        <i id="loading-icon" class="fa-solid fa-circle-notch fa-spin text-5xl text-primary mb-4"></i> 
+        <h2 id="loading-text" class="text-xl font-black text-primary uppercase mb-2">Cargando...</h2> 
+        <p id="loading-error" class="text-xs text-gray-500 font-medium max-w-sm hidden text-center"></p> 
+        <div id="error-actions" class="hidden mt-6 flex gap-3"> 
+            <button onclick="cerrarErrorCarga()" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2.5 rounded font-bold uppercase text-xs btn-press transition shadow">Cerrar</button> 
+        </div> 
+    </div> 
+
+    <div id="modal-detalle" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[9990] hidden flex items-center justify-center p-4 fade-in"> 
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col border border-gray-200 max-h-[95vh]"> 
+            <div class="bg-primary px-4 py-3 flex justify-between items-center shrink-0"> 
+                <h3 class="font-bold text-white text-[12px] tracking-wide uppercase"><i class="fa-solid fa-file-invoice text-tertiary mr-2"></i> Auditoría de Documento</h3> 
+                <button onclick="cerrarModalDetalle()" class="text-gray-300 hover:text-white text-lg transition"><i class="fa-solid fa-times"></i></button> 
+            </div> 
+            
+            <div class="p-5 bg-gray-50 overflow-y-auto custom-scroll flex-1 space-y-4"> 
+                <div class="bg-white border border-gray-200 rounded p-3 shadow-sm grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div><span class="block text-[9px] font-bold text-gray-400 uppercase">Documento</span><span id="det-doc" class="font-black text-primary text-sm"></span></div>
+                    <div><span class="block text-[9px] font-bold text-gray-400 uppercase">Fecha / Vence</span><span id="det-fecha" class="font-bold text-gray-800 text-xs"></span></div>
+                    <div class="md:col-span-2"><span class="block text-[9px] font-bold text-gray-400 uppercase">Cliente</span><span id="det-cliente" class="font-bold text-gray-800 text-xs truncate block"></span></div>
+                    <div><span class="block text-[9px] font-bold text-gray-400 uppercase">Estatus</span><span id="det-estatus" class="font-black text-xs"></span></div>
+                    <div><span class="block text-[9px] font-bold text-gray-400 uppercase">Tipo</span><span id="det-tipo" class="font-bold text-gray-800 text-xs"></span></div>
+                    <div><span class="block text-[9px] font-bold text-gray-400 uppercase">Método</span><span id="det-metodo" class="font-bold text-gray-800 text-xs"></span></div>
+                    <div><span class="block text-[9px] font-bold text-gray-400 uppercase">Cajero</span><span id="det-cajero" class="font-bold text-gray-800 text-xs truncate block"></span></div>
+                </div>
+
+                <div class="bg-white border border-gray-200 rounded shadow-sm overflow-hidden">
+                    <table class="w-full text-left text-[10px]">
+                        <thead class="bg-gray-100 text-gray-500 uppercase border-b border-gray-200">
+                            <tr><th class="py-2 px-3">SKU</th><th class="py-2 px-3">Producto</th><th class="py-2 px-3 text-center">Cant</th><th class="py-2 px-3 text-right">Precio Unt</th><th class="py-2 px-3 text-right">Subtotal</th></tr>
+                        </thead>
+                        <tbody id="det-cuerpo-tabla" class="divide-y divide-gray-100"></tbody>
+                    </table>
+                </div>
+
+                <div class="flex flex-col md:flex-row gap-4 items-start">
+                    <div id="caja-anulacion" class="flex-1 w-full bg-red-50 border border-red-200 rounded p-3 shadow-inner hidden">
+                        <h4 class="text-[10px] font-black text-red-700 uppercase mb-2"><i class="fa-solid fa-triangle-exclamation"></i> Zona de Peligro: Devolución / Anulación</h4>
+                        <p class="text-[9px] text-red-600 mb-2 font-medium">Esta acción repondrá el inventario y registrará un Egreso en la caja abierta por el total del documento. Se emitirá una Nota de Crédito.</p>
+                        <input type="text" id="input-motivo-anulacion" placeholder="Motivo de la devolución (Obligatorio)..." class="w-full border border-red-300 rounded px-2 py-1.5 text-[10px] uppercase outline-none focus:border-red-500 mb-2 bg-white">
+                        <button onclick="procesarAnulacion()" id="btn-procesar-anulacion" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded shadow transition-all text-[10px] uppercase tracking-wider btn-press w-full"><i class="fa-solid fa-rotate-left mr-1"></i> Ejecutar Devolución</button>
+                    </div>
+
+                    <div class="w-full md:w-64 bg-slate-800 text-white rounded p-3 shadow-md ml-auto shrink-0">
+                        <div class="flex justify-between text-[10px] mb-1 text-gray-300"><span>Base Imponible:</span> <span id="det-base"></span></div>
+                        <div class="flex justify-between text-[10px] mb-1 text-gray-300"><span>IVA / IGTF:</span> <span id="det-impuestos"></span></div>
+                        <div class="flex justify-between text-[10px] mb-1 text-gray-300"><span>Descuento:</span> <span id="det-desc"></span></div>
+                        <div class="border-t border-gray-600 my-1.5"></div>
+                        <div class="flex justify-between items-end">
+                            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Total Factura</span>
+                            <div class="text-right">
+                                <div id="det-total-bs" class="text-lg font-black text-white leading-none">Bs. 0.00</div>
+                                <div id="det-total-usd" class="text-[10px] font-bold text-secondary mt-0.5">US$ 0.00</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div> 
+        </div> 
+    </div> 
+
+    <script src="menu.js"></script> 
+    
+    <main class="flex-1 flex flex-col h-screen overflow-hidden w-full z-10 relative"> 
+        <header class="bg-white shadow-sm px-4 flex justify-between items-center z-10 shrink-0 border-b border-gray-200 h-12"> 
+            <div class="flex items-center gap-3"> 
+                <button onclick="toggleMobileMenu()" class="md:hidden text-gray-600 hover:text-primary text-lg px-2"><i class="fa-solid fa-bars"></i></button> 
+                <h1 class="text-xs font-bold text-primary flex items-center gap-2 uppercase tracking-tighter"><i class="fa-solid fa-clock-rotate-left text-tertiary"></i> Historial de Ventas</h1> 
+            </div> 
+        </header> 
+
+        <div class="flex-1 flex flex-col overflow-hidden p-4"> 
+            <div class="bg-white p-2 rounded-lg border border-gray-200 shadow-sm flex items-center gap-2 mb-4 shrink-0">
+                <i class="fa-solid fa-search text-gray-400 ml-2"></i>
+                <input type="text" id="buscador-historial" oninput="buscarFacturas()" placeholder="Buscar Nro de Factura, Cliente o Cédula..." class="flex-1 border-none outline-none text-xs font-bold uppercase text-gray-700 bg-transparent h-full py-1">
+                <button onclick="cargarHistorial()" class="bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-1 rounded text-[10px] font-bold uppercase transition"><i class="fa-solid fa-rotate"></i> Refrescar</button>
+            </div>
+
+            <div class="flex-1 bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden flex flex-col"> 
+                <div class="overflow-y-auto custom-scroll flex-1">
+                    <table class="w-full text-left text-[10px] whitespace-nowrap">
+                        <thead class="bg-gray-50 text-gray-500 uppercase tracking-wider sticky top-0 z-10 border-b border-gray-200 shadow-sm">
+                            <tr>
+                                <th class="py-3 px-4 font-bold">Fecha</th>
+                                <th class="py-3 px-4 font-bold">Documento</th>
+                                <th class="py-3 px-4 font-bold">Cliente</th>
+                                <th class="py-3 px-4 font-bold text-center">Estatus</th>
+                                <th class="py-3 px-4 font-bold text-right">Total ($)</th>
+                                <th class="py-3 px-4 font-bold text-center">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100" id="tabla-historial">
+                            <tr><td colspan="6" class="p-10 text-center text-gray-400 font-bold uppercase tracking-widest"><i class="fa-solid fa-spinner fa-spin text-2xl mb-2 block"></i> Extrayendo Archivo...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div> 
+        </div> 
+    </main>
+    <script> 
+        const SUPABASE_URL = 'https://icvfmdvvochzaktugqvj.supabase.co'; 
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImljdmZtZHZ2b2NoemFrdHVncXZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyNDEzMzEsImV4cCI6MjA5MTgxNzMzMX0.gO3D39piT6KGbMMOzrPGWXUp5-g_nOBAgJ-nwPv8IcQ';
+        const TOKEN_JWT = localStorage.getItem('pyp_token_seguro'); 
+        
+        let dbFacturas = [], fuseFacturas = null, empresaActual = null; 
+        let facturaVistaActual = null; // Guarda el objeto completo que se está visualizando
+
+        window.onload = async () => { 
+            try { await iniciarModulo(); } catch(e) { mostrarErrorConexion("Fallo al conectar con la base de datos."); } 
+        }; 
+
+        function fmt(num) { return parseFloat(num || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); } 
+
+        function mostrarErrorConexion(msg) { 
+            document.getElementById('loading-text').innerText = "Error"; 
+            document.getElementById('loading-error').innerText = msg;  
+            document.getElementById('loading-error').classList.remove('hidden'); 
+            document.getElementById('error-actions').classList.remove('hidden'); 
+            document.getElementById('loading-icon').className = "fa-solid fa-wifi text-5xl text-red-500 mb-4";  
+            document.getElementById('loading-overlay').classList.remove('hidden'); document.getElementById('loading-overlay').classList.add('flex'); 
+        } 
+        function cerrarErrorCarga() { document.getElementById('loading-overlay').classList.add('hidden'); document.getElementById('loading-overlay').classList.remove('flex'); } 
+        function mostrarCarga(txt) {
+            document.getElementById('loading-text').innerText = txt;
+            document.getElementById('loading-error').classList.add('hidden'); 
+            document.getElementById('error-actions').classList.add('hidden'); 
+            document.getElementById('loading-icon').className = "fa-solid fa-circle-notch fa-spin text-5xl text-primary mb-4";  
+            document.getElementById('loading-overlay').classList.remove('hidden'); document.getElementById('loading-overlay').classList.add('flex'); 
+        }
+
+        async function iniciarModulo() { 
+            mostrarCarga("Leyendo Archivo General...");
+            try { 
+                const resUser = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?select=id_empresa&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }); 
+                if (!resUser.ok) throw new Error("Sesión inválida."); 
+                empresaActual = (await resUser.json())[0]?.id_empresa || null; 
+
+                await cargarHistorial();
+                cerrarErrorCarga();
+            } catch(e) { mostrarErrorConexion(e.message); } 
+        } 
+
+        async function cargarHistorial() {
+            const filtroEmpresa = empresaActual ? `id_empresa=eq.${empresaActual}` : `id_empresa=is.null`; 
+            // Cargamos las últimas 200 facturas para no saturar memoria. 
+            const res = await fetch(`${SUPABASE_URL}/rest/v1/facturas?${filtroEmpresa}&select=*&order=fecha_emision.desc&limit=200`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }); 
+            if (!res.ok) throw new Error("Fallo al leer el historial."); 
+            
+            dbFacturas = await res.json(); 
+            fuseFacturas = new Fuse(dbFacturas, { keys: ['nro_factura_manual', 'nro_control_manual', 'cliente_nombre', 'cliente_documento', 'id_factura'], threshold: 0.3, ignoreLocation: true, getFn: function(obj, path) { let val = obj; for (let i = 0; i < path.length; i++) { val = val ? val[path[i]] : null; } return typeof val === 'string' ? val.normalize("NFD").replace(/[\u0300-\u036f]/g, "") : val; } }); 
+            
+            renderTabla(dbFacturas);
+        }
+
+        function buscarFacturas() {
+            let query = document.getElementById('buscador-historial').value.trim(); 
+            if (query === '') { renderTabla(dbFacturas); return; }
+            const queryNormalizada = query.normalize("NFD").replace(/[\u0300-\u036f]/g, ""); 
+            let data = fuseFacturas.search(queryNormalizada).map(r => r.item); 
+            renderTabla(data);
+        }
+
+        function renderTabla(data) {
+            const tbody = document.getElementById('tabla-historial');
+            let html = ''; 
+
+            if(data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-10 text-center text-gray-400 font-bold uppercase tracking-widest"><i class="fa-solid fa-folder-open text-3xl mb-2 block text-gray-300"></i> No se encontraron documentos.</td></tr>`;
+                return;
+            }
+
+            data.forEach(f => {
+                const fecha = new Date(f.fecha_emision).toLocaleDateString('es-VE', {hour: '2-digit', minute:'2-digit'});
+                const docStr = f.tipo_transaccion === 'Nota de Credito' ? `NC-${f.nro_factura_manual || f.id_factura.substring(0,8)}` : (f.nro_factura_manual || f.id_factura.substring(0,8));
+                
+                // Colorización de Estatus
+                let bColor = "bg-gray-100 text-gray-600";
+                if(f.estatus === 'Completada') bColor = "bg-green-100 text-green-700";
+                if(f.estatus === 'Por Pagar') bColor = "bg-orange-100 text-orange-700";
+                if(f.estatus === 'Anulada') bColor = "bg-red-100 text-red-700";
+
+                const colorTotal = f.tipo_transaccion === 'Nota de Credito' ? 'text-red-500' : 'text-gray-700';
+                const signoTotal = f.tipo_transaccion === 'Nota de Credito' ? '-' : '';
+
+                html += `<tr class="hover:bg-blue-50 transition border-b border-gray-100">
+                    <td class="py-2 px-4 text-[10px] text-gray-500 font-mono">${fecha}</td>
+                    <td class="py-2 px-4 font-mono font-black text-primary">${docStr}</td>
+                    <td class="py-2 px-4 min-w-[200px]">
+                        <div class="text-[11px] font-bold text-gray-800 truncate uppercase">${f.cliente_nombre}</div>
+                        <div class="text-[9px] text-gray-500 font-mono">${f.cliente_documento}</div>
+                    </td>
+                    <td class="py-2 px-4 text-center"><span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${bColor}">${f.estatus}</span></td>
+                    <td class="py-2 px-4 text-right font-black ${colorTotal} text-[11px]">${signoTotal}$${fmt(f.total_usd)}</td>
+                    <td class="py-2 px-4 text-center">
+                        <button onclick="verDetalles('${f.id_factura}')" class="bg-primary/10 hover:bg-primary text-primary hover:text-white px-3 py-1.5 rounded shadow-sm text-[10px] font-bold uppercase transition"><i class="fa-solid fa-eye"></i></button>
+                    </td>
+                </tr>`;
+            });
+            tbody.innerHTML = html;
+        }
+
+        async function verDetalles(idFactura) {
+            mostrarCarga("Cargando Detalles...");
+            try {
+                // Descargar el documento específico para tener datos frescos
+                const resF = await fetch(`${SUPABASE_URL}/rest/v1/facturas?id_factura=eq.${idFactura}&select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                if (!resF.ok) throw new Error("Fallo al leer factura.");
+                facturaVistaActual = (await resF.json())[0];
+
+                const resD = await fetch(`${SUPABASE_URL}/rest/v1/detalles_factura?factura_id=eq.${idFactura}&select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                const detalles = resD.ok ? await resD.json() : [];
+
+                // Llenar Interfaz
+                document.getElementById('det-doc').innerText = facturaVistaActual.tipo_transaccion === 'Nota de Credito' ? `NC-${facturaVistaActual.nro_factura_manual || idFactura.substring(0,8)}` : (facturaVistaActual.nro_factura_manual || idFactura.substring(0,8));
+                document.getElementById('det-fecha').innerText = new Date(facturaVistaActual.fecha_emision).toLocaleDateString('es-VE');
+                document.getElementById('det-cliente').innerText = `${facturaVistaActual.cliente_documento} - ${facturaVistaActual.cliente_nombre}`;
+                document.getElementById('det-estatus').innerText = facturaVistaActual.estatus.toUpperCase();
+                
+                // Color estatus cabecera
+                const elEst = document.getElementById('det-estatus');
+                elEst.className = "font-black text-xs " + (facturaVistaActual.estatus === 'Anulada' ? 'text-red-600' : (facturaVistaActual.estatus === 'Completada' ? 'text-green-600' : 'text-orange-500'));
+
+                document.getElementById('det-tipo').innerText = facturaVistaActual.tipo_transaccion.toUpperCase();
+                document.getElementById('det-metodo').innerText = facturaVistaActual.metodos_pago.replace('_',' ');
+                document.getElementById('det-cajero').innerText = facturaVistaActual.nombre_cajero || 'SISTEMA';
+
+                // Llenar tabla de ítems (Atando el array de detalles al DOM para uso futuro)
+                const tbody = document.getElementById('det-cuerpo-tabla');
+                let htmlDet = '';
+                detalles.forEach(d => {
+                    htmlDet += `<tr><td class="py-2 px-3 font-mono text-gray-500">${d.producto_sku}</td><td class="py-2 px-3 font-bold text-primary truncate max-w-[200px]">${d.producto_nombre}</td><td class="py-2 px-3 text-center font-black">${d.cantidad}</td><td class="py-2 px-3 text-right text-gray-600">$${fmt(d.precio_unitario_usd)}</td><td class="py-2 px-3 text-right font-black text-gray-800">$${fmt(d.subtotal_usd)}</td></tr>`;
+                });
+                tbody.innerHTML = htmlDet;
+
+                // Llenar Totales
+                document.getElementById('det-base').innerText = `$${fmt(facturaVistaActual.base_imponible)}`;
+                document.getElementById('det-impuestos').innerText = `$${fmt(facturaVistaActual.total_usd - facturaVistaActual.base_imponible + facturaVistaActual.descuento_usd)}`;
+                document.getElementById('det-desc').innerText = `$${fmt(facturaVistaActual.descuento_usd)}`;
+                document.getElementById('det-total-usd').innerText = `US$ ${fmt(facturaVistaActual.total_usd)}`;
+                document.getElementById('det-total-bs').innerText = `Bs. ${fmt(facturaVistaActual.total_bs)}`;
+
+                // Lógica Botón Anular
+                const cajaAnul = document.getElementById('caja-anulacion');
+                if (facturaVistaActual.estatus === 'Anulada' || facturaVistaActual.tipo_transaccion === 'Nota de Credito') {
+                    cajaAnul.classList.add('hidden'); // Ya está anulada o es una NC, no se puede re-anular
+                } else {
+                    cajaAnul.classList.remove('hidden');
+                    document.getElementById('input-motivo-anulacion').value = '';
+                }
+                
+                // Asociar temporalmente los detalles al objeto global para la anulación
+                facturaVistaActual.detalles = detalles;
+
+                document.getElementById('modal-detalle').classList.remove('hidden');
+                document.getElementById('modal-detalle').classList.add('flex');
+                cerrarErrorCarga();
+            } catch (e) { mostrarErrorConexion(e.message); }
+        }
+
+        function cerrarModalDetalle() {
+            document.getElementById('modal-detalle').classList.add('hidden');
+            document.getElementById('modal-detalle').classList.remove('flex');
+            facturaVistaActual = null;
+        }
+
+        // ================= EL MOTOR DE DEVOLUCIÓN ERP =================
+        async function procesarAnulacion() {
+            const motivo = document.getElementById('input-motivo-anulacion').value.trim();
+            if(motivo.length < 5) return alert("Debe ingresar un motivo válido y descriptivo para la devolución (Mín. 5 caracteres).");
+            
+            if(!confirm(`⚠️ ATENCIÓN: Va a anular la factura por $${fmt(facturaVistaActual.total_usd)}.\n\nEsto devolverá el stock al inventario y registrará la extracción del dinero de su caja. ¿Desea proceder?`)) return;
+
+            const btn = document.getElementById('btn-procesar-anulacion'); btn.disabled = true;
+            mostrarCarga("Procesando Devolución (Auditoría)...");
+
+            try {
+                // 1. FILTRO DE SEGURIDAD DE CAJA
+                const usuario = localStorage.getItem('pyp_usuario_nombre') || 'SISTEMA';
+                const resTurno = await fetch(`${SUPABASE_URL}/rest/v1/cierres_caja?id_empresa=${empresaActual ? 'eq.'+empresaActual : 'is.null'}&usuario_cajero=eq.${usuario}&estatus=eq.ABIERTA&select=id_cierre`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                const dataTurno = await resTurno.json();
+                if (dataTurno.length === 0) {
+                    throw new Error("CAJA CERRADA: Debes tener una caja abierta para procesar devoluciones de dinero. Abre tu turno en Control de Caja.");
+                }
+                const idCierreActivo = dataTurno[0].id_cierre;
+
+                // 2. CREAR NOTA DE CRÉDITO (Duplica la cabecera en negativo)
+                const payloadNC = { ...facturaVistaActual };
+                delete payloadNC.id_factura; // Para que genere uno nuevo
+                payloadNC.tipo_transaccion = 'Nota de Credito';
+                payloadNC.estatus = 'Completada';
+                payloadNC.id_factura_origen = facturaVistaActual.id_factura;
+                payloadNC.motivo_devolucion = motivo.toUpperCase();
+                payloadNC.fecha_emision = new Date().toISOString();
+                payloadNC.saldo_pendiente_usd = 0;
+                payloadNC.nombre_cajero = usuario;
+                
+                // Todo negativo para contabilidad perfecta
+                payloadNC.total_usd = payloadNC.total_usd * -1;
+                payloadNC.total_bs = payloadNC.total_bs * -1;
+                payloadNC.base_imponible = payloadNC.base_imponible * -1;
+                payloadNC.monto_exento = payloadNC.monto_exento * -1;
+                payloadNC.subtotal_usd = payloadNC.subtotal_usd * -1;
+                payloadNC.descuento_usd = payloadNC.descuento_usd * -1;
+
+                const resNC = await fetch(`${SUPABASE_URL}/rest/v1/facturas`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, body: JSON.stringify(payloadNC) }); 
+                if(!resNC.ok) throw new Error("Fallo al crear la Nota de Crédito en DB.");
+                const fIdNC = (await resNC.json())[0].id_factura;
+
+                // 3. CAMBIAR ESTATUS ORIGINAL A 'ANULADA' Y SALDO A 0
+                await fetch(`${SUPABASE_URL}/rest/v1/facturas?id_factura=eq.${facturaVistaActual.id_factura}`, { method: 'PATCH', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ estatus: 'Anulada', saldo_pendiente_usd: 0 }) });
+
+                // 4. REPONER STOCK Y CREAR DETALLES NEGATIVOS
+                const promesas = [];
+                facturaVistaActual.detalles.forEach(i => {
+                    // Detalle en la NC
+                    promesas.push(fetch(`${SUPABASE_URL}/rest/v1/detalles_factura`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ id_empresa: empresaActual || null, factura_id: fIdNC, producto_sku: i.producto_sku, producto_nombre: i.producto_nombre, cantidad: i.cantidad * -1, precio_unitario_usd: i.precio_unitario_usd, subtotal_usd: i.subtotal_usd * -1 }) }));  
+                    
+                    // Reposición de inventario: Lee el stock actual y lo suma.
+                    promesas.push(fetch(`${SUPABASE_URL}/rest/v1/productos?id_producto_sku=eq.${i.producto_sku}&select=stock_actual`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } })
+                        .then(res => res.json())
+                        .then(dataProd => {
+                            if(dataProd.length > 0) {
+                                const sActual = parseFloat(dataProd[0].stock_actual) || 0;
+                                return fetch(`${SUPABASE_URL}/rest/v1/productos?id_producto_sku=eq.${i.producto_sku}`, { method: 'PATCH', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ stock_actual: sActual + parseFloat(i.cantidad) }) });
+                            }
+                        }));
+                });
+
+                // 5. SACAR EL DINERO DE LA CAJA ACTIVA
+                const payloadCaja = { id_empresa: empresaActual || null, id_factura: fIdNC, id_cierre: idCierreActivo, fecha: new Date().toISOString(), tipo: 'EGRESO', concepto: `DEVOLUCIÓN DE FACTURA NRO: ${facturaVistaActual.nro_factura_manual || 'S/N'} - CLI: ${facturaVistaActual.cliente_nombre}`, monto_usd: facturaVistaActual.total_usd, monto_bs: facturaVistaActual.total_bs, metodo_pago: facturaVistaActual.metodos_pago, usuario: usuario }; 
+                promesas.push(fetch(`${SUPABASE_URL}/rest/v1/caja_movimientos`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify(payloadCaja) }));
+
+                // Ejecutar todo el lote
+                await Promise.all(promesas);
+
+                alert("DEVOLUCIÓN COMPLETADA: El dinero ha sido descontado de su turno actual y el stock reingresado a inventario.");
+                
+                cerrarModalDetalle();
+                await cargarHistorial();
+                cerrarErrorCarga();
+
+            } catch (e) {
+                mostrarCarga("Acción Denegada", e.message, true);
+            } finally { btn.disabled = false; }
+        }
+    </script> 
+</body> 
+</html>
