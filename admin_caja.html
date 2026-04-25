@@ -59,19 +59,22 @@
                 <h3 class="font-bold text-white text-[12px] tracking-wide uppercase"><i class="fa-solid fa-door-open text-tertiary mr-2"></i> Apertura de Turno</h3> 
                 <button onclick="cerrarModalApertura()" class="text-gray-300 hover:text-white text-lg transition"><i class="fa-solid fa-times"></i></button> 
             </div> 
-            <div class="p-5 bg-gray-50 space-y-4 text-center"> 
-                <div class="bg-blue-50 border border-blue-200 rounded p-3 text-[10px] text-primary font-bold uppercase">
-                    Ingrese el fondo de caja o saldo inicial en efectivo para iniciar las operaciones.
+            <div class="p-5 bg-gray-50 space-y-4"> 
+                <div class="bg-blue-50 border border-blue-200 rounded p-3 text-[10px] text-primary font-bold uppercase text-center">
+                    Ingrese el fondo de caja inicial (Sencillo para vuelto).
                 </div>
-                <div class="text-left"> 
-                    <label class="block text-[10px] font-bold text-gray-600 uppercase mb-1">Fondo Inicial (USD)</label> 
-                    <div class="relative">
-                        <span class="absolute left-3 top-2.5 text-gray-500 font-bold">$</span>
-                        <input type="number" id="input-fondo-usd" step="0.01" class="w-full border border-gray-300 rounded-lg pl-7 pr-3 py-2 text-xl font-black text-primary outline-none shadow-sm bg-white focus:border-tertiary transition text-center" value="0.00"> 
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="text-left"> 
+                        <label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Fondo USD ($)</label> 
+                        <input type="number" id="input-fondo-usd" step="0.01" class="w-full border border-gray-300 rounded-lg p-2 text-lg font-black text-primary outline-none focus:border-tertiary transition text-center" value="0.00"> 
+                    </div> 
+                    <div class="text-left"> 
+                        <label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Fondo Bs. (Bs)</label> 
+                        <input type="number" id="input-fondo-bs" step="0.01" class="w-full border border-gray-300 rounded-lg p-2 text-lg font-black text-primary outline-none focus:border-tertiary transition text-center" value="0.00"> 
                     </div>
-                </div> 
-                <button onclick="procesarAperturaCaja()" id="btn-procesar-apertura" class="w-full bg-secondary hover:opacity-90 text-white font-bold py-3 mt-2 rounded-lg shadow-md transition-all text-xs uppercase tracking-wider btn-press flex justify-center items-center gap-2"><i class="fa-solid fa-play text-white"></i> Iniciar Turno</button> 
-            </div> 
+                </div>
+                <button onclick="procesarAperturaCaja()" id="btn-procesar-apertura" class="w-full bg-secondary hover:opacity-90 text-white font-bold py-3 mt-2 rounded-lg shadow-md transition-all text-xs uppercase tracking-wider btn-press flex justify-center items-center gap-2"><i class="fa-solid fa-play"></i> Iniciar Turno</button> 
+            </div>
         </div> 
     </div> 
 
@@ -291,7 +294,8 @@
         }
 
         async function procesarAperturaCaja() {
-            const fondo = parseFloat(document.getElementById('input-fondo-usd').value) || 0;
+            const fondoUsd = parseFloat(document.getElementById('input-fondo-usd').value) || 0;
+            const fondoBs = parseFloat(document.getElementById('input-fondo-bs').value) || 0;
             const btn = document.getElementById('btn-procesar-apertura'); btn.disabled = true;
             mostrarCarga("Aperturando Turno...");
 
@@ -301,7 +305,8 @@
                     id_empresa: empresaActual || null,
                     usuario_cajero: usuario,
                     estatus: 'ABIERTA',
-                    monto_apertura_usd: fondo
+                    monto_apertura_usd: fondoUsd,
+                    monto_apertura_bs: fondoBs
                 };
 
                 const res = await fetch(`${SUPABASE_URL}/rest/v1/cierres_caja`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, body: JSON.stringify(payload) }); 
@@ -312,7 +317,6 @@
                 cerrarErrorCarga();
             } catch(e) { mostrarErrorConexion(e.message); } finally { btn.disabled = false; }
         }
-
         // ================= CARGA DE MOVIMIENTOS EN VIVO =================
         async function cargarMovimientosTurno(idCierre) {
             const res = await fetch(`${SUPABASE_URL}/rest/v1/caja_movimientos?id_cierre=eq.${idCierre}&select=*&order=fecha.desc`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }); 
