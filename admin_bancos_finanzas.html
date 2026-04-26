@@ -246,8 +246,7 @@
             </form>
         </div>
     </div>
-
-    <script>
+<script>
         const SUPABASE_URL = 'https://icvfmdvvochzaktugqvj.supabase.co'; 
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImljdmZtZHZ2b2NoemFrdHVncXZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyNDEzMzEsImV4cCI6MjA5MTgxNzMzMX0.gO3D39piT6KGbMMOzrPGWXUp5-g_nOBAgJ-nwPv8IcQ';
         const TOKEN_JWT = localStorage.getItem('pyp_token_seguro');
@@ -399,7 +398,6 @@
             select.innerHTML = html;
         }
 
-        // ================= MODALES =================
         function abrirModalCuenta(id = null) {
             const form = document.getElementById('form-cuenta');
             form.reset(); 
@@ -440,7 +438,6 @@
         }
         function cerrarModalTerminal() { document.getElementById('modal-terminal').classList.add('hidden'); document.getElementById('modal-terminal').classList.remove('flex'); }
 
-        // ================= GUARDADO EN BD =================
         async function guardarCuenta(e) {
             e.preventDefault();
             const btn = document.getElementById('btn-guardar-cta'); btn.disabled = true; btn.innerHTML = "...";
@@ -529,7 +526,7 @@
             }
         }
 
-        // === LÓGICA DE ASIGNACIÓN DE FONDOS (MULTIMONEDA) ===
+        // === LÓGICA DE ASIGNACIÓN DE FONDOS (AQUÍ ESTÁ LA CORRECCIÓN DEL NOMBRE) ===
         async function abrirModalAsignarFondo() {
             document.getElementById('form-asignar-fondo').reset();
             
@@ -545,7 +542,8 @@
                 if(resUsr.ok) {
                     const usuarios = await resUsr.json();
                     if(usuarios.length > 0) {
-                        document.getElementById('asig-cajero').innerHTML = usuarios.map(u => `<option value="${u.usuario_login}">${u.nombre_completo} (${u.usuario_login})</option>`).join('');
+                        // AQUÍ ENVIAMOS EL NOMBRE COMPLETO PARA QUE COINCIDA CON LA CAJA
+                        document.getElementById('asig-cajero').innerHTML = usuarios.map(u => `<option value="${u.nombre_completo}">${u.nombre_completo} (${u.usuario_login})</option>`).join('');
                     } else throw new Error("No se encontraron usuarios.");
                 } else throw new Error("Fallo API de usuarios.");
             } catch (e) {
@@ -567,7 +565,7 @@
             const bs = parseFloat(document.getElementById('asig-bs').value) || 0;
             const bovedaUsd = document.getElementById('asig-boveda-usd').value;
             const bovedaBs = document.getElementById('asig-boveda-bs').value;
-            const cajero = document.getElementById('asig-cajero').value;
+            const cajero = document.getElementById('asig-cajero').value; // Este valor ahora es el Nombre Completo
 
             if(usd === 0 && bs === 0) { alert("Debes asignar al menos un monto en USD o Bs."); btn.disabled = false; btn.innerHTML = "Emitir Transferencia(s)"; return; }
             if(usd > 0 && !bovedaUsd) { alert("Debes seleccionar de qué Bóveda saldrán los Dólares."); btn.disabled = false; btn.innerHTML = "Emitir Transferencia(s)"; return; }
@@ -591,11 +589,12 @@
                 const respuestas = await Promise.all(promesas);
                 for(let r of respuestas) { if(!r.ok) throw new Error("Fallo al emitir una de las transferencias."); }
 
-                alert(`Asignación completada con éxito. El cajero ${cajero} debe aceptarlas al abrir turno.`);
+                alert(`Transferencia emitida. El cajero ${cajero} debe aceptarla al abrir su turno.`);
                 cerrarModalAsignarFondo(); 
                 cerrarErrorCarga();
             } catch(error) { mostrarErrorConexion(error.message); } finally { btn.disabled = false; btn.innerHTML = "Emitir Transferencia(s)"; }
         }
     </script>
+   
 </body>
 </html>
