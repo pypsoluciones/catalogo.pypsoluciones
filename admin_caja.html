@@ -63,39 +63,35 @@
                 
                 <div id="estado-fondo-cargando">
                     <i class="fa-solid fa-spinner fa-spin text-3xl text-gray-300 mb-2"></i>
-                    <p class="text-[10px] font-bold text-gray-500 uppercase">Buscando asignaciones pendientes...</p>
+                    <p class="text-[10px] font-bold text-gray-500 uppercase">Buscando tus asignaciones...</p>
                 </div>
 
                 <div id="estado-fondo-vacio" class="hidden">
                     <i class="fa-solid fa-box-open text-4xl text-gray-300 mb-2"></i>
-                    <p class="text-[11px] font-bold text-gray-600 uppercase">No hay fondos asignados</p>
-                    <p class="text-[9px] text-gray-400 mt-1">El supervisor no ha enviado dinero a ningún cajero. Iniciarás con la gaveta en cero.</p>
+                    <p class="text-[11px] font-bold text-gray-600 uppercase">No tienes fondos asignados</p>
+                    <p class="text-[9px] text-gray-400 mt-1">El supervisor no ha enviado dinero a tu usuario. Iniciarás con la gaveta en cero.</p>
                     <button onclick="procesarAperturaCaja(false)" class="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 mt-4 rounded-lg shadow-md transition-all text-xs uppercase tracking-wider btn-press">Abrir Caja en Cero</button> 
                 </div>
 
                 <div id="estado-fondo-pendiente" class="hidden text-left">
-                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1 text-center">Selecciona la asignación que te pertenece:</label>
-                    <select id="select-fondo-pendiente" onchange="seleccionarFondo()" class="w-full border border-gray-300 rounded px-3 py-3 text-[11px] font-bold uppercase focus:border-tertiary outline-none bg-white transition shadow-sm mb-3">
-                        </select>
+                    <p class="text-[10px] text-gray-500 font-bold uppercase mb-2 text-center">Se te ha asignado el siguiente fondo:</p>
                     
-                    <div id="detalle-fondo-seleccionado" class="hidden">
-                        <div class="bg-blue-50 border border-blue-200 rounded p-3 mb-3 shadow-inner">
-                            <div class="grid grid-cols-2 gap-2 divide-x divide-blue-200 text-center">
-                                <div>
-                                    <span class="text-[9px] text-gray-500 block uppercase font-bold">Efectivo USD</span>
-                                    <span id="txt-fondo-recibe-usd" class="text-xl font-black text-green-700">$0.00</span>
-                                </div>
-                                <div>
-                                    <span class="text-[9px] text-gray-500 block uppercase font-bold">Efectivo Bs.</span>
-                                    <span id="txt-fondo-recibe-bs" class="text-lg font-black text-primary pt-1 block">Bs. 0.00</span>
-                                </div>
+                    <div class="bg-blue-50 border border-blue-200 rounded p-3 mb-3 shadow-inner">
+                        <div class="grid grid-cols-2 gap-2 divide-x divide-blue-200 text-center">
+                            <div>
+                                <span class="text-[9px] text-gray-500 block uppercase font-bold">Efectivo USD</span>
+                                <span id="txt-fondo-recibe-usd" class="text-xl font-black text-green-700">$0.00</span>
+                            </div>
+                            <div>
+                                <span class="text-[9px] text-gray-500 block uppercase font-bold">Efectivo Bs.</span>
+                                <span id="txt-fondo-recibe-bs" class="text-lg font-black text-primary pt-1 block">Bs. 0.00</span>
                             </div>
                         </div>
-                        <p class="text-[8px] text-blue-800 font-bold uppercase text-center"><i class="fa-solid fa-circle-info"></i> Origen: <span id="txt-fondo-origen" class="font-black">...</span></p>
-                        <button onclick="procesarAperturaCaja(false)" class="w-full text-gray-400 hover:text-gray-600 text-[10px] font-bold uppercase mt-2 underline text-center">Ignorar e iniciar en cero</button>
                     </div>
+                    <p class="text-[8px] text-blue-800 font-bold uppercase text-center"><i class="fa-solid fa-circle-info"></i> Origen: <span id="txt-fondo-origen" class="font-black">...</span></p>
                     
-                    <button id="btn-aceptar-fondo" onclick="procesarAperturaCaja(true)" disabled class="w-full bg-secondary disabled:bg-gray-400 disabled:cursor-not-allowed hover:opacity-90 text-white font-bold py-3 mt-4 rounded-lg shadow-md transition-all text-xs uppercase tracking-wider flex justify-center items-center gap-2"><i class="fa-solid fa-check-double"></i> Reclamar Fondo y Abrir Turno</button> 
+                    <button id="btn-aceptar-fondo" onclick="procesarAperturaCaja(true)" class="w-full bg-secondary hover:opacity-90 text-white font-bold py-3 mt-4 rounded-lg shadow-md transition-all text-xs uppercase tracking-wider flex justify-center items-center gap-2 btn-press"><i class="fa-solid fa-check-double"></i> Recibir Fondo y Abrir</button> 
+                    <button onclick="procesarAperturaCaja(false)" class="w-full text-gray-400 hover:text-gray-600 text-[10px] font-bold uppercase mt-3 underline text-center">Ignorar e iniciar en cero</button>
                 </div>
 
             </div>
@@ -225,8 +221,7 @@
         let empresaActual = null; 
         let turnoActivo = null; 
         let tasaBCV = 1;
-        let agrupacionesFondos = {}; // Para guardar las valijas consolidadas
-        let transferenciasPendientes = []; // Para procesar las que el usuario seleccione
+        let transferenciasPendientes = []; 
 
         window.onload = async () => { 
             try { 
@@ -273,7 +268,8 @@
 
         async function verificarTurnoActivo() {
             const filtroEmpresa = empresaActual ? `id_empresa=eq.${empresaActual}&` : `id_empresa=is.null&`; 
-            const usuario = localStorage.getItem('pyp_usuario_nombre') || 'SISTEMA';
+            // Para la seguridad de la tabla de caja usamos el login estricto
+            const usuario = localStorage.getItem('pyp_usuario_login') || localStorage.getItem('pyp_usuario_nombre') || 'SISTEMA';
             
             const res = await fetch(`${SUPABASE_URL}/rest/v1/cierres_caja?${filtroEmpresa}usuario_cajero=eq.${usuario}&estatus=eq.ABIERTA&select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }); 
             if (!res.ok) throw new Error("Fallo al leer estado de caja."); 
@@ -304,7 +300,7 @@
             }
         }
 
-        // ================= APERTURA DE CAJA (SISTEMA DE RECLAMO INTELIGENTE) =================
+        // ================= APERTURA DE CAJA (SEGURA Y AUTOMÁTICA) =================
         async function abrirModalApertura() {
             document.getElementById('modal-abrir-caja').classList.remove('hidden');
             document.getElementById('modal-abrir-caja').classList.add('flex');
@@ -312,73 +308,44 @@
             document.getElementById('estado-fondo-cargando').classList.remove('hidden');
             document.getElementById('estado-fondo-vacio').classList.add('hidden');
             document.getElementById('estado-fondo-pendiente').classList.add('hidden');
-            agrupacionesFondos = {};
-            transferenciasPendientes = [];
+            transferenciasPendientes = []; 
+
+            // Tomamos la identidad real hidratada por el login
+            const usrNombre = localStorage.getItem('pyp_usuario_nombre') || 'SISTEMA';
+            const usrLogin = localStorage.getItem('pyp_usuario_login') || usrNombre;
 
             try {
-                // Buscamos TODAS las transferencias pendientes en la empresa (sin importar el nombre exacto)
-                const filtroEmpresa = empresaActual ? `id_empresa=eq.${empresaActual}&` : `id_empresa=is.null&`;
-                const url = `${SUPABASE_URL}/rest/v1/fin_transferencias?${filtroEmpresa}estado=eq.PENDIENTE&select=*,fin_cuentas!id_cuenta_origen(nombre)`;
+                // Buscamos estrictamente por el usuario real (Nombre o Login)
+                const url = `${SUPABASE_URL}/rest/v1/fin_transferencias?or=(usuario_receptor.eq.${encodeURIComponent(usrNombre)},usuario_receptor.eq.${encodeURIComponent(usrLogin)})&estado=eq.PENDIENTE&select=*,fin_cuentas!id_cuenta_origen(nombre)`;
                 const res = await fetch(url, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
                 const data = await res.json();
 
                 document.getElementById('estado-fondo-cargando').classList.add('hidden');
 
                 if (data.length > 0) {
-                    // Agrupamos las transferencias por el nombre al que fueron enviadas
+                    transferenciasPendientes = data; 
+                    
+                    let totalUsd = 0; let totalBs = 0; let nombresOrigen = new Set();
+
                     data.forEach(t => {
-                        let rec = t.usuario_receptor || 'Cajero Desconocido';
-                        if(!agrupacionesFondos[rec]) agrupacionesFondos[rec] = { transferencias: [], totalUsd: 0, totalBs: 0, origenes: new Set() };
-                        
-                        agrupacionesFondos[rec].transferencias.push(t);
-                        agrupacionesFondos[rec].totalUsd += parseFloat(t.monto_usd) || 0;
-                        agrupacionesFondos[rec].totalBs += parseFloat(t.monto_bs) || 0;
-                        
+                        totalUsd += parseFloat(t.monto_usd) || 0;
+                        totalBs += parseFloat(t.monto_bs) || 0;
                         let nom = "Bóveda";
                         if(t.fin_cuentas && t.fin_cuentas.nombre) nom = t.fin_cuentas.nombre;
                         else if (t.fin_cuentas && t.fin_cuentas.length > 0) nom = t.fin_cuentas[0].nombre;
-                        agrupacionesFondos[rec].origenes.add(nom);
+                        nombresOrigen.add(nom);
                     });
 
-                    // Llenamos el selector
-                    const select = document.getElementById('select-fondo-pendiente');
-                    select.innerHTML = '<option value="">-- SELECCIONA TU ASIGNACIÓN --</option>';
-                    Object.keys(agrupacionesFondos).forEach(k => {
-                        select.innerHTML += `<option value="${k}">Dinero asignado a: ${k}</option>`;
-                    });
-
+                    document.getElementById('txt-fondo-recibe-usd').innerText = `$${fmt(totalUsd)}`;
+                    document.getElementById('txt-fondo-recibe-bs').innerText = `Bs. ${fmt(totalBs)}`;
+                    document.getElementById('txt-fondo-origen').innerText = Array.from(nombresOrigen).join(' / ');
                     document.getElementById('estado-fondo-pendiente').classList.remove('hidden');
-                    document.getElementById('detalle-fondo-seleccionado').classList.add('hidden');
-                    document.getElementById('btn-aceptar-fondo').disabled = true;
                 } else {
                     document.getElementById('estado-fondo-vacio').classList.remove('hidden');
                 }
             } catch (e) {
                 cerrarModalApertura(); mostrarErrorConexion("No se pudo verificar fondos en la bóveda.");
             }
-        }
-
-        // Cuando el cajero selecciona un nombre del selector
-        function seleccionarFondo() {
-            const val = document.getElementById('select-fondo-pendiente').value;
-            const divDetalle = document.getElementById('detalle-fondo-seleccionado');
-            const btn = document.getElementById('btn-aceptar-fondo');
-
-            if(!val) {
-                divDetalle.classList.add('hidden');
-                btn.disabled = true;
-                transferenciasPendientes = [];
-                return;
-            }
-
-            const grupo = agrupacionesFondos[val];
-            transferenciasPendientes = grupo.transferencias;
-            document.getElementById('txt-fondo-recibe-usd').innerText = `$${fmt(grupo.totalUsd)}`;
-            document.getElementById('txt-fondo-recibe-bs').innerText = `Bs. ${fmt(grupo.totalBs)}`;
-            document.getElementById('txt-fondo-origen').innerText = Array.from(grupo.origenes).join(' / ');
-            
-            divDetalle.classList.remove('hidden');
-            btn.disabled = false;
         }
 
         function cerrarModalApertura() { document.getElementById('modal-abrir-caja').classList.add('hidden'); document.getElementById('modal-abrir-caja').classList.remove('flex'); }
@@ -398,7 +365,8 @@
             }
 
             try {
-                const usuario = localStorage.getItem('pyp_usuario_nombre') || 'SISTEMA';
+                // Usamos la identidad real hidratada
+                const usuario = localStorage.getItem('pyp_usuario_login') || localStorage.getItem('pyp_usuario_nombre') || 'SISTEMA';
                 
                 const payloadTurno = {
                     id_empresa: empresaActual || null, usuario_cajero: usuario, estatus: 'ABIERTA',
