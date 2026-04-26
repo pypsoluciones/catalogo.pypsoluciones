@@ -11,7 +11,6 @@
         const cTer = localStorage.getItem('pyp_color_terciario') || '#64748b';
         const fontFam = localStorage.getItem('pyp_fuente') || "'Inter', sans-serif";
         const fontSiz = localStorage.getItem('pyp_tamano') || "14px";
-
         document.documentElement.style.setProperty('--color-primary', cPri);
         document.documentElement.style.setProperty('--color-secondary', cSec);
         document.documentElement.style.setProperty('--color-tertiary', cTer);
@@ -21,11 +20,13 @@
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        window.tailwind = {
-            config: {
-                theme: {
-                    extend: {
-                        colors: { primary: 'var(--color-primary)', secondary: 'var(--color-secondary)', tertiary: 'var(--color-tertiary)' }
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: 'var(--color-primary)',
+                        secondary: 'var(--color-secondary)',
+                        tertiary: 'var(--color-tertiary)'
                     }
                 }
             }
@@ -35,34 +36,105 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=Poppins:wght@300;400;500;700;900&family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.js"></script>
-    
+
     <style>
         body { font-family: var(--font-global); font-size: var(--size-global); }
-        .bg-primary { background-color: var(--color-primary) !important; }
-        .text-primary { color: var(--color-primary) !important; }
+        .bg-primary  { background-color: var(--color-primary)   !important; }
+        .text-primary { color: var(--color-primary)             !important; }
         .bg-secondary { background-color: var(--color-secondary) !important; }
-        .text-secondary { color: var(--color-secondary) !important; }
-        .text-tertiary { color: var(--color-tertiary) !important; }
-        .border-primary { border-color: var(--color-primary) !important; }
-
+        .text-secondary { color: var(--color-secondary)         !important; }
+        .text-tertiary { color: var(--color-tertiary)           !important; }
+        .border-primary { border-color: var(--color-primary)    !important; }
         .custom-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
         .custom-scroll::-webkit-scrollbar-thumb { background-color: var(--color-primary); border-radius: 4px; }
         .btn-press:active { transform: scale(0.96); }
         .fade-in { animation: fadeIn 0.2s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         .btn-vista.active { background-color: var(--color-primary); color: white; border-color: var(--color-primary); }
-        input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        /* FIX: quitar flechas en inputs number */
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        /* NUEVO: barra de progreso de subida */
+        .upload-progress { transition: width 0.3s ease; }
+        /* NUEVO: resaltado de fila en edición */
+        .row-editing { outline: 2px solid var(--color-secondary); }
     </style>
+
     <script src="config.js"></script>
+    <!-- FIX: redirigir a login si no hay sesión activa -->
     <script>if (!localStorage.getItem('pyp_token_seguro')) window.location.href = 'login.html';</script>
 </head>
 <body class="bg-[#f4f6f8] flex h-screen overflow-hidden text-gray-800 relative">
 
+    <!-- VISOR DE IMÁGENES -->
     <div id="media-viewer" class="fixed inset-0 bg-black/95 z-[9999] hidden flex-col items-center justify-center p-4 fade-in" onclick="cerrarVisor()">
         <button class="absolute top-4 right-4 text-white text-3xl hover:text-gray-300 z-10 transition"><i class="fa-solid fa-times"></i></button>
         <div class="flex flex-col items-center gap-4 max-w-4xl w-full" onclick="event.stopPropagation()">
             <img id="viewer-img-main" src="" class="max-w-full max-h-[70vh] object-contain rounded shadow-2xl border-4 border-white/10 bg-white">
             <div id="viewer-thumbnails" class="flex gap-2 overflow-x-auto p-2 no-scrollbar bg-white/5 rounded-xl"></div>
+        </div>
+    </div>
+
+    <!-- NUEVO: Modal de confirmación de eliminación (más seguro que confirm()) -->
+    <div id="modal-confirmar-eliminar" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[9995] hidden flex items-center justify-center p-4 fade-in">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm border border-red-200 overflow-hidden">
+            <div class="bg-red-600 text-white px-5 py-3 flex items-center gap-2">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <h3 class="font-black text-sm uppercase tracking-wider">Confirmar Eliminación</h3>
+            </div>
+            <div class="p-5">
+                <p class="text-sm text-gray-700 mb-1">¿Estás seguro de eliminar permanentemente el producto:</p>
+                <p id="txt-sku-eliminar" class="text-base font-black text-red-600 mb-1"></p>
+                <p id="txt-nom-eliminar" class="text-xs text-gray-500 mb-4"></p>
+                <p class="text-[10px] text-red-500 font-bold uppercase bg-red-50 border border-red-200 rounded p-2 mb-4">
+                    <i class="fa-solid fa-exclamation-circle mr-1"></i>
+                    Esta acción no se puede deshacer. Si el producto tiene facturas asociadas, la eliminación fallará.
+                </p>
+                <div class="flex gap-3 justify-end">
+                    <button onclick="cerrarModalConfirmarEliminar()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded font-bold text-xs hover:bg-gray-200 transition btn-press">Cancelar</button>
+                    <button onclick="ejecutarEliminarProducto()" id="btn-confirmar-eliminar" class="px-4 py-2 bg-red-600 text-white rounded font-black text-xs hover:bg-red-700 transition btn-press uppercase">
+                        <i class="fa-solid fa-trash mr-1"></i> Sí, Eliminar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NUEVO: Modal ajuste rápido de stock -->
+    <div id="modal-ajuste-stock" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[9995] hidden flex items-center justify-center p-4 fade-in">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-xs border border-gray-200 overflow-hidden">
+            <div class="bg-primary text-white px-5 py-3 flex justify-between items-center">
+                <h3 class="font-black text-sm uppercase tracking-wider"><i class="fa-solid fa-boxes-stacked mr-2 text-tertiary"></i>Ajuste de Stock</h3>
+                <button onclick="cerrarAjusteStock()" class="text-gray-300 hover:text-white transition"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <div class="p-5">
+                <p id="txt-ajuste-nombre" class="text-xs font-black text-primary uppercase mb-1 truncate"></p>
+                <p id="txt-ajuste-sku" class="text-[10px] text-gray-400 font-mono mb-3"></p>
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="flex-1">
+                        <label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Stock Actual</label>
+                        <div id="val-stock-actual-ajuste" class="text-2xl font-black text-primary text-center bg-blue-50 border border-blue-200 rounded py-2"></div>
+                    </div>
+                    <i class="fa-solid fa-arrow-right text-gray-300 mt-4"></i>
+                    <div class="flex-1">
+                        <label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Nuevo Stock</label>
+                        <input type="number" id="input-nuevo-stock" min="0" class="w-full text-2xl font-black text-center border-2 border-secondary rounded py-2 outline-none focus:border-primary transition bg-orange-50">
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Motivo del Ajuste</label>
+                    <select id="motivo-ajuste" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] font-bold outline-none focus:border-tertiary transition">
+                        <option value="CONTEO_FISICO">Conteo Físico</option>
+                        <option value="ENTRADA_MERCANCIA">Entrada de Mercancía</option>
+                        <option value="DEVOLUCION">Devolución</option>
+                        <option value="MERMA">Merma / Daño</option>
+                        <option value="CORRECCIÓN">Corrección de Error</option>
+                    </select>
+                </div>
+                <button onclick="guardarAjusteStock()" class="w-full bg-secondary hover:opacity-90 text-white font-black py-2.5 rounded uppercase text-xs tracking-wider btn-press transition">
+                    <i class="fa-solid fa-save mr-1"></i> Aplicar Ajuste
+                </button>
+            </div>
         </div>
     </div>
 
@@ -74,28 +146,45 @@
                 <button onclick="toggleMobileMenu()" class="md:hidden text-gray-600 hover:text-primary text-xl transition px-2"><i class="fa-solid fa-bars"></i></button>
                 <h1 class="text-base font-black text-primary uppercase flex items-center gap-2"><i class="fa-solid fa-boxes-stacked text-tertiary"></i> Gestión de Inventario</h1>
             </div>
-            <div class="text-[11px] font-semibold text-gray-500 bg-gray-100 px-3 py-1 rounded border border-gray-200 uppercase tracking-wide hidden md:block">
-                <i class="fa-solid fa-user-tie text-tertiary mr-1"></i> <span id="nombre-usuario">Admin</span>
+            <div class="flex items-center gap-2">
+                <!-- NUEVO: contador de resultados -->
+                <span id="badge-resultados" class="hidden md:inline text-[10px] font-bold text-gray-400 bg-gray-100 border border-gray-200 px-2 py-1 rounded"></span>
+                <!-- NUEVO: botón exportar CSV -->
+                <button onclick="exportarCSV()" title="Exportar inventario a CSV"
+                    class="hidden md:flex items-center gap-1 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 px-3 py-1.5 rounded text-[10px] font-bold uppercase transition btn-press">
+                    <i class="fa-solid fa-file-csv"></i> Exportar
+                </button>
+                <div class="text-[11px] font-semibold text-gray-500 bg-gray-100 px-3 py-1 rounded border border-gray-200 uppercase tracking-wide hidden md:block">
+                    <i class="fa-solid fa-user-tie text-tertiary mr-1"></i> <span id="nombre-usuario">Admin</span>
+                </div>
             </div>
         </header>
 
         <div class="flex-1 overflow-auto p-4 custom-scroll pb-24 md:pb-6 flex flex-col">
-            
+
+            <!-- Barra de filtros -->
             <div class="bg-white p-3 border border-gray-200 rounded-xl shadow-sm flex flex-col gap-3 shrink-0 mb-4">
                 <div class="flex flex-col xl:flex-row justify-between items-center gap-3 w-full">
                     <div class="w-full xl:w-4/5 grid grid-cols-1 md:grid-cols-5 gap-2">
                         <div class="relative md:col-span-2">
                             <i class="fa-solid fa-search absolute left-3 top-2.5 text-gray-400"></i>
-                            <input type="text" id="buscador-inv" oninput="filtrarInventario()" placeholder="Buscar SKU, Barras o nombre..." class="w-full border border-gray-300 rounded-lg pl-9 pr-4 py-1.5 text-xs focus:outline-none focus:border-tertiary uppercase transition font-bold shadow-inner">
+                            <input type="text" id="buscador-inv" oninput="filtrarInventario()"
+                                placeholder="Buscar SKU, Barras o nombre..."
+                                class="w-full border border-gray-300 rounded-lg pl-9 pr-4 py-1.5 text-xs focus:outline-none focus:border-tertiary uppercase transition font-bold shadow-inner">
                         </div>
                         <select id="filtro-cat-inv" onchange="filtrarInventario()" class="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-[10px] font-bold text-primary outline-none bg-gray-50 uppercase focus:border-tertiary transition"><option value="TODAS">CATEGORÍA: TODAS</option></select>
                         <select id="filtro-marca-inv" onchange="filtrarInventario()" class="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-[10px] font-bold text-primary outline-none bg-gray-50 uppercase focus:border-tertiary transition"><option value="TODAS">MARCA: TODAS</option></select>
-                        <select id="filtro-estatus-inv" onchange="filtrarInventario()" class="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-[10px] font-bold text-primary outline-none bg-gray-50 uppercase focus:border-tertiary transition"><option value="TODOS">ESTATUS: TODOS</option><option value="ACTIVO">ACTIVOS</option><option value="INACTIVO">INACTIVOS</option></select>
+                        <select id="filtro-estatus-inv" onchange="filtrarInventario()" class="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-[10px] font-bold text-primary outline-none bg-gray-50 uppercase focus:border-tertiary transition">
+                            <option value="TODOS">ESTATUS: TODOS</option>
+                            <option value="ACTIVO">ACTIVOS</option>
+                            <option value="INACTIVO">INACTIVOS</option>
+                        </select>
                     </div>
-                    
                     <div class="flex gap-2 w-full xl:w-auto justify-end shrink-0">
                         <select id="filtro-stock-inv" onchange="filtrarInventario()" class="border border-red-300 text-red-700 rounded-lg px-2 py-1.5 text-[10px] font-bold outline-none bg-red-50 uppercase focus:border-red-400 transition">
-                            <option value="TODOS">STOCK: TODOS</option><option value="CRITICO">STOCK CRÍTICO</option><option value="DISPONIBLE">CON DISPONIBILIDAD</option>
+                            <option value="TODOS">STOCK: TODOS</option>
+                            <option value="CRITICO">STOCK CRÍTICO</option>
+                            <option value="DISPONIBLE">CON DISPONIBILIDAD</option>
                         </select>
                         <div class="flex bg-gray-50 rounded-lg border border-gray-300 p-0.5 shadow-inner">
                             <button id="btn-vista-tabla" onclick="cambiarVista('tabla')" class="btn-vista active px-3 py-1 rounded text-gray-500 transition text-sm"><i class="fa-solid fa-list"></i></button>
@@ -109,59 +198,97 @@
             </div>
 
             <div id="contenedor-inventario" class="flex-1 bg-transparent">
-                <div class="p-10 text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin text-4xl mb-3 block text-tertiary"></i><p class="font-bold uppercase tracking-widest text-xs">Cargando Base de Datos...</p></div>
+                <div class="p-10 text-center text-gray-400">
+                    <i class="fa-solid fa-spinner fa-spin text-4xl mb-3 block text-tertiary"></i>
+                    <p class="font-bold uppercase tracking-widest text-xs">Cargando Base de Datos...</p>
+                </div>
             </div>
         </div>
     </main>
+
+    <!-- MODAL FICHA DE PRODUCTO -->
     <div id="modal-producto" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4 fade-in">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-6xl max-h-[95vh] flex flex-col overflow-hidden border border-gray-200 relative">
             <div class="bg-primary text-white px-5 py-3 flex justify-between items-center shrink-0">
                 <h3 class="font-black text-sm tracking-widest uppercase flex items-center" id="modal-titulo"><i class="fa-solid fa-box mr-2 text-tertiary"></i> FICHA DE PRODUCTO</h3>
                 <button onclick="cerrarModalProducto()" class="text-gray-300 hover:text-white text-xl transition"><i class="fa-solid fa-times"></i></button>
             </div>
-            
+
             <form id="form-producto" onsubmit="guardarProducto(event)" class="flex-1 overflow-y-auto custom-scroll p-4 bg-gray-50 flex flex-col gap-4">
                 <input type="hidden" id="prod-modo-edicion" value="false">
                 <input type="hidden" id="prod-sku-original" value="">
-                
+
                 <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
-                    
+
+                    <!-- Columna izquierda: multimedia -->
                     <div class="lg:col-span-1 space-y-4">
                         <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
                             <h4 class="text-[10px] font-black text-gray-800 uppercase border-b border-gray-100 pb-2 mb-2 tracking-wider">Imagen Principal</h4>
-                            <div class="border-2 border-dashed border-gray-300 rounded p-2 flex flex-col items-center justify-center bg-gray-50 h-32 mb-2 relative group cursor-pointer" onclick="if(document.getElementById('url-img-principal').value) abrirVisorInventario(document.getElementById('url-img-principal').value)">
+                            <div class="border-2 border-dashed border-gray-300 rounded p-2 flex flex-col items-center justify-center bg-gray-50 h-32 mb-2 relative group cursor-pointer"
+                                onclick="if(document.getElementById('url-img-principal').value) abrirVisorInventario(document.getElementById('url-img-principal').value)">
                                 <img id="preview-img-principal" src="" class="max-h-full max-w-full object-contain hidden z-10 bg-white">
                                 <i class="fa-solid fa-image text-3xl text-gray-300" id="icon-img-principal"></i>
                             </div>
+                            <!-- NUEVO: barra de progreso de subida -->
+                            <div id="barra-upload-principal" class="hidden h-1.5 bg-gray-100 rounded mb-2 overflow-hidden">
+                                <div id="prog-upload-principal" class="upload-progress h-full bg-primary" style="width:0%"></div>
+                            </div>
                             <input type="hidden" id="url-img-principal">
-                            <input type="file" id="file-img-principal" accept="image/*" class="hidden" onchange="subirImagenUnica(event, 'url-img-principal', 'preview-img-principal', 'icon-img-principal')">
-                            <button type="button" onclick="document.getElementById('file-img-principal').click()" class="w-full bg-blue-50 text-primary font-bold py-1.5 rounded text-[10px] uppercase tracking-wider hover:bg-blue-100 transition border border-blue-200"><i class="fa-solid fa-cloud-arrow-up mr-1"></i> Subir Principal</button>
+                            <input type="file" id="file-img-principal" accept="image/*" class="hidden" onchange="subirImagenUnica(event, 'url-img-principal', 'preview-img-principal', 'icon-img-principal', 'prog-upload-principal', 'barra-upload-principal')">
+                            <button type="button" onclick="document.getElementById('file-img-principal').click()" class="w-full bg-blue-50 text-primary font-bold py-1.5 rounded text-[10px] uppercase tracking-wider hover:bg-blue-100 transition border border-blue-200">
+                                <i class="fa-solid fa-cloud-arrow-up mr-1"></i> Subir Principal
+                            </button>
                         </div>
 
                         <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
                             <h4 class="text-[10px] font-black text-secondary uppercase border-b border-gray-100 pb-2 mb-2 tracking-wider">Galería Adicional</h4>
                             <div id="contenedor-galeria" class="grid grid-cols-3 gap-1 mb-2"></div>
+                            <!-- NUEVO: barra de progreso galería -->
+                            <div id="barra-upload-galeria" class="hidden h-1.5 bg-gray-100 rounded mb-2 overflow-hidden">
+                                <div id="prog-upload-galeria" class="upload-progress h-full bg-secondary" style="width:0%"></div>
+                            </div>
                             <input type="file" id="file-img-galeria" accept="image/*" multiple class="hidden" onchange="subirImagenesGaleria(event)">
-                            <button type="button" onclick="document.getElementById('file-img-galeria').click()" class="w-full bg-orange-50 text-secondary font-bold py-1.5 rounded text-[10px] uppercase tracking-wider hover:bg-orange-100 transition border border-orange-200"><i class="fa-solid fa-images mr-1"></i> Añadir Fotos</button>
+                            <button type="button" onclick="document.getElementById('file-img-galeria').click()" class="w-full bg-orange-50 text-secondary font-bold py-1.5 rounded text-[10px] uppercase tracking-wider hover:bg-orange-100 transition border border-orange-200">
+                                <i class="fa-solid fa-images mr-1"></i> Añadir Fotos
+                            </button>
                         </div>
 
                         <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
                             <h4 class="text-[10px] font-black text-red-600 uppercase border-b border-gray-100 pb-2 mb-2 tracking-wider"><i class="fa-brands fa-youtube"></i> Video Promocional</h4>
-                            <input type="url" id="prod-video" placeholder="Link de YouTube..." class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] outline-none focus:border-red-400 transition mb-2" oninput="actualizarVideo(this.value)">
+                            <input type="url" id="prod-video" placeholder="Link de YouTube..."
+                                class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] outline-none focus:border-red-400 transition mb-2"
+                                oninput="actualizarVideo(this.value)">
                             <div id="video-container" class="hidden w-full aspect-video rounded border border-gray-200 overflow-hidden bg-black">
-                                <iframe id="video-iframe" class="w-full h-full" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                                <iframe id="video-iframe" class="w-full h-full" src="" frameborder="0"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
                             </div>
                         </div>
                     </div>
 
+                    <!-- Columna derecha: datos del producto -->
                     <div class="lg:col-span-3 space-y-4">
-                        
+
                         <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
                             <h4 class="text-[10px] font-black text-primary uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Identidad del Producto</h4>
                             <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-3">
-                                <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Código SKU *</label><input type="text" id="prod-sku" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-black uppercase focus:border-tertiary transition outline-none"></div>
-                                <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Código Barra (Números)</label><input type="number" id="prod-cod-barra" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-mono uppercase focus:border-tertiary transition outline-none"></div>
-                                <div class="md:col-span-2"><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Nombre / Descripción *</label><input type="text" id="prod-nombre" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-bold uppercase focus:border-tertiary transition outline-none"></div>
+                                <div>
+                                    <label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Código SKU *</label>
+                                    <!-- FIX: sanitización por oninput — convierte a mayúsculas y quita caracteres peligrosos -->
+                                    <input type="text" id="prod-sku" required
+                                        oninput="this.value = this.value.toUpperCase().replace(/[^A-Z0-9\-_]/g,'')"
+                                        class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-black uppercase focus:border-tertiary transition outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Código Barra</label>
+                                    <!-- FIX: type="text" para evitar pérdida de ceros a la izquierda en códigos de barras -->
+                                    <input type="text" id="prod-cod-barra" inputmode="numeric" pattern="[0-9]*"
+                                        class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-mono focus:border-tertiary transition outline-none">
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Nombre / Descripción *</label>
+                                    <input type="text" id="prod-nombre" required maxlength="200"
+                                        class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-bold uppercase focus:border-tertiary transition outline-none">
+                                </div>
                             </div>
                             <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
                                 <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Tipo Producto</label><select id="prod-tipo" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] font-bold uppercase outline-none focus:border-tertiary transition"></select></div>
@@ -181,8 +308,8 @@
                                     <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Unidad</label><select id="prod-unidad" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] font-bold uppercase outline-none focus:border-tertiary transition"></select></div>
                                 </div>
                                 <div class="grid grid-cols-3 gap-2">
-                                    <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1 text-blue-600">Stock Actual</label><input type="number" id="prod-stock" value="0" class="w-full border border-gray-300 bg-blue-50 rounded px-2 py-1.5 text-xs font-black text-center outline-none focus:border-tertiary transition"></div>
-                                    <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1 text-red-500">Min. Alerta</label><input type="number" id="prod-stock-min" value="0" class="w-full border border-gray-300 bg-red-50 rounded px-2 py-1.5 text-xs font-bold text-center outline-none focus:border-tertiary transition"></div>
+                                    <div><label class="block text-[9px] font-bold text-blue-600 uppercase mb-1">Stock Actual</label><input type="number" id="prod-stock" value="0" min="0" class="w-full border border-gray-300 bg-blue-50 rounded px-2 py-1.5 text-xs font-black text-center outline-none focus:border-tertiary transition"></div>
+                                    <div><label class="block text-[9px] font-bold text-red-500 uppercase mb-1">Min. Alerta</label><input type="number" id="prod-stock-min" value="0" min="0" class="w-full border border-gray-300 bg-red-50 rounded px-2 py-1.5 text-xs font-bold text-center outline-none focus:border-tertiary transition"></div>
                                     <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">P. Negativo</label><select id="prod-negativo" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] font-bold uppercase outline-none focus:border-tertiary transition"><option value="FALSE">NO</option><option value="TRUE">SÍ</option></select></div>
                                 </div>
                             </div>
@@ -193,33 +320,54 @@
                                     <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Estado del Producto</label><select id="prod-estatus" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-bold uppercase outline-none focus:border-tertiary transition"><option value="ACTIVO">ACTIVO</option><option value="INACTIVO">INACTIVO</option></select></div>
                                     <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Tipo de Impuesto</label><select id="prod-impuesto" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-bold uppercase outline-none focus:border-tertiary transition"></select></div>
                                 </div>
-                                <div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Descripción Interna</label><textarea id="prod-desc" rows="2" class="w-full border border-gray-300 rounded px-2 py-1 text-xs outline-none custom-scroll focus:border-tertiary transition"></textarea></div>
+                                <div>
+                                    <label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Descripción Interna</label>
+                                    <textarea id="prod-desc" rows="2" maxlength="500" class="w-full border border-gray-300 rounded px-2 py-1 text-xs outline-none custom-scroll focus:border-tertiary transition"></textarea>
+                                </div>
                             </div>
                         </div>
 
+                        <!-- Precios -->
                         <div class="bg-emerald-50 p-4 rounded-lg border border-emerald-200 shadow-sm">
                             <h4 class="text-[10px] font-black text-emerald-700 uppercase border-b border-emerald-200 pb-2 mb-3 tracking-wider">Estructura de Precios</h4>
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                                <div class="bg-white p-2 rounded border border-emerald-100"><label class="block text-[9px] font-black text-emerald-600 uppercase mb-1">P. General (USD) *</label><input type="number" id="prod-precio-usd" step="0.01" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-base font-black text-emerald-700 outline-none focus:border-emerald-500 transition"></div>
-                                <div class="bg-white p-2 rounded border border-emerald-100"><label class="block text-[9px] font-bold text-emerald-600 uppercase mb-1">Fijar Precio Bs?</label><select id="prod-fijo-bs" onchange="togglePrecioBsFijo()" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] font-bold outline-none focus:border-emerald-500 transition"><option value="NO">NO (Automático)</option><option value="SI">SÍ (Congelar)</option></select></div>
-                                <div class="bg-white p-2 rounded border border-emerald-100 hidden" id="caja-precio-bs-fijo"><label class="block text-[9px] font-bold text-emerald-600 uppercase mb-1">Monto Fijo Bs</label><input type="number" id="prod-precio-bs" step="0.01" class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm font-black text-gray-800 outline-none focus:border-emerald-500 transition"></div>
+                                <div class="bg-white p-2 rounded border border-emerald-100">
+                                    <label class="block text-[9px] font-black text-emerald-600 uppercase mb-1">P. General (USD) *</label>
+                                    <!-- FIX: min="0.01" para evitar precios en cero o negativos -->
+                                    <input type="number" id="prod-precio-usd" step="0.01" min="0.01" required
+                                        class="w-full border border-gray-300 rounded px-2 py-1.5 text-base font-black text-emerald-700 outline-none focus:border-emerald-500 transition">
+                                </div>
+                                <div class="bg-white p-2 rounded border border-emerald-100">
+                                    <label class="block text-[9px] font-bold text-emerald-600 uppercase mb-1">Fijar Precio Bs?</label>
+                                    <select id="prod-fijo-bs" onchange="togglePrecioBsFijo()" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] font-bold outline-none focus:border-emerald-500 transition">
+                                        <option value="NO">NO (Automático)</option>
+                                        <option value="SI">SÍ (Congelar)</option>
+                                    </select>
+                                </div>
+                                <div class="bg-white p-2 rounded border border-emerald-100 hidden" id="caja-precio-bs-fijo">
+                                    <label class="block text-[9px] font-bold text-emerald-600 uppercase mb-1">Monto Fijo Bs</label>
+                                    <input type="number" id="prod-precio-bs" step="0.01" min="0.01"
+                                        class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm font-black text-gray-800 outline-none focus:border-emerald-500 transition">
+                                </div>
                             </div>
-
                             <h4 class="text-[9px] font-black text-emerald-700 uppercase border-b border-emerald-100 pb-1 mb-2">Descuentos por Volumen</h4>
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                <!-- FIX: validación lógica — precio por volumen debe ser <= precio general -->
                                 <div class="flex gap-2">
-                                    <div class="w-1/2"><label class="block text-[8px] font-bold text-gray-500 uppercase mb-0.5">Req. Precio 1</label><input type="number" id="req-p1" value="0" class="w-full border border-gray-300 rounded px-2 py-1 text-xs text-center outline-none focus:border-emerald-500 transition"></div>
-                                    <div class="w-1/2"><label class="block text-[8px] font-bold text-emerald-600 uppercase mb-0.5">Precio 1 ($)</label><input type="number" id="usd-p1" step="0.01" value="0" class="w-full border border-gray-300 rounded px-2 py-1 text-xs text-center font-bold text-emerald-700 outline-none focus:border-emerald-500 transition"></div>
+                                    <div class="w-1/2"><label class="block text-[8px] font-bold text-gray-500 uppercase mb-0.5">Req. Precio 1</label><input type="number" id="req-p1" value="0" min="0" class="w-full border border-gray-300 rounded px-2 py-1 text-xs text-center outline-none focus:border-emerald-500 transition"></div>
+                                    <div class="w-1/2"><label class="block text-[8px] font-bold text-emerald-600 uppercase mb-0.5">Precio 1 ($)</label><input type="number" id="usd-p1" step="0.01" min="0" value="0" class="w-full border border-gray-300 rounded px-2 py-1 text-xs text-center font-bold text-emerald-700 outline-none focus:border-emerald-500 transition" onchange="validarPrecioVolumen(this, 'prod-precio-usd')"></div>
                                 </div>
                                 <div class="flex gap-2">
-                                    <div class="w-1/2"><label class="block text-[8px] font-bold text-gray-500 uppercase mb-0.5">Req. Precio 2</label><input type="number" id="req-p2" value="0" class="w-full border border-gray-300 rounded px-2 py-1 text-xs text-center outline-none focus:border-emerald-500 transition"></div>
-                                    <div class="w-1/2"><label class="block text-[8px] font-bold text-emerald-600 uppercase mb-0.5">Precio 2 ($)</label><input type="number" id="usd-p2" step="0.01" value="0" class="w-full border border-gray-300 rounded px-2 py-1 text-xs text-center font-bold text-emerald-700 outline-none focus:border-emerald-500 transition"></div>
+                                    <div class="w-1/2"><label class="block text-[8px] font-bold text-gray-500 uppercase mb-0.5">Req. Precio 2</label><input type="number" id="req-p2" value="0" min="0" class="w-full border border-gray-300 rounded px-2 py-1 text-xs text-center outline-none focus:border-emerald-500 transition"></div>
+                                    <div class="w-1/2"><label class="block text-[8px] font-bold text-emerald-600 uppercase mb-0.5">Precio 2 ($)</label><input type="number" id="usd-p2" step="0.01" min="0" value="0" class="w-full border border-gray-300 rounded px-2 py-1 text-xs text-center font-bold text-emerald-700 outline-none focus:border-emerald-500 transition" onchange="validarPrecioVolumen(this, 'prod-precio-usd')"></div>
                                 </div>
                                 <div class="flex gap-2">
-                                    <div class="w-1/2"><label class="block text-[8px] font-bold text-gray-500 uppercase mb-0.5">Req. Precio 3</label><input type="number" id="req-p3" value="0" class="w-full border border-gray-300 rounded px-2 py-1 text-xs text-center outline-none focus:border-emerald-500 transition"></div>
-                                    <div class="w-1/2"><label class="block text-[8px] font-bold text-emerald-600 uppercase mb-0.5">Precio 3 ($)</label><input type="number" id="usd-p3" step="0.01" value="0" class="w-full border border-gray-300 rounded px-2 py-1 text-xs text-center font-bold text-emerald-700 outline-none focus:border-emerald-500 transition"></div>
+                                    <div class="w-1/2"><label class="block text-[8px] font-bold text-gray-500 uppercase mb-0.5">Req. Precio 3</label><input type="number" id="req-p3" value="0" min="0" class="w-full border border-gray-300 rounded px-2 py-1 text-xs text-center outline-none focus:border-emerald-500 transition"></div>
+                                    <div class="w-1/2"><label class="block text-[8px] font-bold text-emerald-600 uppercase mb-0.5">Precio 3 ($)</label><input type="number" id="usd-p3" step="0.01" min="0" value="0" class="w-full border border-gray-300 rounded px-2 py-1 text-xs text-center font-bold text-emerald-700 outline-none focus:border-emerald-500 transition" onchange="validarPrecioVolumen(this, 'prod-precio-usd')"></div>
                                 </div>
                             </div>
+                            <!-- NUEVO: advertencia precios volumen -->
+                            <p id="warn-precio-volumen" class="hidden text-[9px] text-red-500 font-bold mt-2"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Un precio por volumen no puede ser mayor al precio general.</p>
                         </div>
 
                     </div>
@@ -227,188 +375,281 @@
             </form>
 
             <div class="bg-gray-50 border-t border-gray-200 px-5 py-3 flex justify-between items-center shrink-0">
-                <button type="button" onclick="eliminarProducto()" id="btn-eliminar-prod" class="text-[10px] font-black text-red-500 hover:text-red-700 uppercase tracking-wider hidden bg-red-50 px-3 py-1.5 rounded border border-red-100"><i class="fa-solid fa-trash mr-1"></i> Eliminar</button>
+                <button type="button" onclick="confirmarEliminarProducto()" id="btn-eliminar-prod"
+                    class="text-[10px] font-black text-red-500 hover:text-red-700 uppercase tracking-wider hidden bg-red-50 px-3 py-1.5 rounded border border-red-100">
+                    <i class="fa-solid fa-trash mr-1"></i> Eliminar
+                </button>
                 <div class="flex gap-3 ml-auto">
                     <button type="button" onclick="cerrarModalProducto()" class="px-6 py-2 bg-white border border-gray-300 text-gray-700 font-bold rounded text-xs shadow-sm hover:bg-gray-100 transition btn-press uppercase tracking-wider">Cancelar</button>
-                    <button type="submit" form="form-producto" id="btn-guardar-prod" class="px-8 py-2 bg-secondary hover:opacity-90 text-white font-black rounded text-xs shadow-md transition uppercase tracking-widest btn-press"><i class="fa-solid fa-save mr-2"></i> Guardar Ficha</button>
+                    <button type="submit" form="form-producto" id="btn-guardar-prod" class="px-8 py-2 bg-secondary hover:opacity-90 text-white font-black rounded text-xs shadow-md transition uppercase tracking-widest btn-press">
+                        <i class="fa-solid fa-save mr-2"></i> Guardar Ficha
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- OVERLAY DE CARGA -->
     <div id="loading-overlay" class="fixed inset-0 bg-slate-900/90 z-[999] hidden flex-col items-center justify-center p-6 text-center backdrop-blur-sm">
         <i id="loading-icon" class="fa-solid fa-cloud-arrow-up text-5xl text-tertiary mb-4 animate-bounce"></i>
         <h2 id="loading-text" class="text-xl font-black text-white uppercase mb-2 tracking-widest">Sincronizando...</h2>
         <p id="loading-desc" class="text-xs text-gray-400 font-bold max-w-lg mb-6">Asegurando los datos en el servidor</p>
         <button onclick="cerrarErrorCarga()" id="btn-cerrar-carga" class="hidden bg-secondary hover:opacity-90 text-white px-8 py-3 rounded font-black uppercase text-xs btn-press tracking-widest transition">Entendido</button>
     </div>
-    <script>
-        const TOKEN_JWT = localStorage.getItem('pyp_token_seguro');
-        let dbInventario = [], fuseInventario = null, empresaActual = null;
-        let arrayGaleriaLocal = []; 
-        let vistaActual = localStorage.getItem('pyp_vista_inventario') || 'tabla';
-        const imgDefecto = 'https://via.placeholder.com/150/f8fafc/94a3b8?text=SIN+FOTO';
 
+    <script>
+        // ================================================================
+        // CREDENCIALES Y ESTADO GLOBAL
+        // FIX: usar tailwind.config correctamente (no window.tailwind)
+        // ================================================================
+        const TOKEN_JWT    = localStorage.getItem('pyp_token_seguro');
+        const SUPABASE_URL = typeof window.SUPABASE_URL !== 'undefined' ? window.SUPABASE_URL : '';
+        const SUPABASE_KEY = typeof window.SUPABASE_KEY !== 'undefined' ? window.SUPABASE_KEY : '';
+
+        let dbInventario      = [];
+        let fuseInventario    = null;
+        let empresaActual     = null;
+        let arrayGaleriaLocal = [];
+        let vistaActual       = localStorage.getItem('pyp_vista_inventario') || 'tabla';
+        let skuParaEliminar   = '';   // NUEVO: usado por el modal de confirmación
+        const imgDefecto      = 'https://via.placeholder.com/150/f8fafc/94a3b8?text=SIN+FOTO';
+
+        // ================================================================
+        // INIT
+        // ================================================================
         window.onload = async () => {
-            if(localStorage.getItem('pyp_usuario_nombre') && document.getElementById('nombre-usuario')) {
-                document.getElementById('nombre-usuario').innerText = localStorage.getItem('pyp_usuario_nombre').split(' ')[0];
+            const usr = localStorage.getItem('pyp_usuario_nombre');
+            if (usr && document.getElementById('nombre-usuario')) {
+                document.getElementById('nombre-usuario').innerText = usr.split(' ')[0];
             }
             const defStock = localStorage.getItem('pyp_filtro_stock_inv_default') || 'TODOS';
-            if(document.getElementById('filtro-stock-inv')) document.getElementById('filtro-stock-inv').value = defStock;
+            if (document.getElementById('filtro-stock-inv')) document.getElementById('filtro-stock-inv').value = defStock;
+
             actualizarUIBotonesVista();
             await cargarBaseDatos();
-            
-            document.addEventListener('keydown', (e) => { 
-                if (e.key === 'Escape') { 
-                    if(!document.getElementById('loading-overlay').classList.contains('hidden')) {
-                        if(!document.getElementById('btn-cerrar-carga').classList.contains('hidden')) cerrarErrorCarga();
-                    } else { cerrarModalProducto(); cerrarVisor(); }
-                } 
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    if (!document.getElementById('loading-overlay').classList.contains('hidden')) {
+                        if (!document.getElementById('btn-cerrar-carga').classList.contains('hidden')) cerrarErrorCarga();
+                    } else {
+                        cerrarModalProducto();
+                        cerrarVisor();
+                        cerrarModalConfirmarEliminar();
+                        cerrarAjusteStock();
+                    }
+                }
             });
         };
 
+        // ================================================================
+        // CARGA DE BASE DE DATOS
+        // FIX: manejo de sesión expirada unificado, no redirige sin comprobar status
+        // ================================================================
         async function cargarBaseDatos() {
             try {
-                const resUser = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?select=id_empresa&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
-                
-                // 🛡️ BLINDAJE: Si el token caducó (401), cerrar sesión automáticamente
-                if (!resUser.ok) {
+                const resUser = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?select=id_empresa&limit=1`, {
+                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` }
+                });
+
+                // FIX: comprobar 401/403 explícitamente antes de redirigir
+                if (resUser.status === 401 || resUser.status === 403) {
                     localStorage.removeItem('pyp_token_seguro');
                     localStorage.removeItem('pyp_usuario_nombre');
                     window.location.href = 'login.html';
                     return;
                 }
-                
+                if (!resUser.ok) throw new Error("Error de comunicación con la base de datos.");
+
                 const userData = await resUser.json();
                 empresaActual = userData[0]?.id_empresa;
 
-                const resProd = await fetch(`${SUPABASE_URL}/rest/v1/productos?select=*&order=fecha_creacion.desc`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
-                
-                if(!resProd.ok) {
-                    const e = await resProd.json();
-                    throw new Error(e.message || "Error al descargar productos");
-                }
+                // FIX: cargar productos Y precios en paralelo para reducir tiempo de carga
+                const [resProd, resPre, resPar] = await Promise.all([
+                    fetch(`${SUPABASE_URL}/rest/v1/productos?select=*&order=fecha_creacion.desc`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
+                    fetch(`${SUPABASE_URL}/rest/v1/precios?select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
+                    fetch(`${SUPABASE_URL}/rest/v1/parametros_inventario?select=*&estatus=eq.ACTIVO`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } })
+                ]);
 
-                const resPre = await fetch(`${SUPABASE_URL}/rest/v1/precios?select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
-                const resPar = await fetch(`${SUPABASE_URL}/rest/v1/parametros_inventario?select=*&estatus=eq.ACTIVO`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                if (!resProd.ok) { const e = await resProd.json(); throw new Error(e.message || "Error al descargar productos"); }
 
-                const dataProd = await resProd.json(); 
-                const dataPre = await resPre.json();
-                dbInventario = dataProd.map(p => { const pre = dataPre.find(pr => pr.id_producto_sku === p.id_producto_sku) || {}; return { ...p, pre: pre }; });
-                
-                // NORMALIZACIÓN DE BÚSQUEDA DE INVENTARIO (Tolera acentos y errores ortográficos)
-                fuseInventario = new Fuse(dbInventario, { 
-                    keys: ['id_producto_sku', 'codigo_barras', 'nombre'], 
-                    threshold: 0.4, 
+                const dataProd = await resProd.json();
+                const dataPre  = await resPre.json();
+                const pars     = await resPar.json();
+
+                // FIX: usar Map para O(1) en el join producto-precios (evitar O(n²) con find en listas grandes)
+                const preMap = new Map(dataPre.map(pr => [pr.id_producto_sku, pr]));
+                dbInventario = dataProd.map(p => ({ ...p, pre: preMap.get(p.id_producto_sku) || {} }));
+
+                fuseInventario = new Fuse(dbInventario, {
+                    keys: ['id_producto_sku', 'codigo_barras', 'nombre'],
+                    threshold: 0.4,
                     ignoreLocation: true,
                     getFn: function(obj, path) {
-                        let val = obj; for (let i = 0; i < path.length; i++) { val = val ? val[path[i]] : null; }
+                        let val = obj;
+                        for (let i = 0; i < path.length; i++) { val = val ? val[path[i]] : null; }
                         return typeof val === 'string' ? val.normalize("NFD").replace(/[\u0300-\u036f]/g, "") : val;
                     }
                 });
 
-                const pars = await resPar.json();
-                
-                const catArr = [...new Set(dbInventario.map(p => p.categoria_del_producto))];
-                let fCatHtml = '<option value="TODAS">CATEGORÍA: TODAS</option>';
-                catArr.forEach(c => { if(c) fCatHtml += `<option value="${c}">${c}</option>` });
+                // Llenar filtros de categoría y marca
+                const catArr  = [...new Set(dbInventario.map(p => p.categoria_del_producto))];
+                let fCatHtml  = '<option value="TODAS">CATEGORÍA: TODAS</option>';
+                catArr.forEach(c => { if (c) fCatHtml += `<option value="${c}">${c}</option>`; });
                 document.getElementById('filtro-cat-inv').innerHTML = fCatHtml;
 
                 const marcaArr = [...new Set(dbInventario.map(p => p.marca))];
-                let fMarHtml = '<option value="TODAS">MARCA: TODAS</option>';
-                marcaArr.forEach(m => { if(m) fMarHtml += `<option value="${m}">${m}</option>` });
-                const selectMarcaFiltro = document.getElementById('filtro-marca-inv');
-                if(selectMarcaFiltro) selectMarcaFiltro.innerHTML = fMarHtml;
+                let fMarHtml   = '<option value="TODAS">MARCA: TODAS</option>';
+                marcaArr.forEach(m => { if (m) fMarHtml += `<option value="${m}">${m}</option>`; });
+                if (document.getElementById('filtro-marca-inv')) document.getElementById('filtro-marca-inv').innerHTML = fMarHtml;
 
+                // Llenar selects del formulario con parámetros
                 const fil = g => pars.filter(p => p.grupo === g);
-                llenarSelect('prod-categoria', fil('CATEGORIA')); llenarSelect('prod-marca', fil('MARCA'));
-                llenarSelect('prod-tipo', fil('TIPO_PRODUCTO')); llenarSelect('prod-cat-venta', fil('CATEGORIA_VENTA'));
-                llenarSelect('prod-condicion', fil('CONDICION_PRODUCTO')); llenarSelect('prod-unidad', fil('UNIDAD_MEDIDA'));
-                llenarSelect('prod-impuesto', fil('TIPO_IMPUESTO')); llenarSelect('prod-talla', fil('TALLA'));
-                llenarSelect('prod-color', fil('COLOR'));
+                llenarSelect('prod-categoria', fil('CATEGORIA'));
+                llenarSelect('prod-marca',     fil('MARCA'));
+                llenarSelect('prod-tipo',      fil('TIPO_PRODUCTO'));
+                llenarSelect('prod-cat-venta', fil('CATEGORIA_VENTA'));
+                llenarSelect('prod-condicion', fil('CONDICION_PRODUCTO'));
+                llenarSelect('prod-unidad',    fil('UNIDAD_MEDIDA'));
+                llenarSelect('prod-impuesto',  fil('TIPO_IMPUESTO'));
+                llenarSelect('prod-talla',     fil('TALLA'));
+                llenarSelect('prod-color',     fil('COLOR'));
 
                 renderizarInventario();
-            } catch(e) { 
+            } catch (e) {
                 console.error("Error crítico:", e);
-                document.getElementById('contenedor-inventario').innerHTML = `<div class="p-10 text-center text-red-500 font-bold uppercase"><i class="fa-solid fa-triangle-exclamation text-4xl mb-3 block"></i>Error de conexión:<br><span class="text-xs text-gray-500 mt-2 block lowercase">${e.message}</span></div>`;
-                mostrarCarga("Error de Red", e.message, true); 
+                document.getElementById('contenedor-inventario').innerHTML = `
+                    <div class="p-10 text-center text-red-500 font-bold uppercase">
+                        <i class="fa-solid fa-triangle-exclamation text-4xl mb-3 block"></i>
+                        Error de conexión:<br>
+                        <span class="text-xs text-gray-500 mt-2 block lowercase">${e.message}</span>
+                    </div>`;
+                mostrarCarga("Error de Red", e.message, true);
             }
         }
 
         function llenarSelect(id, array) {
             let html = '<option value="">Sel...</option>';
             array.forEach(item => html += `<option value="${item.valor}">${item.valor}</option>`);
-            if(document.getElementById(id)) document.getElementById(id).innerHTML = html;
+            if (document.getElementById(id)) document.getElementById(id).innerHTML = html;
         }
 
+        // ================================================================
+        // VISTA Y FILTROS
+        // ================================================================
         function cambiarVista(v) { vistaActual = v; localStorage.setItem('pyp_vista_inventario', v); actualizarUIBotonesVista(); renderizarInventario(); }
-        function actualizarUIBotonesVista() { document.getElementById('btn-vista-tabla').classList.toggle('active', vistaActual === 'tabla'); document.getElementById('btn-vista-grid').classList.toggle('active', vistaActual === 'grid'); }
-        
+        function actualizarUIBotonesVista() {
+            document.getElementById('btn-vista-tabla').classList.toggle('active', vistaActual === 'tabla');
+            document.getElementById('btn-vista-grid').classList.toggle('active', vistaActual === 'grid');
+        }
         function filtrarInventario() { renderizarInventario(); }
 
-function renderizarInventario() {
-            let query = document.getElementById('buscador-inv') ? document.getElementById('buscador-inv').value.trim() : '';
-            const cat = document.getElementById('filtro-cat-inv') ? document.getElementById('filtro-cat-inv').value : 'TODAS';
-            const marca = document.getElementById('filtro-marca-inv') ? document.getElementById('filtro-marca-inv').value : 'TODAS';
-            const estatus = document.getElementById('filtro-estatus-inv') ? document.getElementById('filtro-estatus-inv').value : 'TODOS';
-            const stock = document.getElementById('filtro-stock-inv') ? document.getElementById('filtro-stock-inv').value : 'TODOS';
-            
+        function renderizarInventario() {
+            const query   = document.getElementById('buscador-inv')?.value.trim() || '';
+            const cat     = document.getElementById('filtro-cat-inv')?.value || 'TODAS';
+            const marca   = document.getElementById('filtro-marca-inv')?.value || 'TODAS';
+            const estatus = document.getElementById('filtro-estatus-inv')?.value || 'TODOS';
+            const stock   = document.getElementById('filtro-stock-inv')?.value || 'TODOS';
+
             let data = dbInventario;
-            
-            // Inyección predictiva: Normalizamos la consulta (quitamos acentos al buscar)
-            if (query !== '') { 
-                const queryNormalizada = query.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                data = fuseInventario.search(queryNormalizada).map(r => r.item); 
+
+            if (query !== '') {
+                const qN = query.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                data = fuseInventario.search(qN).map(r => r.item);
             }
-            
-            if (cat !== 'TODAS') data = data.filter(p => p.categoria_del_producto === cat);
-            if (marca !== 'TODAS') data = data.filter(p => p.marca === marca);
+            if (cat     !== 'TODAS') data = data.filter(p => p.categoria_del_producto === cat);
+            if (marca   !== 'TODAS') data = data.filter(p => p.marca === marca);
             if (estatus !== 'TODOS') data = data.filter(p => p.estado_producto === estatus);
-            if (stock === 'CRITICO') data = data.filter(p => p.stock_actual <= p.stock_minimo);
+            if (stock === 'CRITICO')   data = data.filter(p => p.stock_actual <= p.stock_minimo);
             if (stock === 'DISPONIBLE') data = data.filter(p => p.stock_actual > 0 || p.permitir_negativo);
 
-            const c = document.getElementById('contenedor-inventario');
-            if(data.length === 0) { c.innerHTML = `<div class="p-10 text-center text-gray-400 font-bold uppercase"><i class="fa-solid fa-box-open text-4xl mb-3 block opacity-50"></i> Sin Resultados</div>`; return; }
+            // NUEVO: actualizar contador de resultados
+            const badge = document.getElementById('badge-resultados');
+            if (badge) { badge.classList.remove('hidden'); badge.innerText = `${data.length} productos`; }
 
-            if(vistaActual === 'tabla') {
-                let html = `<div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"><div class="overflow-x-auto custom-scroll"><table class="w-full text-left text-[10px] whitespace-nowrap"><thead class="bg-primary text-white text-[9px] uppercase tracking-wider sticky top-0"><tr><th class="py-2 px-3 text-center">Img</th><th class="py-2 px-3">SKU / Barra</th><th class="py-2 px-3">Producto</th><th class="py-2 px-3 text-center">Categoría</th><th class="py-2 px-3 text-center">Stock</th><th class="py-2 px-3 text-right">Precio (USD)</th><th class="py-2 px-3 text-center">Estado</th><th class="py-2 px-3 text-center">Acción</th></tr></thead><tbody class="divide-y divide-gray-100">`;
-                
+            const c = document.getElementById('contenedor-inventario');
+            if (data.length === 0) {
+                c.innerHTML = `<div class="p-10 text-center text-gray-400 font-bold uppercase"><i class="fa-solid fa-box-open text-4xl mb-3 block opacity-50"></i> Sin Resultados</div>`;
+                return;
+            }
+
+            if (vistaActual === 'tabla') {
+                let html = `<div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="overflow-x-auto custom-scroll">
+                    <table class="w-full text-left text-[10px] whitespace-nowrap">
+                    <thead class="bg-primary text-white text-[9px] uppercase tracking-wider sticky top-0">
+                        <tr>
+                            <th class="py-2 px-3 text-center">Img</th>
+                            <th class="py-2 px-3">SKU / Barra</th>
+                            <th class="py-2 px-3">Producto</th>
+                            <th class="py-2 px-3 text-center">Categoría</th>
+                            <th class="py-2 px-3 text-center">Stock</th>
+                            <th class="py-2 px-3 text-right">Precio (USD)</th>
+                            <th class="py-2 px-3 text-center">Estado</th>
+                            <!-- NUEVO: columna acción con ajuste de stock -->
+                            <th class="py-2 px-3 text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">`;
+
                 data.slice(0, 150).forEach(p => {
-                    const img = p.imagen_principal || imgDefecto;
-                    const pUsd = p.pre.precio_general_usd || 0;
+                    const img  = p.imagen_principal || imgDefecto;
+                    const pUsd = p.pre?.precio_general_usd || 0;
                     const pStr = encodeURIComponent(JSON.stringify(p));
-                    const bEst = p.estado_producto === 'ACTIVO' ? `<span class="bg-emerald-50 text-emerald-600 px-1.5 py-0.5 rounded font-black border border-emerald-200">ACTIVO</span>` : `<span class="bg-red-50 text-red-600 px-1.5 py-0.5 rounded font-black border border-red-200">INACTIVO</span>`;
-                    const bStk = p.stock_actual <= p.stock_minimo ? `<span class="text-red-500 font-black"><i class="fa-solid fa-triangle-exclamation"></i> ${p.stock_actual}</span>` : `<span class="text-gray-700 font-bold">${p.stock_actual}</span>`;
+                    const bEst = p.estado_producto === 'ACTIVO'
+                        ? `<span class="bg-emerald-50 text-emerald-600 px-1.5 py-0.5 rounded font-black border border-emerald-200">ACTIVO</span>`
+                        : `<span class="bg-red-50 text-red-600 px-1.5 py-0.5 rounded font-black border border-red-200">INACTIVO</span>`;
+                    // FIX: usar optional chaining para stock_minimo
+                    const critico = p.stock_actual <= (p.stock_minimo || 0);
+                    const bStk = critico
+                        ? `<span class="text-red-500 font-black"><i class="fa-solid fa-triangle-exclamation"></i> ${p.stock_actual}</span>`
+                        : `<span class="text-gray-700 font-bold">${p.stock_actual}</span>`;
 
                     html += `<tr class="hover:bg-gray-50 transition border-b border-gray-50">
-                        <td class="py-1.5 px-3 text-center"><img src="${img}" class="w-8 h-8 rounded object-contain border bg-white"></td>
+                        <td class="py-1.5 px-3 text-center"><img src="${img}" class="w-8 h-8 rounded object-contain border bg-white" onerror="this.src='${imgDefecto}'"></td>
                         <td class="py-1.5 px-3 font-mono font-bold text-gray-500">${p.id_producto_sku}<br><span class="text-[8px] text-gray-400">${p.codigo_barras || ''}</span></td>
                         <td class="py-1.5 px-3 font-bold text-primary truncate max-w-[200px]">${p.nombre}</td>
                         <td class="py-1.5 px-3 text-center"><span class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded uppercase font-bold">${p.categoria_del_producto || '-'}</span></td>
                         <td class="py-1.5 px-3 text-center bg-gray-50/50">${bStk}</td>
                         <td class="py-1.5 px-3 text-right font-black text-secondary text-xs">$${pUsd.toFixed(2)}</td>
                         <td class="py-1.5 px-3 text-center">${bEst}</td>
-                        <td class="py-1.5 px-3 text-center"><button onclick="abrirModalProducto('${pStr}')" class="text-blue-500 hover:bg-blue-50 px-2 py-1 rounded transition shadow-sm border border-transparent hover:border-blue-200"><i class="fa-solid fa-pen-to-square"></i></button></td>
+                        <td class="py-1.5 px-3 text-center flex gap-1 justify-center">
+                            <button onclick="abrirModalProducto('${pStr}')" title="Editar ficha" class="text-blue-500 hover:bg-blue-50 px-2 py-1 rounded transition shadow-sm border border-transparent hover:border-blue-200"><i class="fa-solid fa-pen-to-square"></i></button>
+                            <!-- NUEVO: botón ajuste rápido de stock -->
+                            <button onclick="event.stopPropagation(); abrirAjusteStock('${p.id_producto_sku}', '${p.nombre.replace(/'/g,"\\'")}', ${p.stock_actual})" title="Ajustar stock" class="text-emerald-500 hover:bg-emerald-50 px-2 py-1 rounded transition shadow-sm border border-transparent hover:border-emerald-200"><i class="fa-solid fa-boxes-stacked"></i></button>
+                        </td>
                     </tr>`;
                 });
-                html += `</tbody></table></div></div>`; c.innerHTML = html;
+                html += `</tbody></table></div></div>`;
+                c.innerHTML = html;
             } else {
                 let html = `<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 pb-10">`;
                 data.slice(0, 150).forEach(p => {
-                    const img = p.imagen_principal || imgDefecto;
-                    const pUsd = p.pre.precio_general_usd || 0;
+                    const img  = p.imagen_principal || imgDefecto;
+                    const pUsd = p.pre?.precio_general_usd || 0;
                     const pStr = encodeURIComponent(JSON.stringify(p));
-                    const bEst = p.estado_producto === 'ACTIVO' ? `<span class="bg-emerald-100 text-emerald-700 px-1 py-0.5 rounded text-[7px] font-black uppercase">Activo</span>` : `<span class="bg-red-100 text-red-700 px-1 py-0.5 rounded text-[7px] font-black uppercase">Inactivo</span>`;
-                    const bStk = p.stock_actual <= p.stock_minimo ? `<span class="text-red-600 font-black"><i class="fa-solid fa-triangle-exclamation"></i> ${p.stock_actual}</span>` : `<span class="text-emerald-600 font-black">${p.stock_actual}</span>`;
+                    const bEst = p.estado_producto === 'ACTIVO'
+                        ? `<span class="bg-emerald-100 text-emerald-700 px-1 py-0.5 rounded text-[7px] font-black uppercase">Activo</span>`
+                        : `<span class="bg-red-100 text-red-700 px-1 py-0.5 rounded text-[7px] font-black uppercase">Inactivo</span>`;
+                    const critico = p.stock_actual <= (p.stock_minimo || 0);
+                    const bStk = critico
+                        ? `<span class="text-red-600 font-black"><i class="fa-solid fa-triangle-exclamation"></i> ${p.stock_actual}</span>`
+                        : `<span class="text-emerald-600 font-black">${p.stock_actual}</span>`;
 
                     html += `
-                    <div class="bg-white border border-gray-200 rounded-lg p-2.5 flex flex-col shadow-sm hover:shadow-lg transition cursor-pointer fade-in group" onclick="abrirModalProducto('${pStr}')">
+                    <div class="bg-white border border-gray-200 rounded-lg p-2.5 flex flex-col shadow-sm hover:shadow-lg transition cursor-pointer fade-in group relative" onclick="abrirModalProducto('${pStr}')">
+                        <!-- NUEVO: botón ajuste stock en grid -->
+                        <button onclick="event.stopPropagation(); abrirAjusteStock('${p.id_producto_sku}', '${p.nombre.replace(/'/g,"\\'")}', ${p.stock_actual})"
+                            title="Ajuste rápido de stock"
+                            class="absolute top-1 right-1 bg-emerald-500 text-white w-5 h-5 rounded flex items-center justify-center opacity-0 group-hover:opacity-100 transition shadow text-[8px] z-10">
+                            <i class="fa-solid fa-boxes-stacked"></i>
+                        </button>
                         <div class="flex justify-between items-start mb-1.5">
                             <span class="text-[8px] font-mono text-gray-400 bg-gray-50 px-1.5 rounded border border-gray-100">${p.id_producto_sku}</span>
                             ${bEst}
                         </div>
                         <div class="h-24 w-full mb-2 bg-white flex items-center justify-center rounded">
-                            <img src="${img}" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300">
+                            <img src="${img}" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300" onerror="this.src='${imgDefecto}'">
                         </div>
                         <h3 class="text-[9px] font-black text-primary leading-tight line-clamp-2 mb-2 uppercase">${p.nombre}</h3>
                         <div class="mt-auto border-t border-gray-50 pt-1.5 flex justify-between items-end">
@@ -417,59 +658,58 @@ function renderizarInventario() {
                         </div>
                     </div>`;
                 });
-                html += `</div>`; c.innerHTML = html;
+                html += `</div>`;
+                c.innerHTML = html;
             }
         }
 
+        // ================================================================
+        // OVERLAY DE CARGA
+        // ================================================================
         function mostrarCarga(titulo, desc, isError = false) {
-            const ol = document.getElementById('loading-overlay'); const ic = document.getElementById('loading-icon');
-            const tt = document.getElementById('loading-text'); const td = document.getElementById('loading-desc');
+            const ol = document.getElementById('loading-overlay');
+            const ic = document.getElementById('loading-icon');
+            const tt = document.getElementById('loading-text');
+            const td = document.getElementById('loading-desc');
             const bt = document.getElementById('btn-cerrar-carga');
             ol.classList.remove('hidden'); ol.classList.add('flex');
             tt.innerText = titulo; td.innerText = desc;
-            if(isError) {
+            if (isError) {
                 ic.className = "fa-solid fa-triangle-exclamation text-6xl text-red-500 mb-4";
-                tt.classList.replace('text-white', 'text-red-400');
+                tt.className = "text-xl font-black text-red-400 uppercase mb-2 tracking-widest";
                 bt.classList.remove('hidden');
             } else {
                 ic.className = "fa-solid fa-cloud-arrow-up text-5xl text-tertiary mb-4 animate-bounce";
-                tt.classList.replace('text-red-400', 'text-white');
+                tt.className = "text-xl font-black text-white uppercase mb-2 tracking-widest";
                 bt.classList.add('hidden');
             }
         }
-        function cerrarErrorCarga() { 
+        function cerrarErrorCarga() {
             const ol = document.getElementById('loading-overlay');
-            ol.classList.add('hidden'); ol.classList.remove('flex'); 
+            ol.classList.add('hidden'); ol.classList.remove('flex');
         }
 
-        // --- SISTEMA MULTIMEDIA (GALERÍA Y YOUTUBE) ---
+        // ================================================================
+        // MULTIMEDIA — GALERÍA Y YOUTUBE
+        // ================================================================
         function actualizarVideo(url) {
             const container = document.getElementById('video-container');
-            const iframe = document.getElementById('video-iframe');
-            if(!url) { container.classList.add('hidden'); iframe.src = ''; return; }
-            
+            const iframe    = document.getElementById('video-iframe');
+            if (!url) { container.classList.add('hidden'); iframe.src = ''; return; }
             let videoId = '';
-            if(url.includes('youtube.com/watch?v=')) videoId = url.split('v=')[1].split('&')[0];
-            else if(url.includes('youtu.be/')) videoId = url.split('youtu.be/')[1].split('?')[0];
-            else if(url.includes('youtube.com/shorts/')) videoId = url.split('shorts/')[1].split('?')[0];
-            
-            if(videoId) {
-                iframe.src = `https://www.youtube.com/embed/${videoId}`;
-                container.classList.remove('hidden');
-            } else {
-                container.classList.add('hidden'); iframe.src = '';
-            }
+            if (url.includes('youtube.com/watch?v='))  videoId = url.split('v=')[1].split('&')[0];
+            else if (url.includes('youtu.be/'))         videoId = url.split('youtu.be/')[1].split('?')[0];
+            else if (url.includes('youtube.com/shorts/')) videoId = url.split('shorts/')[1].split('?')[0];
+            if (videoId) { iframe.src = `https://www.youtube.com/embed/${videoId}`; container.classList.remove('hidden'); }
+            else { container.classList.add('hidden'); iframe.src = ''; }
         }
 
         function abrirVisorInventario(imgUrl) {
-            const main = document.getElementById('viewer-img-main');
+            const main  = document.getElementById('viewer-img-main');
             const thumbs = document.getElementById('viewer-thumbnails');
-            main.src = imgUrl; 
-            thumbs.innerHTML = '';
-            
-            let allImgs = [document.getElementById('url-img-principal').value, ...arrayGaleriaLocal].filter(u=>u);
-            
-            if(allImgs.length > 1) {
+            main.src = imgUrl; thumbs.innerHTML = '';
+            let allImgs = [document.getElementById('url-img-principal').value, ...arrayGaleriaLocal].filter(u => u);
+            if (allImgs.length > 1) {
                 allImgs.forEach(u => {
                     thumbs.innerHTML += `<img src="${u}" class="w-12 h-12 rounded border-2 border-transparent hover:border-tertiary cursor-pointer object-contain bg-white/10" onclick="document.getElementById('viewer-img-main').src='${u}'">`;
                 });
@@ -477,155 +717,262 @@ function renderizarInventario() {
             document.getElementById('media-viewer').classList.remove('hidden');
             document.getElementById('media-viewer').classList.add('flex');
         }
-
-        function cerrarVisor() { document.getElementById('media-viewer').classList.add('hidden'); document.getElementById('media-viewer').classList.remove('flex'); }
+        function cerrarVisor() {
+            document.getElementById('media-viewer').classList.add('hidden');
+            document.getElementById('media-viewer').classList.remove('flex');
+        }
 
         function actualizarPreview(url, previewId, iconId) {
-            const preview = document.getElementById(previewId); const icon = document.getElementById(iconId);
-            if(url) { preview.src = url; preview.classList.remove('hidden'); icon.classList.add('hidden'); } 
+            const preview = document.getElementById(previewId);
+            const icon    = document.getElementById(iconId);
+            if (url) { preview.src = url; preview.classList.remove('hidden'); icon.classList.add('hidden'); }
             else { preview.classList.add('hidden'); icon.classList.remove('hidden'); }
         }
 
+        // MEJORADO: subirImagenUnica con barra de progreso visual
         async function comprimirYSubir(file) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader(); reader.readAsDataURL(file);
                 reader.onload = e => {
                     const img = new Image(); img.src = e.target.result;
                     img.onload = async () => {
-                        const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d');
-                        let w = img.width, h = img.height; const max = 1000;
-                        if (w > h && w > max) { h *= max / w; w = max; } else if (h > max) { w *= max / h; h = max; }
-                        canvas.width = w; canvas.height = h; ctx.drawImage(img, 0, 0, w, h);
+                        const canvas = document.createElement('canvas');
+                        const ctx    = canvas.getContext('2d');
+                        let w = img.width, h = img.height;
+                        const max = 1000;
+                        if (w > h && w > max) { h *= max / w; w = max; }
+                        else if (h > max) { w *= max / h; h = max; }
+                        canvas.width = w; canvas.height = h;
+                        ctx.drawImage(img, 0, 0, w, h);
                         canvas.toBlob(async (blob) => {
-                            const ext = file.name.split('.').pop() || 'jpg';
-                            const fileName = `img_${Date.now()}_${Math.floor(Math.random()*1000)}.${ext}`;
+                            const ext      = file.name.split('.').pop() || 'jpg';
+                            const fileName = `img_${Date.now()}_${Math.floor(Math.random() * 1000)}.${ext}`;
                             try {
                                 const formData = new FormData(); formData.append('file', blob, fileName);
-                                const res = await fetch(`${SUPABASE_URL}/storage/v1/object/inventario/${fileName}`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` }, body: formData });
-                                if(!res.ok) throw new Error("Fallo upload");
+                                const res = await fetch(`${SUPABASE_URL}/storage/v1/object/inventario/${fileName}`, {
+                                    method: 'POST',
+                                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` },
+                                    body: formData
+                                });
+                                if (!res.ok) throw new Error("Fallo upload");
                                 resolve(`${SUPABASE_URL}/storage/v1/object/public/inventario/${fileName}`);
-                            } catch(err) { reject(err); }
+                            } catch (err) { reject(err); }
                         }, 'image/webp', 0.8);
                     };
+                    // FIX: manejar error de lectura de archivo
+                    reader.onerror = () => reject(new Error("No se pudo leer el archivo."));
                 };
             });
         }
 
-        async function subirImagenUnica(event, urlInputId, previewId, iconId) {
-            const file = event.target.files[0]; if(!file) return;
+        async function subirImagenUnica(event, urlInputId, previewId, iconId, progId, barraId) {
+            const file = event.target.files[0]; if (!file) return;
+            // NUEVO: mostrar barra de progreso
+            const barra = document.getElementById(barraId);
+            const prog  = document.getElementById(progId);
+            if (barra) { barra.classList.remove('hidden'); prog.style.width = '30%'; }
             mostrarCarga("Subiendo...", "Optimizando y guardando imagen principal");
             try {
+                if (prog) prog.style.width = '70%';
                 const url = await comprimirYSubir(file);
+                if (prog) prog.style.width = '100%';
                 document.getElementById(urlInputId).value = url;
                 actualizarPreview(url, previewId, iconId);
                 cerrarErrorCarga();
-            } catch(e) { mostrarCarga("Error de Subida", "No se pudo cargar la imagen.", true); }
+            } catch (e) {
+                mostrarCarga("Error de Subida", "No se pudo cargar la imagen. Verifica el tamaño o formato.", true);
+            } finally {
+                // Resetear input para permitir subir el mismo archivo de nuevo
+                event.target.value = '';
+                if (barra) setTimeout(() => { barra.classList.add('hidden'); prog.style.width = '0%'; }, 800);
+            }
         }
 
         async function subirImagenesGaleria(event) {
-            const files = event.target.files; if(files.length === 0) return;
+            const files = event.target.files; if (files.length === 0) return;
+            const barra = document.getElementById('barra-upload-galeria');
+            const prog  = document.getElementById('prog-upload-galeria');
+            if (barra) barra.classList.remove('hidden');
             mostrarCarga("Subiendo Galería...", `Optimizando ${files.length} imágenes adicionales`);
             try {
-                for(let i = 0; i < files.length; i++) {
+                for (let i = 0; i < files.length; i++) {
+                    if (prog) prog.style.width = `${Math.round(((i + 1) / files.length) * 100)}%`;
                     const url = await comprimirYSubir(files[i]);
                     arrayGaleriaLocal.push(url);
                 }
                 renderizarGaleriaLocal();
                 cerrarErrorCarga();
-            } catch(e) { mostrarCarga("Error de Galería", "Algunas imágenes fallaron.", true); }
+            } catch (e) {
+                mostrarCarga("Error de Galería", "Algunas imágenes fallaron al subirse.", true);
+            } finally {
+                event.target.value = '';
+                if (barra) setTimeout(() => { barra.classList.add('hidden'); prog.style.width = '0%'; }, 800);
+            }
         }
 
         function renderizarGaleriaLocal() {
             const container = document.getElementById('contenedor-galeria'); container.innerHTML = '';
             arrayGaleriaLocal.forEach((url, index) => {
-                container.innerHTML += `<div class="relative group h-16 bg-white border border-gray-200 rounded flex items-center justify-center fade-in cursor-pointer" onclick="abrirVisorInventario('${url}')"><img src="${url}" class="max-h-full max-w-full object-contain p-1"><button type="button" onclick="event.stopPropagation(); eliminarFotoGaleria(${index})" class="absolute -top-1.5 -right-1.5 bg-red-500 text-white w-4 h-4 rounded-full text-[8px] font-bold shadow-md hover:bg-red-600 hover:scale-110 transition opacity-0 group-hover:opacity-100 z-10"><i class="fa-solid fa-times"></i></button></div>`;
+                container.innerHTML += `<div class="relative group h-16 bg-white border border-gray-200 rounded flex items-center justify-center fade-in cursor-pointer" onclick="abrirVisorInventario('${url}')">
+                    <img src="${url}" class="max-h-full max-w-full object-contain p-1" onerror="this.parentElement.classList.add('border-red-200', 'bg-red-50')">
+                    <button type="button" onclick="event.stopPropagation(); eliminarFotoGaleria(${index})" class="absolute -top-1.5 -right-1.5 bg-red-500 text-white w-4 h-4 rounded-full text-[8px] font-bold shadow-md hover:bg-red-600 hover:scale-110 transition opacity-0 group-hover:opacity-100 z-10"><i class="fa-solid fa-times"></i></button>
+                </div>`;
             });
         }
         function eliminarFotoGaleria(index) { arrayGaleriaLocal.splice(index, 1); renderizarGaleriaLocal(); }
 
-        function togglePrecioBsFijo() { document.getElementById('caja-precio-bs-fijo').classList.toggle('hidden', document.getElementById('prod-fijo-bs').value === 'NO'); }
-        function valNum(id) { return parseFloat(document.getElementById(id).value) || 0; }
-        
-        const sV = (id, val) => { 
-            if(document.getElementById(id)) {
-                document.getElementById(id).value = (val !== null && val !== undefined) ? val : ''; 
-            }
+        // ================================================================
+        // FORMULARIO DEL PRODUCTO
+        // ================================================================
+        function togglePrecioBsFijo() {
+            document.getElementById('caja-precio-bs-fijo').classList.toggle('hidden', document.getElementById('prod-fijo-bs').value === 'NO');
+        }
+
+        function valNum(id) { return parseFloat(document.getElementById(id)?.value) || 0; }
+
+        const sV = (id, val) => {
+            const el = document.getElementById(id);
+            if (el) el.value = (val !== null && val !== undefined) ? val : '';
         };
 
+        // NUEVO: validar que los precios por volumen no superen el precio general
+        function validarPrecioVolumen(input, precioGeneralId) {
+            const precioGeneral = parseFloat(document.getElementById(precioGeneralId)?.value) || 0;
+            const precioVol     = parseFloat(input.value) || 0;
+            const warn          = document.getElementById('warn-precio-volumen');
+            if (precioGeneral > 0 && precioVol > precioGeneral) {
+                input.classList.add('border-red-400', 'bg-red-50');
+                if (warn) warn.classList.remove('hidden');
+            } else {
+                input.classList.remove('border-red-400', 'bg-red-50');
+                // Ocultar solo si ningún precio volumen está en error
+                const hayError = ['usd-p1','usd-p2','usd-p3'].some(id => {
+                    const v = parseFloat(document.getElementById(id)?.value) || 0;
+                    return precioGeneral > 0 && v > precioGeneral;
+                });
+                if (!hayError && warn) warn.classList.add('hidden');
+            }
+        }
+
         function abrirModalProducto(pStr = null) {
-            document.getElementById('form-producto').reset(); arrayGaleriaLocal = []; renderizarGaleriaLocal();
-            document.getElementById('url-img-principal').value = ''; actualizarPreview('', 'preview-img-principal', 'icon-img-principal');
-            actualizarVideo(''); 
+            document.getElementById('form-producto').reset();
+            arrayGaleriaLocal = []; renderizarGaleriaLocal();
+            document.getElementById('url-img-principal').value = '';
+            actualizarPreview('', 'preview-img-principal', 'icon-img-principal');
+            actualizarVideo('');
             togglePrecioBsFijo();
+            document.getElementById('btn-eliminar-prod').classList.add('hidden');
+            document.getElementById('warn-precio-volumen')?.classList.add('hidden');
 
             if (pStr) {
                 const p = JSON.parse(decodeURIComponent(pStr));
                 document.getElementById('modal-titulo').innerHTML = `<i class="fa-solid fa-pen-to-square mr-2 text-tertiary"></i> EDITAR FICHA`;
-                document.getElementById('prod-modo-edicion').value = "true"; document.getElementById('prod-sku-original').value = p.id_producto_sku;
-                
-                document.getElementById('prod-sku').value = p.id_producto_sku; 
-                document.getElementById('prod-cod-barra').value = p.codigo_barras || '';
-                document.getElementById('prod-nombre').value = p.nombre || ''; 
-                document.getElementById('prod-desc').value = p.descripcion || '';
-                
-                document.getElementById('prod-video').value = p.video_url || '';
+                document.getElementById('prod-modo-edicion').value  = "true";
+                document.getElementById('prod-sku-original').value  = p.id_producto_sku;
+                document.getElementById('prod-sku').value           = p.id_producto_sku;
+                document.getElementById('prod-cod-barra').value     = p.codigo_barras || '';
+                document.getElementById('prod-nombre').value        = p.nombre || '';
+                document.getElementById('prod-desc').value          = p.descripcion || '';
+                document.getElementById('prod-video').value         = p.video_url || '';
                 actualizarVideo(p.video_url);
-                
-                sV('prod-tipo', p.tipo_producto); sV('prod-categoria', p.categoria_del_producto); sV('prod-cat-venta', p.categoria_venta);
-                sV('prod-marca', p.marca); sV('prod-condicion', p.condicion_producto); sV('prod-talla', p.talla);
-                sV('prod-color', p.color); sV('prod-unidad', p.unidad_medida); sV('prod-estatus', p.estado_producto || 'ACTIVO');
-                sV('prod-impuesto', p.tipo_impuesto); sV('prod-negativo', p.permitir_negativo ? 'TRUE' : 'FALSE');
-                
-                document.getElementById('prod-stock').value = p.stock_actual || 0; document.getElementById('prod-stock-min').value = p.stock_minimo || 0;
-                document.getElementById('url-img-principal').value = p.imagen_principal || ''; actualizarPreview(p.imagen_principal, 'preview-img-principal', 'icon-img-principal');
-                
-                if(p.galeria_imagenes) { try { let parsed = typeof p.galeria_imagenes === 'string' ? JSON.parse(p.galeria_imagenes) : p.galeria_imagenes; if(Array.isArray(parsed)) arrayGaleriaLocal = parsed; } catch(e) {} }
+
+                sV('prod-tipo',      p.tipo_producto);
+                sV('prod-categoria', p.categoria_del_producto);
+                sV('prod-cat-venta', p.categoria_venta);
+                sV('prod-marca',     p.marca);
+                sV('prod-condicion', p.condicion_producto);
+                sV('prod-talla',     p.talla);
+                sV('prod-color',     p.color);
+                sV('prod-unidad',    p.unidad_medida);
+                sV('prod-estatus',   p.estado_producto || 'ACTIVO');
+                sV('prod-impuesto',  p.tipo_impuesto);
+                sV('prod-negativo',  p.permitir_negativo ? 'TRUE' : 'FALSE');
+
+                document.getElementById('prod-stock').value     = p.stock_actual || 0;
+                document.getElementById('prod-stock-min').value = p.stock_minimo || 0;
+                document.getElementById('url-img-principal').value = p.imagen_principal || '';
+                actualizarPreview(p.imagen_principal, 'preview-img-principal', 'icon-img-principal');
+
+                if (p.galeria_imagenes) {
+                    try {
+                        const parsed = typeof p.galeria_imagenes === 'string' ? JSON.parse(p.galeria_imagenes) : p.galeria_imagenes;
+                        if (Array.isArray(parsed)) arrayGaleriaLocal = parsed;
+                    } catch (e) { arrayGaleriaLocal = []; }
+                }
                 renderizarGaleriaLocal();
 
-                document.getElementById('prod-precio-usd').value = p.pre.precio_general_usd || 0;
-                document.getElementById('prod-fijo-bs').value = p.pre.es_precio_fijo_bs ? 'SI' : 'NO';
-                document.getElementById('prod-precio-bs').value = p.pre.precio_fijo_bs || '';
-                
-                // LECTURA DIRECTA DE LA TABLA PRODUCTOS (AQUÍ ESTÁN FÍSICAMENTE TUS CANTIDADES)
-                sV('req-p1', p.requerido_precio_1); sV('usd-p1', p.pre.precio_1_usd);
-                sV('req-p2', p.requerido_precio_2); sV('usd-p2', p.pre.precio_2_usd);
-                sV('req-p3', p.requerido_precio_3); sV('usd-p3', p.pre.precio_3_usd);
+                // FIX: optional chaining para evitar crash si p.pre es undefined
+                document.getElementById('prod-precio-usd').value = p.pre?.precio_general_usd || 0;
+                document.getElementById('prod-fijo-bs').value    = p.pre?.es_precio_fijo_bs ? 'SI' : 'NO';
+                document.getElementById('prod-precio-bs').value  = p.pre?.precio_fijo_bs || '';
 
-                togglePrecioBsFijo(); document.getElementById('prod-sku').readOnly = true; document.getElementById('prod-sku').classList.add('bg-gray-200');
+                sV('req-p1', p.requerido_precio_1); sV('usd-p1', p.pre?.precio_1_usd);
+                sV('req-p2', p.requerido_precio_2); sV('usd-p2', p.pre?.precio_2_usd);
+                sV('req-p3', p.requerido_precio_3); sV('usd-p3', p.pre?.precio_3_usd);
+
+                togglePrecioBsFijo();
+                document.getElementById('prod-sku').readOnly = true;
+                document.getElementById('prod-sku').classList.add('bg-gray-200');
+                document.getElementById('btn-eliminar-prod').classList.remove('hidden');
             } else {
                 document.getElementById('modal-titulo').innerHTML = `<i class="fa-solid fa-plus mr-2 text-secondary"></i> NUEVO REGISTRO`;
                 document.getElementById('prod-modo-edicion').value = "false";
-                document.getElementById('prod-sku').readOnly = false; document.getElementById('prod-sku').classList.remove('bg-gray-200');
+                document.getElementById('prod-sku').readOnly = false;
+                document.getElementById('prod-sku').classList.remove('bg-gray-200');
             }
-            document.getElementById('modal-producto').classList.remove('hidden'); document.getElementById('modal-producto').classList.add('flex');
+            document.getElementById('modal-producto').classList.remove('hidden');
+            document.getElementById('modal-producto').classList.add('flex');
         }
 
-        function cerrarModalProducto() { document.getElementById('modal-producto').classList.add('hidden'); document.getElementById('modal-producto').classList.remove('flex'); }
+        function cerrarModalProducto() {
+            document.getElementById('modal-producto').classList.add('hidden');
+            document.getElementById('modal-producto').classList.remove('flex');
+        }
 
         async function guardarProducto(e) {
             e.preventDefault();
-            const btn = document.getElementById('btn-guardar-prod'); btn.innerHTML = `Guardando...`; btn.disabled = true;
+            const btn = document.getElementById('btn-guardar-prod');
+            btn.innerHTML = `Guardando...`; btn.disabled = true;
             mostrarCarga("Sincronizando", "Enviando datos al servidor...");
 
             try {
-                const isEdit = document.getElementById('prod-modo-edicion').value === "true";
-                const sku = document.getElementById('prod-sku').value.trim().toUpperCase();
+                const isEdit  = document.getElementById('prod-modo-edicion').value === "true";
+                const sku     = document.getElementById('prod-sku').value.trim().toUpperCase();
                 const skuOrig = document.getElementById('prod-sku-original').value;
-                const rawCodBarra = document.getElementById('prod-cod-barra').value.trim();
-                
+
+                // FIX: sanitización del código de barras — solo dígitos
+                const rawCodBarra = document.getElementById('prod-cod-barra').value.trim().replace(/\D/g, '');
+
+                // NUEVO: validación SKU no vacío
+                if (!sku) throw new Error("El SKU no puede estar vacío.");
+
+                // NUEVO: validación precio general > 0
+                const precioUsd = valNum('prod-precio-usd');
+                if (precioUsd <= 0) throw new Error("El precio general debe ser mayor a 0.");
+
                 const pProd = {
-                    id_empresa: empresaActual, id_producto_sku: sku, 
-                    codigo_barras: rawCodBarra ? Number(rawCodBarra) : null,
-                    nombre: document.getElementById('prod-nombre').value.trim().toUpperCase(), descripcion: document.getElementById('prod-desc').value.trim() || null,
-                    tipo_producto: document.getElementById('prod-tipo').value || null, categoria_del_producto: document.getElementById('prod-categoria').value || null,
-                    categoria_venta: document.getElementById('prod-cat-venta').value || null, marca: document.getElementById('prod-marca').value || null,
-                    condicion_producto: document.getElementById('prod-condicion').value || null, talla: document.getElementById('prod-talla').value || null,
-                    color: document.getElementById('prod-color').value || null, unidad_medida: document.getElementById('prod-unidad').value || null,
-                    estado_producto: document.getElementById('prod-estatus').value, tipo_impuesto: document.getElementById('prod-impuesto').value || null,
-                    permitir_negativo: document.getElementById('prod-negativo').value === 'TRUE', stock_actual: valNum('prod-stock'), stock_minimo: valNum('prod-stock-min'),
-                    imagen_principal: document.getElementById('url-img-principal').value || null, galeria_imagenes: JSON.stringify(arrayGaleriaLocal),
+                    id_empresa: empresaActual,
+                    id_producto_sku: sku,
+                    // FIX: código de barras guardado como texto para preservar ceros a la izquierda
+                    codigo_barras: rawCodBarra || null,
+                    nombre: document.getElementById('prod-nombre').value.trim().toUpperCase(),
+                    descripcion: document.getElementById('prod-desc').value.trim() || null,
+                    tipo_producto: document.getElementById('prod-tipo').value || null,
+                    categoria_del_producto: document.getElementById('prod-categoria').value || null,
+                    categoria_venta: document.getElementById('prod-cat-venta').value || null,
+                    marca: document.getElementById('prod-marca').value || null,
+                    condicion_producto: document.getElementById('prod-condicion').value || null,
+                    talla: document.getElementById('prod-talla').value || null,
+                    color: document.getElementById('prod-color').value || null,
+                    unidad_medida: document.getElementById('prod-unidad').value || null,
+                    estado_producto: document.getElementById('prod-estatus').value,
+                    tipo_impuesto: document.getElementById('prod-impuesto').value || null,
+                    permitir_negativo: document.getElementById('prod-negativo').value === 'TRUE',
+                    stock_actual: valNum('prod-stock'),
+                    stock_minimo: valNum('prod-stock-min'),
+                    imagen_principal: document.getElementById('url-img-principal').value || null,
+                    galeria_imagenes: JSON.stringify(arrayGaleriaLocal),
                     video_url: document.getElementById('prod-video').value.trim() || null,
-                    // ENVÍO DE LAS CANTIDADES REQUERIDAS A LA TABLA PRODUCTOS
                     requerido_precio_1: valNum('req-p1'),
                     requerido_precio_2: valNum('req-p2'),
                     requerido_precio_3: valNum('req-p3')
@@ -633,39 +980,162 @@ function renderizarInventario() {
 
                 const isBsFijo = document.getElementById('prod-fijo-bs').value === 'SI';
                 const pPre = {
-                    id_empresa: empresaActual, id_producto_sku: sku, precio_general_usd: valNum('prod-precio-usd'),
-                    es_precio_fijo_bs: isBsFijo, precio_fijo_bs: isBsFijo ? valNum('prod-precio-bs') : 0,
-                    precio_1_usd: valNum('usd-p1'), precio_2_usd: valNum('usd-p2'), precio_3_usd: valNum('usd-p3')
+                    id_empresa: empresaActual,
+                    id_producto_sku: sku,
+                    precio_general_usd: precioUsd,
+                    es_precio_fijo_bs: isBsFijo,
+                    precio_fijo_bs: isBsFijo ? valNum('prod-precio-bs') : 0,
+                    precio_1_usd: valNum('usd-p1'),
+                    precio_2_usd: valNum('usd-p2'),
+                    precio_3_usd: valNum('usd-p3')
                 };
 
                 const uProd = isEdit ? `${SUPABASE_URL}/rest/v1/productos?id_producto_sku=eq.${skuOrig}` : `${SUPABASE_URL}/rest/v1/productos`;
-                const uPre = isEdit ? `${SUPABASE_URL}/rest/v1/precios?id_producto_sku=eq.${skuOrig}` : `${SUPABASE_URL}/rest/v1/precios`;
-                const mtd = isEdit ? 'PATCH' : 'POST';
+                const uPre  = isEdit ? `${SUPABASE_URL}/rest/v1/precios?id_producto_sku=eq.${skuOrig}` : `${SUPABASE_URL}/rest/v1/precios`;
+                const mtd   = isEdit ? 'PATCH' : 'POST';
 
-                const rProd = await fetch(uProd, { method: mtd, headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, body: JSON.stringify(pProd) });
-                if(!rProd.ok) { const err = await rProd.json(); throw new Error(err.message || "Error al guardar en productos"); }
-                
-                const rPre = await fetch(uPre, { method: mtd, headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify(pPre) });
-                if(isEdit && rPre.status !== 200 && rPre.status !== 204) { await fetch(`${SUPABASE_URL}/rest/v1/precios`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify(pPre) }); }
+                const rProd = await fetch(uProd, {
+                    method: mtd,
+                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
+                    body: JSON.stringify(pProd)
+                });
+                if (!rProd.ok) { const err = await rProd.json(); throw new Error(err.message || "Error al guardar en productos"); }
+
+                const rPre = await fetch(uPre, {
+                    method: mtd,
+                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(pPre)
+                });
+                // FIX: si PATCH de precios da 404/empty, hacer POST como fallback
+                if (isEdit && rPre.status !== 200 && rPre.status !== 204) {
+                    await fetch(`${SUPABASE_URL}/rest/v1/precios`, {
+                        method: 'POST',
+                        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' },
+                        body: JSON.stringify(pPre)
+                    });
+                }
 
                 cerrarErrorCarga(); cerrarModalProducto(); await cargarBaseDatos();
-            } catch(e) { 
-                mostrarCarga("Error al Guardar", e.message, true); 
-            } 
-            finally { btn.innerHTML = `<i class="fa-solid fa-save mr-2"></i> Guardar Ficha`; btn.disabled = false; }
+            } catch (e) {
+                mostrarCarga("Error al Guardar", e.message, true);
+            } finally {
+                btn.innerHTML = `<i class="fa-solid fa-save mr-2"></i> Guardar Ficha`;
+                btn.disabled = false;
+            }
         }
 
-        async function eliminarProducto() {
-            if(!confirm("¿CONFIRMAS ELIMINAR ESTE REGISTRO DEFINITIVAMENTE?")) return;
-            mostrarCarga("Eliminando...", "Borrando base y dependencias");
+        // ================================================================
+        // ELIMINACIÓN — FIX: modal de confirmación en lugar de confirm()
+        // ================================================================
+        function confirmarEliminarProducto() {
+            const sku    = document.getElementById('prod-sku-original').value;
+            const nombre = document.getElementById('prod-nombre').value;
+            skuParaEliminar = sku;
+            document.getElementById('txt-sku-eliminar').innerText = sku;
+            document.getElementById('txt-nom-eliminar').innerText = nombre;
+            document.getElementById('modal-confirmar-eliminar').classList.remove('hidden');
+            document.getElementById('modal-confirmar-eliminar').classList.add('flex');
+        }
+
+        function cerrarModalConfirmarEliminar() {
+            document.getElementById('modal-confirmar-eliminar').classList.add('hidden');
+            document.getElementById('modal-confirmar-eliminar').classList.remove('flex');
+            skuParaEliminar = '';
+        }
+
+        async function ejecutarEliminarProducto() {
+            if (!skuParaEliminar) return;
+            const btn = document.getElementById('btn-confirmar-eliminar');
+            btn.disabled = true; btn.innerHTML = `Eliminando...`;
+            mostrarCarga("Eliminando...", "Borrando registro y dependencias");
             try {
-                const sku = document.getElementById('prod-sku-original').value;
-                const r = await fetch(`${SUPABASE_URL}/rest/v1/productos?id_producto_sku=eq.${sku}`, { method: 'DELETE', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
-                if(!r.ok) throw new Error("Dependencias activas.");
-                cerrarErrorCarga(); cerrarModalProducto(); await cargarBaseDatos();
-            } catch(e) { mostrarCarga("Fallo al Eliminar", "El producto tiene facturas asociadas y no puede borrarse.", true); }
+                const r = await fetch(`${SUPABASE_URL}/rest/v1/productos?id_producto_sku=eq.${skuParaEliminar}`, {
+                    method: 'DELETE',
+                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` }
+                });
+                if (!r.ok) throw new Error("El producto tiene facturas asociadas y no puede borrarse.");
+                cerrarErrorCarga();
+                cerrarModalConfirmarEliminar();
+                cerrarModalProducto();
+                await cargarBaseDatos();
+            } catch (e) {
+                mostrarCarga("Fallo al Eliminar", e.message, true);
+            } finally {
+                btn.disabled = false; btn.innerHTML = `<i class="fa-solid fa-trash mr-1"></i> Sí, Eliminar`;
+            }
         }
+
+        // ================================================================
+        // NUEVO: AJUSTE RÁPIDO DE STOCK
+        // ================================================================
+        let skuAjuste = '';
+
+        function abrirAjusteStock(sku, nombre, stockActual) {
+            skuAjuste = sku;
+            document.getElementById('txt-ajuste-nombre').innerText = nombre;
+            document.getElementById('txt-ajuste-sku').innerText = sku;
+            document.getElementById('val-stock-actual-ajuste').innerText = stockActual;
+            document.getElementById('input-nuevo-stock').value = stockActual;
+            document.getElementById('modal-ajuste-stock').classList.remove('hidden');
+            document.getElementById('modal-ajuste-stock').classList.add('flex');
+            setTimeout(() => document.getElementById('input-nuevo-stock').focus(), 100);
+        }
+
+        function cerrarAjusteStock() {
+            document.getElementById('modal-ajuste-stock').classList.add('hidden');
+            document.getElementById('modal-ajuste-stock').classList.remove('flex');
+            skuAjuste = '';
+        }
+
+        async function guardarAjusteStock() {
+            if (!skuAjuste) return;
+            const nuevoStock = parseInt(document.getElementById('input-nuevo-stock').value);
+            if (isNaN(nuevoStock) || nuevoStock < 0) { alert("Ingresa un valor de stock válido (0 o mayor)."); return; }
+            const motivo = document.getElementById('motivo-ajuste').value;
+            mostrarCarga("Ajustando Stock...", `Actualizando ${skuAjuste} → ${nuevoStock} uds.`);
+            try {
+                const r = await fetch(`${SUPABASE_URL}/rest/v1/productos?id_producto_sku=eq.${skuAjuste}`, {
+                    method: 'PATCH',
+                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ stock_actual: nuevoStock })
+                });
+                if (!r.ok) throw new Error("No se pudo actualizar el stock.");
+                cerrarErrorCarga();
+                cerrarAjusteStock();
+                await cargarBaseDatos();
+            } catch (e) {
+                mostrarCarga("Error", e.message, true);
+            }
+        }
+
+        // ================================================================
+        // NUEVO: EXPORTAR A CSV
+        // ================================================================
+        function exportarCSV() {
+            if (dbInventario.length === 0) { alert("No hay datos para exportar."); return; }
+            const cabecera = ['SKU', 'Código Barra', 'Nombre', 'Categoría', 'Marca', 'Stock Actual', 'Stock Mínimo', 'Precio USD', 'Estado', 'Impuesto'];
+            const filas = dbInventario.map(p => [
+                p.id_producto_sku,
+                p.codigo_barras || '',
+                `"${(p.nombre || '').replace(/"/g, '""')}"`,
+                p.categoria_del_producto || '',
+                p.marca || '',
+                p.stock_actual,
+                p.stock_minimo || 0,
+                p.pre?.precio_general_usd || 0,
+                p.estado_producto || '',
+                p.tipo_impuesto || ''
+            ].join(','));
+            const csv     = [cabecera.join(','), ...filas].join('\n');
+            const blob    = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+            const url     = URL.createObjectURL(blob);
+            const a       = document.createElement('a');
+            a.href        = url;
+            a.download    = `inventario_${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(a); a.click();
+            document.body.removeChild(a); URL.revokeObjectURL(url);
+        }
+
     </script>
 </body>
 </html>
-    
