@@ -6,17 +6,19 @@
     <title>P&P Admin | Directorio Maestro</title>
     
     <script>
-        const cPri = localStorage.getItem('pyp_color_primario') || '#143B62';
-        const cSec = localStorage.getItem('pyp_color_secundario') || '#E67E22';
-        const cTer = localStorage.getItem('pyp_color_terciario') || '#64748b';
-        const fontFam = localStorage.getItem('pyp_fuente') || "'Inter', sans-serif";
-        const fontSiz = localStorage.getItem('pyp_tamano') || "14px";
+        (function() {
+            const cPri = localStorage.getItem('pyp_color_primario') || '#143B62';
+            const cSec = localStorage.getItem('pyp_color_secundario') || '#E67E22';
+            const cTer = localStorage.getItem('pyp_color_terciario') || '#64748b';
+            const fontFam = localStorage.getItem('pyp_fuente') || "'Inter', sans-serif";
+            const fontSiz = localStorage.getItem('pyp_tamano') || "14px";
 
-        document.documentElement.style.setProperty('--color-primary', cPri);
-        document.documentElement.style.setProperty('--color-secondary', cSec);
-        document.documentElement.style.setProperty('--color-tertiary', cTer);
-        document.documentElement.style.setProperty('--font-global', fontFam);
-        document.documentElement.style.setProperty('--size-global', fontSiz);
+            document.documentElement.style.setProperty('--color-primary', cPri);
+            document.documentElement.style.setProperty('--color-secondary', cSec);
+            document.documentElement.style.setProperty('--color-tertiary', cTer);
+            document.documentElement.style.setProperty('--font-global', fontFam);
+            document.documentElement.style.setProperty('--size-global', fontSiz);
+        })();
     </script>
 
     <link rel="stylesheet" href="styles.css">
@@ -32,8 +34,19 @@
     </script>
     
     <style>
-        * { box-sizing: border-box; }
-        body { font-family: var(--font-global); font-size: var(--size-global); margin: 0; padding: 0; width: 100vw; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { 
+            font-family: var(--font-global); 
+            font-size: var(--size-global); 
+            margin: 0; 
+            padding: 0; 
+            width: 100%; 
+            height: 100vh;
+            background-color: #f4f6f8;
+            overflow: hidden; 
+        }
+
+        /* Clases de Identidad */
         .bg-primary { background-color: var(--color-primary) !important; }
         .text-primary { color: var(--color-primary) !important; }
         .bg-secondary { background-color: var(--color-secondary) !important; }
@@ -41,11 +54,13 @@
         .text-tertiary { color: var(--color-tertiary) !important; }
         .border-primary { border-color: var(--color-primary) !important; }
 
+        /* Scroll Estilo ERP Saint/Profit */
         .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
         .custom-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
         .custom-scroll::-webkit-scrollbar-thumb:hover { background-color: var(--color-primary); }
         
-        .btn-press:active { transform: scale(0.97); }
+        /* Animaciones y Estados */
+        .btn-press:active { transform: scale(0.97); transition: 0.1s; }
         .fade-in { animation: fadeIn 0.2s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         
@@ -54,14 +69,23 @@
         .btn-vista.active { background-color: var(--color-primary); color: white; border-color: var(--color-primary); }
         .param-label { font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; }
         
-        /* Corrección de Margen Excedente */
+        /* Contenedor Principal Riguroso */
         .main-content-area {
             max-width: 100%;
             overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        /* Forzar que el contenedor de datos ocupe el resto de la pantalla */
+        #contenedor-contactos {
+            flex: 1;
+            min-height: 0; /* Vital para que el scroll funcione en Flexbox */
         }
     </style>
 </head>
-<body class="bg-[#f4f6f8] flex h-screen overflow-hidden text-gray-800 relative">
+<body class="flex relative">
 
     <script src="menu.js"></script>
 
@@ -100,7 +124,7 @@
                         <input type="text" id="buscador" oninput="filtrarContactos()" placeholder="Buscar..." class="w-full border border-gray-300 rounded-md pl-9 pr-4 py-1.5 text-xs focus:outline-none focus:border-tertiary uppercase transition font-bold">
                     </div>
                     <select id="filtro-categoria" onchange="filtrarContactos()" class="w-full sm:w-1/3 border border-gray-300 rounded-md px-3 py-1.5 text-xs text-primary font-semibold focus:outline-none focus:border-tertiary transition bg-gray-50">
-                        <option value="TODAS">TODAS</option>
+                        <option value="TODAS">TODAS LAS CATEGORÍAS</option>
                     </select>
                 </div>
                 
@@ -115,30 +139,13 @@
                 </div>
             </div>
 
-            <div id="contenedor-contactos" class="flex-1 bg-white border border-gray-200 border-t-0 rounded-b-xl shadow-sm overflow-y-auto custom-scroll min-h-0">
+            <div id="contenedor-contactos" class="bg-white border border-gray-200 border-t-0 rounded-b-xl shadow-sm overflow-y-auto custom-scroll">
                 <div class="p-10 text-center text-gray-400">
-                    <i class="fa-solid fa-spinner fa-spin text-2xl mb-2 block text-tertiary"></i> Sincronizando...
+                    <i class="fa-solid fa-spinner fa-spin text-2xl mb-2 block text-tertiary"></i> Sincronizando Directorio Maestro...
                 </div>
             </div>
 
-        </div> </main> ```
-
----
-
-### ¿Por qué esto funcionará ahora?
-
-1.  **Aislamiento de `main`**: He definido el `main` como `flex-1` y `overflow-hidden`. Esto le dice al navegador: "Tú solo ocupas el espacio que deja el menú lateral, ni un píxel más".
-2.  **Triple Capa de Seguridad**: 
-    * Capa 1 (Header): Fija arriba.
-    * Capa 2 (Controles): Fijos bajo el header.
-    * Capa 3 (Datos): Es la **única** que tiene permiso para hacer scroll (`overflow-y-auto`).
-3.  **Corrección de Etiquetado**: He verificado que cada `div` abierto se cierre exactamente donde debe, evitando que el contenido se "desparrame" por la pantalla como se veía en tu captura.
-
-Lesme, asegúrate de no dejar texto suelto fuera de las etiquetas `<script>` o `<div>`. Aplica este bloque y el sistema debería verse impecable. ¿Cómo se ve ahora?
-
-### ¿Por qué esto soluciona el problema?
-* **`min-h-0` + `flex-1`:** En diseños Flexbox complejos, si no defines una altura mínima de cero al hijo que debe tener scroll, el navegador intenta expandir el contenedor hacia afuera en lugar de activar la barra de desplazamiento interna.
-* **`overflow-hidden` en Main:** Obligamos a que el "cuerpo" de la app sea estático. El scroll ahora solo ocurre dentro del div `#contenedor-contactos`.
-* **Viewport Fijo:** Agregué `maximum-scale=1.0` en el meta-tag para evitar que en móviles el usuario haga un "zoom" accidental que desplace el margen hacia los lados.
-
-Prueba este cambio, Lesme. Verás que ahora la tabla se siente "anclada" al marco de la pantalla, tal como los ERP profesionales.
+        </div> 
+    </main>
+</body>
+</html>
