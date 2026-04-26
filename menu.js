@@ -98,7 +98,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     <i class="fa-solid fa-chevron-down text-[10px]"></i>
                 </button>
                 <div id="submenu-dir" class="pl-6 space-y-1 mt-1 ${currentPage.includes('admin_contactos') || currentPage.includes('admin_nomina') ? '' : 'hidden'}">
-                    <a href="admin_contactos.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_contactos.html' ? estiloActivoSub : estiloInactivoSub}">Clientes y Prov.</a>
+                    <a href="admin_contactos.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_contactos.html' ? estiloActivoSub : estiloInactivoSub}">Clientes / Proveedores</a>
                     <a href="admin_nomina.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_nomina.html' ? estiloActivoSub : estiloInactivoSub}">Personal / Nómina</a>
                 </div>
             </div>
