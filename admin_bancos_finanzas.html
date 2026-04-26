@@ -84,8 +84,8 @@
                             <h2 class="text-xl font-black text-gray-800">Cuentas Financieras</h2>
                             <p class="text-xs text-gray-500 font-medium">Bóvedas de efectivo, cuentas bancarias y cuentas de tránsito.</p>
                         </div>
-                       <div class="flex gap-2">
-                            <button onclick="abrirModalAsignarFondo()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-bold shadow-sm transition btn-press text-[10px] uppercase tracking-wider flex items-center gap-2">
+                        <div class="flex gap-2">
+                            <button onclick="abrirModalAsignarFondo()" class="bg-primary hover:opacity-90 text-white px-4 py-2 rounded-lg font-bold shadow-sm transition btn-press text-[10px] uppercase tracking-wider flex items-center gap-2">
                                 <i class="fa-solid fa-money-bill-transfer"></i> Asignar Fondo a Cajero
                             </button>
                             <button onclick="abrirModalCuenta()" class="bg-secondary hover:opacity-90 text-white px-4 py-2 rounded-lg font-bold shadow-sm transition btn-press text-[10px] uppercase tracking-wider flex items-center gap-2">
@@ -127,6 +127,41 @@
             </div>
         </div>
     </main>
+
+    <div id="modal-asignar-fondo" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[9990] hidden flex items-center justify-center p-4 fade-in">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col border border-gray-200">
+            <div class="bg-primary text-white px-4 py-3 flex justify-between items-center">
+                <h3 class="font-bold text-[12px] tracking-wide uppercase"><i class="fa-solid fa-hand-holding-dollar mr-2 text-tertiary"></i> Asignar Fondo de Caja</h3>
+                <button onclick="cerrarModalAsignarFondo()" class="text-gray-300 hover:text-white transition"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <form id="form-asignar-fondo" onsubmit="procesarAsignacionFondo(event)" class="p-5 bg-gray-50 space-y-4">
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Origen (Bóveda) *</label>
+                    <select id="asig-boveda" onchange="manejarCambioBoveda()" required class="w-full border border-gray-300 rounded px-3 py-2 text-xs font-bold uppercase focus:border-tertiary outline-none bg-white transition shadow-inner">
+                        </select>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Usuario / Cajero Receptor *</label>
+                    <select id="asig-cajero" required class="w-full border border-gray-300 rounded px-3 py-2 text-xs font-bold uppercase focus:border-tertiary outline-none bg-white transition shadow-inner">
+                        </select>
+                </div>
+                <div class="bg-slate-100 border border-slate-200 rounded p-3">
+                    <label class="block text-[10px] font-bold text-primary uppercase mb-1">Monto a Entregar Físicamente</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <span class="text-[9px] font-bold text-gray-500">Monto USD ($)</span>
+                            <input type="number" id="asig-usd" step="0.01" min="0" placeholder="0.00" class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm font-black text-center outline-none bg-white focus:border-tertiary transition-colors" value="0">
+                        </div>
+                        <div>
+                            <span class="text-[9px] font-bold text-gray-500">Monto Bs.</span>
+                            <input type="number" id="asig-bs" step="0.01" min="0" placeholder="0.00" class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm font-black text-center outline-none bg-white focus:border-tertiary transition-colors" value="0">
+                        </div>
+                    </div>
+                </div>
+                <button type="submit" id="btn-guardar-asig" class="w-full bg-secondary hover:opacity-90 text-white font-bold py-2.5 rounded shadow btn-press uppercase text-[11px] tracking-wider transition mt-2">Emitir Transferencia</button>
+            </form>
+        </div>
+    </div>
 
     <div id="modal-cuenta" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[9990] hidden flex items-center justify-center p-4 fade-in">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col border border-gray-200">
@@ -181,40 +216,7 @@
             </form>
         </div>
     </div>
-<div id="modal-asignar-fondo" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[9990] hidden flex items-center justify-center p-4 fade-in">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col border border-gray-200">
-            <div class="bg-blue-600 text-white px-4 py-3 flex justify-between items-center">
-                <h3 class="font-bold text-[12px] tracking-wide uppercase"><i class="fa-solid fa-hand-holding-dollar mr-2"></i> Asignar Fondo de Caja</h3>
-                <button onclick="cerrarModalAsignarFondo()" class="text-blue-200 hover:text-white transition"><i class="fa-solid fa-times"></i></button>
-            </div>
-            <form id="form-asignar-fondo" onsubmit="procesarAsignacionFondo(event)" class="p-5 bg-gray-50 space-y-4">
-                <div>
-                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Origen (Bóveda) *</label>
-                    <select id="asig-boveda" onchange="manejarCambioBoveda()" required class="w-full border border-gray-300 rounded px-3 py-2 text-xs font-bold uppercase focus:border-blue-500 outline-none bg-white transition shadow-inner">
-                        </select>
-                </div>
-                <div>
-                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Usuario / Cajero Receptor *</label>
-                    <select id="asig-cajero" required class="w-full border border-gray-300 rounded px-3 py-2 text-xs font-bold uppercase focus:border-blue-500 outline-none bg-white transition shadow-inner">
-                        </select>
-                </div>
-                <div class="bg-blue-50 border border-blue-200 rounded p-3">
-                    <label class="block text-[10px] font-bold text-blue-800 uppercase mb-1">Monto a Entregar Físicamente</label>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <span class="text-[9px] font-bold text-gray-500">Monto USD ($)</span>
-                            <input type="number" id="asig-usd" step="0.01" min="0" placeholder="0.00" class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm font-black text-center outline-none bg-white focus:border-blue-500 transition-colors" value="0">
-                        </div>
-                        <div>
-                            <span class="text-[9px] font-bold text-gray-500">Monto Bs.</span>
-                            <input type="number" id="asig-bs" step="0.01" min="0" placeholder="0.00" class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm font-black text-center outline-none bg-white focus:border-blue-500 transition-colors" value="0">
-                        </div>
-                    </div>
-                </div>
-                <button type="submit" id="btn-guardar-asig" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded shadow btn-press uppercase text-[11px] tracking-wider transition mt-2">Emitir Transferencia</button>
-            </form>
-        </div>
-    </div>
+
     <div id="modal-terminal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[9990] hidden flex items-center justify-center p-4 fade-in">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col border border-gray-200">
             <div class="bg-primary text-white px-4 py-3 flex justify-between items-center">
@@ -394,7 +396,7 @@
         // ================= MODALES =================
         function abrirModalCuenta(id = null) {
             const form = document.getElementById('form-cuenta');
-            form.reset(); // Limpia la caché visual
+            form.reset(); 
             document.getElementById('cta-id').value = '';
             
             const titulo = document.getElementById('modal-titulo-cuenta');
@@ -402,7 +404,6 @@
             const cajaSaldos = document.getElementById('caja-saldos-iniciales');
 
             if (id) {
-                // Modo Edición
                 const cta = dbCuentas.find(c => c.id === id);
                 if(cta) {
                     document.getElementById('cta-id').value = cta.id;
@@ -414,10 +415,9 @@
                     
                     titulo.innerHTML = '<i class="fa-solid fa-pen mr-2 text-tertiary"></i> Editar Cuenta';
                     btn.innerText = 'Actualizar Cuenta';
-                    cajaSaldos.classList.add('hidden'); // Ocultar saldos en edición para evitar alteraciones directas
+                    cajaSaldos.classList.add('hidden'); 
                 }
             } else {
-                // Modo Creación
                 titulo.innerHTML = '<i class="fa-solid fa-vault mr-2 text-tertiary"></i> Crear Cuenta';
                 btn.innerText = 'Guardar Cuenta';
                 cajaSaldos.classList.remove('hidden');
@@ -457,11 +457,9 @@
                 let url = `${SUPABASE_URL}/rest/v1/fin_cuentas`;
 
                 if (idCta) {
-                    // Actualización
                     method = 'PATCH';
                     url += `?id=eq.${idCta}`;
                 } else {
-                    // Creación nueva
                     payloadCta.id_empresa = empresaActual || null;
                     payloadCta.saldo_usd = redondear(sUsd);
                     payloadCta.saldo_bs = redondear(sBs);
@@ -475,7 +473,6 @@
                 
                 if(!res.ok) throw new Error(idCta ? "No se pudo actualizar." : "No se pudo crear la cuenta.");
                 
-                // Si es cuenta nueva y tiene saldo, creamos el movimiento inicial
                 if(!idCta && (sUsd > 0 || sBs > 0)) {
                     const ctaNueva = (await res.json())[0];
                     const usuario = localStorage.getItem('pyp_usuario_nombre') || 'SISTEMA';
@@ -525,22 +522,20 @@
                 btn.disabled = false; btn.innerHTML = "Guardar Terminal";
             }
         }
+
         // === LÓGICA DE ASIGNACIÓN DE FONDOS A CAJEROS ===
         async function abrirModalAsignarFondo() {
             document.getElementById('form-asignar-fondo').reset();
             const selectBoveda = document.getElementById('asig-boveda');
             
-            // Inyectamos el atributo "data-moneda" para que el sistema sepa qué moneda maneja la bóveda
             selectBoveda.innerHTML = dbCuentas.filter(c => c.tipo_cuenta === 'EFECTIVO').map(c => `<option value="${c.id}" data-moneda="${c.moneda}">${c.nombre} (Saldo: ${c.moneda === 'USD' ? '$'+fmt(c.saldo_usd) : 'Bs.'+fmt(c.saldo_bs)})</option>`).join('');
             
             if(selectBoveda.options.length === 0) { alert("Debes crear al menos una cuenta tipo 'Caja Fuerte / Efectivo' primero."); return; }
 
-            // Ejecutamos el bloqueo de moneda inmediatamente
             manejarCambioBoveda();
 
             mostrarCarga("Cargando cajeros...");
             try {
-                // CONSULTA ESTRICTA CON LOS NOMBRES REALES DE LA BASE DE DATOS
                 const resUsr = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?select=usuario_login,nombre_completo`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
                 
                 if(resUsr.ok) {
@@ -558,12 +553,32 @@
             } catch (e) {
                 cerrarErrorCarga();
                 alert(e.message);
-                return; // Corta la ejecución si falla
+                return;
             }
             cerrarErrorCarga();
             
             document.getElementById('modal-asignar-fondo').classList.remove('hidden');
             document.getElementById('modal-asignar-fondo').classList.add('flex');
+        }
+
+        function manejarCambioBoveda() {
+            const select = document.getElementById('asig-boveda');
+            if(select.selectedIndex === -1) return;
+            
+            const moneda = select.options[select.selectedIndex].getAttribute('data-moneda');
+            const inputUsd = document.getElementById('asig-usd');
+            const inputBs = document.getElementById('asig-bs');
+            
+            if(moneda === 'USD') {
+                inputUsd.disabled = false; inputUsd.classList.remove('bg-gray-200', 'text-gray-400');
+                inputBs.disabled = true; inputBs.value = '0'; inputBs.classList.add('bg-gray-200', 'text-gray-400');
+            } else if(moneda === 'BS') {
+                inputBs.disabled = false; inputBs.classList.remove('bg-gray-200', 'text-gray-400');
+                inputUsd.disabled = true; inputUsd.value = '0'; inputUsd.classList.add('bg-gray-200', 'text-gray-400');
+            } else {
+                inputUsd.disabled = false; inputUsd.classList.remove('bg-gray-200', 'text-gray-400');
+                inputBs.disabled = false; inputBs.classList.remove('bg-gray-200', 'text-gray-400');
+            }
         }
 
         function cerrarModalAsignarFondo() { document.getElementById('modal-asignar-fondo').classList.add('hidden'); document.getElementById('modal-asignar-fondo').classList.remove('flex'); }
