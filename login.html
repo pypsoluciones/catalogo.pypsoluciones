@@ -10,7 +10,6 @@
     <meta name="apple-mobile-web-app-title" content="Admin">
     
     <script>
-        // Inyectar variables de Marca Blanca antes de renderizar
         const cPri = localStorage.getItem('pyp_color_primario') || '#143B62';
         const cSec = localStorage.getItem('pyp_color_secundario') || '#E67E22';
         document.documentElement.style.setProperty('--color-primary', cPri);
@@ -34,7 +33,6 @@
         .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
         @keyframes shake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-5px); } 40%, 80% { transform: translateX(5px); } }
 
-        /* Consumir CSS Vars para Tailwind dinámico */
         .text-primary { color: var(--color-primary); }
         .bg-primary { background-color: var(--color-primary); }
         .border-primary { border-color: var(--color-primary); }
@@ -45,7 +43,6 @@
         .grad-accent { background: radial-gradient(circle at 100% 100%, var(--color-secondary), transparent 60%); }
         .grad-line { background: linear-gradient(to right, var(--color-primary), var(--color-secondary), var(--color-primary)); }
 
-        /* Estilos del Cartel de Instalación PWA */
         #cartel-instalacion { position: fixed; top: 0; left: 0; width: 100%; background-color: var(--color-secondary); color: white; box-shadow: 0 10px 25px rgba(0,0,0,0.2); padding: 16px 24px; box-sizing: border-box; display: flex; justify-content: space-between; align-items: center; z-index: 9999; transform: translateY(-150%); transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1); border-bottom-left-radius: 15px; border-bottom-right-radius: 15px; }
         #cartel-instalacion.mostrar { transform: translateY(0); }
         .texto-instalar { font-size: 14px; line-height: 1.4; flex-grow: 1; padding-right: 15px; font-weight: 500; }
@@ -117,7 +114,6 @@
         const SUPABASE_URL = 'https://icvfmdvvochzaktugqvj.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImljdmZtZHZ2b2NoemFrdHVncXZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyNDEzMzEsImV4cCI6MjA5MTgxNzMzMX0.gO3D39piT6KGbMMOzrPGWXUp5-g_nOBAgJ-nwPv8IcQ';
 
-        // LÓGICA DE LOGO DINÁMICO AL CARGAR
         document.addEventListener("DOMContentLoaded", () => {
             const logoLogin = localStorage.getItem('pyp_logo_login_url');
             if (logoLogin && logoLogin.trim() !== '') {
@@ -127,40 +123,6 @@
             }
         });
 
-        // --- LÓGICA PWA ---
-        let eventoInstalacionDiferido;
-        const cartelInstalacion = document.getElementById('cartel-instalacion');
-        const btnInstalar = document.getElementById('btn-instalar');
-        const btnCerrarCartel = document.getElementById('btn-cerrar-cartel');
-
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            eventoInstalacionDiferido = e;
-            setTimeout(() => { cartelInstalacion.classList.add('mostrar'); }, 1000);
-        });
-
-        if(btnInstalar) {
-            btnInstalar.addEventListener('click', async () => {
-                if (eventoInstalacionDiferido !== null) {
-                    cartelInstalacion.classList.remove('mostrar'); 
-                    eventoInstalacionDiferido.prompt(); 
-                    const { outcome } = await eventoInstalacionDiferido.userChoice;
-                    eventoInstalacionDiferido = null;
-                }
-            });
-        }
-
-        if(btnCerrarCartel) {
-            btnCerrarCartel.addEventListener('click', () => { cartelInstalacion.classList.remove('mostrar'); });
-        }
-
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js').catch(err => console.log('Error SW:', err));
-            });
-        }
-
-        // --- LÓGICA DE LOGIN ---
         function togglePassword() {
             const input = document.getElementById('login-pass');
             const icono = document.getElementById('icono-ojo');
@@ -195,8 +157,7 @@
 
             try {
                 const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
-                    method: 'POST',
-                    headers: { 'apikey': SUPABASE_KEY, 'Content-Type': 'application/json' },
+                    method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email: user, password: pass })
                 });
                 
@@ -210,12 +171,37 @@
                 localStorage.setItem('pyp_token_seguro', data.access_token);
                 localStorage.setItem('pyp_sesion_activa', 'true');
                 localStorage.setItem('pyp_usuario_rol', 'Admin');
-                localStorage.setItem('pyp_usuario_nombre', user.split('@')[0]);
                 
+                // =======================================================================
+                // LA MAGIA: VAMOS A BUSCAR QUIÉN ES ESTE USUARIO EN TU TABLA DE 'usuarios'
+                // =======================================================================
+                const userAuthId = data.user?.id;
+                const loginPrefix = user.split('@')[0];
+                let nombreCompleto = loginPrefix; // Fallback
+                let usuarioLogin = loginPrefix;   // Fallback
+
+                try {
+                    // Busca por auth_id o por el usuario_login
+                    const resDb = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?or=(auth_id.eq.${userAuthId},usuario_login.eq.${loginPrefix})&select=nombre_completo,usuario_login&limit=1`, {
+                        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${data.access_token}` }
+                    });
+                    if(resDb.ok) {
+                        const dbUsers = await resDb.json();
+                        if(dbUsers.length > 0) {
+                            nombreCompleto = dbUsers[0].nombre_completo;
+                            usuarioLogin = dbUsers[0].usuario_login;
+                        }
+                    }
+                } catch(e) { console.warn("No se pudo obtener el perfil de la tabla usuarios."); }
+
+                // Guardamos la identidad real y blindada
+                localStorage.setItem('pyp_usuario_nombre', nombreCompleto);
+                localStorage.setItem('pyp_usuario_login', usuarioLogin);
+                // =======================================================================
+
                 btn.innerHTML = `<i class="fa-solid fa-check text-xl"></i> ¡Bienvenido!`;
                 btn.classList.replace('bg-primary', 'bg-green-500');
                 
-                // Recargar variables globales desde Supabase de forma transparente antes de entrar
                 const resConf = await fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${data.access_token}` } });
                 if(resConf.ok) {
                     const dataConf = await resConf.json();
