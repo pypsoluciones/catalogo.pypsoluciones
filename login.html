@@ -12,19 +12,29 @@
     <script>
         const cPri = localStorage.getItem('pyp_color_primario') || '#143B62';
         const cSec = localStorage.getItem('pyp_color_secundario') || '#E67E22';
+        const fontFam = localStorage.getItem('pyp_fuente') || "'Inter', sans-serif";
+        
         document.documentElement.style.setProperty('--color-primary', cPri);
         document.documentElement.style.setProperty('--color-secondary', cSec);
-        document.querySelector('meta[name="theme-color"]')?.setAttribute("content", cPri);
+        document.documentElement.style.setProperty('--font-global', fontFam);
+
+        // Actualizar el meta theme-color dinámicamente
+        const metaTheme = document.createElement('meta');
+        metaTheme.name = "theme-color";
+        metaTheme.content = cPri;
+        document.getElementsByTagName('head')[0].appendChild(metaTheme);
     </script>
 
     <link rel="manifest" href="admin_manifest.json">
     <link rel="apple-touch-icon" href="https://i.ibb.co/Y7kFmQbj/Favicon-P-P-Soluciones-Tinified.png">
     <link rel="shortcut icon" type="image/png" href="https://i.ibb.co/Y7kFmQbj/Favicon-P-P-Soluciones-Tinified.png">
 
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
+        body { font-family: var(--font-global); }
         .fade-in { animation: fadeIn 0.5s ease-out; }
         .slide-up { animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -39,10 +49,12 @@
         .border-secondary { border-color: var(--color-secondary); }
         .focus-ring-secondary:focus { border-color: var(--color-secondary); box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-secondary) 20%, transparent); }
         
+        /* Marca Blanca en Gradientes */
         .grad-bg { background: radial-gradient(circle at 0% 0%, var(--color-primary), color-mix(in srgb, var(--color-primary) 30%, transparent) 70%); }
         .grad-accent { background: radial-gradient(circle at 100% 100%, var(--color-secondary), transparent 60%); }
         .grad-line { background: linear-gradient(to right, var(--color-primary), var(--color-secondary), var(--color-primary)); }
 
+        /* Banner PWA */
         #cartel-instalacion { position: fixed; top: 0; left: 0; width: 100%; background-color: var(--color-secondary); color: white; box-shadow: 0 10px 25px rgba(0,0,0,0.2); padding: 16px 24px; box-sizing: border-box; display: flex; justify-content: space-between; align-items: center; z-index: 9999; transform: translateY(-150%); transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1); border-bottom-left-radius: 15px; border-bottom-right-radius: 15px; }
         #cartel-instalacion.mostrar { transform: translateY(0); }
         .texto-instalar { font-size: 14px; line-height: 1.4; flex-grow: 1; padding-right: 15px; font-weight: 500; }
