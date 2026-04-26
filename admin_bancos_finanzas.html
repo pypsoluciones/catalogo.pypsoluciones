@@ -190,7 +190,7 @@
             <form id="form-asignar-fondo" onsubmit="procesarAsignacionFondo(event)" class="p-5 bg-gray-50 space-y-4">
                 <div>
                     <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Origen (Bóveda) *</label>
-                    <select id="asig-boveda" required class="w-full border border-gray-300 rounded px-3 py-2 text-xs font-bold uppercase focus:border-blue-500 outline-none bg-white transition shadow-inner">
+                    <select id="asig-boveda" onchange="manejarCambioBoveda()" required class="w-full border border-gray-300 rounded px-3 py-2 text-xs font-bold uppercase focus:border-blue-500 outline-none bg-white transition shadow-inner">
                         </select>
                 </div>
                 <div>
@@ -203,11 +203,11 @@
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <span class="text-[9px] font-bold text-gray-500">Monto USD ($)</span>
-                            <input type="number" id="asig-usd" step="0.01" min="0" placeholder="0.00" class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm font-black text-center outline-none bg-white focus:border-blue-500" value="0">
+                            <input type="number" id="asig-usd" step="0.01" min="0" placeholder="0.00" class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm font-black text-center outline-none bg-white focus:border-blue-500 transition-colors" value="0">
                         </div>
                         <div>
                             <span class="text-[9px] font-bold text-gray-500">Monto Bs.</span>
-                            <input type="number" id="asig-bs" step="0.01" min="0" placeholder="0.00" class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm font-black text-center outline-none bg-white focus:border-blue-500" value="0">
+                            <input type="number" id="asig-bs" step="0.01" min="0" placeholder="0.00" class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm font-black text-center outline-none bg-white focus:border-blue-500 transition-colors" value="0">
                         </div>
                     </div>
                 </div>
@@ -529,18 +529,39 @@
         async function abrirModalAsignarFondo() {
             document.getElementById('form-asignar-fondo').reset();
             const selectBoveda = document.getElementById('asig-boveda');
-            selectBoveda.innerHTML = dbCuentas.filter(c => c.tipo_cuenta === 'EFECTIVO').map(c => `<option value="${c.id}">${c.nombre} (Saldo: ${c.moneda === 'USD' ? '$'+fmt(c.saldo_usd) : 'Bs.'+fmt(c.saldo_bs)})</option>`).join('');
+            
+            // Inyectamos el atributo "data-moneda" para que el sistema sepa qué moneda maneja la bóveda
+            selectBoveda.innerHTML = dbCuentas.filter(c => c.tipo_cuenta === 'EFECTIVO').map(c => `<option value="${c.id}" data-moneda="${c.moneda}">${c.nombre} (Saldo: ${c.moneda === 'USD' ? '$'+fmt(c.saldo_usd) : 'Bs.'+fmt(c.saldo_bs)})</option>`).join('');
             
             if(selectBoveda.options.length === 0) { alert("Debes crear al menos una cuenta tipo 'Caja Fuerte / Efectivo' primero."); return; }
 
+            // Ejecutamos el bloqueo de moneda inmediatamente
+            manejarCambioBoveda();
+
             mostrarCarga("Cargando cajeros...");
-            const resUsr = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?select=nombre_usuario`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+            try {
+                // CONSULTA ESTRICTA CON LOS NOMBRES REALES DE LA BASE DE DATOS
+                const resUsr = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?select=usuario_login,nombre_completo`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                
+                if(resUsr.ok) {
+                    const usuarios = await resUsr.json();
+                    if(usuarios.length > 0) {
+                        document.getElementById('asig-cajero').innerHTML = usuarios.map(u => 
+                            `<option value="${u.usuario_login}">${u.nombre_completo} (${u.usuario_login})</option>`
+                        ).join('');
+                    } else {
+                        throw new Error("No se encontraron usuarios en la base de datos.");
+                    }
+                } else { 
+                    throw new Error("Error al consultar la tabla de usuarios."); 
+                }
+            } catch (e) {
+                cerrarErrorCarga();
+                alert(e.message);
+                return; // Corta la ejecución si falla
+            }
             cerrarErrorCarga();
             
-            if(resUsr.ok) {
-                const usuarios = await resUsr.json();
-                document.getElementById('asig-cajero').innerHTML = usuarios.map(u => `<option value="${u.nombre_usuario}">${u.nombre_usuario}</option>`).join('');
-            }
             document.getElementById('modal-asignar-fondo').classList.remove('hidden');
             document.getElementById('modal-asignar-fondo').classList.add('flex');
         }
