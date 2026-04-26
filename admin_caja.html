@@ -210,8 +210,7 @@
             </div>
         </div> 
     </main>
-
-    <script> 
+<script> 
         const SUPABASE_URL = 'https://icvfmdvvochzaktugqvj.supabase.co'; 
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImljdmZtZHZ2b2NoemFrdHVncXZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyNDEzMzEsImV4cCI6MjA5MTgxNzMzMX0.gO3D39piT6KGbMMOzrPGWXUp5-g_nOBAgJ-nwPv8IcQ';
         const TOKEN_JWT = localStorage.getItem('pyp_token_seguro'); 
@@ -219,7 +218,7 @@
         let empresaActual = null; 
         let turnoActivo = null; 
         let tasaBCV = 1;
-        let transferenciasPendientes = []; // Ahora es un arreglo para multimoneda
+        let transferenciasPendientes = []; 
 
         window.onload = async () => { 
             try { 
@@ -297,7 +296,7 @@
             }
         }
 
-        // ================= APERTURA DE CAJA (MAKER-CHECKER MULTIMONEDA) =================
+        // ================= APERTURA DE CAJA (AQUÍ SE CORRIGIÓ LA BÚSQUEDA) =================
         async function abrirModalApertura() {
             document.getElementById('modal-abrir-caja').classList.remove('hidden');
             document.getElementById('modal-abrir-caja').classList.add('flex');
@@ -305,15 +304,15 @@
             document.getElementById('estado-fondo-cargando').classList.remove('hidden');
             document.getElementById('estado-fondo-vacio').classList.add('hidden');
             document.getElementById('estado-fondo-pendiente').classList.add('hidden');
-            transferenciasPendientes = []; // Reiniciamos el arreglo
+            transferenciasPendientes = []; 
 
-            // Para cubrir cualquier caso de login (si entra con el user o con el nombre)
+            // Tomamos el nombre exacto de la sesión
             const usrNombre = localStorage.getItem('pyp_usuario_nombre') || 'SISTEMA';
-            const usrLogin = localStorage.getItem('pyp_usuario_login') || usrNombre;
 
             try {
-                // Buscamos transferencias donde el receptor sea el nombre_completo o el usuario_login
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/fin_transferencias?or=(usuario_receptor.eq.${encodeURIComponent(usrNombre)},usuario_receptor.eq.${encodeURIComponent(usrLogin)})&estado=eq.PENDIENTE&select=*,fin_cuentas!id_cuenta_origen(nombre)`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                // Buscamos directamente por el Nombre Completo (Limpiado y seguro)
+                const url = `${SUPABASE_URL}/rest/v1/fin_transferencias?usuario_receptor=eq.${encodeURIComponent(usrNombre)}&estado=eq.PENDIENTE&select=*,fin_cuentas!id_cuenta_origen(nombre)`;
+                const res = await fetch(url, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
                 const data = await res.json();
 
                 document.getElementById('estado-fondo-cargando').classList.add('hidden');
@@ -323,7 +322,6 @@
                     
                     let totalUsd = 0; let totalBs = 0; let nombresOrigen = new Set();
 
-                    // Sumamos todo lo que le mandaron para mostrárselo consolidado en la pantalla
                     data.forEach(t => {
                         totalUsd += parseFloat(t.monto_usd) || 0;
                         totalBs += parseFloat(t.monto_bs) || 0;
@@ -364,7 +362,6 @@
             try {
                 const usuario = localStorage.getItem('pyp_usuario_nombre') || 'SISTEMA';
                 
-                // 1. Abrimos el turno con el dinero total consolidado
                 const payloadTurno = {
                     id_empresa: empresaActual || null, usuario_cajero: usuario, estatus: 'ABIERTA',
                     monto_apertura_usd: redondear(totalUsd), monto_apertura_bs: redondear(totalBs)
@@ -374,28 +371,24 @@
                 if(!resTurno.ok) throw new Error("No se pudo aperturar la caja.");
                 const idCierreNuevo = (await resTurno.json())[0].id_cierre;
 
-                // 2. Procesamos UNO por UNO los paquetes que mandó el admin (Para descontar correctamente de cada bóveda)
                 if (aceptaFondo && transferenciasPendientes.length > 0) {
                     const ts = new Date().toISOString();
                     for(const t of transferenciasPendientes) {
                         const mUsd = parseFloat(t.monto_usd) || 0;
                         const mBs = parseFloat(t.monto_bs) || 0;
 
-                        // A. Sellar la transferencia como ACEPTADA
                         await fetch(`${SUPABASE_URL}/rest/v1/fin_transferencias?id=eq.${t.id}`, { method: 'PATCH', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ estado: 'ACEPTADA', fecha_recepcion: ts }) });
                         
                         let nombreBoveda = "Bóveda";
                         if(t.fin_cuentas && t.fin_cuentas.nombre) nombreBoveda = t.fin_cuentas.nombre;
                         else if (t.fin_cuentas && t.fin_cuentas.length > 0) nombreBoveda = t.fin_cuentas[0].nombre;
 
-                        // B. Sacar el dinero de la bóveda específica
                         const payloadEgresoBoveda = { 
                             id_empresa: empresaActual || null, id_cuenta: t.id_cuenta_origen, fecha: ts, tipo: 'EGRESO', 
                             concepto: `ASIGNACIÓN ACEPTADA POR CAJERO: ${usuario}`, monto_usd: redondear(mUsd), monto_bs: redondear(mBs), usuario: usuario, referencia_origen: t.id
                         }; 
                         await fetch(`${SUPABASE_URL}/rest/v1/fin_movimientos`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify(payloadEgresoBoveda) });
 
-                        // C. Meter el dinero a la caja del cajero
                         const payloadIngresoCaja = {
                             id_empresa: empresaActual || null, id_cierre: idCierreNuevo, fecha: ts, tipo: 'INGRESO',
                             concepto: `FONDO RECIBIDO DESDE: ${nombreBoveda}`, monto_usd: redondear(mUsd), monto_bs: redondear(mBs), metodo_pago: 'EFECTIVO_MIXTO', usuario: usuario
@@ -410,7 +403,6 @@
             } catch(e) { mostrarErrorConexion(e.message); } finally { if(btn) btn.disabled = false; }
         }
 
-        // ================= CARGA DE MOVIMIENTOS EN VIVO =================
         async function cargarMovimientosTurno(idCierre) {
             const res = await fetch(`${SUPABASE_URL}/rest/v1/caja_movimientos?id_cierre=eq.${idCierre}&select=*&order=fecha.desc`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }); 
             if (!res.ok) return; 
@@ -449,7 +441,6 @@
             turnoActivo.totalCalculadoSistema = parseFloat(turnoActivo.monto_apertura_usd) + sumIngresos - sumEgresos;
         }
 
-        // ================= CIERRE DE CAJA (CUADRE Z) =================
         function abrirModalCierre() {
             document.getElementById('dec-efectivo-usd').value = '';
             document.getElementById('dec-efectivo-bs').value = '';
@@ -556,6 +547,6 @@
                 </div>`;
             window.print();
         }
-    </script> 
+    </script>   
 </body> 
 </html>
