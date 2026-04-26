@@ -63,6 +63,14 @@
                 <div class="bg-blue-50 border border-blue-200 rounded p-3 text-[10px] text-primary font-bold uppercase text-center">
                     Ingrese el fondo de caja inicial (Sencillo para vuelto).
                 </div>
+                
+                <div>
+                    <label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Origen de los Fondos (Trazabilidad) *</label>
+                    <select id="input-origen-fondo" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[11px] font-bold text-primary outline-none bg-white focus:border-tertiary transition uppercase shadow-sm">
+                        <option value="SALDO_ANTERIOR">SALDO RETENIDO DEL TURNO ANTERIOR</option>
+                    </select>
+                </div>
+
                 <div class="grid grid-cols-2 gap-3">
                     <div class="text-left"> 
                         <label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Fondo USD ($)</label> 
@@ -198,8 +206,9 @@
         const TOKEN_JWT = localStorage.getItem('pyp_token_seguro'); 
         
         let empresaActual = null; 
-        let turnoActivo = null; // Guardará el objeto del turno si está abierto
+        let turnoActivo = null; 
         let tasaBCV = 1;
+        let dbCuentas = []; // Para almacenar las bóvedas
 
         window.onload = async () => { 
             try { 
@@ -238,16 +247,37 @@
                 const resTasa = await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?moneda=eq.USD&select=tasa&order=fecha_actualizacion.desc&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }); 
                 if (resTasa.ok) { const dataT = await resTasa.json(); if(dataT.length > 0) tasaBCV = dataT[0].tasa; }
 
+                // NUEVA LÓGICA: Traer las cuentas maestras para el selector
+                const filtroEmpresa = empresaActual ? `id_empresa=eq.${empresaActual}` : `id_empresa=is.null`;
+                const resCuentas = await fetch(`${SUPABASE_URL}/rest/v1/fin_cuentas?${filtroEmpresa}&estatus=eq.ACTIVO`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                if (resCuentas.ok) {
+                    dbCuentas = await resCuentas.json();
+                    llenarSelectorOrigenFondos();
+                }
+
                 await verificarTurnoActivo();
                 cerrarErrorCarga();
             } catch(e) { mostrarErrorConexion(e.message); } 
         } 
 
+        function llenarSelectorOrigenFondos() {
+            const select = document.getElementById('input-origen-fondo');
+            if(!select) return;
+            
+            // Opción por defecto (Sin tocar la bóveda)
+            let html = '<option value="SALDO_ANTERIOR">SALDO RETENIDO DEL TURNO ANTERIOR</option>';
+            
+            // Agregamos las Bóvedas y Bancos que haya creado el Administrador
+            dbCuentas.filter(c => c.tipo_cuenta === 'EFECTIVO' || c.tipo_cuenta === 'BANCO').forEach(c => {
+                html += `<option value="${c.id}">${c.nombre} (${c.moneda})</option>`;
+            });
+            select.innerHTML = html;
+        }
+
         async function verificarTurnoActivo() {
             const filtroEmpresa = empresaActual ? `id_empresa=eq.${empresaActual}&` : `id_empresa=is.null&`; 
             const usuario = localStorage.getItem('pyp_usuario_nombre') || 'SISTEMA';
             
-            // Busca si hay un turno ABIERTO para este usuario/empresa
             const res = await fetch(`${SUPABASE_URL}/rest/v1/cierres_caja?${filtroEmpresa}usuario_cajero=eq.${usuario}&estatus=eq.ABIERTA&select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }); 
             if (!res.ok) throw new Error("Fallo al leer estado de caja."); 
             
@@ -283,6 +313,7 @@
         // ================= APERTURA DE CAJA =================
         function abrirModalApertura() {
             document.getElementById('input-fondo-usd').value = '0.00';
+            document.getElementById('input-fondo-bs').value = '0.00';
             document.getElementById('modal-abrir-caja').classList.remove('hidden');
             document.getElementById('modal-abrir-caja').classList.add('flex');
             setTimeout(() => document.getElementById('input-fondo-usd').focus(), 100);
@@ -296,12 +327,20 @@
         async function procesarAperturaCaja() {
             const fondoUsd = parseFloat(document.getElementById('input-fondo-usd').value) || 0;
             const fondoBs = parseFloat(document.getElementById('input-fondo-bs').value) || 0;
+            
+            // Lógica para detectar qué origen eligió el cajero
+            const selectOrigen = document.getElementById('input-origen-fondo');
+            const origenFondoTexto = selectOrigen.options[selectOrigen.selectedIndex].text;
+            const idCuentaOrigen = selectOrigen.value !== 'SALDO_ANTERIOR' ? selectOrigen.value : null;
+
             const btn = document.getElementById('btn-procesar-apertura'); btn.disabled = true;
-            mostrarCarga("Aperturando Turno...");
+            mostrarCarga("Aperturando Turno...", "Registrando movimientos contables...");
 
             try {
                 const usuario = localStorage.getItem('pyp_usuario_nombre') || 'SISTEMA';
-                const payload = {
+                
+                // 1. Creamos el turno (Se mantiene en la tabla original cierres_caja)
+                const payloadTurno = {
                     id_empresa: empresaActual || null,
                     usuario_cajero: usuario,
                     estatus: 'ABIERTA',
@@ -309,14 +348,49 @@
                     monto_apertura_bs: fondoBs
                 };
 
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/cierres_caja`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, body: JSON.stringify(payload) }); 
-                if(!res.ok) throw new Error("No se pudo aperturar la caja.");
+                const resTurno = await fetch(`${SUPABASE_URL}/rest/v1/cierres_caja`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, body: JSON.stringify(payloadTurno) }); 
+                if(!resTurno.ok) throw new Error("No se pudo aperturar la caja.");
                 
+                const idCierreNuevo = (await resTurno.json())[0].id_cierre;
+
+                // 2. SI ELIGIÓ UNA BÓVEDA -> Registramos el EGRESO en el Libro Mayor (fin_movimientos)
+                if (idCuentaOrigen && (fondoUsd > 0 || fondoBs > 0)) {
+                    const payloadEgresoBoveda = { 
+                        id_empresa: empresaActual || null, 
+                        id_cuenta: idCuentaOrigen, 
+                        fecha: new Date().toISOString(), 
+                        tipo: 'EGRESO', 
+                        concepto: `FONDO ASIGNADO A CAJERO: ${usuario}`, 
+                        monto_usd: fondoUsd, 
+                        monto_bs: fondoBs, 
+                        usuario: usuario,
+                        referencia_origen: idCierreNuevo
+                    }; 
+                    await fetch(`${SUPABASE_URL}/rest/v1/fin_movimientos`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify(payloadEgresoBoveda) });
+                }
+
+                // 3. Registramos el INGRESO en la caja del cajero (caja_movimientos)
+                if (fondoUsd > 0 || fondoBs > 0) {
+                    const payloadIngresoCaja = {
+                        id_empresa: empresaActual || null,
+                        id_cierre: idCierreNuevo,
+                        fecha: new Date().toISOString(),
+                        tipo: 'INGRESO',
+                        concepto: `APERTURA CAJA. Origen: ${origenFondoTexto}`,
+                        monto_usd: fondoUsd,
+                        monto_bs: fondoBs,
+                        metodo_pago: 'EFECTIVO_MIXTO',
+                        usuario: usuario
+                    };
+                    await fetch(`${SUPABASE_URL}/rest/v1/caja_movimientos`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify(payloadIngresoCaja) });
+                }
+
                 cerrarModalApertura();
                 await verificarTurnoActivo();
                 cerrarErrorCarga();
             } catch(e) { mostrarErrorConexion(e.message); } finally { btn.disabled = false; }
         }
+
         // ================= CARGA DE MOVIMIENTOS EN VIVO =================
         async function cargarMovimientosTurno(idCierre) {
             const res = await fetch(`${SUPABASE_URL}/rest/v1/caja_movimientos?id_cierre=eq.${idCierre}&select=*&order=fecha.desc`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }); 
@@ -351,7 +425,6 @@
             document.getElementById('metric-ingresos').innerText = `$${fmt(sumIngresos)}`;
             document.getElementById('metric-egresos').innerText = `$${fmt(sumEgresos)}`;
             
-            // Guardamos esto en el objeto activo para el Cuadre Z
             turnoActivo.sumIngresos = sumIngresos;
             turnoActivo.sumEgresos = sumEgresos;
             turnoActivo.totalCalculadoSistema = parseFloat(turnoActivo.monto_apertura_usd) + sumIngresos - sumEgresos;
@@ -383,7 +456,6 @@
             mostrarCarga("Cuadrando Caja y Generando Reporte Z...");
 
             try {
-                // 1. Recoger Declaración del Cajero
                 const decEfvoUsd = parseFloat(document.getElementById('dec-efectivo-usd').value) || 0;
                 const decEfvoBs = parseFloat(document.getElementById('dec-efectivo-bs').value) || 0;
                 const decPuntoBs = parseFloat(document.getElementById('dec-punto-bs').value) || 0;
@@ -391,10 +463,7 @@
                 const decZelleUsd = parseFloat(document.getElementById('dec-zelle-usd').value) || 0;
                 const obs = document.getElementById('dec-observaciones').value.trim();
 
-                // 2. Convertir todo a USD para el cuadre matemático
                 const totalDeclaradoUsd = decEfvoUsd + decZelleUsd + (decEfvoBs / tasaBCV) + (decPuntoBs / tasaBCV) + (decTransfBs / tasaBCV);
-                
-                // 3. Calcular Descuadre (Lo que el sistema dice vs Lo que el cajero declara)
                 const descuadreUsd = totalDeclaradoUsd - turnoActivo.totalCalculadoSistema;
 
                 const desglosePagos = {
@@ -415,13 +484,11 @@
                     observaciones: obs || null
                 };
 
-                // 4. Actualizar tabla de cierres (Sellar)
                 const res = await fetch(`${SUPABASE_URL}/rest/v1/cierres_caja?id_cierre=eq.${turnoActivo.id_cierre}`, { method: 'PATCH', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, body: JSON.stringify(payload) }); 
                 if(!res.ok) throw new Error("Fallo al sellar la caja.");
                 
                 const datosCierreFinal = (await res.json())[0];
 
-                // 5. Imprimir Ticket Z
                 imprimirReporteZ(datosCierreFinal);
 
                 cerrarModalCierre();
