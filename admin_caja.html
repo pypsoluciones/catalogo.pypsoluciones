@@ -214,6 +214,7 @@
     </main>
 
     <script> 
+       <script> 
         const SUPABASE_URL = 'https://icvfmdvvochzaktugqvj.supabase.co'; 
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImljdmZtZHZ2b2NoemFrdHVncXZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyNDEzMzEsImV4cCI6MjA5MTgxNzMzMX0.gO3D39piT6KGbMMOzrPGWXUp5-g_nOBAgJ-nwPv8IcQ';
         const TOKEN_JWT = localStorage.getItem('pyp_token_seguro'); 
@@ -311,7 +312,8 @@
             const usrLogin = localStorage.getItem('pyp_usuario_login') || usrNombre;
 
             try {
-                const url = `${SUPABASE_URL}/rest/v1/fin_transferencias?or=(usuario_receptor.eq.${encodeURIComponent(usrNombre)},usuario_receptor.eq.${encodeURIComponent(usrLogin)})&estado=eq.PENDIENTE&select=*,fin_cuentas!id_cuenta_origen(nombre)`;
+                // NOTA: Ahora pedimos que nos traiga también saldo_usd y saldo_bs de la bóveda
+                const url = `${SUPABASE_URL}/rest/v1/fin_transferencias?or=(usuario_receptor.eq.${encodeURIComponent(usrNombre)},usuario_receptor.eq.${encodeURIComponent(usrLogin)})&estado=eq.PENDIENTE&select=*,fin_cuentas!id_cuenta_origen(nombre,saldo_usd,saldo_bs)`;
                 const res = await fetch(url, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
                 const data = await res.json();
 
@@ -325,8 +327,10 @@
                         totalUsd += parseFloat(t.monto_usd) || 0;
                         totalBs += parseFloat(t.monto_bs) || 0;
                         let nom = "Bóveda";
-                        if(t.fin_cuentas && t.fin_cuentas.nombre) nom = t.fin_cuentas.nombre;
-                        else if (t.fin_cuentas && t.fin_cuentas.length > 0) nom = t.fin_cuentas[0].nombre;
+                        if(t.fin_cuentas) {
+                            const cta = Array.isArray(t.fin_cuentas) ? t.fin_cuentas[0] : t.fin_cuentas;
+                            if(cta.nombre) nom = cta.nombre;
+                        }
                         nombresOrigen.add(nom);
                     });
 
@@ -375,20 +379,35 @@
                     for(const t of transferenciasPendientes) {
                         const mUsd = parseFloat(t.monto_usd) || 0;
                         const mBs = parseFloat(t.monto_bs) || 0;
-
+                        
+                        const cta = Array.isArray(t.fin_cuentas) ? t.fin_cuentas[0] : t.fin_cuentas;
+                        const nombreBoveda = cta ? cta.nombre : "Bóveda";
+                        
+                        // A. Sellar la transferencia como ACEPTADA
                         await fetch(`${SUPABASE_URL}/rest/v1/fin_transferencias?id=eq.${t.id}`, { method: 'PATCH', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ estado: 'ACEPTADA', fecha_recepcion: ts }) });
                         
-                        let nombreBoveda = "Bóveda";
-                        if(t.fin_cuentas && t.fin_cuentas.nombre) nombreBoveda = t.fin_cuentas.nombre;
-                        else if (t.fin_cuentas && t.fin_cuentas.length > 0) nombreBoveda = t.fin_cuentas[0].nombre;
-
+                        // B. Libro Mayor (Dejar rastro)
                         const payloadEgresoBoveda = { 
                             id_empresa: empresaActual || null, id_cuenta: t.id_cuenta_origen, fecha: ts, tipo: 'EGRESO', 
                             concepto: `ASIGNACIÓN ACEPTADA POR CAJERO: ${usuario}`, monto_usd: redondear(mUsd), monto_bs: redondear(mBs), usuario: usuario, referencia_origen: t.id
                         }; 
                         await fetch(`${SUPABASE_URL}/rest/v1/fin_movimientos`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify(payloadEgresoBoveda) });
 
-                        // ¡NOTA CLAVE! Usamos la palabra "FONDO RECIBIDO" para que la matemática sepa que esto NO es una venta.
+                        // C. DESCONTAR DE LA BÓVEDA (La pieza que faltaba)
+                        if(cta) {
+                            const saldoActualUsd = parseFloat(cta.saldo_usd) || 0;
+                            const saldoActualBs = parseFloat(cta.saldo_bs) || 0;
+                            const nuevoSaldoUsd = redondear(saldoActualUsd - mUsd);
+                            const nuevoSaldoBs = redondear(saldoActualBs - mBs);
+
+                            await fetch(`${SUPABASE_URL}/rest/v1/fin_cuentas?id=eq.${t.id_cuenta_origen}`, { 
+                                method: 'PATCH', 
+                                headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, 
+                                body: JSON.stringify({ saldo_usd: nuevoSaldoUsd, saldo_bs: nuevoSaldoBs }) 
+                            });
+                        }
+
+                        // D. Ingresar a la Caja del Cajero
                         const payloadIngresoCaja = {
                             id_empresa: empresaActual || null, id_cierre: idCierreNuevo, fecha: ts, tipo: 'INGRESO',
                             concepto: `FONDO RECIBIDO DESDE: ${nombreBoveda}`, monto_usd: redondear(mUsd), monto_bs: redondear(mBs), metodo_pago: 'EFECTIVO_MIXTO', usuario: usuario
@@ -403,7 +422,7 @@
             } catch(e) { mostrarErrorConexion(e.message); } finally { if(btn) btn.disabled = false; }
         }
 
-        // ================= CARGA DE MOVIMIENTOS EN VIVO (CON MATEMÁTICA CORREGIDA) =================
+        // ================= CARGA DE MOVIMIENTOS EN VIVO =================
         async function cargarMovimientosTurno(idCierre) {
             const res = await fetch(`${SUPABASE_URL}/rest/v1/caja_movimientos?id_cierre=eq.${idCierre}&select=*&order=fecha.desc`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }); 
             if (!res.ok) return; 
@@ -412,9 +431,9 @@
             const tbody = document.getElementById('tabla-movimientos');
             let html = '';
             
-            let sApUsd = 0, sApBs = 0; // Sumatorias de Apertura/Fondo
-            let sInUsd = 0, sInBs = 0; // Sumatorias de Ingresos Reales (Ventas)
-            let sEgUsd = 0, sEgBs = 0; // Sumatorias de Egresos Reales
+            let sApUsd = 0, sApBs = 0; 
+            let sInUsd = 0, sInBs = 0; 
+            let sEgUsd = 0, sEgBs = 0; 
 
             if(movs.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-gray-400 font-bold text-[10px] uppercase">Sin transacciones aún.</td></tr>`;
@@ -427,7 +446,6 @@
                     const color = m.tipo === 'INGRESO' ? 'text-green-600' : 'text-red-600';
                     const signo = m.tipo === 'INGRESO' ? '+' : '-';
                     
-                    // SEPARAMOS LA MATEMÁTICA PARA QUE EL FONDO INICIAL NO SUME A LAS VENTAS
                     if (m.concepto.includes('FONDO RECIBIDO')) {
                         sApUsd += usd; sApBs += bs;
                     } else if (m.tipo === 'INGRESO') {
@@ -436,7 +454,6 @@
                         sEgUsd += usd; sEgBs += bs;
                     }
 
-                    // Armamos el texto para que la tabla muestre USD y BS si existen
                     let textoMonto = '';
                     if (usd > 0) textoMonto += `$${fmt(usd)} `;
                     if (bs > 0) textoMonto += `Bs.${fmt(bs)}`;
@@ -452,21 +469,18 @@
                 tbody.innerHTML = html;
             }
 
-            // INYECTAMOS LA MATEMÁTICA EN LOS PANELES VISUALES
             document.getElementById('metric-fondo').innerHTML = `$${fmt(sApUsd)}<br><span class="text-[10px] text-gray-500">Bs. ${fmt(sApBs)}</span>`;
             document.getElementById('metric-ingresos').innerHTML = `$${fmt(sInUsd)}<br><span class="text-[10px] text-gray-500">Bs. ${fmt(sInBs)}</span>`;
             document.getElementById('metric-egresos').innerHTML = `$${fmt(sEgUsd)}<br><span class="text-[10px] text-gray-500">Bs. ${fmt(sEgBs)}</span>`;
             
-            // GUARDAMOS PARA EL REPORTE Z
             turnoActivo.sumFondoUsd = sApUsd; turnoActivo.sumFondoBs = sApBs;
             turnoActivo.sumIngresosUsd = sInUsd; turnoActivo.sumIngresosBs = sInBs;
             turnoActivo.sumEgresosUsd = sEgUsd; turnoActivo.sumEgresosBs = sEgBs;
             
-            // EL TOTAL ESPERADO EN LA CAJA AL CERRAR (Fondo + Ventas - Egresos) CONVERTIDO TODO A USD
             turnoActivo.totalCalculadoSistema = sApUsd + sInUsd - sEgUsd + ((sApBs + sInBs - sEgBs) / tasaBCV);
         }
 
-        // ================= CIERRE DE CAJA (CUADRE Z) =================
+        // ================= CIERRE DE CAJA =================
         function abrirModalCierre() {
             document.getElementById('dec-efectivo-usd').value = '';
             document.getElementById('dec-efectivo-bs').value = '';
@@ -573,6 +587,6 @@
                 </div>`;
             window.print();
         }
-    </script> 
+    </script>
 </body> 
 </html>
