@@ -557,24 +557,29 @@
         }
         function filtrarInventario() { renderizarInventario(); }
 
-        function renderizarInventario() {
-            const query   = document.getElementById('buscador-inv')?.value.trim() || '';
-            const cat     = document.getElementById('filtro-cat-inv')?.value || 'TODAS';
-            const marca   = document.getElementById('filtro-marca-inv')?.value || 'TODAS';
-            const estatus = document.getElementById('filtro-estatus-inv')?.value || 'TODOS';
-            const stock   = document.getElementById('filtro-stock-inv')?.value || 'TODOS';
+       function renderizarInventario() {
+            const query   = document.getElementById('buscador-inv')?.value.trim() || '';
+            const cat     = document.getElementById('filtro-cat-inv')?.value || 'TODAS';
+            const marca   = document.getElementById('filtro-marca-inv')?.value || 'TODAS';
+            const estatus = document.getElementById('filtro-estatus-inv')?.value || 'TODOS';
+            const stock   = document.getElementById('filtro-stock-inv')?.value || 'TODOS';
+            const imagen  = document.getElementById('filtro-imagen-inv')?.value || 'TODOS';
 
-            let data = dbInventario;
+            let data = dbInventario;
 
-            if (query !== '') {
-                const qN = query.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                data = fuseInventario.search(qN).map(r => r.item);
-            }
-            if (cat     !== 'TODAS') data = data.filter(p => p.categoria_del_producto === cat);
-            if (marca   !== 'TODAS') data = data.filter(p => p.marca === marca);
-            if (estatus !== 'TODOS') data = data.filter(p => p.estado_producto === estatus);
-            if (stock === 'CRITICO')   data = data.filter(p => p.stock_actual <= p.stock_minimo);
-            if (stock === 'DISPONIBLE') data = data.filter(p => p.stock_actual > 0 || p.permitir_negativo);
+            if (query !== '') {
+                const qN = query.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                data = fuseInventario.search(qN).map(r => r.item);
+            }
+            if (cat     !== 'TODAS') data = data.filter(p => p.categoria_del_producto === cat);
+            if (marca   !== 'TODAS') data = data.filter(p => p.marca === marca);
+            if (estatus !== 'TODOS') data = data.filter(p => p.estado_producto === estatus);
+            if (stock === 'CRITICO')   data = data.filter(p => p.stock_actual <= p.stock_minimo);
+            if (stock === 'DISPONIBLE') data = data.filter(p => p.stock_actual > 0 || p.permitir_negativo);
+            if (imagen === 'SIN_FOTO') data = data.filter(p => !p.imagen_principal);
+            if (imagen === 'CON_FOTO') data = data.filter(p => p.imagen_principal);
+
+            // NUEVO: actualizar contador de resultados
 
             // NUEVO: actualizar contador de resultados
             const badge = document.getElementById('badge-resultados');
