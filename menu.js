@@ -109,7 +109,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     <i class="fa-solid fa-chevron-down text-[10px]"></i>
                 </button>
                 <div id="submenu-sis" class="pl-6 space-y-1 mt-1 ${currentPage.includes('admin_usuarios') || currentPage.includes('admin_configuracion') ? '' : 'hidden'}">
-                    <a href="admin_usuarios.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_usuarios.html' ? estiloActivoSub : estiloInactivoSub}">Control de Accesos</a>
+                    <a href="admin_usuarios.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_usuarios.html' ? estiloActivoSub : estiloInactivoSub}">Usuarios</a>
                     <a href="admin_publicidad.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_publicidad.html' ? estiloActivoSub : estiloInactivoSub}">Publicidad TV</a>
                     <a href="admin_configuracion.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_configuracion.html' ? estiloActivoSub : estiloInactivoSub}">Marca Blanca</a>
                 </div>
