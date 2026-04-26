@@ -89,7 +89,7 @@
                         </button>
                     </div>
                     
-                    <div id="grid-cuentas" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div id="grid-cuentas" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                         </div>
                 </div>
 
@@ -124,17 +124,22 @@
     </main>
 
     <div id="modal-cuenta" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[9990] hidden flex items-center justify-center p-4 fade-in">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col border border-gray-200">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col border border-gray-200">
             <div class="bg-primary text-white px-4 py-3 flex justify-between items-center">
-                <h3 class="font-bold text-[12px] tracking-wide uppercase"><i class="fa-solid fa-vault mr-2 text-tertiary"></i> Crear Cuenta</h3>
+                <h3 id="modal-titulo-cuenta" class="font-bold text-[12px] tracking-wide uppercase"><i class="fa-solid fa-vault mr-2 text-tertiary"></i> Crear Cuenta</h3>
                 <button onclick="cerrarModalCuenta()" class="text-gray-300 hover:text-white transition"><i class="fa-solid fa-times"></i></button>
             </div>
-            <form onsubmit="guardarCuenta(event)" class="p-5 bg-gray-50 space-y-4">
-                <div>
-                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Nombre de la Cuenta *</label>
-                    <input type="text" id="cta-nombre" required placeholder="Ej: Bóveda Principal" class="w-full border border-gray-300 rounded px-3 py-2 text-xs font-bold uppercase focus:border-tertiary outline-none bg-white transition">
-                </div>
-                <div class="grid grid-cols-2 gap-4">
+            <form id="form-cuenta" onsubmit="guardarCuenta(event)" class="p-5 bg-gray-50 space-y-4">
+                <input type="hidden" id="cta-id">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="md:col-span-2">
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Nombre de la Cuenta *</label>
+                        <input type="text" id="cta-nombre" required placeholder="Ej: Bóveda Principal" class="w-full border border-gray-300 rounded px-3 py-2 text-xs font-bold uppercase focus:border-tertiary outline-none bg-white transition">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Número de Cuenta</label>
+                        <input type="text" id="cta-numero" placeholder="Ej: 0134-..." class="w-full border border-gray-300 rounded px-3 py-2 text-xs font-bold uppercase focus:border-tertiary outline-none bg-white transition">
+                    </div>
                     <div>
                         <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Clasificación *</label>
                         <select id="cta-tipo" required class="w-full border border-gray-300 rounded px-3 py-2 text-xs font-bold uppercase focus:border-tertiary outline-none bg-white transition">
@@ -152,15 +157,21 @@
                             <option value="EUR">Euros (€)</option>
                         </select>
                     </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Descripción / Agencia</label>
+                        <input type="text" id="cta-desc" placeholder="Detalles u oficina..." class="w-full border border-gray-300 rounded px-3 py-2 text-[10px] uppercase focus:border-tertiary outline-none bg-white transition">
+                    </div>
                 </div>
-                <div class="bg-blue-50 border border-blue-200 rounded p-3">
-                    <label class="block text-[10px] font-bold text-primary uppercase mb-1">Saldo Inicial</label>
+                
+                <div class="bg-blue-50 border border-blue-200 rounded p-3" id="caja-saldos-iniciales">
+                    <label class="block text-[10px] font-bold text-primary uppercase mb-1">Saldo Inicial (Solo Creación)</label>
                     <div class="grid grid-cols-2 gap-3">
                         <input type="number" id="cta-saldo-usd" step="0.01" placeholder="US$ 0.00" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-black text-center outline-none bg-white">
                         <input type="number" id="cta-saldo-bs" step="0.01" placeholder="Bs. 0.00" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-black text-center outline-none bg-white">
                     </div>
                     <p class="text-[8px] text-gray-500 mt-1 font-medium leading-tight">Este saldo inicial quedará registrado en el Libro Mayor como un ajuste de apertura.</p>
                 </div>
+                
                 <button type="submit" id="btn-guardar-cta" class="w-full bg-secondary hover:opacity-90 text-white font-bold py-2.5 rounded shadow btn-press uppercase text-[11px] tracking-wider transition">Guardar Cuenta</button>
             </form>
         </div>
@@ -172,7 +183,7 @@
                 <h3 class="font-bold text-[12px] tracking-wide uppercase"><i class="fa-solid fa-calculator mr-2 text-tertiary"></i> Configurar Terminal POS</h3>
                 <button onclick="cerrarModalTerminal()" class="text-gray-300 hover:text-white transition"><i class="fa-solid fa-times"></i></button>
             </div>
-            <form onsubmit="guardarTerminal(event)" class="p-5 bg-gray-50 space-y-4">
+            <form id="form-terminal" onsubmit="guardarTerminal(event)" class="p-5 bg-gray-50 space-y-4">
                 <div>
                     <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Nombre del Aparato *</label>
                     <input type="text" id="term-nombre" required placeholder="Ej: Punto Banesco Inalámbrico" class="w-full border border-gray-300 rounded px-3 py-2 text-xs font-bold uppercase focus:border-tertiary outline-none bg-white transition">
@@ -285,18 +296,20 @@
 
                 html += `
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition">
-                    <div class="flex justify-between items-start mb-4">
-                        <div class="flex items-center gap-3">
+                    <div class="flex justify-between items-start mb-2">
+                        <div class="flex items-center gap-3 w-full pr-6">
                             <div class="w-10 h-10 rounded-full ${bgIcon} ${color} flex items-center justify-center text-lg shrink-0">
                                 <i class="fa-solid ${icon}"></i>
                             </div>
-                            <div>
-                                <h3 class="text-sm font-black text-gray-800 uppercase leading-tight truncate w-32 md:w-40">${c.nombre}</h3>
+                            <div class="w-full">
+                                <h3 class="text-sm font-black text-gray-800 uppercase leading-tight line-clamp-2">${c.nombre}</h3>
                                 <span class="text-[9px] font-bold text-gray-500 uppercase tracking-widest">${c.tipo_cuenta} • ${c.moneda}</span>
+                                ${c.numero_cuenta ? `<p class="text-[9px] font-mono text-gray-400 mt-1">${c.numero_cuenta}</p>` : ''}
                             </div>
                         </div>
+                        <button onclick="abrirModalCuenta('${c.id}')" class="absolute top-4 right-4 text-gray-300 hover:text-secondary transition bg-gray-50 hover:bg-orange-50 w-6 h-6 rounded flex items-center justify-center shadow-sm" title="Editar Cuenta"><i class="fa-solid fa-pen text-[10px]"></i></button>
                     </div>
-                    <div class="grid grid-cols-2 gap-2 border-t border-gray-100 pt-3">
+                    <div class="grid grid-cols-2 gap-2 border-t border-gray-100 pt-3 mt-2">
                         <div>
                             <p class="text-[8px] text-gray-400 font-bold uppercase">Saldo ($)</p>
                             <p class="text-sm font-black text-gray-700 leading-none">$${fmt(c.saldo_usd)}</p>
@@ -334,50 +347,103 @@
         function actualizarSelectCuentasBanco() {
             const select = document.getElementById('term-banco');
             let html = '<option value="">Seleccione un Banco de destino...</option>';
-            // Filtramos para que solo muestre cuentas tipo BANCO (O Efectivo si deciden amarrar un punto a una bóveda)
             dbCuentas.filter(c => c.tipo_cuenta === 'BANCO' || c.tipo_cuenta === 'EFECTIVO').forEach(c => {
                 html += `<option value="${c.id}">${c.nombre} (${c.moneda})</option>`;
             });
             select.innerHTML = html;
         }
 
-        // MODALES
-        function abrirModalCuenta() { document.getElementById('modal-cuenta').classList.remove('hidden'); document.getElementById('modal-cuenta').classList.add('flex'); }
+        // ================= MODALES =================
+        function abrirModalCuenta(id = null) {
+            const form = document.getElementById('form-cuenta');
+            form.reset(); // Limpia la caché visual
+            document.getElementById('cta-id').value = '';
+            
+            const titulo = document.getElementById('modal-titulo-cuenta');
+            const btn = document.getElementById('btn-guardar-cta');
+            const cajaSaldos = document.getElementById('caja-saldos-iniciales');
+
+            if (id) {
+                // Modo Edición
+                const cta = dbCuentas.find(c => c.id === id);
+                if(cta) {
+                    document.getElementById('cta-id').value = cta.id;
+                    document.getElementById('cta-nombre').value = cta.nombre;
+                    document.getElementById('cta-numero').value = cta.numero_cuenta || '';
+                    document.getElementById('cta-tipo').value = cta.tipo_cuenta;
+                    document.getElementById('cta-moneda').value = cta.moneda;
+                    document.getElementById('cta-desc').value = cta.descripcion || '';
+                    
+                    titulo.innerHTML = '<i class="fa-solid fa-pen mr-2 text-tertiary"></i> Editar Cuenta';
+                    btn.innerText = 'Actualizar Cuenta';
+                    cajaSaldos.classList.add('hidden'); // Ocultar saldos en edición para evitar alteraciones directas
+                }
+            } else {
+                // Modo Creación
+                titulo.innerHTML = '<i class="fa-solid fa-vault mr-2 text-tertiary"></i> Crear Cuenta';
+                btn.innerText = 'Guardar Cuenta';
+                cajaSaldos.classList.remove('hidden');
+            }
+
+            document.getElementById('modal-cuenta').classList.remove('hidden'); 
+            document.getElementById('modal-cuenta').classList.add('flex'); 
+        }
         function cerrarModalCuenta() { document.getElementById('modal-cuenta').classList.add('hidden'); document.getElementById('modal-cuenta').classList.remove('flex'); }
-        function abrirModalTerminal() { document.getElementById('modal-terminal').classList.remove('hidden'); document.getElementById('modal-terminal').classList.add('flex'); }
+        
+        function abrirModalTerminal() { 
+            document.getElementById('form-terminal').reset();
+            document.getElementById('modal-terminal').classList.remove('hidden'); document.getElementById('modal-terminal').classList.add('flex'); 
+        }
         function cerrarModalTerminal() { document.getElementById('modal-terminal').classList.add('hidden'); document.getElementById('modal-terminal').classList.remove('flex'); }
 
-        // GUARDADO EN BD (PARTIDA DOBLE INICIAL)
+        // ================= GUARDADO EN BD =================
         async function guardarCuenta(e) {
             e.preventDefault();
             const btn = document.getElementById('btn-guardar-cta'); btn.disabled = true; btn.innerHTML = "...";
-            mostrarCarga("Creando Cuenta...");
+            const idCta = document.getElementById('cta-id').value;
+            mostrarCarga(idCta ? "Actualizando Cuenta..." : "Creando Cuenta...");
 
             const sUsd = parseFloat(document.getElementById('cta-saldo-usd').value) || 0;
             const sBs = parseFloat(document.getElementById('cta-saldo-bs').value) || 0;
-            const tipo = document.getElementById('cta-tipo').value;
 
             try {
                 const payloadCta = {
-                    id_empresa: empresaActual || null,
                     nombre: document.getElementById('cta-nombre').value.trim().toUpperCase(),
-                    tipo_cuenta: tipo,
+                    tipo_cuenta: document.getElementById('cta-tipo').value,
                     moneda: document.getElementById('cta-moneda').value,
-                    saldo_usd: redondear(sUsd),
-                    saldo_bs: redondear(sBs)
+                    numero_cuenta: document.getElementById('cta-numero').value.trim(),
+                    descripcion: document.getElementById('cta-desc').value.trim()
                 };
 
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/fin_cuentas`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, body: JSON.stringify(payloadCta) });
-                if(!res.ok) throw new Error("No se pudo crear la cuenta.");
-                
-                const ctaId = (await res.json())[0].id;
-                const usuario = localStorage.getItem('pyp_usuario_nombre') || 'SISTEMA';
+                let method = 'POST';
+                let url = `${SUPABASE_URL}/rest/v1/fin_cuentas`;
 
-                // Si se declaró un saldo inicial, creamos el movimiento en el Libro Mayor por seguridad
-                if(sUsd > 0 || sBs > 0) {
+                if (idCta) {
+                    // Actualización
+                    method = 'PATCH';
+                    url += `?id=eq.${idCta}`;
+                } else {
+                    // Creación nueva
+                    payloadCta.id_empresa = empresaActual || null;
+                    payloadCta.saldo_usd = redondear(sUsd);
+                    payloadCta.saldo_bs = redondear(sBs);
+                }
+
+                const res = await fetch(url, { 
+                    method: method, 
+                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, 
+                    body: JSON.stringify(payloadCta) 
+                });
+                
+                if(!res.ok) throw new Error(idCta ? "No se pudo actualizar." : "No se pudo crear la cuenta.");
+                
+                // Si es cuenta nueva y tiene saldo, creamos el movimiento inicial
+                if(!idCta && (sUsd > 0 || sBs > 0)) {
+                    const ctaNueva = (await res.json())[0];
+                    const usuario = localStorage.getItem('pyp_usuario_nombre') || 'SISTEMA';
                     const payloadMov = {
                         id_empresa: empresaActual || null,
-                        id_cuenta: ctaId,
+                        id_cuenta: ctaNueva.id,
                         tipo: 'INGRESO',
                         monto_usd: redondear(sUsd),
                         monto_bs: redondear(sBs),
@@ -393,7 +459,7 @@
             } catch(error) {
                 mostrarErrorConexion(error.message);
             } finally {
-                btn.disabled = false; btn.innerHTML = "Guardar Cuenta";
+                btn.disabled = false; btn.innerHTML = idCta ? "Actualizar Cuenta" : "Guardar Cuenta";
             }
         }
 
