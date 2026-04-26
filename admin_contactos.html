@@ -46,7 +46,6 @@
             overflow: hidden; 
         }
 
-        /* Clases de Identidad */
         .bg-primary { background-color: var(--color-primary) !important; }
         .text-primary { color: var(--color-primary) !important; }
         .bg-secondary { background-color: var(--color-secondary) !important; }
@@ -54,12 +53,10 @@
         .text-tertiary { color: var(--color-tertiary) !important; }
         .border-primary { border-color: var(--color-primary) !important; }
 
-        /* Scroll Estilo ERP Saint/Profit */
         .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
         .custom-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
         .custom-scroll::-webkit-scrollbar-thumb:hover { background-color: var(--color-primary); }
         
-        /* Animaciones y Estados */
         .btn-press:active { transform: scale(0.97); transition: 0.1s; }
         .fade-in { animation: fadeIn 0.2s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
@@ -67,21 +64,10 @@
         .tab-active { border-bottom: 3px solid var(--color-secondary); color: var(--color-primary); font-weight: 800; }
         .tab-inactive { color: #64748b; font-weight: 500; border-bottom: 3px solid transparent; }
         .btn-vista.active { background-color: var(--color-primary); color: white; border-color: var(--color-primary); }
-        .param-label { font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; }
         
-        /* Contenedor Principal Riguroso */
-        .main-content-area {
-            max-width: 100%;
-            overflow-x: hidden;
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-        }
-
-        /* Forzar que el contenedor de datos ocupe el resto de la pantalla */
         #contenedor-contactos {
             flex: 1;
-            min-height: 0; /* Vital para que el scroll funcione en Flexbox */
+            min-height: 0;
         }
     </style>
 </head>
@@ -140,12 +126,53 @@
             </div>
 
             <div id="contenedor-contactos" class="bg-white border border-gray-200 border-t-0 rounded-b-xl shadow-sm overflow-y-auto custom-scroll">
-                <div class="p-10 text-center text-gray-400">
+                <div id="loading-state" class="p-10 text-center text-gray-400">
                     <i class="fa-solid fa-spinner fa-spin text-2xl mb-2 block text-tertiary"></i> Sincronizando Directorio Maestro...
                 </div>
+                <div id="lista-contactos" class="hidden">
+                    </div>
             </div>
-
         </div> 
     </main>
+
+    <script>
+        let pestanaActual = 'CLIENTE';
+        let vistaActual = 'tabla';
+
+        function cambiarPestana(tipo) {
+            pestanaActual = tipo;
+            
+            // UI Update
+            document.getElementById('tab-clientes').className = (tipo === 'CLIENTE') ? 'tab-active pb-2 px-2 text-xs uppercase tracking-wider transition' : 'tab-inactive pb-2 px-2 text-xs uppercase tracking-wider transition';
+            document.getElementById('tab-proveedores').className = (tipo === 'PROVEEDOR') ? 'tab-active pb-2 px-2 text-xs uppercase tracking-wider transition' : 'tab-inactive pb-2 px-2 text-xs uppercase tracking-wider transition';
+            
+            document.getElementById('lbl-btn-nuevo').innerText = `NUEVO ${tipo}`;
+            console.log("Cambiando a:", tipo);
+            // Aquí llamarás a la función de cargar data de Supabase
+        }
+
+        function cambiarVista(vista) {
+            vistaActual = vista;
+            document.getElementById('btn-vista-tabla').classList.toggle('active', vista === 'tabla');
+            document.getElementById('btn-vista-grid').classList.toggle('active', vista === 'grid');
+            console.log("Vista cambiada a:", vista);
+        }
+
+        function filtrarContactos() {
+            const busqueda = document.getElementById('buscador').value.toLowerCase();
+            const categoria = document.getElementById('filtro-categoria').value;
+            console.log("Filtrando:", busqueda, categoria);
+            // Lógica de Fuse.js irá aquí
+        }
+
+        function abrirModalContacto() {
+            alert("Abriendo formulario para: " + pestanaActual);
+        }
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('nombre-usuario').innerText = localStorage.getItem('pyp_usuario_nombre') || 'Admin';
+        });
+    </script>
 </body>
 </html>
