@@ -172,19 +172,19 @@
             <div id="panel-caja-abierta" class="hidden flex-col h-full">
                 
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4 shrink-0">
-                    <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm flex flex-col">
+                    <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-sm flex flex-col">
                         <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Fondo Inicial</p>
-                        <h2 class="text-xl font-black text-primary mt-1" id="metric-fondo">$0.00</h2>
+                        <h2 class="text-lg font-black text-primary mt-1 leading-tight" id="metric-fondo">$0.00<br><span class="text-[10px] text-gray-500">Bs. 0.00</span></h2>
                     </div>
-                    <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm flex flex-col border-l-4 border-l-green-500">
-                        <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Ingresos del Turno</p>
-                        <h2 class="text-xl font-black text-green-600 mt-1" id="metric-ingresos">$0.00</h2>
+                    <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-sm flex flex-col border-l-4 border-l-green-500">
+                        <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Ventas / Cobros</p>
+                        <h2 class="text-lg font-black text-green-600 mt-1 leading-tight" id="metric-ingresos">$0.00<br><span class="text-[10px] text-gray-500">Bs. 0.00</span></h2>
                     </div>
-                    <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm flex flex-col border-l-4 border-l-red-500">
+                    <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-sm flex flex-col border-l-4 border-l-red-500">
                         <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Egresos / Retiros</p>
-                        <h2 class="text-xl font-black text-red-600 mt-1" id="metric-egresos">$0.00</h2>
+                        <h2 class="text-lg font-black text-red-600 mt-1 leading-tight" id="metric-egresos">$0.00<br><span class="text-[10px] text-gray-500">Bs. 0.00</span></h2>
                     </div>
-                    <div class="bg-slate-800 p-4 rounded-lg border border-slate-900 shadow-md flex flex-col items-center justify-center cursor-pointer hover:bg-slate-700 transition btn-press" onclick="abrirModalCierre()">
+                    <div class="bg-slate-800 p-3 rounded-lg border border-slate-900 shadow-md flex flex-col items-center justify-center cursor-pointer hover:bg-slate-700 transition btn-press" onclick="abrirModalCierre()">
                         <i class="fa-solid fa-lock text-white text-xl mb-1"></i>
                         <span class="text-xs font-black text-white uppercase tracking-widest">Cerrar Caja</span>
                     </div>
@@ -201,7 +201,7 @@
                                     <th class="py-2 px-2 font-bold">Hora</th>
                                     <th class="py-2 px-2 font-bold">Concepto</th>
                                     <th class="py-2 px-2 font-bold">Método</th>
-                                    <th class="py-2 px-2 font-bold text-right">Monto ($)</th>
+                                    <th class="py-2 px-2 font-bold text-right">Monto</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-50" id="tabla-movimientos">
@@ -268,7 +268,6 @@
 
         async function verificarTurnoActivo() {
             const filtroEmpresa = empresaActual ? `id_empresa=eq.${empresaActual}&` : `id_empresa=is.null&`; 
-            // Para la seguridad de la tabla de caja usamos el login estricto
             const usuario = localStorage.getItem('pyp_usuario_login') || localStorage.getItem('pyp_usuario_nombre') || 'SISTEMA';
             
             const res = await fetch(`${SUPABASE_URL}/rest/v1/cierres_caja?${filtroEmpresa}usuario_cajero=eq.${usuario}&estatus=eq.ABIERTA&select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }); 
@@ -286,8 +285,6 @@
                 badge.className = "text-[9px] font-bold uppercase tracking-wider bg-green-50 text-green-600 border border-green-200 shadow-sm px-2 py-1 rounded flex items-center gap-1";
                 badge.innerHTML = `<i class="fa-solid fa-lock-open"></i> TURNO ABIERTO`;
                 
-                document.getElementById('metric-fondo').innerText = `$${fmt(turnoActivo.monto_apertura_usd)}`;
-                
                 await cargarMovimientosTurno(turnoActivo.id_cierre);
             } else {
                 turnoActivo = null;
@@ -300,7 +297,7 @@
             }
         }
 
-        // ================= APERTURA DE CAJA (SEGURA Y AUTOMÁTICA) =================
+        // ================= APERTURA DE CAJA =================
         async function abrirModalApertura() {
             document.getElementById('modal-abrir-caja').classList.remove('hidden');
             document.getElementById('modal-abrir-caja').classList.add('flex');
@@ -310,12 +307,10 @@
             document.getElementById('estado-fondo-pendiente').classList.add('hidden');
             transferenciasPendientes = []; 
 
-            // Tomamos la identidad real hidratada por el login
             const usrNombre = localStorage.getItem('pyp_usuario_nombre') || 'SISTEMA';
             const usrLogin = localStorage.getItem('pyp_usuario_login') || usrNombre;
 
             try {
-                // Buscamos estrictamente por el usuario real (Nombre o Login)
                 const url = `${SUPABASE_URL}/rest/v1/fin_transferencias?or=(usuario_receptor.eq.${encodeURIComponent(usrNombre)},usuario_receptor.eq.${encodeURIComponent(usrLogin)})&estado=eq.PENDIENTE&select=*,fin_cuentas!id_cuenta_origen(nombre)`;
                 const res = await fetch(url, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
                 const data = await res.json();
@@ -324,7 +319,6 @@
 
                 if (data.length > 0) {
                     transferenciasPendientes = data; 
-                    
                     let totalUsd = 0; let totalBs = 0; let nombresOrigen = new Set();
 
                     data.forEach(t => {
@@ -365,7 +359,6 @@
             }
 
             try {
-                // Usamos la identidad real hidratada
                 const usuario = localStorage.getItem('pyp_usuario_login') || localStorage.getItem('pyp_usuario_nombre') || 'SISTEMA';
                 
                 const payloadTurno = {
@@ -395,6 +388,7 @@
                         }; 
                         await fetch(`${SUPABASE_URL}/rest/v1/fin_movimientos`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify(payloadEgresoBoveda) });
 
+                        // ¡NOTA CLAVE! Usamos la palabra "FONDO RECIBIDO" para que la matemática sepa que esto NO es una venta.
                         const payloadIngresoCaja = {
                             id_empresa: empresaActual || null, id_cierre: idCierreNuevo, fecha: ts, tipo: 'INGRESO',
                             concepto: `FONDO RECIBIDO DESDE: ${nombreBoveda}`, monto_usd: redondear(mUsd), monto_bs: redondear(mBs), metodo_pago: 'EFECTIVO_MIXTO', usuario: usuario
@@ -409,6 +403,7 @@
             } catch(e) { mostrarErrorConexion(e.message); } finally { if(btn) btn.disabled = false; }
         }
 
+        // ================= CARGA DE MOVIMIENTOS EN VIVO (CON MATEMÁTICA CORREGIDA) =================
         async function cargarMovimientosTurno(idCierre) {
             const res = await fetch(`${SUPABASE_URL}/rest/v1/caja_movimientos?id_cierre=eq.${idCierre}&select=*&order=fecha.desc`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }); 
             if (!res.ok) return; 
@@ -416,37 +411,62 @@
             const movs = await res.json();
             const tbody = document.getElementById('tabla-movimientos');
             let html = '';
-            let sumIngresos = 0, sumEgresos = 0;
+            
+            let sApUsd = 0, sApBs = 0; // Sumatorias de Apertura/Fondo
+            let sInUsd = 0, sInBs = 0; // Sumatorias de Ingresos Reales (Ventas)
+            let sEgUsd = 0, sEgBs = 0; // Sumatorias de Egresos Reales
 
             if(movs.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-gray-400 font-bold text-[10px] uppercase">Sin transacciones aún.</td></tr>`;
             } else {
                 movs.forEach(m => {
                     const hora = new Date(m.fecha).toLocaleTimeString('es-VE', {hour: '2-digit', minute:'2-digit'});
+                    const usd = parseFloat(m.monto_usd) || 0;
+                    const bs = parseFloat(m.monto_bs) || 0;
+
                     const color = m.tipo === 'INGRESO' ? 'text-green-600' : 'text-red-600';
                     const signo = m.tipo === 'INGRESO' ? '+' : '-';
                     
-                    if(m.tipo === 'INGRESO') sumIngresos += parseFloat(m.monto_usd);
-                    if(m.tipo === 'EGRESO') sumEgresos += parseFloat(m.monto_usd);
+                    // SEPARAMOS LA MATEMÁTICA PARA QUE EL FONDO INICIAL NO SUME A LAS VENTAS
+                    if (m.concepto.includes('FONDO RECIBIDO')) {
+                        sApUsd += usd; sApBs += bs;
+                    } else if (m.tipo === 'INGRESO') {
+                        sInUsd += usd; sInBs += bs;
+                    } else if (m.tipo === 'EGRESO') {
+                        sEgUsd += usd; sEgBs += bs;
+                    }
+
+                    // Armamos el texto para que la tabla muestre USD y BS si existen
+                    let textoMonto = '';
+                    if (usd > 0) textoMonto += `$${fmt(usd)} `;
+                    if (bs > 0) textoMonto += `Bs.${fmt(bs)}`;
+                    if (usd === 0 && bs === 0) textoMonto = '$0.00';
 
                     html += `<tr class="hover:bg-blue-50 transition border-b border-gray-50">
                         <td class="py-2 px-2 text-[9px] font-bold text-gray-500">${hora}</td>
                         <td class="py-2 px-2 font-bold text-primary truncate max-w-[200px] text-[10px]">${m.concepto}</td>
                         <td class="py-2 px-2 font-mono text-[9px] text-gray-500">${m.metodo_pago.replace('_', ' ')}</td>
-                        <td class="py-2 px-2 text-right font-black ${color} text-[11px]">${signo} $${fmt(m.monto_usd)}</td>
+                        <td class="py-2 px-2 text-right font-black ${color} text-[11px]">${signo} ${textoMonto}</td>
                     </tr>`;
                 });
                 tbody.innerHTML = html;
             }
 
-            document.getElementById('metric-ingresos').innerText = `$${fmt(sumIngresos)}`;
-            document.getElementById('metric-egresos').innerText = `$${fmt(sumEgresos)}`;
+            // INYECTAMOS LA MATEMÁTICA EN LOS PANELES VISUALES
+            document.getElementById('metric-fondo').innerHTML = `$${fmt(sApUsd)}<br><span class="text-[10px] text-gray-500">Bs. ${fmt(sApBs)}</span>`;
+            document.getElementById('metric-ingresos').innerHTML = `$${fmt(sInUsd)}<br><span class="text-[10px] text-gray-500">Bs. ${fmt(sInBs)}</span>`;
+            document.getElementById('metric-egresos').innerHTML = `$${fmt(sEgUsd)}<br><span class="text-[10px] text-gray-500">Bs. ${fmt(sEgBs)}</span>`;
             
-            turnoActivo.sumIngresos = sumIngresos;
-            turnoActivo.sumEgresos = sumEgresos;
-            turnoActivo.totalCalculadoSistema = parseFloat(turnoActivo.monto_apertura_usd) + sumIngresos - sumEgresos;
+            // GUARDAMOS PARA EL REPORTE Z
+            turnoActivo.sumFondoUsd = sApUsd; turnoActivo.sumFondoBs = sApBs;
+            turnoActivo.sumIngresosUsd = sInUsd; turnoActivo.sumIngresosBs = sInBs;
+            turnoActivo.sumEgresosUsd = sEgUsd; turnoActivo.sumEgresosBs = sEgBs;
+            
+            // EL TOTAL ESPERADO EN LA CAJA AL CERRAR (Fondo + Ventas - Egresos) CONVERTIDO TODO A USD
+            turnoActivo.totalCalculadoSistema = sApUsd + sInUsd - sEgUsd + ((sApBs + sInBs - sEgBs) / tasaBCV);
         }
 
+        // ================= CIERRE DE CAJA (CUADRE Z) =================
         function abrirModalCierre() {
             document.getElementById('dec-efectivo-usd').value = '';
             document.getElementById('dec-efectivo-bs').value = '';
@@ -530,9 +550,9 @@
                     <strong>Cierre:</strong> ${fechaCierre}
                 </div>
                 <div style="border-top: 1px dashed #000; border-bottom: 1px dashed #000; margin-bottom: 10px; padding: 5px 0;">
-                    <div style="display: flex; justify-content: space-between;"><span>Fondo Inicial:</span><strong>$${fmt(cierre.monto_apertura_usd)}</strong></div>
-                    <div style="display: flex; justify-content: space-between;"><span>Ingresos Turno:</span><strong>+$${fmt(turnoActivo.sumIngresos)}</strong></div>
-                    <div style="display: flex; justify-content: space-between;"><span>Retiros/Egresos:</span><strong>-$${fmt(turnoActivo.sumEgresos)}</strong></div>
+                    <div style="display: flex; justify-content: space-between;"><span>Fondo Inicial:</span><strong>$${fmt(turnoActivo.sumFondoUsd)} | Bs.${fmt(turnoActivo.sumFondoBs)}</strong></div>
+                    <div style="display: flex; justify-content: space-between;"><span>Ventas/Cobros:</span><strong>+$${fmt(turnoActivo.sumIngresosUsd)} | +Bs.${fmt(turnoActivo.sumIngresosBs)}</strong></div>
+                    <div style="display: flex; justify-content: space-between;"><span>Retiros/Egresos:</span><strong>-$${fmt(turnoActivo.sumEgresosUsd)} | -Bs.${fmt(turnoActivo.sumEgresosBs)}</strong></div>
                     <div style="display: flex; justify-content: space-between; margin-top: 5px; font-weight: bold; border-top: 1px solid #000;"><span>TOTAL SISTEMA:</span><span>$${fmt(cierre.total_calculado_sistema_usd)}</span></div>
                 </div>
                 <div style="margin-bottom: 10px; padding: 5px 0;">
