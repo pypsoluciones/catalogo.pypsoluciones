@@ -123,7 +123,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     <a href="index.html" target="_blank" class="flex items-center p-2 rounded-md text-xs text-gray-400 hover:bg-secondary hover:text-white transition">
                         <i class="fa-solid fa-globe mr-3 w-4"></i> Landing Page
                     </a>
-                    <a href="catalogo.html" target="_blank" class="flex items-center p-2 rounded-md text-xs text-gray-400 hover:bg-secondary hover:text-white transition">
+                    <a href="web.html" target="_blank" class="flex items-center p-2 rounded-md text-xs text-gray-400 hover:bg-secondary hover:text-white transition">
                         <i class="fa-solid fa-store mr-3 w-4"></i> Catálogo Público
                     </a>
                 </div>
