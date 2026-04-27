@@ -105,12 +105,12 @@ document.addEventListener("DOMContentLoaded", () => {
             </div>
 
             <div class="space-y-1 pt-1">
-                <button type="button" onclick="document.getElementById('submenu-sis').classList.toggle('hidden')" class="w-full flex items-center justify-between p-2 rounded-md transition text-sm ${currentPage.includes('admin_usuarios') || currentPage.includes('admin_configuracion') ? 'bg-white/5 text-white font-bold' : 'text-gray-300 hover:bg-white/10'}">
+                <button type="button" onclick="document.getElementById('submenu-sis').classList.toggle('hidden')" class="w-full flex items-center justify-between p-2 rounded-md transition text-sm ${currentPage.includes('admin_empleados_roles') || currentPage.includes('admin_configuracion') ? 'bg-white/5 text-white font-bold' : 'text-gray-300 hover:bg-white/10'}">
                     <div class="flex items-center"><i class="fa-solid fa-gears mr-3 w-4"></i> Sistema</div>
                     <i class="fa-solid fa-chevron-down text-[10px]"></i>
                 </button>
-                <div id="submenu-sis" class="pl-6 space-y-1 mt-1 ${currentPage.includes('admin_usuarios') || currentPage.includes('admin_configuracion') ? '' : 'hidden'}">
-                    <a href="admin_usuarios.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_usuarios.html' ? estiloActivoSub : estiloInactivoSub}">Usuarios</a>
+                <div id="submenu-sis" class="pl-6 space-y-1 mt-1 ${currentPage.includes('admin_empleados_roles') || currentPage.includes('admin_configuracion') ? '' : 'hidden'}">
+                    <a href="admin_empleados_roles.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_empleados_roles.html' ? estiloActivoSub : estiloInactivoSub}">Empleados y Roles</a>
                     <a href="admin_publicidad.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_publicidad.html' ? estiloActivoSub : estiloInactivoSub}">Publicidad TV</a>
                     <a href="admin_configuracion.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_configuracion.html' ? estiloActivoSub : estiloInactivoSub}">Marca Blanca</a>
                 </div>
