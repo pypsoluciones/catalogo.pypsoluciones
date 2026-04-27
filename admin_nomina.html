@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <!-- Configuración central P&P (cargada antes de cualquier otro script) -->
+    <script src="config.js"></script>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin | Nómina y Empleados</title>
@@ -161,7 +164,7 @@
 
         async function cargarNomina() {
             try {
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/nomina_pagos?order=fecha_pago.desc`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${localStorage.getItem('pyp_token_seguro')}`;
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/nomina_pagos?order=fecha_pago.desc`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${localStorage.getItem('pyp_token_seguro')}` } });
                 const data = await res.json();
                 
                 const tbody = document.getElementById('tabla-nomina');
@@ -186,12 +189,12 @@
         async function cargarCatalogos() {
             try {
                 // Cargar Empleados (Usuarios)
-                const resEmp = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?estatus=eq.Activo`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${localStorage.getItem('pyp_token_seguro')}`;
+                const resEmp = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?estatus=eq.Activo`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${localStorage.getItem('pyp_token_seguro')}` } });
                 const empleados = await resEmp.json();
                 document.getElementById('nom-empleado').innerHTML = empleados.map(e => `<option value="${e.nombre_completo}">${e.nombre_completo} (${e.rol})</option>`).join('');
 
                 // Cargar Cuentas Bancarias (Solo USD porque la nómina se calcula en $)
-                const resCta = await fetch(`${SUPABASE_URL}/rest/v1/cuentas_bancarias?moneda=eq.USD`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${localStorage.getItem('pyp_token_seguro')}`;
+                const resCta = await fetch(`${SUPABASE_URL}/rest/v1/cuentas_bancarias?moneda=eq.USD`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${localStorage.getItem('pyp_token_seguro')}` } });
                 cuentasActivas = await resCta.json();
                 document.getElementById('nom-cuenta').innerHTML = cuentasActivas.map(c => `<option value="${c.id_cuenta}|${c.nombre}">${c.nombre} (Saldo: $${Number(c.saldo).toFixed(2)})</option>`).join('');
 
