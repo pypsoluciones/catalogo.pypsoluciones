@@ -76,28 +76,20 @@
     <script src="menu.js"></script>
 
     <main class="flex-1 flex flex-col h-screen overflow-hidden bg-[#f4f6f8] relative">
-        
-        <header class="bg-white shadow-sm px-4 py-2 flex justify-between items-center z-20 shrink-0 border-b border-gray-200 h-14">
+        <header class="bg-white shadow-sm px-4 py-2 flex justify-between items-center z-10 shrink-0 border-b border-gray-200 h-14">
             <div class="flex items-center gap-3">
-                <button onclick="toggleMobileMenu()" class="md:hidden text-gray-600 hover:text-primary text-xl transition px-2">
-                    <i class="fa-solid fa-bars"></i>
-                </button>
-                <h1 class="text-base font-semibold text-primary flex items-center gap-2">
-                    <i class="fa-solid fa-address-book text-tertiary"></i> Directorio Maestro
-                </h1>
+                <button onclick="toggleMobileMenu()" class="md:hidden text-gray-600 hover:text-primary text-xl transition px-2"><i class="fa-solid fa-bars"></i></button>
+                <h1 class="text-base font-semibold text-primary flex items-center gap-2"><i class="fa-solid fa-address-book text-tertiary"></i> Directorio Maestro</h1>
             </div>
             <div class="flex items-center gap-3 shrink-0">
-                <button onclick="window.location.reload()" class="md:hidden text-primary bg-slate-100 w-8 h-8 rounded-full flex items-center justify-center hover:bg-slate-200 transition shadow-sm btn-press">
-                    <i class="fa-solid fa-rotate-right"></i>
-                </button>
+                <button onclick="window.location.reload()" class="md:hidden text-primary bg-slate-100 w-8 h-8 rounded-full flex items-center justify-center hover:bg-slate-200 transition shadow-sm btn-press"><i class="fa-solid fa-rotate-right"></i></button>
                 <div class="text-[11px] font-semibold text-gray-500 bg-gray-100 px-3 py-1 rounded border border-gray-200 uppercase tracking-wide hidden sm:block">
                     <i class="fa-solid fa-user-tie text-tertiary mr-1"></i> <span id="nombre-usuario">Admin</span>
                 </div>
             </div>
         </header>
 
-        <div class="flex-1 flex flex-col overflow-hidden p-2 md:p-4">
-            
+        <div class="flex-1 overflow-hidden p-2 md:p-3 flex flex-col">
             <div class="bg-white rounded-t-xl border border-gray-200 border-b-0 px-4 pt-3 flex gap-6 shrink-0">
                 <button onclick="cambiarPestana('CLIENTE')" id="tab-clientes" class="tab-active pb-2 px-2 text-xs uppercase tracking-wider transition">Clientes</button>
                 <button onclick="cambiarPestana('PROVEEDOR')" id="tab-proveedores" class="tab-inactive pb-2 px-2 text-xs uppercase tracking-wider transition">Proveedores</button>
@@ -107,10 +99,10 @@
                 <div class="w-full sm:w-2/3 flex flex-col sm:flex-row gap-2">
                     <div class="relative flex-1">
                         <i class="fa-solid fa-search absolute left-3 top-2.5 text-gray-400 text-sm"></i>
-                        <input type="text" id="buscador" oninput="filtrarContactos()" placeholder="Buscar..." class="w-full border border-gray-300 rounded-md pl-9 pr-4 py-1.5 text-xs focus:outline-none focus:border-tertiary uppercase transition font-bold">
+                        <input type="text" id="buscador" oninput="filtrarContactos()" placeholder="Buscar (Ignora acentos)..." class="w-full border border-gray-300 rounded-md pl-9 pr-4 py-1.5 text-xs focus:outline-none focus:border-tertiary uppercase transition font-bold">
                     </div>
                     <select id="filtro-categoria" onchange="filtrarContactos()" class="w-full sm:w-1/3 border border-gray-300 rounded-md px-3 py-1.5 text-xs text-primary font-semibold focus:outline-none focus:border-tertiary transition bg-gray-50">
-                        <option value="TODAS">TODAS LAS CATEGORÍAS</option>
+                        <option value="TODAS">TODAS</option>
                     </select>
                 </div>
                 
@@ -125,54 +117,232 @@
                 </div>
             </div>
 
-            <div id="contenedor-contactos" class="bg-white border border-gray-200 border-t-0 rounded-b-xl shadow-sm overflow-y-auto custom-scroll">
-                <div id="loading-state" class="p-10 text-center text-gray-400">
-                    <i class="fa-solid fa-spinner fa-spin text-2xl mb-2 block text-tertiary"></i> Sincronizando Directorio Maestro...
-                </div>
-                <div id="lista-contactos" class="hidden">
-                    </div>
+            <div id="contenedor-contactos" class="flex-1 bg-white border border-gray-200 border-t-0 rounded-b-xl shadow-sm flex flex-col min-h-0 overflow-y-auto custom-scroll">
+                <div class="p-10 text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin text-2xl mb-2 block text-tertiary"></i> Sincronizando Directorio...</div>
             </div>
-        </div> 
+        </div>
     </main>
 
+    <div id="modal-contacto" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4 fade-in">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden border border-gray-200">
+            <div class="bg-primary text-white px-5 py-3 flex justify-between items-center">
+                <h3 class="font-medium text-sm tracking-wide uppercase" id="modal-titulo">REGISTRO</h3>
+                <button onclick="cerrarModalContacto()" class="text-gray-300 hover:text-white text-lg"><i class="fa-solid fa-times"></i></button>
+            </div>
+            
+            <form id="form-contacto" onsubmit="guardarContacto(event)" class="flex-1 overflow-y-auto custom-scroll p-4 md:p-5 bg-gray-50">
+                <input type="hidden" id="cont-modo-edicion" value="false">
+                <input type="hidden" id="cont-id-original" value="">
+                
+                <div class="bg-white p-4 rounded border border-gray-200 shadow-sm mb-4">
+                    <h4 class="text-[11px] font-bold text-secondary uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Identificación Legal</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                        <div><label class="block param-label mb-1">Doc. Identidad / RIF *</label><input type="text" id="cont-doc" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-bold uppercase"></div>
+                        <div><label class="block param-label mb-1">Nombre o Razón Social *</label><input type="text" id="cont-nombre" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-bold uppercase"></div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="md:col-span-2"><label class="block param-label mb-1">Dirección Fiscal</label><input type="text" id="cont-dir-p" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs uppercase"></div>
+                        <div><label id="lbl-cont-categoria" class="block param-label mb-1">Categoría</label><select id="cont-categoria" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-semibold bg-purple-50"></select></div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded border border-gray-200 shadow-sm mb-4">
+                    <h4 class="text-[11px] font-bold text-primary uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Comunicación Directa</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
+                        <div><label class="block param-label mb-1" id="lbl-tel1">Celular Principal *</label><input type="text" id="cont-tel1" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-bold bg-blue-50"></div>
+                        <div><label class="block param-label mb-1">Teléfono Alternativo</label><input type="text" id="cont-tel2" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs"></div>
+                        <div><label class="block param-label mb-1">Correo Electrónico</label><input type="email" id="cont-email" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs"></div>
+                    </div>
+                    <div class="w-1/3"><label class="block param-label mb-1">Estatus</label><select id="cont-estatus" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-bold"><option value="ACTIVO">ACTIVO</option><option value="INACTIVO">INACTIVO</option></select></div>
+                </div>
+
+                <div id="caja-cliente" class="bg-white p-4 rounded border border-gray-200 shadow-sm border-l-4 border-l-emerald-500">
+                    <h4 class="text-[11px] font-bold text-emerald-600 uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Ventas (Cliente)</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div><label class="block param-label mb-1">Dirección Entrega</label><input type="text" id="cli-dir-sec" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs uppercase"></div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div><label class="block param-label mb-1">Tipo Persona</label><select id="cli-tipo" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs"><option value="NATURAL">NATURAL</option><option value="JURIDICA">JURÍDICA</option></select></div>
+                            <div><label class="block param-label mb-1">Precio</label><select id="cli-nivel" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs"><option value="GENERAL">GENERAL</option><option value="P1">MAYOR (P1)</option><option value="P2">GRAN MAYOR (P2)</option></select></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="caja-proveedor" class="bg-white p-4 rounded border border-gray-200 shadow-sm border-l-4 border-l-purple-500 hidden">
+                    <h4 class="text-[11px] font-bold text-purple-600 uppercase border-b border-gray-100 pb-2 mb-3 tracking-wider">Compras (Proveedor)</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
+                        <div class="md:col-span-2"><label class="block param-label mb-1">Dirección Sucursal</label><input type="text" id="prov-dir-sec" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs uppercase"></div>
+                        <div><label class="block param-label mb-1">Fiscal</label><select id="prov-clas" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs"><option value="ORDINARIO">ORDINARIO</option><option value="ESPECIAL">ESPECIAL</option></select></div>
+                    </div>
+                </div>
+            </form>
+
+            <div class="bg-gray-50 border-t border-gray-200 px-4 py-3 flex gap-3 justify-end">
+                <button type="button" onclick="cerrarModalContacto()" class="px-5 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-md text-[12px]">Cancelar</button>
+                <button type="submit" form="form-contacto" id="btn-guardar-cont" class="px-5 py-2 bg-secondary text-white font-medium rounded-md text-[12px] flex items-center gap-2"><i class="fa-solid fa-save"></i> Guardar</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        let pestanaActual = 'CLIENTE';
-        let vistaActual = 'tabla';
+        const TOKEN_JWT = localStorage.getItem('pyp_token_seguro');
+        let tipoActual = 'CLIENTE', vistaActual = localStorage.getItem('pyp_vista_contactos') || 'tabla', dbDirectorio = [], fuseMaestro = null;
+        let catClientes = [], rubProveedor = [];
+
+        window.onload = async () => {
+            if(localStorage.getItem('pyp_usuario_nombre')) document.getElementById('nombre-usuario').innerText = localStorage.getItem('pyp_usuario_nombre').split(' ')[0];
+            await cargarDatos();
+            document.addEventListener('keydown', (e) => { if(e.key === 'Escape') cerrarModalContacto(); });
+        };
+
+        async function cargarDatos() {
+            try {
+                const [resDir, resPar] = await Promise.all([
+                    fetch(`${SUPABASE_URL}/rest/v1/directorio_maestro?select=*&order=nombre_razon_social.asc`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
+                    fetch(`${SUPABASE_URL}/rest/v1/parametros_inventario?select=*&grupo=in.(CATEGORIA_CLIENTE,RUBRO_PROVEEDOR)&estatus=eq.ACTIVO`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } })
+                ]);
+                
+                if (!resDir.ok) throw new Error("Sesión expirada");
+
+                dbDirectorio = await resDir.json();
+                const pars = await resPar.json();
+                catClientes = pars.filter(p => p.grupo === 'CATEGORIA_CLIENTE');
+                rubProveedor = pars.filter(p => p.grupo === 'RUBRO_PROVEEDOR');
+                fuseMaestro = new Fuse(dbDirectorio, { keys: ['documento_identidad', 'nombre_razon_social'], threshold: 0.2 });
+                
+                cambiarPestana(tipoActual);
+            } catch(e) { 
+                document.getElementById('contenedor-contactos').innerHTML = `<div class="p-10 text-center text-red-500 font-bold uppercase">Sesión Expirada o Error de Red</div>`; 
+            }
+        }
 
         function cambiarPestana(tipo) {
-            pestanaActual = tipo;
+            tipoActual = tipo;
+            document.getElementById('tab-clientes').className = tipo === 'CLIENTE' ? 'tab-active pb-2 px-2 text-xs uppercase transition' : 'tab-inactive pb-2 px-2 text-xs uppercase transition';
+            document.getElementById('tab-proveedores').className = tipo === 'PROVEEDOR' ? 'tab-active pb-2 px-2 text-xs uppercase transition' : 'tab-inactive pb-2 px-2 text-xs uppercase transition';
+            document.getElementById('lbl-btn-nuevo').innerText = tipo === 'CLIENTE' ? 'NUEVO CLIENTE' : 'NUEVO PROVEEDOR';
             
-            // UI Update
-            document.getElementById('tab-clientes').className = (tipo === 'CLIENTE') ? 'tab-active pb-2 px-2 text-xs uppercase tracking-wider transition' : 'tab-inactive pb-2 px-2 text-xs uppercase tracking-wider transition';
-            document.getElementById('tab-proveedores').className = (tipo === 'PROVEEDOR') ? 'tab-active pb-2 px-2 text-xs uppercase tracking-wider transition' : 'tab-inactive pb-2 px-2 text-xs uppercase tracking-wider transition';
+            const arr = tipo === 'CLIENTE' ? catClientes : rubProveedor;
+            const label = tipo === 'CLIENTE' ? 'Categoría' : 'Rubro';
+            document.getElementById('lbl-cont-categoria').innerText = label;
             
-            document.getElementById('lbl-btn-nuevo').innerText = `NUEVO ${tipo}`;
-            console.log("Cambiando a:", tipo);
-            // Aquí llamarás a la función de cargar data de Supabase
+            let opts = '<option value="">SIN ASIGNAR</option>', fts = `<option value="TODAS">TODOS</option><option value="SIN_CATEGORIA">SIN ASIGNAR</option>`;
+            arr.forEach(c => { opts += `<option value="${c.valor}">${c.valor}</option>`; fts += `<option value="${c.valor}">${c.valor}</option>`; });
+            document.getElementById('cont-categoria').innerHTML = opts;
+            document.getElementById('filtro-categoria').innerHTML = fts;
+
+            renderizarPantalla();
         }
 
-        function cambiarVista(vista) {
-            vistaActual = vista;
-            document.getElementById('btn-vista-tabla').classList.toggle('active', vista === 'tabla');
-            document.getElementById('btn-vista-grid').classList.toggle('active', vista === 'grid');
-            console.log("Vista cambiada a:", vista);
+        function filtrarContactos() { renderizarPantalla(); }
+        function cambiarVista(v) { vistaActual = v; localStorage.setItem('pyp_vista_contactos', v); renderizarPantalla(); }
+
+        function renderizarPantalla() {
+            const query = document.getElementById('buscador').value.trim();
+            const cat = document.getElementById('filtro-categoria').value;
+            let data = dbDirectorio.filter(p => p.tipo_persona === tipoActual);
+            
+            if (query !== '') data = fuseMaestro.search(query).map(r => r.item).filter(p => p.tipo_persona === tipoActual);
+            if (cat !== 'TODAS') {
+                if(cat === 'SIN_CATEGORIA') data = data.filter(p => !p.categoria_contacto);
+                else data = data.filter(p => p.categoria_contacto === cat);
+            }
+
+            const c = document.getElementById('contenedor-contactos');
+            if(data.length === 0) { c.innerHTML = `<div class="p-10 text-center text-gray-400 font-medium uppercase">No hay registros en ${tipoActual}S</div>`; return; }
+
+            if(vistaActual === 'tabla') {
+                let html = `<div class="overflow-x-auto"><table class="w-full text-left text-xs whitespace-nowrap"><thead class="bg-primary text-white text-[10px] uppercase sticky top-0"><tr><th class="py-3 px-4">Doc / RIF</th><th class="py-3 px-4">Razón Social</th><th class="py-3 px-4">Categoría</th><th class="py-3 px-4">Celular</th><th class="py-3 px-4">Dirección</th><th class="py-3 px-4 text-center">Acción</th></tr></thead><tbody class="divide-y divide-gray-100">`;
+                data.forEach(item => {
+                    html += `<tr class="hover:bg-gray-50"><td class="py-2 px-4 font-mono font-bold">${item.documento_identidad || '-'}</td><td class="py-2 px-4 font-bold text-primary">${item.nombre_razon_social}</td><td class="py-2 px-4"><span class="bg-purple-50 text-purple-600 px-2 py-0.5 rounded text-[9px] font-bold">${item.categoria_contacto || 'N/A'}</span></td><td class="py-2 px-4">${item.telefono_principal || '-'}</td><td class="py-2 px-4 truncate max-w-[200px] text-gray-400">${item.direccion_principal || '-'}</td><td class="py-2 px-4 text-center"><button onclick='abrirModalContacto(${JSON.stringify(item).replace(/'/g, "&apos;")})' class="text-blue-500 px-2 py-1"><i class="fa-solid fa-pen-to-square"></i></button></td></tr>`;
+                });
+                html += `</tbody></table></div>`; c.innerHTML = html;
+            } else {
+                let html = `<div class="p-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">`;
+                data.forEach(item => {
+                    html += `<div class="bg-white border border-gray-200 rounded-lg p-3 shadow-sm hover:border-secondary transition"><div class="flex justify-between mb-2"><span class="text-[9px] font-bold text-gray-500">${item.documento_identidad}</span><span class="text-[8px] bg-purple-50 text-purple-600 px-2 py-0.5 rounded font-bold">${item.categoria_contacto || ''}</span></div><h3 class="font-black text-primary text-xs uppercase mb-2">${item.nombre_razon_social}</h3><p class="text-[10px] text-gray-500 truncate mb-3"><i class="fa-solid fa-location-dot mr-1"></i>${item.direccion_principal || '-'}</p><button onclick='abrirModalContacto(${JSON.stringify(item).replace(/'/g, "&apos;")})' class="w-full bg-blue-50 text-blue-700 text-[9px] font-bold py-1.5 rounded uppercase">Editar Ficha</button></div>`;
+                });
+                html += `</div>`; c.innerHTML = html;
+            }
         }
 
-        function filtrarContactos() {
-            const busqueda = document.getElementById('buscador').value.toLowerCase();
-            const categoria = document.getElementById('filtro-categoria').value;
-            console.log("Filtrando:", busqueda, categoria);
-            // Lógica de Fuse.js irá aquí
+        function abrirModalContacto(item = null) {
+            const f = document.getElementById('form-contacto'); f.reset();
+            document.getElementById('caja-cliente').classList.toggle('hidden', tipoActual !== 'CLIENTE');
+            document.getElementById('caja-proveedor').classList.toggle('hidden', tipoActual !== 'PROVEEDOR');
+            
+            if (item) {
+                document.getElementById('modal-titulo').innerText = `EDITAR ${tipoActual}`;
+                document.getElementById('cont-modo-edicion').value = "true";
+                document.getElementById('cont-id-original').value = item.id;
+                document.getElementById('cont-doc').value = item.documento_identidad;
+                document.getElementById('cont-nombre').value = item.nombre_razon_social;
+                document.getElementById('cont-categoria').value = item.categoria_contacto || '';
+                document.getElementById('cont-dir-p').value = item.direccion_principal || '';
+                document.getElementById('cont-email').value = item.correo_electronico || '';
+                document.getElementById('cont-tel1').value = item.telefono_principal || '';
+                document.getElementById('cont-tel2').value = item.telefono_secundario || '';
+                document.getElementById('cont-estatus').value = item.estatus || 'ACTIVO';
+                if(tipoActual === 'CLIENTE') {
+                    document.getElementById('cli-dir-sec').value = item.direccion_secundaria || '';
+                    document.getElementById('cli-tipo').value = item.tipo_contribuyente || 'NATURAL';
+                    document.getElementById('cli-nivel').value = item.nivel_precio || 'GENERAL';
+                } else {
+                    document.getElementById('prov-dir-sec').value = item.direccion_secundaria || '';
+                    document.getElementById('prov-clas').value = item.clasificacion_fiscal || 'ORDINARIO';
+                }
+            } else {
+                document.getElementById('modal-titulo').innerText = `NUEVO ${tipoActual}`;
+                document.getElementById('cont-modo-edicion').value = "false";
+            }
+            document.getElementById('modal-contacto').classList.remove('hidden');
         }
+        
+        function cerrarModalContacto() { document.getElementById('modal-contacto').classList.add('hidden'); }
 
-        function abrirModalContacto() {
-            alert("Abriendo formulario para: " + pestanaActual);
+        async function guardarContacto(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btn-guardar-cont');
+            btn.innerHTML = `Guardando...`; btn.disabled = true;
+            const isEdit = document.getElementById('cont-modo-edicion').value === "true";
+            
+            try {
+                const resUser = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?select=id_empresa&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                const miEmpresa = (await resUser.json())[0].id_empresa;
+                
+                const payload = {
+                    id_empresa: miEmpresa,
+                    tipo_persona: tipoActual,
+                    documento_identidad: document.getElementById('cont-doc').value.trim().toUpperCase(),
+                    nombre_razon_social: document.getElementById('cont-nombre').value.trim().toUpperCase(),
+                    categoria_contacto: document.getElementById('cont-categoria').value || null,
+                    direccion_principal: document.getElementById('cont-dir-p').value.trim().toUpperCase(),
+                    correo_electronico: document.getElementById('cont-email').value.trim().toLowerCase(),
+                    telefono_principal: document.getElementById('cont-tel1').value.trim(),
+                    telefono_secundario: document.getElementById('cont-tel2').value.trim(),
+                    estatus: document.getElementById('cont-estatus').value,
+                    direccion_secundaria: tipoActual === 'CLIENTE' ? document.getElementById('cli-dir-sec').value.trim().toUpperCase() : document.getElementById('prov-dir-sec').value.trim().toUpperCase(),
+                    tipo_contribuyente: tipoActual === 'CLIENTE' ? document.getElementById('cli-tipo').value : null,
+                    nivel_precio: tipoActual === 'CLIENTE' ? document.getElementById('cli-nivel').value : null,
+                    clasificacion_fiscal: tipoActual === 'PROVEEDOR' ? document.getElementById('prov-clas').value : null
+                };
+
+                const url = isEdit ? `${SUPABASE_URL}/rest/v1/directorio_maestro?id=eq.${document.getElementById('cont-id-original').value}` : `${SUPABASE_URL}/rest/v1/directorio_maestro`;
+                const res = await fetch(url, {
+                    method: isEdit ? 'PATCH' : 'POST',
+                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+                    body: JSON.stringify(payload)
+                });
+
+                if(!res.ok) throw new Error("Error en DB");
+                cerrarModalContacto();
+                await cargarDatos();
+            } catch(e) {
+                alert("Error al guardar: " + e.message);
+            } finally {
+                btn.innerHTML = `<i class="fa-solid fa-save"></i> Guardar`;
+                btn.disabled = false;
+            }
         }
-
-        // Inicialización
-        document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('nombre-usuario').innerText = localStorage.getItem('pyp_usuario_nombre') || 'Admin';
-        });
     </script>
 </body>
 </html>
