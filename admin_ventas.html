@@ -1567,7 +1567,160 @@
         // ================================================================
         // PROCESAR VENTA
         // ================================================================
+        // Sprint 3D: usa RPC procesar_venta (transacción atómica).
+        // Si algo falla, puedes volver al método viejo cambiando esta bandera a false.
+        const USAR_RPC_PROCESAR_VENTA = true;
+        // ================================================================
         async function procesarVenta(modo = 'NORMAL') {
+            if (USAR_RPC_PROCESAR_VENTA) {
+                return procesarVentaRPC(modo);
+            }
+            return procesarVentaLegacy(modo);
+        }
+
+        // ================================================================
+        // NUEVA implementación: 1 sola petición HTTP, transacción atómica
+        // ================================================================
+        async function procesarVentaRPC(modo = 'NORMAL') {
+            const btnCobrar = document.getElementById('btn-cobrar');
+            const btnGuardar = document.getElementById('btn-guardar');
+            btnCobrar.disabled = true; btnGuardar.disabled = true;
+            mostrarCarga(modo === 'DIRECTO' ? "Guardando..." : "Procesando...", "Procesando venta...");
+            try {
+                const metodo = modo === 'DIRECTO' ? 'POR_PAGAR' : document.getElementById('cobro-metodo').value;
+                const usuario = localStorage.getItem('pyp_usuario_nombre') || 'SISTEMA';
+
+                // 🆕 Sprint 3D: el RPC procesar_venta busca el turno automáticamente
+                // por auth_id_cajero. Ya no validamos el turno aquí — si no existe,
+                // el RPC lanza una excepción clara.
+
+                const formatoPrint = document.getElementById('cobro-formato-impresion').value;
+                const condicionSel = document.getElementById('pos-condicion');
+                const condicion = condicionSel.options[condicionSel.selectedIndex].text;
+                const nroFactura = document.getElementById('pos-nro-factura').value.trim().toUpperCase();
+                const nroControl = document.getElementById('pos-nro-control').value.trim().toUpperCase();
+                const fechaVenc = document.getElementById('pos-fecha-vencimiento').value;
+                const fechaEmision = document.getElementById('pos-fecha-emision').value + 'T12:00:00Z';
+
+                const aplicaIgtf = (metodo === 'EFECTIVO_USD' || metodo === 'ZELLE');
+                const igtfVal = aplicaIgtf ? pypIgtf * 100 : 0;
+                const totalBsFinal = redondear(granTotalBs + (aplicaIgtf ? redondear(granTotalBs * pypIgtf) : 0));
+                const totalUsdFinal = totalBsFinal / tasaBCV;
+                const baseImpUsd = parseFloat(document.getElementById('contenedor-totales-fiscales').dataset.baseTotalUsd) || 0;
+                const exentoUsd = parseFloat(document.getElementById('contenedor-totales-fiscales').dataset.exentoTotalUsd) || 0;
+
+                const estadoFinal = (metodo === 'POR_PAGAR' || modoCotizacion) ? (modoCotizacion ? 'Cotización' : 'Por Pagar') : 'Completada';
+
+                let metodoPagoFinal = metodo;
+                if (lineasPagoMixto.length > 0) {
+                    metodoPagoFinal = lineasPagoMixto.map(l => `${l.metodo}(${fmt(l.monto)}Bs)`).join('+');
+                }
+
+                // Armar payload de la factura
+                const payloadFactura = {
+                    id_cliente: document.getElementById('pos-id-cliente').value || null,
+                    cliente_documento: document.getElementById('txt-cli-doc').innerText,
+                    cliente_nombre: document.getElementById('txt-cli-nom').innerText,
+                    subtotal_usd: sumSubtotalBasePuroUsd,
+                    descuento_usd: descGeneralTotalUsd,
+                    total_usd: totalUsdFinal,
+                    total_bs: totalBsFinal,
+                    tasa_bcv_aplicada: tasaBCV,
+                    metodos_pago: metodoPagoFinal,
+                    condicion_pago: condicion,
+                    iva_porcentaje: pypIva * 100,
+                    igtf_porcentaje: igtfVal,
+                    base_imponible: baseImpUsd * tasaBCV,
+                    monto_exento: exentoUsd * tasaBCV,
+                    nombre_cajero: usuario,
+                    nro_factura_manual: nroFactura || null,
+                    nro_control_manual: nroControl || null,
+                    fecha_vencimiento: fechaVenc,
+                    fecha_emision: fechaEmision,
+                    estatus: estadoFinal,
+                    tipo_transaccion: modoCotizacion ? 'Cotización' : 'Venta',
+                    saldo_pendiente_usd: (estadoFinal === 'Por Pagar' || estadoFinal === 'Cotización') ? totalUsdFinal : 0
+                };
+
+                // Armar payload de items
+                const payloadItems = carrito.map(i => ({
+                    producto_sku: i.id_producto_sku,
+                    producto_nombre: i.nombre,
+                    cantidad: i.cantidad,
+                    precio_unitario_usd: calcularPrecioUnitario(i, i.cantidad)
+                }));
+
+                // Armar payload de caja (si aplica). El RPC determina id_cierre por auth_id_cajero.
+                let payloadCaja = null;
+                if (metodo !== 'POR_PAGAR' && !modoCotizacion) {
+                    payloadCaja = {
+                        fecha: new Date().toISOString(),
+                        tipo: 'INGRESO',
+                        concepto: `COBRO FACTURA NRO: ${nroFactura} - CLIENTE: ${document.getElementById('txt-cli-nom').innerText}`,
+                        monto_usd: totalUsdFinal,
+                        monto_bs: totalBsFinal,
+                        metodo_pago: metodoPagoFinal,
+                        usuario: usuario
+                    };
+                }
+
+                // ÚNICA PETICIÓN HTTP que hace TODO de forma atómica
+                mostrarCarga("Procesando venta...", "Guardando factura, detalles y stock...");
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/procesar_venta`, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': `Bearer ${TOKEN_JWT}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        p_factura: payloadFactura,
+                        p_items: payloadItems,
+                        p_caja: payloadCaja
+                    })
+                });
+
+                if (!res.ok) {
+                    const errObj = await res.json();
+                    throw new Error(errObj.message || errObj.hint || "Fallo al procesar la venta.");
+                }
+
+                const result = await res.json();
+                const fId = result.id_factura;
+
+                // IMPRESIÓN (igual que antes)
+                if (modo !== 'DIRECTO') {
+                    let empresaPrint = { nombre_empresa: 'P&P SOLUCIONES', rif: 'J-00000000-0', direccion_fiscal: 'SIN DIRECCIÓN FISCAL' };
+                    generarHTMLImpresion(formatoPrint, empresaPrint, payloadFactura, carrito);
+                    ultimaVentaParaReimprimir = { formato: formatoPrint, empresa: empresaPrint, factura: payloadFactura, items: JSON.parse(JSON.stringify(carrito)) };
+                    document.getElementById('btn-reimprimir').disabled = false;
+                    window.print();
+                }
+
+                if (nroFacturaEditable) toggleEditNroFactura();
+                carrito = [];
+                document.getElementById('pos-input-desc-general').value = '';
+                document.getElementById('pos-nro-control').value = '';
+                document.getElementById('pos-condicion').selectedIndex = 0;
+                document.getElementById('pos-fecha-emision').value = getFechaHoy();
+                ajustarFechaVencimiento();
+                limpiarCliente();
+                cerrarCobro();
+                actualizarUI_Carrito();
+                await iniciarPuntoVenta();
+                await inicializarCorrelativos();
+                cerrarErrorCarga();
+            } catch (e) {
+                mostrarErrorConexion(e.message);
+            } finally {
+                btnCobrar.disabled = false; btnGuardar.disabled = false;
+            }
+        }
+
+        // ================================================================
+        // VIEJA implementación (queda como respaldo). NO se llama si USAR_RPC_PROCESAR_VENTA = true
+        // ================================================================
+        async function procesarVentaLegacy(modo = 'NORMAL') {
             const btnCobrar = document.getElementById('btn-cobrar');
             const btnGuardar = document.getElementById('btn-guardar');
             btnCobrar.disabled = true; btnGuardar.disabled = true;

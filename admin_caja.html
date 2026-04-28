@@ -279,10 +279,24 @@
         } 
 
         async function verificarTurnoActivo() {
-            const filtroEmpresa = empresaActual ? `id_empresa=eq.${empresaActual}&` : `id_empresa=is.null&`; 
-            const usuario = localStorage.getItem('pyp_usuario_login') || localStorage.getItem('pyp_usuario_nombre') || 'SISTEMA';
-            
-            const res = await fetch(`${SUPABASE_URL}/rest/v1/cierres_caja?${filtroEmpresa}usuario_cajero=eq.${usuario}&estatus=eq.ABIERTA&select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }); 
+            const filtroEmpresa = empresaActual ? `id_empresa=eq.${empresaActual}&` : `id_empresa=is.null&`;
+
+            // 🆕 Sprint 3D: filtrar por auth_id_cajero (UUID del JWT) en vez de string del usuario.
+            // Esto es robusto a cambios de nombre, mayúsculas, y soporta múltiples cajas simultáneas.
+            let authIdCajero = null;
+            try {
+                if (TOKEN_JWT) {
+                    const payload = JSON.parse(atob(TOKEN_JWT.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+                    authIdCajero = payload.sub;
+                }
+            } catch(e) {}
+
+            // Si tenemos auth_id, filtramos por él. Si no, fallback al método viejo.
+            const filtroCajero = authIdCajero
+                ? `auth_id_cajero=eq.${authIdCajero}`
+                : `usuario_cajero=eq.${localStorage.getItem('pyp_usuario_login') || localStorage.getItem('pyp_usuario_nombre') || 'SISTEMA'}`;
+
+            const res = await fetch(`${SUPABASE_URL}/rest/v1/cierres_caja?${filtroEmpresa}${filtroCajero}&estatus=eq.ABIERTA&select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
             if (!res.ok) throw new Error("Fallo al leer estado de caja."); 
             
             const data = await res.json(); 
@@ -375,10 +389,20 @@
 
             try {
                 const usuario = localStorage.getItem('pyp_usuario_login') || localStorage.getItem('pyp_usuario_nombre') || 'SISTEMA';
-                
+
+                // 🆕 Sprint 3D: extraer auth_id del JWT para identificar al cajero por UUID
+                let authIdCajero = null;
+                try {
+                    if (TOKEN_JWT) {
+                        const payload = JSON.parse(atob(TOKEN_JWT.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+                        authIdCajero = payload.sub;
+                    }
+                } catch(e) {}
+
                 const payloadTurno = {
                     id_empresa: empresaActual || null, usuario_cajero: usuario, estatus: 'ABIERTA',
-                    monto_apertura_usd: redondear(totalUsd), monto_apertura_bs: redondear(totalBs)
+                    monto_apertura_usd: redondear(totalUsd), monto_apertura_bs: redondear(totalBs),
+                    auth_id_cajero: authIdCajero
                 };
 
                 const resTurno = await fetch(`${SUPABASE_URL}/rest/v1/cierres_caja`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, body: JSON.stringify(payloadTurno) }); 
