@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <!-- Configuración central P&P (cargada antes de cualquier otro script) -->
+    <script src="config.js"></script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>P&P Admin | Control de Caja</title>
+    
+    <script>
+        const cPri = localStorage.getItem('pyp_color_primario') || '#143B62';
+        const cSec = localStorage.getItem('pyp_color_secundario') || '#E67E22';
+        const cTer = localStorage.getItem('pyp_color_terciario') || '#64748b';
+        const fontFam = localStorage.getItem('pyp_fuente') || "'Inter', sans-serif";
+        const fontSiz = localStorage.getItem('pyp_tamano') || "14px";
+        
+        // Inyectamos variables CSS (Motor Marca Blanca)
+        document.documentElement.style.setProperty('--color-primary', cPri);
+        document.documentElement.style.setProperty('--color-secondary', cSec);
+        document.documentElement.style.setProperty('--color-tertiary', cTer);
+        document.documentElement.style.setProperty('--font-global', fontFam);
+        document.documentElement.style.setProperty('--size-global', fontSiz);
+    </script>
+
+    <link rel="stylesheet" href="styles.css">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    
+    <script>
+        // Guardián de Seguridad: Exige el Token Real
+        if (!localStorage.getItem('pyp_token_seguro')) {
+            window.location.href = 'login.html';
+        }
+    </script>
+
+    <style>
+        body { font-family: var(--font-global); font-size: var(--size-global); }
+        .bg-primary { background-color: var(--color-primary) !important; }
+        .text-primary { color: var(--color-primary) !important; }
+        .bg-secondary { background-color: var(--color-secondary) !important; }
+        .text-secondary { color: var(--color-secondary) !important; }
+        .text-tertiary { color: var(--color-tertiary) !important; }
+        .custom-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background-color: var(--color-primary); border-radius: 4px; }
+        .btn-press:active { transform: scale(0.96); }
+        .fade-in { animation: fadeIn 0.15s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(2px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* IMPRESIÓN DE TICKETS INTACTA (78mm) */
+        @media print {
+            body * { visibility: hidden; }
+            #ticket-impresion, #ticket-impresion * { visibility: visible; }
+            #ticket-impresion { position: absolute; left: 0; top: 0; margin: 0; padding: 0; color: #000; background: #fff; width: 78mm; font-family: 'Courier New', monospace; font-size: 11px; }
+        }
+    </style>
+</head>
+<body class="bg-[#f4f6f8] flex h-screen overflow-hidden text-gray-800"> 
+
+    <div id="loading-overlay" class="fixed inset-0 bg-white/95 z-[9999] hidden flex-col items-center justify-center p-6 text-center backdrop-blur-sm"> 
+        <i id="loading-icon" class="fa-solid fa-circle-notch fa-spin text-5xl text-primary mb-4"></i> 
+        <h2 id="loading-text" class="text-xl font-black text-primary uppercase mb-2">Cargando...</h2> 
+        <p id="loading-error" class="text-xs text-gray-500 font-medium max-w-sm hidden text-center"></p> 
+        <div id="error-actions" class="hidden mt-6 flex gap-3"> 
+            <button onclick="cerrarErrorCarga()" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2.5 rounded font-bold uppercase text-xs btn-press transition shadow">Cerrar</button> 
+        </div> 
+    </div> 
+
+    <div id="modal-abrir-caja" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[9990] hidden flex items-center justify-center p-4 fade-in"> 
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden flex flex-col border border-gray-200"> 
+            <div class="bg-primary px-4 py-3 flex justify-between items-center shrink-0"> 
+                <h3 class="font-bold text-white text-[12px] tracking-wide uppercase"><i class="fa-solid fa-handshake text-tertiary mr-2"></i> Recepción de Fondo</h3> 
+                <button onclick="cerrarModalApertura()" class="text-gray-300 hover:text-white text-lg transition"><i class="fa-solid fa-times"></i></button> 
+            </div> 
+            <div class="p-5 bg-gray-50 space-y-4 text-center"> 
+                
+                <div id="estado-fondo-cargando">
+                    <i class="fa-solid fa-spinner fa-spin text-3xl text-gray-300 mb-2"></i>
+                    <p class="text-[10px] font-bold text-gray-500 uppercase">Buscando tus asignaciones...</p>
+                </div>
+
+                <div id="estado-fondo-vacio" class="hidden">
+                    <i class="fa-solid fa-box-open text-4xl text-gray-300 mb-2"></i>
+                    <p class="text-[11px] font-bold text-gray-600 uppercase">No tienes fondos asignados</p>
+                    <p class="text-[9px] text-gray-400 mt-1">El supervisor no ha enviado dinero a tu usuario. Iniciarás con la gaveta en cero.</p>
+                    <button onclick="procesarAperturaCaja(false)" class="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 mt-4 rounded-lg shadow-md transition-all text-xs uppercase tracking-wider btn-press">Abrir Caja en Cero</button> 
+                </div>
+
+                <div id="estado-fondo-pendiente" class="hidden text-left">
+                    <p class="text-[10px] text-gray-500 font-bold uppercase mb-2 text-center">Se te ha asignado el siguiente fondo:</p>
+                    
+                    <div class="bg-blue-50 border border-blue-200 rounded p-3 mb-3 shadow-inner">
+                        <div class="grid grid-cols-2 gap-2 divide-x divide-blue-200 text-center">
+                            <div>
+                                <span class="text-[9px] text-gray-500 block uppercase font-bold">Efectivo USD</span>
+                                <span id="txt-fondo-recibe-usd" class="text-xl font-black text-green-700">$0.00</span>
+                            </div>
+                            <div>
+                                <span class="text-[9px] text-gray-500 block uppercase font-bold">Efectivo Bs.</span>
+                                <span id="txt-fondo-recibe-bs" class="text-lg font-black text-primary pt-1 block">Bs. 0.00</span>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-[8px] text-blue-800 font-bold uppercase text-center"><i class="fa-solid fa-circle-info"></i> Origen: <span id="txt-fondo-origen" class="font-black">...</span></p>
+                    
+                    <button id="btn-aceptar-fondo" onclick="procesarAperturaCaja(true)" class="w-full bg-secondary hover:opacity-90 text-white font-bold py-3 mt-4 rounded-lg shadow-md transition-all text-xs uppercase tracking-wider flex justify-center items-center gap-2 btn-press"><i class="fa-solid fa-check-double"></i> Recibir Fondo y Abrir</button> 
+                    <button onclick="procesarAperturaCaja(false)" class="w-full text-gray-400 hover:text-gray-600 text-[10px] font-bold uppercase mt-3 underline text-center">Ignorar e iniciar en cero</button>
+                </div>
+
+            </div>
+        </div> 
+    </div> 
+
+    <div id="modal-cerrar-caja" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[9990] hidden flex items-center justify-center p-4 fade-in"> 
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col border border-gray-200"> 
+            <div class="bg-red-600 px-4 py-3 flex justify-between items-center shrink-0"> 
+                <h3 class="font-bold text-white text-[12px] tracking-wide uppercase"><i class="fa-solid fa-lock text-white mr-2"></i> Declaración de Cierre (Reporte Z)</h3> 
+                <button onclick="cerrarModalCierre()" class="text-white hover:text-gray-200 text-lg transition"><i class="fa-solid fa-times"></i></button> 
+            </div> 
+            <div class="p-5 bg-gray-50 space-y-3 max-h-[80vh] overflow-y-auto custom-scroll"> 
+                <div class="bg-yellow-50 border border-yellow-200 rounded p-2 text-[9px] text-yellow-800 font-bold uppercase text-center mb-2">
+                    Declare exactamente el dinero que hay en la gaveta y cuentas bancarias. El sistema calculará el descuadre.
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-white p-2 rounded border border-gray-200 shadow-sm">
+                        <label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Efectivo USD Físico</label>
+                        <input type="number" id="dec-efectivo-usd" step="0.01" class="w-full border-b border-gray-300 px-2 py-1 text-sm font-black text-green-700 outline-none focus:border-tertiary transition text-right bg-transparent" placeholder="0.00">
+                    </div>
+                    <div class="bg-white p-2 rounded border border-gray-200 shadow-sm">
+                        <label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Efectivo BS Físico</label>
+                        <input type="number" id="dec-efectivo-bs" step="0.01" class="w-full border-b border-gray-300 px-2 py-1 text-sm font-black text-primary outline-none focus:border-tertiary transition text-right bg-transparent" placeholder="0.00">
+                    </div>
+                    <div class="bg-white p-2 rounded border border-gray-200 shadow-sm">
+                        <label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Punto de Venta (Lote BS)</label>
+                        <input type="number" id="dec-punto-bs" step="0.01" class="w-full border-b border-gray-300 px-2 py-1 text-sm font-black text-primary outline-none focus:border-tertiary transition text-right bg-transparent" placeholder="0.00">
+                    </div>
+                    <div class="bg-white p-2 rounded border border-gray-200 shadow-sm">
+                        <label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Pago Móvil / Transf. (BS)</label>
+                        <input type="number" id="dec-transf-bs" step="0.01" class="w-full border-b border-gray-300 px-2 py-1 text-sm font-black text-primary outline-none focus:border-tertiary transition text-right bg-transparent" placeholder="0.00">
+                    </div>
+                    <div class="bg-white p-2 rounded border border-gray-200 shadow-sm col-span-2">
+                        <label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Zelle / Transferencias Ext (USD)</label>
+                        <input type="number" id="dec-zelle-usd" step="0.01" class="w-full border-b border-gray-300 px-2 py-1 text-sm font-black text-green-700 outline-none focus:border-tertiary transition text-right bg-transparent" placeholder="0.00">
+                    </div>
+                </div>
+
+                <div class="mt-2">
+                    <label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Observaciones del Cajero</label>
+                    <textarea id="dec-observaciones" rows="2" class="w-full border border-gray-300 rounded p-2 text-xs outline-none focus:border-tertiary transition uppercase shadow-sm" placeholder="Justifique si falta o sobra dinero..."></textarea>
+                </div>
+
+                <button onclick="procesarCierreCaja()" id="btn-procesar-cierre" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 mt-4 rounded-lg shadow-md transition-all text-xs uppercase tracking-wider btn-press flex justify-center items-center gap-2"><i class="fa-solid fa-lock text-white"></i> Declarar y Cerrar Caja</button> 
+            </div> 
+        </div> 
+    </div> 
+
+    <div id="ticket-impresion" class="hidden print:block"></div> 
+
+    <script src="menu.js"></script> 
+    
+    <main class="flex-1 flex flex-col h-screen overflow-hidden w-full z-10 relative"> 
+        <header class="bg-white shadow-sm px-4 flex justify-between items-center z-10 shrink-0 border-b border-gray-200 h-12"> 
+            <div class="flex items-center gap-3"> 
+                <button onclick="toggleMobileMenu()" class="md:hidden text-gray-600 hover:text-primary text-lg px-2"><i class="fa-solid fa-bars"></i></button> 
+                <h1 class="text-xs font-bold text-primary flex items-center gap-2 uppercase tracking-tighter"><i class="fa-solid fa-vault text-tertiary"></i> Control de Caja</h1> 
+            </div> 
+            <div class="flex items-center gap-3"> 
+                <div id="status-caja-badge" class="text-[9px] font-bold uppercase tracking-wider bg-gray-100 text-gray-500 border border-gray-300 shadow-sm px-2 py-1 rounded flex items-center gap-1">
+                    <i class="fa-solid fa-circle-notch fa-spin"></i> VERIFICANDO TURNO...
+                </div>
+            </div> 
+        </header> 
+
+        <div class="flex-1 overflow-y-auto p-4 custom-scroll relative"> 
+            <div id="panel-caja-cerrada" class="hidden absolute inset-0 bg-[#f4f6f8] flex flex-col items-center justify-center p-4 z-20">
+                <i class="fa-solid fa-lock text-6xl text-gray-300 mb-4"></i>
+                <h2 class="text-2xl font-black text-gray-500 uppercase tracking-widest mb-1">Caja Cerrada</h2>
+                <p class="text-xs text-gray-400 font-bold mb-6 text-center max-w-sm">No puedes realizar ventas ni cobros hasta aperturar un nuevo turno de caja.</p>
+                <button onclick="abrirModalApertura()" class="bg-secondary hover:opacity-90 text-white font-black py-3 px-8 rounded-lg shadow-lg transition-all text-sm uppercase tracking-widest btn-press flex justify-center items-center gap-2">
+                    <i class="fa-solid fa-key"></i> Abrir Turno
+                </button>
+            </div>
+
+            <div id="panel-caja-abierta" class="hidden flex-col h-full">
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4 shrink-0">
+                    <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-sm flex flex-col">
+                        <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Fondo Inicial</p>
+                        <h2 class="text-lg font-black text-primary mt-1 leading-tight" id="metric-fondo">$0.00<br><span class="text-[10px] text-gray-500">Bs. 0.00</span></h2>
+                    </div>
+                    <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-sm flex flex-col border-l-4 border-l-green-500">
+                        <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Ventas / Cobros</p>
+                        <h2 class="text-lg font-black text-green-600 mt-1 leading-tight" id="metric-ingresos">$0.00<br><span class="text-[10px] text-gray-500">Bs. 0.00</span></h2>
+                    </div>
+                    <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-sm flex flex-col border-l-4 border-l-red-500">
+                        <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Egresos / Retiros</p>
+                        <h2 class="text-lg font-black text-red-600 mt-1 leading-tight" id="metric-egresos">$0.00<br><span class="text-[10px] text-gray-500">Bs. 0.00</span></h2>
+                    </div>
+                    <div class="bg-slate-800 p-3 rounded-lg border border-slate-900 shadow-md flex flex-col items-center justify-center cursor-pointer hover:bg-slate-700 transition btn-press" onclick="abrirModalCierre()">
+                        <i class="fa-solid fa-lock text-white text-xl mb-1"></i>
+                        <span class="text-xs font-black text-white uppercase tracking-widest">Cerrar Caja</span>
+                    </div>
+                </div>
+
+                <div class="flex-1 bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden flex flex-col"> 
+                    <div class="bg-gray-50 px-4 py-3 border-b border-gray-200 flex justify-between items-center shrink-0">
+                        <h3 class="text-xs font-bold text-gray-700 uppercase tracking-widest"><i class="fa-solid fa-list-ul mr-2"></i> Movimientos del Turno Actual</h3>
+                    </div>
+                    <div class="overflow-y-auto custom-scroll flex-1 p-2">
+                        <table class="w-full text-left text-[10px] whitespace-nowrap">
+                            <thead class="text-gray-400 uppercase tracking-wider border-b border-gray-100">
+                                <tr>
+                                    <th class="py-2 px-2 font-bold">Hora</th>
+                                    <th class="py-2 px-2 font-bold">Concepto</th>
+                                    <th class="py-2 px-2 font-bold">Método</th>
+                                    <th class="py-2 px-2 font-bold text-right">Monto</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-50" id="tabla-movimientos">
+                                </tbody>
+                        </table>
+                    </div>
+                </div> 
+            </div>
+        </div> 
+    </main>
+
+    <script> 
+        const TOKEN_JWT = localStorage.getItem('pyp_token_seguro'); 
+        
+        let empresaActual = null; 
+        let turnoActivo = null; 
+        let tasaBCV = 1;
+        let transferenciasPendientes = []; 
+
+        window.onload = async () => { 
+            try { 
+                await iniciarModuloCaja(); 
+            } catch(e) { 
+                mostrarErrorConexion("Fallo al conectar con la base de datos."); 
+            } 
+        }; 
+
+        function fmt(num) { return parseFloat(num || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); } 
+        function redondear(num) { return Math.round((num + Number.EPSILON) * 100) / 100; }
+
+        function mostrarErrorConexion(msg) { 
+            document.getElementById('loading-text').innerText = "Error"; 
+            document.getElementById('loading-error').innerText = msg;  
+            document.getElementById('loading-error').classList.remove('hidden'); 
+            document.getElementById('error-actions').classList.remove('hidden'); 
+            document.getElementById('loading-icon').className = "fa-solid fa-wifi text-5xl text-red-500 mb-4";  
+            document.getElementById('loading-overlay').classList.remove('hidden'); document.getElementById('loading-overlay').classList.add('flex'); 
+        } 
+        function cerrarErrorCarga() { document.getElementById('loading-overlay').classList.add('hidden'); document.getElementById('loading-overlay').classList.remove('flex'); } 
+        function mostrarCarga(txt) {
+            document.getElementById('loading-text').innerText = txt;
+            document.getElementById('loading-error').classList.add('hidden'); 
+            document.getElementById('error-actions').classList.add('hidden'); 
+            document.getElementById('loading-icon').className = "fa-solid fa-circle-notch fa-spin text-5xl text-primary mb-4";  
+            document.getElementById('loading-overlay').classList.remove('hidden'); document.getElementById('loading-overlay').classList.add('flex'); 
+        }
+
+        async function iniciarModuloCaja() { 
+            mostrarCarga("Verificando Sesión de Caja...");
+            try { 
+                const resUser = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?select=id_empresa&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }); 
+                if (!resUser.ok) throw new Error("Sesión inválida."); 
+                empresaActual = (await resUser.json())[0]?.id_empresa || null; 
+
+                const resTasa = await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?moneda=eq.USD&select=tasa&order=fecha_actualizacion.desc&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }); 
+                if (resTasa.ok) { const dataT = await resTasa.json(); if(dataT.length > 0) tasaBCV = dataT[0].tasa; }
+
+                await verificarTurnoActivo();
+                cerrarErrorCarga();
+            } catch(e) { mostrarErrorConexion(e.message); } 
+        } 
+
+        async function verificarTurnoActivo() {
+            const filtroEmpresa = empresaActual ? `id_empresa=eq.${empresaActual}&` : `id_empresa=is.null&`;
+
+            // 🆕 Sprint 3D: filtrar por auth_id_cajero (UUID del JWT) en vez de string del usuario.
+            // Esto es robusto a cambios de nombre, mayúsculas, y soporta múltiples cajas simultáneas.
+            let authIdCajero = null;
+            try {
+                if (TOKEN_JWT) {
+                    const payload = JSON.parse(atob(TOKEN_JWT.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+                    authIdCajero = payload.sub;
+                }
+            } catch(e) {}
+
+            // Si tenemos auth_id, filtramos por él. Si no, fallback al método viejo.
+            const filtroCajero = authIdCajero
+                ? `auth_id_cajero=eq.${authIdCajero}`
+                : `usuario_cajero=eq.${localStorage.getItem('pyp_usuario_login') || localStorage.getItem('pyp_usuario_nombre') || 'SISTEMA'}`;
+
+            const res = await fetch(`${SUPABASE_URL}/rest/v1/cierres_caja?${filtroEmpresa}${filtroCajero}&estatus=eq.ABIERTA&select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+            if (!res.ok) throw new Error("Fallo al leer estado de caja."); 
+            
+            const data = await res.json(); 
+            const badge = document.getElementById('status-caja-badge');
+
+            if (data.length > 0) {
+                turnoActivo = data[0];
+                document.getElementById('panel-caja-cerrada').classList.add('hidden');
+                document.getElementById('panel-caja-abierta').classList.remove('hidden');
+                document.getElementById('panel-caja-abierta').classList.add('flex');
+                
+                badge.className = "text-[9px] font-bold uppercase tracking-wider bg-green-50 text-green-600 border border-green-200 shadow-sm px-2 py-1 rounded flex items-center gap-1";
+                badge.innerHTML = `<i class="fa-solid fa-lock-open"></i> TURNO ABIERTO`;
+                
+                await cargarMovimientosTurno(turnoActivo.id_cierre);
+            } else {
+                turnoActivo = null;
+                document.getElementById('panel-caja-cerrada').classList.remove('hidden');
+                document.getElementById('panel-caja-abierta').classList.add('hidden');
+                document.getElementById('panel-caja-abierta').classList.remove('flex');
+                
+                badge.className = "text-[9px] font-bold uppercase tracking-wider bg-red-50 text-red-600 border border-red-200 shadow-sm px-2 py-1 rounded flex items-center gap-1";
+                badge.innerHTML = `<i class="fa-solid fa-lock"></i> CAJA CERRADA`;
+            }
+        }
+
+        // ================= APERTURA DE CAJA =================
+        async function abrirModalApertura() {
+            document.getElementById('modal-abrir-caja').classList.remove('hidden');
+            document.getElementById('modal-abrir-caja').classList.add('flex');
+            
+            document.getElementById('estado-fondo-cargando').classList.remove('hidden');
+            document.getElementById('estado-fondo-vacio').classList.add('hidden');
+            document.getElementById('estado-fondo-pendiente').classList.add('hidden');
+            transferenciasPendientes = []; 
+
+            const usrNombre = localStorage.getItem('pyp_usuario_nombre') || 'SISTEMA';
+            const usrLogin = localStorage.getItem('pyp_usuario_login') || usrNombre;
+
+            try {
+                // NOTA: Ahora pedimos que nos traiga también saldo_usd y saldo_bs de la bóveda
+                const url = `${SUPABASE_URL}/rest/v1/fin_transferencias?or=(usuario_receptor.eq.${encodeURIComponent(usrNombre)},usuario_receptor.eq.${encodeURIComponent(usrLogin)})&estado=eq.PENDIENTE&select=*,fin_cuentas!id_cuenta_origen(nombre,saldo_usd,saldo_bs)`;
+                const res = await fetch(url, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                const data = await res.json();
+
+                document.getElementById('estado-fondo-cargando').classList.add('hidden');
+
+                if (data.length > 0) {
+                    transferenciasPendientes = data; 
+                    let totalUsd = 0; let totalBs = 0; let nombresOrigen = new Set();
+
+                    data.forEach(t => {
+                        totalUsd += parseFloat(t.monto_usd) || 0;
+                        totalBs += parseFloat(t.monto_bs) || 0;
+                        let nom = "Bóveda";
+                        if(t.fin_cuentas) {
+                            const cta = Array.isArray(t.fin_cuentas) ? t.fin_cuentas[0] : t.fin_cuentas;
+                            if(cta.nombre) nom = cta.nombre;
+                        }
+                        nombresOrigen.add(nom);
+                    });
+
+                    document.getElementById('txt-fondo-recibe-usd').innerText = `$${fmt(totalUsd)}`;
+                    document.getElementById('txt-fondo-recibe-bs').innerText = `Bs. ${fmt(totalBs)}`;
+                    document.getElementById('txt-fondo-origen').innerText = Array.from(nombresOrigen).join(' / ');
+                    document.getElementById('estado-fondo-pendiente').classList.remove('hidden');
+                } else {
+                    document.getElementById('estado-fondo-vacio').classList.remove('hidden');
+                }
+            } catch (e) {
+                cerrarModalApertura(); mostrarErrorConexion("No se pudo verificar fondos en la bóveda.");
+            }
+        }
+
+        function cerrarModalApertura() { document.getElementById('modal-abrir-caja').classList.add('hidden'); document.getElementById('modal-abrir-caja').classList.remove('flex'); }
+
+        async function procesarAperturaCaja(aceptaFondo) {
+            const btn = document.getElementById(aceptaFondo ? 'btn-aceptar-fondo' : 'btn-procesar-apertura'); 
+            if(btn) btn.disabled = true;
+            
+            mostrarCarga("Aperturando Turno...", "Firmando recibos y descontando de bóvedas...");
+
+            let totalUsd = 0; let totalBs = 0;
+            if (aceptaFondo && transferenciasPendientes.length > 0) {
+                transferenciasPendientes.forEach(t => {
+                    totalUsd += parseFloat(t.monto_usd) || 0;
+                    totalBs += parseFloat(t.monto_bs) || 0;
+                });
+            }
+
+            try {
+                const usuario = localStorage.getItem('pyp_usuario_login') || localStorage.getItem('pyp_usuario_nombre') || 'SISTEMA';
+
+                // 🆕 Sprint 3D: extraer auth_id del JWT para identificar al cajero por UUID
+                let authIdCajero = null;
+                try {
+                    if (TOKEN_JWT) {
+                        const payload = JSON.parse(atob(TOKEN_JWT.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+                        authIdCajero = payload.sub;
+                    }
+                } catch(e) {}
+
+                const payloadTurno = {
+                    id_empresa: empresaActual || null, usuario_cajero: usuario, estatus: 'ABIERTA',
+                    monto_apertura_usd: redondear(totalUsd), monto_apertura_bs: redondear(totalBs),
+                    auth_id_cajero: authIdCajero
+                };
+
+                const resTurno = await fetch(`${SUPABASE_URL}/rest/v1/cierres_caja`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, body: JSON.stringify(payloadTurno) }); 
+                if(!resTurno.ok) throw new Error("No se pudo aperturar la caja.");
+                const idCierreNuevo = (await resTurno.json())[0].id_cierre;
+
+                if (aceptaFondo && transferenciasPendientes.length > 0) {
+                    const ts = new Date().toISOString();
+                    for(const t of transferenciasPendientes) {
+                        const mUsd = parseFloat(t.monto_usd) || 0;
+                        const mBs = parseFloat(t.monto_bs) || 0;
+                        
+                        const cta = Array.isArray(t.fin_cuentas) ? t.fin_cuentas[0] : t.fin_cuentas;
+                        const nombreBoveda = cta ? cta.nombre : "Bóveda";
+                        
+                        // A. Sellar la transferencia como ACEPTADA
+                        await fetch(`${SUPABASE_URL}/rest/v1/fin_transferencias?id=eq.${t.id}`, { method: 'PATCH', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ estado: 'ACEPTADA', fecha_recepcion: ts }) });
+                        
+                        // B. Libro Mayor (Dejar rastro)
+                        const payloadEgresoBoveda = { 
+                            id_empresa: empresaActual || null, id_cuenta: t.id_cuenta_origen, fecha: ts, tipo: 'EGRESO', 
+                            concepto: `ASIGNACIÓN ACEPTADA POR CAJERO: ${usuario}`, monto_usd: redondear(mUsd), monto_bs: redondear(mBs), usuario: usuario, referencia_origen: t.id
+                        }; 
+                        await fetch(`${SUPABASE_URL}/rest/v1/fin_movimientos`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify(payloadEgresoBoveda) });
+
+                        // C. DESCONTAR DE LA BÓVEDA (La pieza que faltaba)
+                        if(cta) {
+                            const saldoActualUsd = parseFloat(cta.saldo_usd) || 0;
+                            const saldoActualBs = parseFloat(cta.saldo_bs) || 0;
+                            const nuevoSaldoUsd = redondear(saldoActualUsd - mUsd);
+                            const nuevoSaldoBs = redondear(saldoActualBs - mBs);
+
+                            await fetch(`${SUPABASE_URL}/rest/v1/fin_cuentas?id=eq.${t.id_cuenta_origen}`, { 
+                                method: 'PATCH', 
+                                headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, 
+                                body: JSON.stringify({ saldo_usd: nuevoSaldoUsd, saldo_bs: nuevoSaldoBs }) 
+                            });
+                        }
+
+                        // D. Ingresar a la Caja del Cajero
+                        const payloadIngresoCaja = {
+                            id_empresa: empresaActual || null, id_cierre: idCierreNuevo, fecha: ts, tipo: 'INGRESO',
+                            concepto: `FONDO RECIBIDO DESDE: ${nombreBoveda}`, monto_usd: redondear(mUsd), monto_bs: redondear(mBs), metodo_pago: 'EFECTIVO_MIXTO', usuario: usuario
+                        };
+                        await fetch(`${SUPABASE_URL}/rest/v1/caja_movimientos`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify(payloadIngresoCaja) });
+                    }
+                }
+
+                cerrarModalApertura();
+                await verificarTurnoActivo();
+                cerrarErrorCarga();
+            } catch(e) { mostrarErrorConexion(e.message); } finally { if(btn) btn.disabled = false; }
+        }
+
+        // ================= CARGA DE MOVIMIENTOS EN VIVO =================
+        async function cargarMovimientosTurno(idCierre) {
+            const res = await fetch(`${SUPABASE_URL}/rest/v1/caja_movimientos?id_cierre=eq.${idCierre}&select=*&order=fecha.desc`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }); 
+            if (!res.ok) return; 
+            
+            const movs = await res.json();
+            const tbody = document.getElementById('tabla-movimientos');
+            let html = '';
+            
+            let sApUsd = 0, sApBs = 0; 
+            let sInUsd = 0, sInBs = 0; 
+            let sEgUsd = 0, sEgBs = 0; 
+
+            if(movs.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-gray-400 font-bold text-[10px] uppercase">Sin transacciones aún.</td></tr>`;
+            } else {
+                movs.forEach(m => {
+                    const hora = new Date(m.fecha).toLocaleTimeString('es-VE', {hour: '2-digit', minute:'2-digit'});
+                    const usd = parseFloat(m.monto_usd) || 0;
+                    const bs = parseFloat(m.monto_bs) || 0;
+
+                    const color = m.tipo === 'INGRESO' ? 'text-green-600' : 'text-red-600';
+                    const signo = m.tipo === 'INGRESO' ? '+' : '-';
+                    
+                    if (m.concepto.includes('FONDO RECIBIDO')) {
+                        sApUsd += usd; sApBs += bs;
+                    } else if (m.tipo === 'INGRESO') {
+                        sInUsd += usd; sInBs += bs;
+                    } else if (m.tipo === 'EGRESO') {
+                        sEgUsd += usd; sEgBs += bs;
+                    }
+
+                    let textoMonto = '';
+                    if (usd > 0) textoMonto += `$${fmt(usd)} `;
+                    if (bs > 0) textoMonto += `Bs.${fmt(bs)}`;
+                    if (usd === 0 && bs === 0) textoMonto = '$0.00';
+
+                    html += `<tr class="hover:bg-blue-50 transition border-b border-gray-50">
+                        <td class="py-2 px-2 text-[9px] font-bold text-gray-500">${hora}</td>
+                        <td class="py-2 px-2 font-bold text-primary truncate max-w-[200px] text-[10px]">${m.concepto}</td>
+                        <td class="py-2 px-2 font-mono text-[9px] text-gray-500">${m.metodo_pago.replace('_', ' ')}</td>
+                        <td class="py-2 px-2 text-right font-black ${color} text-[11px]">${signo} ${textoMonto}</td>
+                    </tr>`;
+                });
+                tbody.innerHTML = html;
+            }
+
+            document.getElementById('metric-fondo').innerHTML = `$${fmt(sApUsd)}<br><span class="text-[10px] text-gray-500">Bs. ${fmt(sApBs)}</span>`;
+            document.getElementById('metric-ingresos').innerHTML = `$${fmt(sInUsd)}<br><span class="text-[10px] text-gray-500">Bs. ${fmt(sInBs)}</span>`;
+            document.getElementById('metric-egresos').innerHTML = `$${fmt(sEgUsd)}<br><span class="text-[10px] text-gray-500">Bs. ${fmt(sEgBs)}</span>`;
+            
+            turnoActivo.sumFondoUsd = sApUsd; turnoActivo.sumFondoBs = sApBs;
+            turnoActivo.sumIngresosUsd = sInUsd; turnoActivo.sumIngresosBs = sInBs;
+            turnoActivo.sumEgresosUsd = sEgUsd; turnoActivo.sumEgresosBs = sEgBs;
+            
+            turnoActivo.totalCalculadoSistema = sApUsd + sInUsd - sEgUsd + ((sApBs + sInBs - sEgBs) / tasaBCV);
+        }
+
+        // ================= CIERRE DE CAJA =================
+        function abrirModalCierre() {
+            document.getElementById('dec-efectivo-usd').value = '';
+            document.getElementById('dec-efectivo-bs').value = '';
+            document.getElementById('dec-punto-bs').value = '';
+            document.getElementById('dec-transf-bs').value = '';
+            document.getElementById('dec-zelle-usd').value = '';
+            document.getElementById('dec-observaciones').value = '';
+            
+            document.getElementById('modal-cerrar-caja').classList.remove('hidden');
+            document.getElementById('modal-cerrar-caja').classList.add('flex');
+        }
+
+        function cerrarModalCierre() {
+            document.getElementById('modal-cerrar-caja').classList.add('hidden');
+            document.getElementById('modal-cerrar-caja').classList.remove('flex');
+        }
+
+        async function procesarCierreCaja() {
+            const btn = document.getElementById('btn-procesar-cierre'); btn.disabled = true;
+            
+            if(!confirm("¿Está seguro que desea CERRAR EL TURNO? Se imprimirá el Reporte Z y la caja quedará bloqueada.")) { btn.disabled = false; return; }
+            
+            mostrarCarga("Cuadrando Caja y Generando Reporte Z...");
+
+            try {
+                const decEfvoUsd = parseFloat(document.getElementById('dec-efectivo-usd').value) || 0;
+                const decEfvoBs = parseFloat(document.getElementById('dec-efectivo-bs').value) || 0;
+                const decPuntoBs = parseFloat(document.getElementById('dec-punto-bs').value) || 0;
+                const decTransfBs = parseFloat(document.getElementById('dec-transf-bs').value) || 0;
+                const decZelleUsd = parseFloat(document.getElementById('dec-zelle-usd').value) || 0;
+                const obs = document.getElementById('dec-observaciones').value.trim();
+
+                const totalDeclaradoUsd = decEfvoUsd + decZelleUsd + (decEfvoBs / tasaBCV) + (decPuntoBs / tasaBCV) + (decTransfBs / tasaBCV);
+                const descuadreUsd = totalDeclaradoUsd - turnoActivo.totalCalculadoSistema;
+
+                const desglosePagos = {
+                    efectivo_usd: decEfvoUsd,
+                    efectivo_bs: decEfvoBs,
+                    punto_bs: decPuntoBs,
+                    transferencias_bs: decTransfBs,
+                    zelle_usd: decZelleUsd
+                };
+
+                const payload = {
+                    estatus: 'CERRADA',
+                    fecha_cierre: new Date().toISOString(),
+                    total_calculado_sistema_usd: turnoActivo.totalCalculadoSistema,
+                    total_declarado_cajero_usd: totalDeclaradoUsd,
+                    descuadre_usd: descuadreUsd,
+                    desglose_pagos: desglosePagos,
+                    observaciones: obs || null
+                };
+
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/cierres_caja?id_cierre=eq.${turnoActivo.id_cierre}`, { method: 'PATCH', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, body: JSON.stringify(payload) }); 
+                if(!res.ok) throw new Error("Fallo al sellar la caja.");
+                
+                const datosCierreFinal = (await res.json())[0];
+
+                imprimirReporteZ(datosCierreFinal);
+
+                cerrarModalCierre();
+                await verificarTurnoActivo();
+                cerrarErrorCarga();
+            } catch(e) { mostrarErrorConexion(e.message); } finally { btn.disabled = false; }
+        }
+
+        function imprimirReporteZ(cierre) {
+            const contenedor = document.getElementById('ticket-impresion');
+            const fechaApertura = new Date(cierre.fecha_apertura).toLocaleString('es-VE');
+            const fechaCierre = new Date(cierre.fecha_cierre).toLocaleString('es-VE');
+            const descColor = cierre.descuadre_usd < -0.1 ? 'color: red;' : (cierre.descuadre_usd > 0.1 ? 'color: green;' : 'color: black;');
+            
+            contenedor.innerHTML = `
+                <div style="text-align: center; margin-bottom: 10px; border-bottom: 1px dashed #000; padding-bottom: 5px;">
+                    <strong style="font-size: 1.3em;">REPORTE Z (CIERRE CAJA)</strong><br>
+                    ID: ${cierre.id_cierre.split('-')[0].toUpperCase()}<br>
+                    Cajero: ${cierre.usuario_cajero}
+                </div>
+                <div style="margin-bottom: 10px; font-size: 0.9em;">
+                    <strong>Apertura:</strong> ${fechaApertura}<br>
+                    <strong>Cierre:</strong> ${fechaCierre}
+                </div>
+                <div style="border-top: 1px dashed #000; border-bottom: 1px dashed #000; margin-bottom: 10px; padding: 5px 0;">
+                    <div style="display: flex; justify-content: space-between;"><span>Fondo Inicial:</span><strong>$${fmt(turnoActivo.sumFondoUsd)} | Bs.${fmt(turnoActivo.sumFondoBs)}</strong></div>
+                    <div style="display: flex; justify-content: space-between;"><span>Ventas/Cobros:</span><strong>+$${fmt(turnoActivo.sumIngresosUsd)} | +Bs.${fmt(turnoActivo.sumIngresosBs)}</strong></div>
+                    <div style="display: flex; justify-content: space-between;"><span>Retiros/Egresos:</span><strong>-$${fmt(turnoActivo.sumEgresosUsd)} | -Bs.${fmt(turnoActivo.sumEgresosBs)}</strong></div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 5px; font-weight: bold; border-top: 1px solid #000;"><span>TOTAL SISTEMA:</span><span>$${fmt(cierre.total_calculado_sistema_usd)}</span></div>
+                </div>
+                <div style="margin-bottom: 10px; padding: 5px 0;">
+                    <strong style="text-decoration: underline;">DECLARACIÓN CAJERO (USD/BS)</strong>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.9em;"><span>Efectivo $:</span><span>$${fmt(cierre.desglose_pagos.efectivo_usd)}</span></div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.9em;"><span>Zelle $:</span><span>$${fmt(cierre.desglose_pagos.zelle_usd)}</span></div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.9em;"><span>Efectivo Bs:</span><span>Bs. ${fmt(cierre.desglose_pagos.efectivo_bs)}</span></div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.9em;"><span>Punto Bs:</span><span>Bs. ${fmt(cierre.desglose_pagos.punto_bs)}</span></div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.9em;"><span>P. Móvil Bs:</span><span>Bs. ${fmt(cierre.desglose_pagos.transferencias_bs)}</span></div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 5px; font-weight: bold; border-top: 1px solid #000;"><span>TOTAL DECLARADO:</span><span>$${fmt(cierre.total_declarado_cajero_usd)}</span></div>
+                </div>
+                <div style="text-align: center; border: 1px solid #000; padding: 5px; font-weight: bold; font-size: 1.1em; ${descColor}">
+                    DESCUADRE (FALTANTE/SOBRANTE)<br>
+                    $${fmt(cierre.descuadre_usd)}
+                </div>
+                <div style="text-align: center; margin-top: 15px; font-size: 0.8em; color: #555;">
+                    Tasa Referencia Cierre: Bs. ${fmt(tasaBCV)}
+                </div>`;
+            window.print();
+        }
+    </script>
+</body> 
+</html>
