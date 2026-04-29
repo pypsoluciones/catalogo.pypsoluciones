@@ -112,49 +112,100 @@
         </div> 
     </div> 
 
-    <div id="modal-cerrar-caja" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[9990] hidden flex items-center justify-center p-4 fade-in"> 
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col border border-gray-200"> 
-            <div class="bg-red-600 px-4 py-3 flex justify-between items-center shrink-0"> 
-                <h3 class="font-bold text-white text-[12px] tracking-wide uppercase"><i class="fa-solid fa-lock text-white mr-2"></i> Declaración de Cierre (Reporte Z)</h3> 
-                <button onclick="cerrarModalCierre()" class="text-white hover:text-gray-200 text-lg transition"><i class="fa-solid fa-times"></i></button> 
-            </div> 
-            <div class="p-5 bg-gray-50 space-y-3 max-h-[80vh] overflow-y-auto custom-scroll"> 
-                <div class="bg-yellow-50 border border-yellow-200 rounded p-2 text-[9px] text-yellow-800 font-bold uppercase text-center mb-2">
-                    Declare exactamente el dinero que hay en la gaveta y cuentas bancarias. El sistema calculará el descuadre.
+    <div id="modal-cerrar-caja" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[9990] hidden flex items-center justify-center p-4 fade-in">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col border border-gray-200 max-h-[95vh]">
+            <div class="bg-red-600 px-4 py-3 flex justify-between items-center shrink-0">
+                <h3 class="font-bold text-white text-[12px] tracking-wide uppercase"><i class="fa-solid fa-lock text-white mr-2"></i> Cierre de Caja Inteligente</h3>
+                <button onclick="cerrarModalCierre()" class="text-white hover:text-gray-200 text-lg transition"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <div class="p-4 bg-gray-50 space-y-4 overflow-y-auto custom-scroll">
+
+                <!-- 📊 SECCIÓN 1: RESUMEN AUTO-CALCULADO -->
+                <div class="bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
+                    <div class="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 flex items-center gap-2">
+                        <i class="fa-solid fa-calculator text-primary"></i> Resumen del Turno (auto-calculado)
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <!-- USD -->
+                        <div class="bg-green-50 border border-green-200 rounded p-2">
+                            <div class="text-[9px] font-bold text-green-800 uppercase tracking-wider mb-1">💵 EN USD</div>
+                            <div class="space-y-0.5 text-[11px] font-bold">
+                                <div class="flex justify-between"><span class="text-gray-600">Fondo inicial:</span> <span id="res-fondo-usd" class="text-gray-800">$0.00</span></div>
+                                <div class="flex justify-between"><span class="text-gray-600">+ Ventas:</span> <span id="res-ventas-usd" class="text-green-700">$0.00</span></div>
+                                <div class="flex justify-between"><span class="text-gray-600">- Egresos:</span> <span id="res-egresos-usd" class="text-red-600">$0.00</span></div>
+                                <div class="border-t border-green-300 my-1"></div>
+                                <div class="flex justify-between text-sm"><span class="font-black text-green-900">DEBE HABER:</span> <span id="res-debe-usd" class="font-black text-green-900">$0.00</span></div>
+                            </div>
+                        </div>
+                        <!-- BS -->
+                        <div class="bg-blue-50 border border-blue-200 rounded p-2">
+                            <div class="text-[9px] font-bold text-blue-800 uppercase tracking-wider mb-1">💴 EN BOLÍVARES</div>
+                            <div class="space-y-0.5 text-[11px] font-bold">
+                                <div class="flex justify-between"><span class="text-gray-600">Fondo inicial:</span> <span id="res-fondo-bs" class="text-gray-800">Bs. 0.00</span></div>
+                                <div class="flex justify-between"><span class="text-gray-600">+ Ventas:</span> <span id="res-ventas-bs" class="text-green-700">Bs. 0.00</span></div>
+                                <div class="flex justify-between"><span class="text-gray-600">- Egresos:</span> <span id="res-egresos-bs" class="text-red-600">Bs. 0.00</span></div>
+                                <div class="border-t border-blue-300 my-1"></div>
+                                <div class="flex justify-between text-sm"><span class="font-black text-blue-900">DEBE HABER:</span> <span id="res-debe-bs" class="font-black text-blue-900">Bs. 0.00</span></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="bg-white p-2 rounded border border-gray-200 shadow-sm">
-                        <label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Efectivo USD Físico</label>
-                        <input type="number" id="dec-efectivo-usd" step="0.01" class="w-full border-b border-gray-300 px-2 py-1 text-sm font-black text-green-700 outline-none focus:border-tertiary transition text-right bg-transparent" placeholder="0.00">
+                <!-- 💵 SECCIÓN 2: VERIFICACIÓN FÍSICA -->
+                <div class="bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
+                    <div class="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 flex items-center gap-2">
+                        <i class="fa-solid fa-coins text-tertiary"></i> Verificación Física <span class="text-[8px] text-gray-400 normal-case">(Confirma el dinero real en gaveta y bancos)</span>
                     </div>
-                    <div class="bg-white p-2 rounded border border-gray-200 shadow-sm">
-                        <label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Efectivo BS Físico</label>
-                        <input type="number" id="dec-efectivo-bs" step="0.01" class="w-full border-b border-gray-300 px-2 py-1 text-sm font-black text-primary outline-none focus:border-tertiary transition text-right bg-transparent" placeholder="0.00">
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="bg-green-50 p-2 rounded border border-green-200">
+                            <label class="block text-[9px] font-bold text-green-800 uppercase mb-1">Efectivo USD físico</label>
+                            <input type="number" id="dec-efectivo-usd" step="0.01" oninput="recalcularDescuadre()" class="w-full bg-white border border-green-300 rounded px-2 py-1 text-sm font-black text-green-700 outline-none focus:border-green-500 transition text-right" placeholder="0.00">
+                        </div>
+                        <div class="bg-blue-50 p-2 rounded border border-blue-200">
+                            <label class="block text-[9px] font-bold text-blue-800 uppercase mb-1">Efectivo Bs físico</label>
+                            <input type="number" id="dec-efectivo-bs" step="0.01" oninput="recalcularDescuadre()" class="w-full bg-white border border-blue-300 rounded px-2 py-1 text-sm font-black text-blue-700 outline-none focus:border-blue-500 transition text-right" placeholder="0.00">
+                        </div>
+                        <div class="bg-blue-50 p-2 rounded border border-blue-200">
+                            <label class="block text-[9px] font-bold text-blue-800 uppercase mb-1">Punto de Venta (Bs)</label>
+                            <input type="number" id="dec-punto-bs" step="0.01" oninput="recalcularDescuadre()" class="w-full bg-white border border-blue-300 rounded px-2 py-1 text-sm font-black text-blue-700 outline-none focus:border-blue-500 transition text-right" placeholder="0.00">
+                        </div>
+                        <div class="bg-blue-50 p-2 rounded border border-blue-200">
+                            <label class="block text-[9px] font-bold text-blue-800 uppercase mb-1">Pago Móvil/Transf. (Bs)</label>
+                            <input type="number" id="dec-transf-bs" step="0.01" oninput="recalcularDescuadre()" class="w-full bg-white border border-blue-300 rounded px-2 py-1 text-sm font-black text-blue-700 outline-none focus:border-blue-500 transition text-right" placeholder="0.00">
+                        </div>
+                        <div class="bg-green-50 p-2 rounded border border-green-200 col-span-2">
+                            <label class="block text-[9px] font-bold text-green-800 uppercase mb-1">Zelle / Transferencias Ext. (USD)</label>
+                            <input type="number" id="dec-zelle-usd" step="0.01" oninput="recalcularDescuadre()" class="w-full bg-white border border-green-300 rounded px-2 py-1 text-sm font-black text-green-700 outline-none focus:border-green-500 transition text-right" placeholder="0.00">
+                        </div>
                     </div>
-                    <div class="bg-white p-2 rounded border border-gray-200 shadow-sm">
-                        <label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Punto de Venta (Lote BS)</label>
-                        <input type="number" id="dec-punto-bs" step="0.01" class="w-full border-b border-gray-300 px-2 py-1 text-sm font-black text-primary outline-none focus:border-tertiary transition text-right bg-transparent" placeholder="0.00">
+                    <button type="button" onclick="autocompletarValores()" class="mt-2 text-[10px] font-bold text-primary hover:text-secondary uppercase transition flex items-center gap-1">
+                        <i class="fa-solid fa-magic-wand-sparkles"></i> Auto-completar con valores esperados
+                    </button>
+                </div>
+
+                <!-- 🎯 SECCIÓN 3: RESULTADO DEL CIERRE -->
+                <div id="cierre-resultado" class="bg-white border-2 border-gray-300 rounded-lg p-3 shadow-sm">
+                    <div class="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 flex items-center gap-2">
+                        <i class="fa-solid fa-flag-checkered text-primary"></i> Resultado del Cierre
                     </div>
-                    <div class="bg-white p-2 rounded border border-gray-200 shadow-sm">
-                        <label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Pago Móvil / Transf. (BS)</label>
-                        <input type="number" id="dec-transf-bs" step="0.01" class="w-full border-b border-gray-300 px-2 py-1 text-sm font-black text-primary outline-none focus:border-tertiary transition text-right bg-transparent" placeholder="0.00">
-                    </div>
-                    <div class="bg-white p-2 rounded border border-gray-200 shadow-sm col-span-2">
-                        <label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Zelle / Transferencias Ext (USD)</label>
-                        <input type="number" id="dec-zelle-usd" step="0.01" class="w-full border-b border-gray-300 px-2 py-1 text-sm font-black text-green-700 outline-none focus:border-tertiary transition text-right bg-transparent" placeholder="0.00">
+                    <div id="cierre-status" class="text-center py-3">
+                        <div class="text-2xl mb-1">⏳</div>
+                        <div class="text-[11px] font-bold text-gray-500 uppercase">Llena los campos físicos para ver el resultado</div>
                     </div>
                 </div>
 
-                <div class="mt-2">
-                    <label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Observaciones del Cajero</label>
-                    <textarea id="dec-observaciones" rows="2" class="w-full border border-gray-300 rounded p-2 text-xs outline-none focus:border-tertiary transition uppercase shadow-sm" placeholder="Justifique si falta o sobra dinero..."></textarea>
+                <!-- Observaciones (oculto si cuadra exacto) -->
+                <div id="cierre-observaciones-wrap" class="bg-white border border-gray-200 rounded-lg p-3 shadow-sm hidden">
+                    <label class="block text-[10px] font-bold text-red-700 uppercase mb-1">⚠ Observaciones (obligatorio si hay descuadre)</label>
+                    <textarea id="dec-observaciones" rows="2" class="w-full border border-gray-300 rounded p-2 text-xs outline-none focus:border-red-500 transition uppercase" placeholder="Justifique el faltante/sobrante: motivo, responsable, etc..."></textarea>
                 </div>
 
-                <button onclick="procesarCierreCaja()" id="btn-procesar-cierre" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 mt-4 rounded-lg shadow-md transition-all text-xs uppercase tracking-wider btn-press flex justify-center items-center gap-2"><i class="fa-solid fa-lock text-white"></i> Declarar y Cerrar Caja</button> 
-            </div> 
-        </div> 
-    </div> 
+                <button onclick="procesarCierreCaja()" id="btn-procesar-cierre" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg shadow-md transition-all text-xs uppercase tracking-wider btn-press flex justify-center items-center gap-2">
+                    <i class="fa-solid fa-lock text-white"></i> Declarar y Cerrar Caja
+                </button>
+            </div>
+        </div>
+    </div>
 
     <div id="ticket-impresion" class="hidden print:block"></div> 
 
@@ -187,16 +238,25 @@
                 
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4 shrink-0">
                     <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-sm flex flex-col">
-                        <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Fondo Inicial</p>
-                        <h2 class="text-lg font-black text-primary mt-1 leading-tight" id="metric-fondo">$0.00<br><span class="text-[10px] text-gray-500">Bs. 0.00</span></h2>
+                        <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Fondo Inicial</p>
+                        <div class="flex flex-col gap-0.5" id="metric-fondo">
+                            <span class="text-base font-black text-primary leading-tight" data-usd>$0.00</span>
+                            <span class="text-base font-black text-primary leading-tight" data-bs>Bs. 0.00</span>
+                        </div>
                     </div>
                     <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-sm flex flex-col border-l-4 border-l-green-500">
-                        <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Ventas / Cobros</p>
-                        <h2 class="text-lg font-black text-green-600 mt-1 leading-tight" id="metric-ingresos">$0.00<br><span class="text-[10px] text-gray-500">Bs. 0.00</span></h2>
+                        <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Ventas / Cobros</p>
+                        <div class="flex flex-col gap-0.5" id="metric-ingresos">
+                            <span class="text-base font-black text-green-600 leading-tight" data-usd>$0.00</span>
+                            <span class="text-base font-black text-green-600 leading-tight" data-bs>Bs. 0.00</span>
+                        </div>
                     </div>
                     <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-sm flex flex-col border-l-4 border-l-red-500">
-                        <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Egresos / Retiros</p>
-                        <h2 class="text-lg font-black text-red-600 mt-1 leading-tight" id="metric-egresos">$0.00<br><span class="text-[10px] text-gray-500">Bs. 0.00</span></h2>
+                        <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Egresos / Retiros</p>
+                        <div class="flex flex-col gap-0.5" id="metric-egresos">
+                            <span class="text-base font-black text-red-600 leading-tight" data-usd>$0.00</span>
+                            <span class="text-base font-black text-red-600 leading-tight" data-bs>Bs. 0.00</span>
+                        </div>
                     </div>
                     <div class="bg-slate-800 p-3 rounded-lg border border-slate-900 shadow-md flex flex-col items-center justify-center cursor-pointer hover:bg-slate-700 transition btn-press" onclick="abrirModalCierre()">
                         <i class="fa-solid fa-lock text-white text-xl mb-1"></i>
@@ -504,9 +564,12 @@
                 tbody.innerHTML = html;
             }
 
-            document.getElementById('metric-fondo').innerHTML = `$${fmt(sApUsd)}<br><span class="text-[10px] text-gray-500">Bs. ${fmt(sApBs)}</span>`;
-            document.getElementById('metric-ingresos').innerHTML = `$${fmt(sInUsd)}<br><span class="text-[10px] text-gray-500">Bs. ${fmt(sInBs)}</span>`;
-            document.getElementById('metric-egresos').innerHTML = `$${fmt(sEgUsd)}<br><span class="text-[10px] text-gray-500">Bs. ${fmt(sEgBs)}</span>`;
+            document.querySelector('#metric-fondo [data-usd]').textContent = `$${fmt(sApUsd)}`;
+            document.querySelector('#metric-fondo [data-bs]').textContent = `Bs. ${fmt(sApBs)}`;
+            document.querySelector('#metric-ingresos [data-usd]').textContent = `$${fmt(sInUsd)}`;
+            document.querySelector('#metric-ingresos [data-bs]').textContent = `Bs. ${fmt(sInBs)}`;
+            document.querySelector('#metric-egresos [data-usd]').textContent = `$${fmt(sEgUsd)}`;
+            document.querySelector('#metric-egresos [data-bs]').textContent = `Bs. ${fmt(sEgBs)}`;
             
             turnoActivo.sumFondoUsd = sApUsd; turnoActivo.sumFondoBs = sApBs;
             turnoActivo.sumIngresosUsd = sInUsd; turnoActivo.sumIngresosBs = sInBs;
@@ -517,15 +580,117 @@
 
         // ================= CIERRE DE CAJA =================
         function abrirModalCierre() {
-            document.getElementById('dec-efectivo-usd').value = '';
-            document.getElementById('dec-efectivo-bs').value = '';
-            document.getElementById('dec-punto-bs').value = '';
-            document.getElementById('dec-transf-bs').value = '';
-            document.getElementById('dec-zelle-usd').value = '';
-            document.getElementById('dec-observaciones').value = '';
-            
+            // Limpiar campos físicos
+            ['dec-efectivo-usd','dec-efectivo-bs','dec-punto-bs','dec-transf-bs','dec-zelle-usd'].forEach(id => document.getElementById(id).value = '');
+            const obs = document.getElementById('dec-observaciones'); if (obs) obs.value = '';
+            document.getElementById('cierre-observaciones-wrap').classList.add('hidden');
+
+            // Llenar el resumen auto-calculado
+            const sApUsd = turnoActivo.sumFondoUsd || 0;
+            const sApBs = turnoActivo.sumFondoBs || 0;
+            const sInUsd = turnoActivo.sumIngresosUsd || 0;
+            const sInBs = turnoActivo.sumIngresosBs || 0;
+            const sEgUsd = turnoActivo.sumEgresosUsd || 0;
+            const sEgBs = turnoActivo.sumEgresosBs || 0;
+
+            document.getElementById('res-fondo-usd').textContent = `$${fmt(sApUsd)}`;
+            document.getElementById('res-ventas-usd').textContent = `$${fmt(sInUsd)}`;
+            document.getElementById('res-egresos-usd').textContent = `$${fmt(sEgUsd)}`;
+            document.getElementById('res-debe-usd').textContent = `$${fmt(sApUsd + sInUsd - sEgUsd)}`;
+
+            document.getElementById('res-fondo-bs').textContent = `Bs. ${fmt(sApBs)}`;
+            document.getElementById('res-ventas-bs').textContent = `Bs. ${fmt(sInBs)}`;
+            document.getElementById('res-egresos-bs').textContent = `Bs. ${fmt(sEgBs)}`;
+            document.getElementById('res-debe-bs').textContent = `Bs. ${fmt(sApBs + sInBs - sEgBs)}`;
+
+            // Reset estado del cierre
+            document.getElementById('cierre-status').innerHTML = `
+                <div class="text-2xl mb-1">⏳</div>
+                <div class="text-[11px] font-bold text-gray-500 uppercase">Llena los campos físicos para ver el resultado</div>`;
+            document.getElementById('cierre-resultado').className = 'bg-white border-2 border-gray-300 rounded-lg p-3 shadow-sm';
+
             document.getElementById('modal-cerrar-caja').classList.remove('hidden');
             document.getElementById('modal-cerrar-caja').classList.add('flex');
+        }
+
+        // Auto-completa los campos con los valores esperados (asume cuadre exacto)
+        function autocompletarValores() {
+            const debeUsd = (turnoActivo.sumFondoUsd || 0) + (turnoActivo.sumIngresosUsd || 0) - (turnoActivo.sumEgresosUsd || 0);
+            const debeBs = (turnoActivo.sumFondoBs || 0) + (turnoActivo.sumIngresosBs || 0) - (turnoActivo.sumEgresosBs || 0);
+            // Valor por defecto: todo el USD en efectivo, todo el Bs en efectivo
+            document.getElementById('dec-efectivo-usd').value = redondear(debeUsd).toFixed(2);
+            document.getElementById('dec-efectivo-bs').value = redondear(debeBs).toFixed(2);
+            document.getElementById('dec-punto-bs').value = '0.00';
+            document.getElementById('dec-transf-bs').value = '0.00';
+            document.getElementById('dec-zelle-usd').value = '0.00';
+            recalcularDescuadre();
+        }
+
+        // Recalcula el descuadre cada vez que el cajero cambia un valor
+        function recalcularDescuadre() {
+            const efUsd = parseFloat(document.getElementById('dec-efectivo-usd').value) || 0;
+            const efBs = parseFloat(document.getElementById('dec-efectivo-bs').value) || 0;
+            const ptoBs = parseFloat(document.getElementById('dec-punto-bs').value) || 0;
+            const trfBs = parseFloat(document.getElementById('dec-transf-bs').value) || 0;
+            const zelleUsd = parseFloat(document.getElementById('dec-zelle-usd').value) || 0;
+
+            const totalDecUsd = efUsd + zelleUsd;
+            const totalDecBs = efBs + ptoBs + trfBs;
+
+            const debeUsd = (turnoActivo.sumFondoUsd || 0) + (turnoActivo.sumIngresosUsd || 0) - (turnoActivo.sumEgresosUsd || 0);
+            const debeBs = (turnoActivo.sumFondoBs || 0) + (turnoActivo.sumIngresosBs || 0) - (turnoActivo.sumEgresosBs || 0);
+
+            const descUsd = redondear(totalDecUsd - debeUsd);
+            const descBs = redondear(totalDecBs - debeBs);
+
+            // Tolerancia: ±0.01 se considera cuadre exacto
+            const cuadraUsd = Math.abs(descUsd) < 0.02;
+            const cuadraBs = Math.abs(descBs) < 0.02;
+
+            const resultado = document.getElementById('cierre-resultado');
+            const status = document.getElementById('cierre-status');
+            const obsWrap = document.getElementById('cierre-observaciones-wrap');
+
+            if (totalDecUsd === 0 && totalDecBs === 0) {
+                status.innerHTML = `<div class="text-2xl mb-1">⏳</div>
+                    <div class="text-[11px] font-bold text-gray-500 uppercase">Llena los campos físicos para ver el resultado</div>`;
+                resultado.className = 'bg-white border-2 border-gray-300 rounded-lg p-3 shadow-sm';
+                obsWrap.classList.add('hidden');
+                return;
+            }
+
+            if (cuadraUsd && cuadraBs) {
+                status.innerHTML = `
+                    <div class="text-3xl mb-1">✅</div>
+                    <div class="text-sm font-black text-green-700 uppercase tracking-widest">Cuadre Exacto</div>
+                    <div class="text-[10px] text-green-600 font-bold mt-1">USD: $${fmt(totalDecUsd)} · Bs: ${fmt(totalDecBs)}</div>`;
+                resultado.className = 'bg-green-50 border-2 border-green-400 rounded-lg p-3 shadow-sm';
+                obsWrap.classList.add('hidden');
+            } else {
+                // Hay descuadre — mostrar diferencia clara
+                let mensajeUsd = '', mensajeBs = '';
+                if (!cuadraUsd) {
+                    if (descUsd > 0)  mensajeUsd = `<div class="text-[11px] font-bold text-orange-700">📈 Sobrante USD: +$${fmt(Math.abs(descUsd))}</div>`;
+                    else              mensajeUsd = `<div class="text-[11px] font-bold text-red-700">📉 Faltante USD: -$${fmt(Math.abs(descUsd))}</div>`;
+                }
+                if (!cuadraBs) {
+                    if (descBs > 0)  mensajeBs = `<div class="text-[11px] font-bold text-orange-700">📈 Sobrante Bs: +Bs. ${fmt(Math.abs(descBs))}</div>`;
+                    else             mensajeBs = `<div class="text-[11px] font-bold text-red-700">📉 Faltante Bs: -Bs. ${fmt(Math.abs(descBs))}</div>`;
+                }
+                status.innerHTML = `
+                    <div class="text-3xl mb-1">⚠️</div>
+                    <div class="text-sm font-black text-red-700 uppercase tracking-widest mb-2">Descuadre Detectado</div>
+                    ${mensajeUsd}
+                    ${mensajeBs}
+                    <div class="text-[9px] text-gray-500 mt-2 italic">Justifica la diferencia abajo. La caja se cerrará pero quedará marcada con alerta.</div>`;
+                resultado.className = 'bg-red-50 border-2 border-red-400 rounded-lg p-3 shadow-sm';
+                obsWrap.classList.remove('hidden');
+            }
+
+            // Guardar el descuadre calculado para usar al cerrar
+            turnoActivo._descuadreUsd = descUsd;
+            turnoActivo._descuadreBs = descBs;
+            turnoActivo._tieneDescuadre = !cuadraUsd || !cuadraBs;
         }
 
         function cerrarModalCierre() {
@@ -534,10 +699,24 @@
         }
 
         async function procesarCierreCaja() {
-            const btn = document.getElementById('btn-procesar-cierre'); btn.disabled = true;
-            
-            if(!confirm("¿Está seguro que desea CERRAR EL TURNO? Se imprimirá el Reporte Z y la caja quedará bloqueada.")) { btn.disabled = false; return; }
-            
+            const btn = document.getElementById('btn-procesar-cierre');
+
+            // Validar: si hay descuadre, las observaciones son OBLIGATORIAS
+            if (turnoActivo._tieneDescuadre) {
+                const obsCheck = document.getElementById('dec-observaciones').value.trim();
+                if (obsCheck.length < 10) {
+                    return alert("⚠️ Hay un descuadre detectado. Debes justificar la diferencia en OBSERVACIONES (mínimo 10 caracteres).");
+                }
+            }
+
+            btn.disabled = true;
+
+            if(!confirm(turnoActivo._tieneDescuadre
+                ? "⚠️ ATENCIÓN: La caja tiene un DESCUADRE. Se cerrará pero quedará marcada en el reporte. ¿Continuar?"
+                : "¿Está seguro que desea CERRAR EL TURNO? Se imprimirá el Reporte Z y la caja quedará bloqueada.")) {
+                btn.disabled = false; return;
+            }
+
             mostrarCarga("Cuadrando Caja y Generando Reporte Z...");
 
             try {
@@ -556,7 +735,10 @@
                     efectivo_bs: decEfvoBs,
                     punto_bs: decPuntoBs,
                     transferencias_bs: decTransfBs,
-                    zelle_usd: decZelleUsd
+                    zelle_usd: decZelleUsd,
+                    descuadre_usd_detalle: turnoActivo._descuadreUsd || 0,
+                    descuadre_bs_detalle: turnoActivo._descuadreBs || 0,
+                    tiene_descuadre: !!turnoActivo._tieneDescuadre
                 };
 
                 const payload = {
@@ -569,9 +751,9 @@
                     observaciones: obs || null
                 };
 
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/cierres_caja?id_cierre=eq.${turnoActivo.id_cierre}`, { method: 'PATCH', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, body: JSON.stringify(payload) }); 
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/cierres_caja?id_cierre=eq.${turnoActivo.id_cierre}`, { method: 'PATCH', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, body: JSON.stringify(payload) });
                 if(!res.ok) throw new Error("Fallo al sellar la caja.");
-                
+
                 const datosCierreFinal = (await res.json())[0];
 
                 imprimirReporteZ(datosCierreFinal);
