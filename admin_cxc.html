@@ -165,7 +165,11 @@
                 </div>
             </div>
 
-            <div class="flex-1 bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden flex flex-col"> 
+            <div class="flex-1 bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden flex flex-col relative"> 
+                <div id="estado-vacio-cxc" class="hidden absolute inset-0 flex flex-col items-center justify-center text-gray-400 z-10 bg-white">
+                    <i class="fa-solid fa-check-double text-4xl mb-3 text-green-500"></i>
+                    <span class="font-bold uppercase tracking-widest text-[11px]">Cartera Limpia. Sin deudas.</span>
+                </div>
                 <div class="overflow-x-auto custom-scroll flex-1">
                     <table class="w-full text-left text-[10px] whitespace-nowrap">
                         <thead class="bg-gray-50 text-gray-500 uppercase tracking-wider sticky top-0 z-10 border-b border-gray-200">
@@ -265,7 +269,8 @@
             let html = ''; let totalDeuda = 0;
 
             if(data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="p-10 text-center text-gray-400 font-bold uppercase tracking-widest"><i class="fa-solid fa-check-double text-3xl mb-2 block text-green-500"></i> Cartera Limpia. Sin deudas.</td></tr>`;
+                tbody.innerHTML = '';
+                document.getElementById('estado-vacio-cxc').classList.remove('hidden');
                 document.getElementById('metric-total-deuda').innerText = `$0.00`;
                 return;
             }
@@ -299,6 +304,7 @@
                     </td>
                 </tr>`;
             });
+            document.getElementById('estado-vacio-cxc').classList.add('hidden');
             tbody.innerHTML = html;
             document.getElementById('metric-total-deuda').innerText = `$${fmt(totalDeuda)}`;
         }
