@@ -252,6 +252,64 @@
             </form>
         </div>
     </div>
+
+    <!-- 💸 MODAL RECARGA / RETIRO / TRANSFERENCIA -->
+    <div id="modal-recarga" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[9990] hidden flex items-center justify-center p-4 fade-in">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col border border-gray-200">
+            <div class="bg-secondary px-4 py-3 flex justify-between items-center shrink-0">
+                <h3 class="font-bold text-white text-[12px] tracking-wide uppercase">
+                    <i class="fa-solid fa-money-bill-transfer mr-2"></i> <span id="rec-titulo">Mover Dinero</span>
+                </h3>
+                <button onclick="cerrarModalRecarga()" class="text-white hover:text-gray-200 text-lg transition"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <div class="p-4 bg-gray-50 space-y-3 max-h-[80vh] overflow-y-auto custom-scroll">
+                <div class="bg-blue-50 border border-blue-200 rounded p-2 text-[10px] text-blue-800 font-bold">
+                    <div id="rec-info-cuenta"></div>
+                    <div class="text-blue-600 mt-1" id="rec-info-saldo"></div>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Tipo de Operación *</label>
+                    <select id="rec-tipo-op" onchange="cambiarTipoOperacion()" class="w-full border border-gray-300 rounded px-3 py-2 text-xs font-bold uppercase bg-white outline-none focus:border-secondary transition">
+                        <option value="DEPOSITO">📥 Depósito (entrada de dinero)</option>
+                        <option value="RETIRO">📤 Retiro (salida de dinero)</option>
+                        <option value="TRANSFERENCIA">🔄 Transferencia a otra cuenta</option>
+                        <option value="AJUSTE">⚙️ Ajuste de saldo (con motivo)</option>
+                    </select>
+                </div>
+
+                <div id="rec-cuenta-destino-wrap" class="hidden">
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Cuenta Destino *</label>
+                    <select id="rec-cuenta-destino" class="w-full border border-gray-300 rounded px-3 py-2 text-xs font-bold uppercase bg-white outline-none focus:border-secondary transition"></select>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Monto * <span id="rec-monto-moneda" class="text-secondary"></span></label>
+                    <input type="number" id="rec-monto" step="0.01" required class="w-full border border-gray-300 rounded px-3 py-2 text-base font-black text-secondary outline-none focus:border-secondary transition text-right" placeholder="0.00">
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Origen / Justificación *</label>
+                    <input type="text" id="rec-origen" required maxlength="200" class="w-full border border-gray-300 rounded px-3 py-2 text-xs uppercase outline-none focus:border-secondary transition" placeholder="Ej: RETIRO BANCO, DEPÓSITO PROPIETARIO, AJUSTE INVENTARIO...">
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Nro. Referencia (opcional)</label>
+                    <input type="text" id="rec-referencia" maxlength="50" class="w-full border border-gray-300 rounded px-3 py-2 text-xs font-mono outline-none focus:border-secondary transition" placeholder="Nro. operación bancaria, cheque, etc.">
+                </div>
+
+                <div class="bg-gray-100 rounded p-2 text-[9px] text-gray-600 font-bold">
+                    <div>Nro. Operación interno: <span id="rec-numero-op" class="text-primary font-mono">OP-AAAA-MM-NNNNNN</span></div>
+                    <div class="mt-0.5">Quedará registrado con tu usuario y fecha actual.</div>
+                </div>
+
+                <button onclick="procesarMovimiento()" id="btn-rec-procesar" class="w-full bg-secondary hover:opacity-90 text-white font-bold py-3 rounded-lg shadow-md transition-all text-xs uppercase tracking-wider btn-press flex justify-center items-center gap-2">
+                    <i class="fa-solid fa-check"></i> Confirmar Operación
+                </button>
+            </div>
+        </div>
+    </div>
+
 <script>
         const TOKEN_JWT = localStorage.getItem('pyp_token_seguro');
         
@@ -362,15 +420,16 @@
                         </div>
                         <button onclick="abrirModalCuenta('${c.id}')" class="absolute top-4 right-4 text-gray-300 hover:text-secondary transition bg-gray-50 hover:bg-orange-50 w-6 h-6 rounded flex items-center justify-center shadow-sm" title="Editar Cuenta"><i class="fa-solid fa-pen text-[10px]"></i></button>
                     </div>
-                    <div class="grid grid-cols-2 gap-2 border-t border-gray-100 pt-3 mt-2">
-                        <div>
-                            <p class="text-[8px] text-gray-400 font-bold uppercase">Saldo ($)</p>
-                            <p class="text-sm font-black text-gray-700 leading-none">$${fmt(c.saldo_usd)}</p>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-[8px] text-gray-400 font-bold uppercase">Saldo (Bs)</p>
-                            <p class="text-sm font-black text-gray-700 leading-none">Bs. ${fmt(c.saldo_bs)}</p>
-                        </div>
+                    <div class="border-t border-gray-100 pt-3 mt-2">
+                        ${c.moneda === 'USD'
+                            ? `<div><p class="text-[8px] text-gray-400 font-bold uppercase">Saldo</p>
+                                <p class="text-base font-black text-green-700 leading-none">$${fmt(c.saldo_usd || 0)}</p></div>`
+                            : `<div><p class="text-[8px] text-gray-400 font-bold uppercase">Saldo</p>
+                                <p class="text-base font-black text-blue-700 leading-none">Bs. ${fmt(c.saldo_bs || 0)}</p></div>`
+                        }
+                        <button onclick="abrirModalRecarga('${c.id}','${c.nombre.replace(/'/g, "\\'")}','${c.moneda}','${c.tipo_cuenta}')" class="mt-2 w-full bg-gray-100 hover:bg-primary hover:text-white text-gray-600 px-3 py-1.5 rounded text-[10px] font-bold uppercase tracking-wider transition flex items-center justify-center gap-1">
+                            <i class="fa-solid fa-money-bill-transfer"></i> Mover dinero
+                        </button>
                     </div>
                 </div>`;
             });
@@ -601,6 +660,173 @@
                 cerrarModalAsignarFondo(); 
                 cerrarErrorCarga();
             } catch(error) { mostrarErrorConexion(error.message); } finally { btn.disabled = false; btn.innerHTML = "Emitir Transferencia(s)"; }
+        }
+
+        // ===========================================================
+        // 💸 RECARGA / RETIRO / TRANSFERENCIA con número de operación
+        // ===========================================================
+        let cuentaSelRecarga = null;
+
+        function generarNumeroOperacion() {
+            const ahora = new Date();
+            const yyyy = ahora.getFullYear();
+            const mm = String(ahora.getMonth() + 1).padStart(2, '0');
+            const random = Math.floor(Math.random() * 999999).toString().padStart(6, '0');
+            return `OP-${yyyy}-${mm}-${random}`;
+        }
+
+        function abrirModalRecarga(idCuenta, nombreCuenta, moneda, tipoCuenta) {
+            cuentaSelRecarga = { id: idCuenta, nombre: nombreCuenta, moneda: moneda, tipo: tipoCuenta };
+
+            // Validar permisos: solo Admin/Supervisor pueden mover dinero
+            const rolUsuario = (localStorage.getItem('pyp_usuario_rol') || '').toUpperCase();
+            const rolesPermitidos = ['ADMIN', 'SUPERADMIN', 'SUPERVISOR', 'GERENTE'];
+            if (!rolesPermitidos.includes(rolUsuario)) {
+                return alert("⛔ ACCESO DENEGADO: Solo usuarios con rol Admin o Supervisor pueden mover dinero entre cuentas.");
+            }
+
+            const cta = dbCuentas.find(c => c.id === idCuenta);
+            const saldoActual = moneda === 'USD' ? (cta.saldo_usd || 0) : (cta.saldo_bs || 0);
+
+            document.getElementById('rec-titulo').textContent = `Mover Dinero — ${nombreCuenta}`;
+            document.getElementById('rec-info-cuenta').innerHTML = `<i class="fa-solid fa-vault mr-1"></i> ${nombreCuenta} (${tipoCuenta} • ${moneda})`;
+            document.getElementById('rec-info-saldo').textContent = `Saldo actual: ${moneda === 'USD' ? '$' : 'Bs. '}${fmt(saldoActual)}`;
+            document.getElementById('rec-monto-moneda').textContent = `(${moneda === 'USD' ? '$' : 'Bs.'})`;
+            document.getElementById('rec-monto').value = '';
+            document.getElementById('rec-origen').value = '';
+            document.getElementById('rec-referencia').value = '';
+            document.getElementById('rec-tipo-op').value = 'DEPOSITO';
+            document.getElementById('rec-numero-op').textContent = generarNumeroOperacion();
+
+            // Llenar cuentas destino (mismas moneda excepto la actual)
+            const cuentasMismaMoneda = dbCuentas.filter(c => c.moneda === moneda && c.id !== idCuenta);
+            const sel = document.getElementById('rec-cuenta-destino');
+            sel.innerHTML = cuentasMismaMoneda.length === 0
+                ? '<option value="">No hay otras cuentas en esta moneda</option>'
+                : cuentasMismaMoneda.map(c => `<option value="${c.id}">${c.nombre} (${c.tipo_cuenta})</option>`).join('');
+
+            cambiarTipoOperacion();
+            document.getElementById('modal-recarga').classList.remove('hidden');
+            document.getElementById('modal-recarga').classList.add('flex');
+        }
+
+        function cerrarModalRecarga() {
+            document.getElementById('modal-recarga').classList.add('hidden');
+            document.getElementById('modal-recarga').classList.remove('flex');
+        }
+
+        function cambiarTipoOperacion() {
+            const tipo = document.getElementById('rec-tipo-op').value;
+            const wrapDestino = document.getElementById('rec-cuenta-destino-wrap');
+            if (tipo === 'TRANSFERENCIA') {
+                wrapDestino.classList.remove('hidden');
+            } else {
+                wrapDestino.classList.add('hidden');
+            }
+        }
+
+        async function procesarMovimiento() {
+            const tipo = document.getElementById('rec-tipo-op').value;
+            const monto = parseFloat(document.getElementById('rec-monto').value) || 0;
+            const origen = document.getElementById('rec-origen').value.trim();
+            const referencia = document.getElementById('rec-referencia').value.trim();
+            const cuentaDestinoId = document.getElementById('rec-cuenta-destino').value;
+            const numeroOp = document.getElementById('rec-numero-op').textContent;
+
+            if (monto <= 0) return alert("El monto debe ser mayor a 0.");
+            if (origen.length < 5) return alert("La justificación es obligatoria (mínimo 5 caracteres).");
+            if (tipo === 'TRANSFERENCIA' && !cuentaDestinoId) return alert("Selecciona la cuenta destino.");
+
+            const cta = dbCuentas.find(c => c.id === cuentaSelRecarga.id);
+            const saldoActual = cuentaSelRecarga.moneda === 'USD' ? (cta.saldo_usd || 0) : (cta.saldo_bs || 0);
+
+            if ((tipo === 'RETIRO' || tipo === 'TRANSFERENCIA') && monto > saldoActual) {
+                return alert(`Saldo insuficiente. Solo hay ${cuentaSelRecarga.moneda === 'USD' ? '$' : 'Bs. '}${fmt(saldoActual)} disponible.`);
+            }
+
+            if (!confirm(`¿Confirmar ${tipo} de ${cuentaSelRecarga.moneda === 'USD' ? '$' : 'Bs. '}${fmt(monto)}?\n\nNro. operación: ${numeroOp}`)) return;
+
+            const btn = document.getElementById('btn-rec-procesar'); btn.disabled = true;
+            mostrarCarga("Procesando movimiento...");
+
+            try {
+                const usuario = localStorage.getItem('pyp_usuario_nombre') || 'SISTEMA';
+                const ahora = new Date().toISOString();
+                const esEntrada = (tipo === 'DEPOSITO');
+                const esSalida  = (tipo === 'RETIRO');
+                const esTransf  = (tipo === 'TRANSFERENCIA');
+                const esAjuste  = (tipo === 'AJUSTE');
+
+                const conceptoBase = `${tipo} | ${origen}${referencia ? ' | Ref: ' + referencia : ''} | ${numeroOp}`;
+                const campoMontoUsd = cuentaSelRecarga.moneda === 'USD' ? monto : 0;
+                const campoMontoBs  = cuentaSelRecarga.moneda === 'BS'  ? monto : 0;
+
+                // 1. Movimiento principal
+                const payloadMov = {
+                    id_empresa: empresaActual || null,
+                    id_cuenta: cuentaSelRecarga.id,
+                    fecha: ahora,
+                    tipo: esEntrada || esAjuste ? 'INGRESO' : 'EGRESO',
+                    concepto: conceptoBase,
+                    monto_usd: esSalida || (esTransf && cuentaSelRecarga.moneda === 'USD') ? -campoMontoUsd : campoMontoUsd,
+                    monto_bs:  esSalida || (esTransf && cuentaSelRecarga.moneda === 'BS')  ? -campoMontoBs  : campoMontoBs,
+                    referencia: numeroOp,
+                    usuario: usuario
+                };
+
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/fin_movimientos`, {
+                    method: 'POST',
+                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payloadMov)
+                });
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.message || "Fallo al registrar el movimiento.");
+                }
+
+                // 2. Actualizar saldo cuenta principal
+                const nuevoSaldoOrigen = (esEntrada || esAjuste) ? saldoActual + monto : saldoActual - monto;
+                const campoSaldo = cuentaSelRecarga.moneda === 'USD' ? 'saldo_usd' : 'saldo_bs';
+                await fetch(`${SUPABASE_URL}/rest/v1/fin_cuentas?id=eq.${cuentaSelRecarga.id}`, {
+                    method: 'PATCH',
+                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ [campoSaldo]: nuevoSaldoOrigen })
+                });
+
+                // 3. Si es transferencia, agregar entrada en cuenta destino
+                if (esTransf) {
+                    const ctaDest = dbCuentas.find(c => c.id === cuentaDestinoId);
+                    const saldoDest = cuentaSelRecarga.moneda === 'USD' ? (ctaDest.saldo_usd || 0) : (ctaDest.saldo_bs || 0);
+                    const payloadDest = {
+                        id_empresa: empresaActual || null,
+                        id_cuenta: cuentaDestinoId,
+                        fecha: ahora,
+                        tipo: 'INGRESO',
+                        concepto: conceptoBase + ` | DESDE: ${cuentaSelRecarga.nombre}`,
+                        monto_usd: campoMontoUsd,
+                        monto_bs:  campoMontoBs,
+                        referencia: numeroOp,
+                        usuario: usuario
+                    };
+                    await fetch(`${SUPABASE_URL}/rest/v1/fin_movimientos`, {
+                        method: 'POST',
+                        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payloadDest)
+                    });
+                    await fetch(`${SUPABASE_URL}/rest/v1/fin_cuentas?id=eq.${cuentaDestinoId}`, {
+                        method: 'PATCH',
+                        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ [campoSaldo]: saldoDest + monto })
+                    });
+                }
+
+                cerrarErrorCarga();
+                cerrarModalRecarga();
+                alert(`✅ Operación completada.\nNro. operación: ${numeroOp}`);
+                await cargarDatos();
+            } catch(e) {
+                mostrarErrorConexion(e.message);
+            } finally { btn.disabled = false; }
         }
     </script>
    
