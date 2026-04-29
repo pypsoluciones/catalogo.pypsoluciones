@@ -257,9 +257,19 @@
             const renderFila = (f, esAnidada = false) => {
                 const fecha = new Date(f.fecha_emision).toLocaleDateString('es-VE', {hour: '2-digit', minute:'2-digit'});
                 const esNC = f.tipo_transaccion === 'Nota de Credito';
+
+                // Correlativo fiscal del sistema (siempre con padding de 6 dígitos)
+                const correlativoFiscal = f.correlativo ? String(f.correlativo).padStart(6,'0') : '?????';
+
+                // Documento principal
                 const docStr = esNC
-                    ? `NC-${f.nro_factura_manual || f.id_factura.substring(0,8)}`
-                    : (f.nro_factura_manual || (f.correlativo ? String(f.correlativo).padStart(6,'0') : f.id_factura.substring(0,8)));
+                    ? `NC-${correlativoFiscal}`
+                    : correlativoFiscal;
+
+                // Número manual del talonario SENIAT (si existe)
+                const numManual = f.nro_factura_manual
+                    ? `<div class="text-[9px] text-gray-500 font-bold mt-0.5">Manual: <span class="font-mono">${f.nro_factura_manual}</span></div>`
+                    : '';
 
                 let bColor = "bg-gray-100 text-gray-600";
                 if(f.estatus === 'Completada' || f.estatus === 'PAGADA') bColor = "bg-green-100 text-green-700";
@@ -275,21 +285,42 @@
                     ? `<span class="text-red-400 mr-1 font-mono">└─</span>`
                     : '';
 
-                // Estilo de fila: si es NC anidada, fondo rosa claro y padding izquierdo
+                // Estilo de fila
                 const claseFila = esAnidada
                     ? 'bg-red-50/40 border-b border-red-100 hover:bg-red-50'
                     : 'hover:bg-blue-50 border-b border-gray-100';
 
-                // Texto descriptivo de la relación
-                const textoRelacion = esAnidada
-                    ? `<div class="text-[9px] text-red-700 font-bold uppercase mt-0.5">↪ Anula esta factura</div>`
-                    : '';
+                // Texto de relación: si es NC anidada, mostrar SU correlativo y el de la factura origen
+                let textoRelacion = '';
+                if (esAnidada) {
+                    // Buscar la factura origen en el dataset
+                    const origen = dbFacturas.find(x => x.id_factura === f.id_factura_origen);
+                    let txtOrigen = 'esta factura';
+                    if (origen) {
+                        const corrOrig = origen.correlativo ? String(origen.correlativo).padStart(6,'0') : '?????';
+                        const manualOrig = origen.nro_factura_manual ? ` (Manual: ${origen.nro_factura_manual})` : '';
+                        txtOrigen = `factura #${corrOrig}${manualOrig}`;
+                    }
+                    textoRelacion = `<div class="text-[9px] text-red-700 font-bold uppercase mt-0.5">↪ Anula ${txtOrigen}</div>`;
+                }
+
+                // Si es factura ANULADA, mostrar también el correlativo de la NC que la anuló
+                let textoFactAnulada = '';
+                if (!esNC && (f.estatus === 'Anulada' || f.estatus === 'ANULADA')) {
+                    const ncQueAnula = dbFacturas.find(x => x.id_factura_origen === f.id_factura);
+                    if (ncQueAnula) {
+                        const corrNC = ncQueAnula.correlativo ? String(ncQueAnula.correlativo).padStart(6,'0') : '?????';
+                        textoFactAnulada = `<div class="text-[9px] text-red-700 font-bold uppercase mt-0.5">⚠ Anulada por NC-${corrNC}</div>`;
+                    }
+                }
 
                 return `<tr class="${claseFila} transition">
                     <td class="py-3 ${esAnidada ? 'pl-8 pr-4' : 'px-4'} text-[13px] text-gray-700 font-bold font-mono">${fecha}</td>
                     <td class="py-3 ${esAnidada ? 'pl-4 pr-4' : 'px-4'}">
                         <div class="font-mono font-black ${esNC ? 'text-red-600' : 'text-primary'} text-sm">${conector}${docStr}${badgeNC}</div>
+                        ${numManual}
                         ${textoRelacion}
+                        ${textoFactAnulada}
                     </td>
                     <td class="py-3 px-4 min-w-[250px]">
                         <div class="text-sm font-bold text-gray-800 truncate uppercase">${f.cliente_nombre}</div>
@@ -403,7 +434,11 @@
                 const detalles = resD.ok ? await resD.json() : [];
 
                 // Llenar Interfaz
-                document.getElementById('det-doc').innerText = facturaVistaActual.tipo_transaccion === 'Nota de Credito' ? `NC-${facturaVistaActual.nro_factura_manual || idFactura.substring(0,8)}` : (facturaVistaActual.nro_factura_manual || idFactura.substring(0,8));
+                // Correlativo fiscal del documento actual
+                const corrActual = facturaVistaActual.correlativo ? String(facturaVistaActual.correlativo).padStart(6,'0') : '?????';
+                document.getElementById('det-doc').innerText = facturaVistaActual.tipo_transaccion === 'Nota de Credito'
+                    ? `NC-${corrActual}`
+                    : corrActual;
                 document.getElementById('det-fecha').innerText = new Date(facturaVistaActual.fecha_emision).toLocaleDateString('es-VE');
                 document.getElementById('det-cliente').innerText = `${facturaVistaActual.cliente_documento} - ${facturaVistaActual.cliente_nombre}`;
                 document.getElementById('det-estatus').innerText = facturaVistaActual.estatus.toUpperCase();
@@ -429,9 +464,10 @@
                         const arr = await resOrig.json();
                         if (arr.length > 0) {
                             const o = arr[0];
-                            const numO = o.nro_factura_manual || (o.correlativo ? String(o.correlativo).padStart(6,'0') : '?');
+                            const corrO = o.correlativo ? String(o.correlativo).padStart(6,'0') : '?????';
+                            const manualO = o.nro_factura_manual ? ` (Talonario: ${o.nro_factura_manual})` : '';
                             const fechaO = new Date(o.fecha_emision).toLocaleDateString('es-VE');
-                            bannerTxt.innerText = `Esta NOTA DE CRÉDITO anula la FACTURA #${numO} del ${fechaO} (Monto: $${fmt(o.total_usd)})`;
+                            bannerTxt.innerText = `Esta NC anula la FACTURA #${corrO}${manualO} del ${fechaO} (Monto: $${fmt(o.total_usd)})`;
                             bannerMot.innerText = facturaVistaActual.motivo_devolucion ? `Motivo: ${facturaVistaActual.motivo_devolucion}` : '';
                             banner.classList.remove('hidden');
                         }
@@ -443,9 +479,10 @@
                         const arr = await resNC.json();
                         if (arr.length > 0) {
                             const nc = arr[0];
-                            const numNC = nc.nro_factura_manual || (nc.correlativo ? String(nc.correlativo).padStart(6,'0') : '?');
+                            const corrNC = nc.correlativo ? String(nc.correlativo).padStart(6,'0') : '?????';
+                            const manualNC = nc.nro_factura_manual ? ` (Talonario: ${nc.nro_factura_manual})` : '';
                             const fechaNC = new Date(nc.fecha_emision).toLocaleDateString('es-VE');
-                            bannerTxt.innerText = `Esta factura fue ANULADA mediante la Nota de Crédito #${numNC} del ${fechaNC}`;
+                            bannerTxt.innerText = `Esta factura fue ANULADA mediante la Nota de Crédito NC-${corrNC}${manualNC} del ${fechaNC}`;
                             bannerMot.innerText = facturaVistaActual.motivo_devolucion ? `Motivo: ${facturaVistaActual.motivo_devolucion}` : '';
                             banner.classList.remove('hidden');
                         }
