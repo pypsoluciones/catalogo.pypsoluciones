@@ -43,8 +43,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     <i class="fa-solid fa-chevron-down text-[10px]"></i>
                 </button>
                 <div id="submenu-com" class="pl-6 space-y-1 mt-1 ${currentPage.includes('admin_compras') ? '' : 'hidden'}">
-                    <a href="admin_compras_ingreso.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_compras_ingreso.html' ? estiloActivoSub : estiloInactivoSub}">Ingresar Compra</a>
-                    <a href="admin_compras_historial.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_compras_historial.html' ? estiloActivoSub : estiloInactivoSub}">Historial de Compras</a>
+                    <a href="admin_compras.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_compras.html' ? estiloActivoSub : estiloInactivoSub}">Gestión de Compras</a>
                 </div>
             </div>
 
