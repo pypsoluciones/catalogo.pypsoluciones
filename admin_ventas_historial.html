@@ -231,29 +231,35 @@
 
      function renderTabla(data) {
             const tbody = document.getElementById('tabla-historial');
-            let html = ''; 
+            let html = '';
 
             if(data.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="6" class="p-10 text-center text-gray-400 font-bold uppercase tracking-widest"><i class="fa-solid fa-folder-open text-4xl mb-3 block text-gray-300"></i> No se encontraron documentos.</td></tr>`;
                 return;
             }
 
-            data.forEach(f => {
+            // ============================================================
+            // AGRUPACIÓN VISUAL: cada Factura va con su NC anidada debajo
+            // ============================================================
+            // Buscar las NC en el dataset y mapearlas por id_factura_origen
+            const ncPorOrigen = {};
+            dbFacturas.forEach(f => {
+                if (f.tipo_transaccion === 'Nota de Credito' && f.id_factura_origen) {
+                    if (!ncPorOrigen[f.id_factura_origen]) ncPorOrigen[f.id_factura_origen] = [];
+                    ncPorOrigen[f.id_factura_origen].push(f);
+                }
+            });
+
+            // Lista de IDs de NC que ya se mostraron como anidadas (para no repetirlas como filas independientes)
+            const ncMostradas = new Set();
+
+            // Función para renderizar UNA fila (factura o NC)
+            const renderFila = (f, esAnidada = false) => {
                 const fecha = new Date(f.fecha_emision).toLocaleDateString('es-VE', {hour: '2-digit', minute:'2-digit'});
                 const esNC = f.tipo_transaccion === 'Nota de Credito';
-                const docStr = esNC ? `NC-${f.nro_factura_manual || f.id_factura.substring(0,8)}` : (f.nro_factura_manual || f.correlativo ? String(f.correlativo).padStart(6,'0') : f.id_factura.substring(0,8));
-
-                // Buscar la factura origen si es NC
-                let refOrigen = '';
-                if (esNC && f.id_factura_origen) {
-                    const origen = dbFacturas.find(x => x.id_factura === f.id_factura_origen);
-                    if (origen) {
-                        const numOrigen = origen.nro_factura_manual || (origen.correlativo ? String(origen.correlativo).padStart(6,'0') : origen.id_factura.substring(0,8));
-                        refOrigen = `<div class="text-[9px] text-red-600 font-bold uppercase mt-0.5"><i class="fa-solid fa-link"></i> Anula Fact #${numOrigen}</div>`;
-                    } else {
-                        refOrigen = `<div class="text-[9px] text-red-600 font-bold uppercase mt-0.5"><i class="fa-solid fa-link"></i> Anula Fact</div>`;
-                    }
-                }
+                const docStr = esNC
+                    ? `NC-${f.nro_factura_manual || f.id_factura.substring(0,8)}`
+                    : (f.nro_factura_manual || (f.correlativo ? String(f.correlativo).padStart(6,'0') : f.id_factura.substring(0,8)));
 
                 let bColor = "bg-gray-100 text-gray-600";
                 if(f.estatus === 'Completada' || f.estatus === 'PAGADA') bColor = "bg-green-100 text-green-700";
@@ -264,11 +270,26 @@
                 const signoTotal = esNC ? '-' : '';
                 const badgeNC = esNC ? `<span class="ml-1 text-[8px] bg-red-500 text-white px-1.5 py-0.5 rounded font-black uppercase tracking-wider">NC</span>` : '';
 
-                html += `<tr class="hover:bg-blue-50 transition border-b border-gray-100 ${esNC ? 'bg-red-50/30' : ''}">
-                    <td class="py-3 px-4 text-[13px] text-gray-700 font-bold font-mono">${fecha}</td>
-                    <td class="py-3 px-4">
-                        <div class="font-mono font-black ${esNC ? 'text-red-600' : 'text-primary'} text-sm">${docStr}${badgeNC}</div>
-                        ${refOrigen}
+                // Conector visual para NC anidada
+                const conector = esAnidada
+                    ? `<span class="text-red-400 mr-1 font-mono">└─</span>`
+                    : '';
+
+                // Estilo de fila: si es NC anidada, fondo rosa claro y padding izquierdo
+                const claseFila = esAnidada
+                    ? 'bg-red-50/40 border-b border-red-100 hover:bg-red-50'
+                    : 'hover:bg-blue-50 border-b border-gray-100';
+
+                // Texto descriptivo de la relación
+                const textoRelacion = esAnidada
+                    ? `<div class="text-[9px] text-red-700 font-bold uppercase mt-0.5">↪ Anula esta factura</div>`
+                    : '';
+
+                return `<tr class="${claseFila} transition">
+                    <td class="py-3 ${esAnidada ? 'pl-8 pr-4' : 'px-4'} text-[13px] text-gray-700 font-bold font-mono">${fecha}</td>
+                    <td class="py-3 ${esAnidada ? 'pl-4 pr-4' : 'px-4'}">
+                        <div class="font-mono font-black ${esNC ? 'text-red-600' : 'text-primary'} text-sm">${conector}${docStr}${badgeNC}</div>
+                        ${textoRelacion}
                     </td>
                     <td class="py-3 px-4 min-w-[250px]">
                         <div class="text-sm font-bold text-gray-800 truncate uppercase">${f.cliente_nombre}</div>
@@ -280,6 +301,24 @@
                         <button onclick="verDetalles('${f.id_factura}')" class="bg-primary/10 hover:bg-primary text-primary hover:text-white px-4 py-2 rounded shadow-sm text-xs font-bold uppercase transition"><i class="fa-solid fa-eye"></i></button>
                     </td>
                 </tr>`;
+            };
+
+            data.forEach(f => {
+                const esNC = f.tipo_transaccion === 'Nota de Credito';
+
+                // Si esta NC ya se mostró anidada, saltar
+                if (esNC && ncMostradas.has(f.id_factura)) return;
+
+                // Renderizar la fila principal
+                html += renderFila(f, false);
+
+                // Si es factura, buscar sus NC y renderizarlas anidadas
+                if (!esNC && ncPorOrigen[f.id_factura]) {
+                    ncPorOrigen[f.id_factura].forEach(nc => {
+                        html += renderFila(nc, true);
+                        ncMostradas.add(nc.id_factura);
+                    });
+                }
             });
             tbody.innerHTML = html;
         }
