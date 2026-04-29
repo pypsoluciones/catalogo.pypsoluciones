@@ -258,11 +258,14 @@
                 const fecha = new Date(f.fecha_emision).toLocaleDateString('es-VE', {hour: '2-digit', minute:'2-digit'});
                 const esNC = f.tipo_transaccion === 'Nota de Credito';
 
-                // Correlativo fiscal del sistema (siempre con padding de 6 dígitos)
-                const correlativoFiscal = f.correlativo ? String(f.correlativo).padStart(6,'0') : '?????';
+                // Correlativo correcto según tipo (FISCAL SENIAT - secuencias separadas)
+                const corrFactura = f.correlativo ? String(f.correlativo).padStart(6,'0') : null;
+                const corrNC      = f.correlativo_nc ? String(f.correlativo_nc).padStart(6,'0') : null;
 
-                // Documento principal: TODOS son "Doc #N" - lo que cambia es el badge tipo
-                const docStr = correlativoFiscal;
+                // Documento principal: FACT-N o NC-N según tipo
+                const docStr = esNC
+                    ? (corrNC ? `NC-${corrNC}` : `NC-?????`)
+                    : (corrFactura ? `FACT-${corrFactura}` : `FACT-?????`);
 
                 // Número manual del talonario SENIAT (si existe)
                 const numManual = f.nro_factura_manual
@@ -291,13 +294,12 @@
                 // Texto de relación: si es NC anidada, mostrar SU correlativo y el de la factura origen
                 let textoRelacion = '';
                 if (esAnidada) {
-                    // Buscar la factura origen en el dataset
                     const origen = dbFacturas.find(x => x.id_factura === f.id_factura_origen);
                     let txtOrigen = 'documento anterior';
                     if (origen) {
                         const corrOrig = origen.correlativo ? String(origen.correlativo).padStart(6,'0') : '?????';
                         const manualOrig = origen.nro_factura_manual ? ` (Manual: ${origen.nro_factura_manual})` : '';
-                        txtOrigen = `Factura #${corrOrig}${manualOrig}`;
+                        txtOrigen = `Factura FACT-${corrOrig}${manualOrig}`;
                     }
                     textoRelacion = `<div class="text-[9px] text-red-700 font-bold uppercase mt-0.5">↪ Anula ${txtOrigen}</div>`;
                 }
@@ -307,15 +309,15 @@
                 if (!esNC && (f.estatus === 'Anulada' || f.estatus === 'ANULADA')) {
                     const ncQueAnula = dbFacturas.find(x => x.id_factura_origen === f.id_factura);
                     if (ncQueAnula) {
-                        const corrNC = ncQueAnula.correlativo ? String(ncQueAnula.correlativo).padStart(6,'0') : '?????';
-                        textoFactAnulada = `<div class="text-[9px] text-red-700 font-bold uppercase mt-0.5">⚠ Anulada por Doc #${corrNC} (NC)</div>`;
+                        const corrNCanula = ncQueAnula.correlativo_nc ? String(ncQueAnula.correlativo_nc).padStart(6,'0') : '?????';
+                        textoFactAnulada = `<div class="text-[9px] text-red-700 font-bold uppercase mt-0.5">⚠ Anulada por NC-${corrNCanula}</div>`;
                     }
                 }
 
                 return `<tr class="${claseFila} transition">
                     <td class="py-3 ${esAnidada ? 'pl-8 pr-4' : 'px-4'} text-[13px] text-gray-700 font-bold font-mono">${fecha}</td>
                     <td class="py-3 ${esAnidada ? 'pl-4 pr-4' : 'px-4'}">
-                        <div class="font-mono font-black ${esNC ? 'text-red-600' : 'text-primary'} text-sm">${conector}Doc #${docStr}${badgeNC}</div>
+                        <div class="font-mono font-black ${esNC ? 'text-red-600' : 'text-primary'} text-sm">${conector}${docStr}${badgeNC}</div>
                         ${numManual}
                         ${textoRelacion}
                         ${textoFactAnulada}
@@ -332,11 +334,10 @@
                 </tr>`;
             };
 
-            // ORDEN DESCENDENTE por correlativo (más reciente arriba)
-            // Pero mantener las NC anidadas debajo de su factura origen
+            // ORDEN DESCENDENTE por fecha (más reciente arriba) — más fiable que correlativo con 2 secuencias
             const facturasOrdenadas = data
                 .filter(f => f.tipo_transaccion !== 'Nota de Credito')
-                .sort((a,b) => (b.correlativo||0) - (a.correlativo||0));
+                .sort((a,b) => new Date(b.fecha_emision) - new Date(a.fecha_emision));
 
             // Las NC sueltas (sin factura origen visible) van al final como independientes
             const ncSueltas = data.filter(f => {
@@ -382,29 +383,32 @@
             renderTabla(filtrado);
         }
 
-        // Reporte SENIAT: CSV con relación factura ↔ NC
+        // Reporte SENIAT: CSV con relación factura ↔ NC (secuencias independientes)
         function exportarReporteSeniat() {
             if (!dbFacturas || dbFacturas.length === 0) return alert('No hay documentos para exportar.');
 
             const fmtNum = (s) => (s ? String(s).padStart(6,'0') : '');
-            const headers = ['CORRELATIVO','TIPO','NRO_FACTURA','FECHA','RIF/CEDULA','CLIENTE','BASE_IMPONIBLE_USD','EXENTO_USD','IMPUESTO_USD','TOTAL_USD','TOTAL_BS','ESTATUS','REF_FACTURA_ORIGEN','MOTIVO_DEVOLUCION','METODO_PAGO','CAJERO'];
+            const headers = ['NRO_DOC','TIPO','CORRELATIVO_FACTURA','CORRELATIVO_NC','NRO_TALONARIO','FECHA','RIF/CEDULA','CLIENTE','BASE_IMPONIBLE_USD','EXENTO_USD','IMPUESTO_USD','TOTAL_USD','TOTAL_BS','ESTATUS','REF_FACTURA_ORIGEN','MOTIVO_DEVOLUCION','METODO_PAGO','CAJERO'];
             let csv = headers.join(';') + '\r\n';
 
-            // Ordenar por correlativo (orden cronológico fiscal)
-            const ordenado = [...dbFacturas].sort((a,b) => (a.correlativo||0) - (b.correlativo||0));
+            // Ordenar por fecha (las dos secuencias coexisten)
+            const ordenado = [...dbFacturas].sort((a,b) => new Date(a.fecha_emision) - new Date(b.fecha_emision));
 
             ordenado.forEach(f => {
                 const esNC = f.tipo_transaccion === 'Nota de Credito';
                 let refOrigen = '';
                 if (esNC && f.id_factura_origen) {
                     const o = dbFacturas.find(x => x.id_factura === f.id_factura_origen);
-                    if (o) refOrigen = o.nro_factura_manual || fmtNum(o.correlativo);
+                    if (o && o.correlativo) refOrigen = `FACT-${fmtNum(o.correlativo)}`;
                 }
+                const numDoc = esNC ? `NC-${fmtNum(f.correlativo_nc)}` : `FACT-${fmtNum(f.correlativo)}`;
                 const impuesto = (f.total_usd || 0) - (f.base_imponible || 0) + (f.descuento_usd || 0) - (f.monto_exento || 0);
                 const fila = [
-                    fmtNum(f.correlativo),
+                    numDoc,
                     esNC ? 'NOTA_CREDITO' : 'FACTURA',
-                    f.nro_factura_manual || fmtNum(f.correlativo),
+                    esNC ? '' : fmtNum(f.correlativo),
+                    esNC ? fmtNum(f.correlativo_nc) : '',
+                    f.nro_factura_manual || '',
                     new Date(f.fecha_emision).toLocaleDateString('es-VE'),
                     f.cliente_documento || '',
                     (f.cliente_nombre || '').replace(/;/g,','),
@@ -444,9 +448,12 @@
                 const detalles = resD.ok ? await resD.json() : [];
 
                 // Llenar Interfaz
-                // Correlativo fiscal del documento actual
-                const corrActual = facturaVistaActual.correlativo ? String(facturaVistaActual.correlativo).padStart(6,'0') : '?????';
-                document.getElementById('det-doc').innerText = `Doc #${corrActual}`;
+                // Correlativo fiscal del documento actual (secuencias separadas)
+                const esNCmodal = facturaVistaActual.tipo_transaccion === 'Nota de Credito';
+                const corrModal = esNCmodal
+                    ? (facturaVistaActual.correlativo_nc ? String(facturaVistaActual.correlativo_nc).padStart(6,'0') : '?????')
+                    : (facturaVistaActual.correlativo ? String(facturaVistaActual.correlativo).padStart(6,'0') : '?????');
+                document.getElementById('det-doc').innerText = esNCmodal ? `NC-${corrModal}` : `FACT-${corrModal}`;
                 document.getElementById('det-fecha').innerText = new Date(facturaVistaActual.fecha_emision).toLocaleDateString('es-VE');
                 document.getElementById('det-cliente').innerText = `${facturaVistaActual.cliente_documento} - ${facturaVistaActual.cliente_nombre}`;
                 document.getElementById('det-estatus').innerText = facturaVistaActual.estatus.toUpperCase();
@@ -466,7 +473,6 @@
                 banner.classList.add('hidden');
 
                 if (facturaVistaActual.tipo_transaccion === 'Nota de Credito' && facturaVistaActual.id_factura_origen) {
-                    // Buscar la factura origen
                     const resOrig = await fetch(`${SUPABASE_URL}/rest/v1/facturas?id_factura=eq.${facturaVistaActual.id_factura_origen}&select=correlativo,nro_factura_manual,fecha_emision,total_usd&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
                     if (resOrig.ok) {
                         const arr = await resOrig.json();
@@ -475,19 +481,18 @@
                             const corrO = o.correlativo ? String(o.correlativo).padStart(6,'0') : '?????';
                             const manualO = o.nro_factura_manual ? ` (Talonario: ${o.nro_factura_manual})` : '';
                             const fechaO = new Date(o.fecha_emision).toLocaleDateString('es-VE');
-                            bannerTxt.innerText = `Esta NC anula la FACTURA #${corrO}${manualO} del ${fechaO} (Monto: $${fmt(o.total_usd)})`;
+                            bannerTxt.innerText = `Esta NC anula la FACTURA FACT-${corrO}${manualO} del ${fechaO} (Monto: $${fmt(o.total_usd)})`;
                             bannerMot.innerText = facturaVistaActual.motivo_devolucion ? `Motivo: ${facturaVistaActual.motivo_devolucion}` : '';
                             banner.classList.remove('hidden');
                         }
                     }
                 } else if ((facturaVistaActual.estatus === 'Anulada' || facturaVistaActual.estatus === 'ANULADA')) {
-                    // Caso inverso: factura anulada → buscar la NC que la anuló
-                    const resNC = await fetch(`${SUPABASE_URL}/rest/v1/facturas?id_factura_origen=eq.${facturaVistaActual.id_factura}&select=correlativo,nro_factura_manual,fecha_emision&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                    const resNC = await fetch(`${SUPABASE_URL}/rest/v1/facturas?id_factura_origen=eq.${facturaVistaActual.id_factura}&select=correlativo_nc,nro_factura_manual,fecha_emision&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
                     if (resNC.ok) {
                         const arr = await resNC.json();
                         if (arr.length > 0) {
                             const nc = arr[0];
-                            const corrNC = nc.correlativo ? String(nc.correlativo).padStart(6,'0') : '?????';
+                            const corrNC = nc.correlativo_nc ? String(nc.correlativo_nc).padStart(6,'0') : '?????';
                             const manualNC = nc.nro_factura_manual ? ` (Talonario: ${nc.nro_factura_manual})` : '';
                             const fechaNC = new Date(nc.fecha_emision).toLocaleDateString('es-VE');
                             bannerTxt.innerText = `Esta factura fue ANULADA mediante la Nota de Crédito NC-${corrNC}${manualNC} del ${fechaNC}`;

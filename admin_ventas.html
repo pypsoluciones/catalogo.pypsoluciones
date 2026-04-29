@@ -941,8 +941,8 @@
                 if (resConf.ok) { const dConf = await resConf.json(); if (dConf.length > 0) corrInicial = parseInt(dConf[0].valor, 10) || 0; }
 
                 const filtroEmpresa = empresaActual ? `id_empresa=eq.${empresaActual}` : `id_empresa=is.null`;
-                // FIX: orden desc por correlativo para obtener siempre el número más alto real
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/facturas?${filtroEmpresa}&select=correlativo&order=correlativo.desc&limit=1`, {
+                // FIX FISCAL SENIAT: solo cuenta FACTURAS (no NC) para el próximo correlativo
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/facturas?${filtroEmpresa}&tipo_transaccion=neq.Nota%20de%20Credito&select=correlativo&order=correlativo.desc&limit=1`, {
                     headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` }
                 });
                 if (res.ok) {
