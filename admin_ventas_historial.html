@@ -71,6 +71,16 @@
             </div> 
             
             <div class="p-5 bg-gray-50 overflow-y-auto custom-scroll flex-1 space-y-4"> 
+                <div id="banner-relacion-nc" class="hidden bg-red-50 border-l-4 border-red-500 p-3 rounded shadow-sm">
+                    <div class="flex items-start gap-3">
+                        <i class="fa-solid fa-link text-red-600 text-base mt-0.5"></i>
+                        <div class="flex-1">
+                            <div class="text-[10px] font-black text-red-700 uppercase tracking-wider">📜 Relación Fiscal SENIAT</div>
+                            <div id="banner-relacion-texto" class="text-xs text-red-800 font-bold mt-1"></div>
+                            <div id="banner-relacion-motivo" class="text-[10px] text-red-700 mt-1 italic"></div>
+                        </div>
+                    </div>
+                </div>
                 <div class="bg-white border border-gray-200 rounded p-3 shadow-sm grid grid-cols-2 md:grid-cols-4 gap-3">
                     <div><span class="block text-[9px] font-bold text-gray-400 uppercase">Documento</span><span id="det-doc" class="font-black text-primary text-sm"></span></div>
                     <div><span class="block text-[9px] font-bold text-gray-400 uppercase">Fecha / Vence</span><span id="det-fecha" class="font-bold text-gray-800 text-xs"></span></div>
@@ -130,6 +140,13 @@
             <div class="bg-white p-2 rounded-lg border border-gray-200 shadow-sm flex items-center gap-2 mb-4 shrink-0">
                 <i class="fa-solid fa-search text-gray-400 ml-2"></i>
                 <input type="text" id="buscador-historial" oninput="buscarFacturas()" placeholder="Buscar Nro de Factura, Cliente o Cédula..." class="flex-1 border-none outline-none text-xs font-bold uppercase text-gray-700 bg-transparent h-full py-1">
+                <select id="filtro-tipo" onchange="aplicarFiltros()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded text-[10px] font-bold uppercase transition border-none outline-none cursor-pointer">
+                    <option value="TODOS">Todos los Documentos</option>
+                    <option value="FACTURAS">Solo Facturas</option>
+                    <option value="NC">Solo Notas de Crédito</option>
+                    <option value="ANULADAS">Solo Anuladas</option>
+                </select>
+                <button onclick="exportarReporteSeniat()" title="Reporte SENIAT con relación NC↔Factura" class="bg-orange-100 hover:bg-orange-500 hover:text-white text-orange-600 px-3 py-1 rounded text-[10px] font-bold uppercase transition"><i class="fa-solid fa-file-export"></i> SENIAT</button>
                 <button onclick="cargarHistorial()" class="bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-1 rounded text-[10px] font-bold uppercase transition"><i class="fa-solid fa-rotate"></i> Refrescar</button>
             </div>
 
@@ -205,14 +222,11 @@
             fuseFacturas = new Fuse(dbFacturas, { keys: ['nro_factura_manual', 'nro_control_manual', 'cliente_nombre', 'cliente_documento', 'id_factura'], threshold: 0.3, ignoreLocation: true, getFn: function(obj, path) { let val = obj; for (let i = 0; i < path.length; i++) { val = val ? val[path[i]] : null; } return typeof val === 'string' ? val.normalize("NFD").replace(/[\u0300-\u036f]/g, "") : val; } }); 
             
             renderTabla(dbFacturas);
+            aplicarFiltros();
         }
 
         function buscarFacturas() {
-            let query = document.getElementById('buscador-historial').value.trim(); 
-            if (query === '') { renderTabla(dbFacturas); return; }
-            const queryNormalizada = query.normalize("NFD").replace(/[\u0300-\u036f]/g, ""); 
-            let data = fuseFacturas.search(queryNormalizada).map(r => r.item); 
-            renderTabla(data);
+            aplicarFiltros();
         }
 
      function renderTabla(data) {
@@ -226,20 +240,36 @@
 
             data.forEach(f => {
                 const fecha = new Date(f.fecha_emision).toLocaleDateString('es-VE', {hour: '2-digit', minute:'2-digit'});
-                const docStr = f.tipo_transaccion === 'Nota de Credito' ? `NC-${f.nro_factura_manual || f.id_factura.substring(0,8)}` : (f.nro_factura_manual || f.id_factura.substring(0,8));
-                
+                const esNC = f.tipo_transaccion === 'Nota de Credito';
+                const docStr = esNC ? `NC-${f.nro_factura_manual || f.id_factura.substring(0,8)}` : (f.nro_factura_manual || f.correlativo ? String(f.correlativo).padStart(6,'0') : f.id_factura.substring(0,8));
+
+                // Buscar la factura origen si es NC
+                let refOrigen = '';
+                if (esNC && f.id_factura_origen) {
+                    const origen = dbFacturas.find(x => x.id_factura === f.id_factura_origen);
+                    if (origen) {
+                        const numOrigen = origen.nro_factura_manual || (origen.correlativo ? String(origen.correlativo).padStart(6,'0') : origen.id_factura.substring(0,8));
+                        refOrigen = `<div class="text-[9px] text-red-600 font-bold uppercase mt-0.5"><i class="fa-solid fa-link"></i> Anula Fact #${numOrigen}</div>`;
+                    } else {
+                        refOrigen = `<div class="text-[9px] text-red-600 font-bold uppercase mt-0.5"><i class="fa-solid fa-link"></i> Anula Fact</div>`;
+                    }
+                }
+
                 let bColor = "bg-gray-100 text-gray-600";
-                if(f.estatus === 'Completada') bColor = "bg-green-100 text-green-700";
-                if(f.estatus === 'Por Pagar') bColor = "bg-orange-100 text-orange-700";
-                if(f.estatus === 'Anulada') bColor = "bg-red-100 text-red-700";
+                if(f.estatus === 'Completada' || f.estatus === 'PAGADA') bColor = "bg-green-100 text-green-700";
+                if(f.estatus === 'Por Pagar' || f.estatus === 'PENDIENTE') bColor = "bg-orange-100 text-orange-700";
+                if(f.estatus === 'Anulada' || f.estatus === 'ANULADA') bColor = "bg-red-100 text-red-700";
 
-                const colorTotal = f.tipo_transaccion === 'Nota de Credito' ? 'text-red-500' : 'text-gray-800';
-                const signoTotal = f.tipo_transaccion === 'Nota de Credito' ? '-' : '';
+                const colorTotal = esNC ? 'text-red-500' : 'text-gray-800';
+                const signoTotal = esNC ? '-' : '';
+                const badgeNC = esNC ? `<span class="ml-1 text-[8px] bg-red-500 text-white px-1.5 py-0.5 rounded font-black uppercase tracking-wider">NC</span>` : '';
 
-                // AQUI ESTÁ EL CAMBIO DE LA FECHA: text-[13px] font-bold text-gray-700
-                html += `<tr class="hover:bg-blue-50 transition border-b border-gray-100">
+                html += `<tr class="hover:bg-blue-50 transition border-b border-gray-100 ${esNC ? 'bg-red-50/30' : ''}">
                     <td class="py-3 px-4 text-[13px] text-gray-700 font-bold font-mono">${fecha}</td>
-                    <td class="py-3 px-4 font-mono font-black text-primary text-sm">${docStr}</td>
+                    <td class="py-3 px-4">
+                        <div class="font-mono font-black ${esNC ? 'text-red-600' : 'text-primary'} text-sm">${docStr}${badgeNC}</div>
+                        ${refOrigen}
+                    </td>
                     <td class="py-3 px-4 min-w-[250px]">
                         <div class="text-sm font-bold text-gray-800 truncate uppercase">${f.cliente_nombre}</div>
                         <div class="text-xs text-gray-500 font-mono">${f.cliente_documento}</div>
@@ -252,6 +282,74 @@
                 </tr>`;
             });
             tbody.innerHTML = html;
+        }
+
+        // Filtro de tipo (Todos / Facturas / NC / Anuladas)
+        function aplicarFiltros() {
+            const tipo = document.getElementById('filtro-tipo').value;
+            const buscador = document.getElementById('buscador-historial').value.trim();
+
+            let base = dbFacturas;
+            if (buscador.length > 0 && fuseFacturas) {
+                base = fuseFacturas.search(buscador).map(r => r.item);
+            }
+
+            let filtrado = base;
+            if (tipo === 'FACTURAS')  filtrado = base.filter(f => f.tipo_transaccion !== 'Nota de Credito');
+            if (tipo === 'NC')        filtrado = base.filter(f => f.tipo_transaccion === 'Nota de Credito');
+            if (tipo === 'ANULADAS')  filtrado = base.filter(f => f.estatus === 'Anulada' || f.estatus === 'ANULADA');
+
+            renderTabla(filtrado);
+        }
+
+        // Reporte SENIAT: CSV con relación factura ↔ NC
+        function exportarReporteSeniat() {
+            if (!dbFacturas || dbFacturas.length === 0) return alert('No hay documentos para exportar.');
+
+            const fmtNum = (s) => (s ? String(s).padStart(6,'0') : '');
+            const headers = ['CORRELATIVO','TIPO','NRO_FACTURA','FECHA','RIF/CEDULA','CLIENTE','BASE_IMPONIBLE_USD','EXENTO_USD','IMPUESTO_USD','TOTAL_USD','TOTAL_BS','ESTATUS','REF_FACTURA_ORIGEN','MOTIVO_DEVOLUCION','METODO_PAGO','CAJERO'];
+            let csv = headers.join(';') + '\r\n';
+
+            // Ordenar por correlativo (orden cronológico fiscal)
+            const ordenado = [...dbFacturas].sort((a,b) => (a.correlativo||0) - (b.correlativo||0));
+
+            ordenado.forEach(f => {
+                const esNC = f.tipo_transaccion === 'Nota de Credito';
+                let refOrigen = '';
+                if (esNC && f.id_factura_origen) {
+                    const o = dbFacturas.find(x => x.id_factura === f.id_factura_origen);
+                    if (o) refOrigen = o.nro_factura_manual || fmtNum(o.correlativo);
+                }
+                const impuesto = (f.total_usd || 0) - (f.base_imponible || 0) + (f.descuento_usd || 0) - (f.monto_exento || 0);
+                const fila = [
+                    fmtNum(f.correlativo),
+                    esNC ? 'NOTA_CREDITO' : 'FACTURA',
+                    f.nro_factura_manual || fmtNum(f.correlativo),
+                    new Date(f.fecha_emision).toLocaleDateString('es-VE'),
+                    f.cliente_documento || '',
+                    (f.cliente_nombre || '').replace(/;/g,','),
+                    (f.base_imponible||0).toFixed(2),
+                    (f.monto_exento||0).toFixed(2),
+                    impuesto.toFixed(2),
+                    (f.total_usd||0).toFixed(2),
+                    (f.total_bs||0).toFixed(2),
+                    f.estatus || '',
+                    refOrigen,
+                    (f.motivo_devolucion || '').replace(/;/g,','),
+                    f.metodos_pago || '',
+                    f.nombre_cajero || ''
+                ];
+                csv += fila.join(';') + '\r\n';
+            });
+
+            const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            const hoy = new Date().toISOString().slice(0,10);
+            a.href = url;
+            a.download = `reporte_seniat_${hoy}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
         }
 
         async function verDetalles(idFactura) {
@@ -278,6 +376,42 @@
                 document.getElementById('det-tipo').innerText = facturaVistaActual.tipo_transaccion.toUpperCase();
                 document.getElementById('det-metodo').innerText = facturaVistaActual.metodos_pago.replace('_',' ');
                 document.getElementById('det-cajero').innerText = facturaVistaActual.nombre_cajero || 'SISTEMA';
+
+                // Banner SENIAT: relación NC ↔ Factura origen
+                const banner = document.getElementById('banner-relacion-nc');
+                const bannerTxt = document.getElementById('banner-relacion-texto');
+                const bannerMot = document.getElementById('banner-relacion-motivo');
+                banner.classList.add('hidden');
+
+                if (facturaVistaActual.tipo_transaccion === 'Nota de Credito' && facturaVistaActual.id_factura_origen) {
+                    // Buscar la factura origen
+                    const resOrig = await fetch(`${SUPABASE_URL}/rest/v1/facturas?id_factura=eq.${facturaVistaActual.id_factura_origen}&select=correlativo,nro_factura_manual,fecha_emision,total_usd&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                    if (resOrig.ok) {
+                        const arr = await resOrig.json();
+                        if (arr.length > 0) {
+                            const o = arr[0];
+                            const numO = o.nro_factura_manual || (o.correlativo ? String(o.correlativo).padStart(6,'0') : '?');
+                            const fechaO = new Date(o.fecha_emision).toLocaleDateString('es-VE');
+                            bannerTxt.innerText = `Esta NOTA DE CRÉDITO anula la FACTURA #${numO} del ${fechaO} (Monto: $${fmt(o.total_usd)})`;
+                            bannerMot.innerText = facturaVistaActual.motivo_devolucion ? `Motivo: ${facturaVistaActual.motivo_devolucion}` : '';
+                            banner.classList.remove('hidden');
+                        }
+                    }
+                } else if ((facturaVistaActual.estatus === 'Anulada' || facturaVistaActual.estatus === 'ANULADA')) {
+                    // Caso inverso: factura anulada → buscar la NC que la anuló
+                    const resNC = await fetch(`${SUPABASE_URL}/rest/v1/facturas?id_factura_origen=eq.${facturaVistaActual.id_factura}&select=correlativo,nro_factura_manual,fecha_emision&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                    if (resNC.ok) {
+                        const arr = await resNC.json();
+                        if (arr.length > 0) {
+                            const nc = arr[0];
+                            const numNC = nc.nro_factura_manual || (nc.correlativo ? String(nc.correlativo).padStart(6,'0') : '?');
+                            const fechaNC = new Date(nc.fecha_emision).toLocaleDateString('es-VE');
+                            bannerTxt.innerText = `Esta factura fue ANULADA mediante la Nota de Crédito #${numNC} del ${fechaNC}`;
+                            bannerMot.innerText = facturaVistaActual.motivo_devolucion ? `Motivo: ${facturaVistaActual.motivo_devolucion}` : '';
+                            banner.classList.remove('hidden');
+                        }
+                    }
+                }
 
                 // Llenar tabla de ítems (Atando el array de detalles al DOM para uso futuro)
                 const tbody = document.getElementById('det-cuerpo-tabla');
