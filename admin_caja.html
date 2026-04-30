@@ -217,6 +217,104 @@
         </div> 
     </div>
 
+<!-- ════════════════════════════════════════════════════════════════════
+     MODAL: PIN DE AUTO-VERIFICACIÓN (empresas mono-usuario)
+     ════════════════════════════════════════════════════════════════════ -->
+<div id="modal-pin" class="fixed inset-0 bg-slate-900/85 backdrop-blur-sm z-[9995] hidden flex items-center justify-center p-4 fade-in">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col border border-gray-200">
+        <div class="bg-primary px-4 py-3 flex justify-between items-center shrink-0">
+            <h3 class="font-bold text-white text-[12px] tracking-wide uppercase"><i class="fa-solid fa-shield-halved text-secondary mr-2"></i> Confirmar con PIN</h3>
+            <button onclick="cerrarModalPin()" class="text-white hover:text-gray-200 text-lg transition"><i class="fa-solid fa-times"></i></button>
+        </div>
+        <div class="p-5 bg-gray-50 space-y-4">
+            <div class="text-center">
+                <div class="text-4xl mb-2">🔐</div>
+                <div id="pin-titulo" class="text-sm font-black text-primary uppercase tracking-wider">Verificación de Cierre</div>
+                <div id="pin-descripcion" class="text-[11px] text-gray-600 mt-1 px-4">
+                    Para confirmar el cierre y enviar el dinero a bóveda, ingresa tu PIN de 4 a 6 dígitos.
+                </div>
+            </div>
+            <div>
+                <input type="password" id="input-pin" inputmode="numeric" maxlength="6" autocomplete="off"
+                    class="w-full text-center text-3xl font-black tracking-[0.5em] border-2 border-primary/30 rounded-lg py-3 outline-none focus:border-primary transition bg-white"
+                    placeholder="••••" onkeyup="if(event.key==='Enter') confirmarPin()">
+                <div id="pin-error" class="text-[11px] text-red-600 font-bold text-center mt-2 hidden"></div>
+            </div>
+            <button onclick="confirmarPin()" id="btn-confirmar-pin"
+                class="w-full bg-secondary hover:opacity-90 text-white font-bold py-3 rounded-lg shadow-md transition-all text-xs uppercase tracking-wider btn-press flex justify-center items-center gap-2">
+                <i class="fa-solid fa-check"></i> Confirmar y Enviar a Bóveda
+            </button>
+            <div class="text-center">
+                <a href="admin_perfil.html" class="text-[10px] text-gray-500 hover:text-primary underline">¿Olvidaste tu PIN? Restablecer</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     MODAL: ESPERANDO SUPERVISOR (empresas con rol Supervisor)
+     ════════════════════════════════════════════════════════════════════ -->
+<div id="modal-esperando-supervisor" class="fixed inset-0 bg-slate-900/85 backdrop-blur-sm z-[9995] hidden flex items-center justify-center p-4 fade-in">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col border border-gray-200">
+        <div class="bg-orange-500 px-4 py-3 flex justify-between items-center shrink-0">
+            <h3 class="font-bold text-white text-[12px] tracking-wide uppercase"><i class="fa-solid fa-user-clock mr-2"></i> Cierre Enviado a Verificación</h3>
+        </div>
+        <div class="p-5 bg-gray-50 space-y-4">
+            <div class="text-center">
+                <div class="text-5xl mb-2">⏳</div>
+                <div class="text-sm font-black text-orange-700 uppercase tracking-wider">Esperando supervisor</div>
+                <div class="text-[11px] text-gray-700 mt-3 leading-relaxed">
+                    Tu cierre fue registrado correctamente. El supervisor recibió la notificación
+                    y debe contar físicamente el dinero antes de aprobar.
+                </div>
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-4 text-left">
+                    <div class="text-[9px] font-bold text-blue-700 uppercase mb-1">📋 Próximos pasos:</div>
+                    <ol class="text-[10px] text-blue-900 space-y-1 list-decimal list-inside">
+                        <li>Entrega físicamente el dinero al supervisor.</li>
+                        <li>El supervisor cuenta y verifica.</li>
+                        <li>Recibirás una notificación cuando se apruebe.</li>
+                        <li>Recién entonces se imprime tu Reporte Z final.</li>
+                    </ol>
+                </div>
+            </div>
+            <button onclick="cerrarModalEsperandoSupervisor()"
+                class="w-full bg-primary hover:opacity-90 text-white font-bold py-3 rounded-lg shadow-md transition-all text-xs uppercase tracking-wider btn-press">
+                <i class="fa-solid fa-check"></i> Entendido
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     MODAL: CIERRE APROBADO (resultado final + botón imprimir Z)
+     ════════════════════════════════════════════════════════════════════ -->
+<div id="modal-cierre-aprobado" class="fixed inset-0 bg-slate-900/85 backdrop-blur-sm z-[9996] hidden flex items-center justify-center p-4 fade-in">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col border border-gray-200">
+        <div id="aprobado-header" class="px-4 py-3 flex justify-between items-center shrink-0 bg-green-600">
+            <h3 class="font-bold text-white text-[12px] tracking-wide uppercase"><i class="fa-solid fa-vault mr-2"></i> Cierre Verificado</h3>
+        </div>
+        <div class="p-5 bg-gray-50 space-y-4">
+            <div class="text-center">
+                <div id="aprobado-icono" class="text-5xl mb-2">✅</div>
+                <div id="aprobado-titulo" class="text-sm font-black uppercase tracking-wider text-green-700">Dinero en bóveda</div>
+                <div id="aprobado-mensaje" class="text-[11px] text-gray-700 mt-2 leading-relaxed"></div>
+            </div>
+            <div id="aprobado-descuadres" class="hidden bg-red-50 border border-red-300 rounded-lg p-3 text-left">
+                <div class="text-[10px] font-bold text-red-700 uppercase mb-2">⚠️ Descuadres detectados:</div>
+                <div id="aprobado-descuadres-lista" class="text-[11px] text-red-900 space-y-1"></div>
+            </div>
+            <button onclick="imprimirReporteZFinal()" id="btn-imprimir-z"
+                class="w-full bg-primary hover:opacity-90 text-white font-bold py-3 rounded-lg shadow-md transition-all text-xs uppercase tracking-wider btn-press flex justify-center items-center gap-2">
+                <i class="fa-solid fa-print"></i> Imprimir Reporte Z Final
+            </button>
+            <button onclick="cerrarModalCierreAprobado()"
+                class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 rounded-lg transition-all text-[11px] uppercase tracking-wider">
+                Cerrar
+            </button>
+        </div>
+    </div>
+</div>
+
 <div id="modal-cerrar-caja" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[9990] hidden flex items-center justify-center p-4 fade-in">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col border border-gray-200 max-h-[95vh]">
             <div class="bg-red-600 px-4 py-3 flex justify-between items-center shrink-0">
@@ -271,15 +369,19 @@
                             <input type="number" id="dec-efectivo-bs" step="0.01" oninput="recalcularDescuadre()" class="w-full bg-white border border-blue-300 rounded px-2 py-1 text-sm font-black text-blue-700 outline-none focus:border-blue-500 transition text-right" placeholder="0.00">
                         </div>
                         <div class="bg-blue-50 p-2 rounded border border-blue-200">
-                            <label class="block text-[9px] font-bold text-blue-800 uppercase mb-1">Punto de Venta (Bs)</label>
-                            <input type="number" id="dec-punto-bs" step="0.01" oninput="recalcularDescuadre()" class="w-full bg-white border border-blue-300 rounded px-2 py-1 text-sm font-black text-blue-700 outline-none focus:border-blue-500 transition text-right" placeholder="0.00">
+                            <label class="block text-[9px] font-bold text-blue-800 uppercase mb-1">💳 Punto de Venta (Bs)</label>
+                            <input type="number" id="dec-pos-bs" step="0.01" oninput="recalcularDescuadre()" class="w-full bg-white border border-blue-300 rounded px-2 py-1 text-sm font-black text-blue-700 outline-none focus:border-blue-500 transition text-right" placeholder="0.00">
                         </div>
                         <div class="bg-blue-50 p-2 rounded border border-blue-200">
-                            <label class="block text-[9px] font-bold text-blue-800 uppercase mb-1">Pago Móvil/Transf. (Bs)</label>
-                            <input type="number" id="dec-transf-bs" step="0.01" oninput="recalcularDescuadre()" class="w-full bg-white border border-blue-300 rounded px-2 py-1 text-sm font-black text-blue-700 outline-none focus:border-blue-500 transition text-right" placeholder="0.00">
+                            <label class="block text-[9px] font-bold text-blue-800 uppercase mb-1">📱 Pago Móvil (Bs)</label>
+                            <input type="number" id="dec-pagomovil-bs" step="0.01" oninput="recalcularDescuadre()" class="w-full bg-white border border-blue-300 rounded px-2 py-1 text-sm font-black text-blue-700 outline-none focus:border-blue-500 transition text-right" placeholder="0.00">
                         </div>
-                        <div class="bg-green-50 p-2 rounded border border-green-200 col-span-2">
-                            <label class="block text-[9px] font-bold text-green-800 uppercase mb-1">Zelle / Transferencias Ext. (USD)</label>
+                        <div class="bg-blue-50 p-2 rounded border border-blue-200">
+                            <label class="block text-[9px] font-bold text-blue-800 uppercase mb-1">🏦 Transferencia (Bs)</label>
+                            <input type="number" id="dec-transferencia-bs" step="0.01" oninput="recalcularDescuadre()" class="w-full bg-white border border-blue-300 rounded px-2 py-1 text-sm font-black text-blue-700 outline-none focus:border-blue-500 transition text-right" placeholder="0.00">
+                        </div>
+                        <div class="bg-green-50 p-2 rounded border border-green-200">
+                            <label class="block text-[9px] font-bold text-green-800 uppercase mb-1">💸 Zelle (USD)</label>
                             <input type="number" id="dec-zelle-usd" step="0.01" oninput="recalcularDescuadre()" class="w-full bg-white border border-green-300 rounded px-2 py-1 text-sm font-black text-green-700 outline-none focus:border-green-500 transition text-right" placeholder="0.00">
                         </div>
                     </div>
@@ -615,7 +717,7 @@
         // ================= CIERRE DE CAJA =================
         function abrirModalCierre() {
             // Limpiar campos físicos
-            ['dec-efectivo-usd','dec-efectivo-bs','dec-punto-bs','dec-transf-bs','dec-zelle-usd'].forEach(id => document.getElementById(id).value = '');
+            ['dec-efectivo-usd','dec-efectivo-bs','dec-pos-bs','dec-pagomovil-bs','dec-transferencia-bs','dec-zelle-usd'].forEach(id => document.getElementById(id).value = '');
             const obs = document.getElementById('dec-observaciones'); if (obs) obs.value = '';
             document.getElementById('cierre-observaciones-wrap').classList.add('hidden');
 
@@ -654,22 +756,24 @@
             // Valor por defecto: todo el USD en efectivo, todo el Bs en efectivo
             document.getElementById('dec-efectivo-usd').value = redondear(debeUsd).toFixed(2);
             document.getElementById('dec-efectivo-bs').value = redondear(debeBs).toFixed(2);
-            document.getElementById('dec-punto-bs').value = '0.00';
-            document.getElementById('dec-transf-bs').value = '0.00';
+            document.getElementById('dec-pos-bs').value = '0.00';
+            document.getElementById('dec-pagomovil-bs').value = '0.00';
+            document.getElementById('dec-transferencia-bs').value = '0.00';
             document.getElementById('dec-zelle-usd').value = '0.00';
             recalcularDescuadre();
         }
 
         // Recalcula el descuadre cada vez que el cajero cambia un valor
         function recalcularDescuadre() {
-            const efUsd = parseFloat(document.getElementById('dec-efectivo-usd').value) || 0;
-            const efBs = parseFloat(document.getElementById('dec-efectivo-bs').value) || 0;
-            const ptoBs = parseFloat(document.getElementById('dec-punto-bs').value) || 0;
-            const trfBs = parseFloat(document.getElementById('dec-transf-bs').value) || 0;
-            const zelleUsd = parseFloat(document.getElementById('dec-zelle-usd').value) || 0;
+            const efUsd       = parseFloat(document.getElementById('dec-efectivo-usd').value) || 0;
+            const efBs        = parseFloat(document.getElementById('dec-efectivo-bs').value) || 0;
+            const posBs       = parseFloat(document.getElementById('dec-pos-bs').value) || 0;
+            const pmBs        = parseFloat(document.getElementById('dec-pagomovil-bs').value) || 0;
+            const trfBs       = parseFloat(document.getElementById('dec-transferencia-bs').value) || 0;
+            const zelleUsd    = parseFloat(document.getElementById('dec-zelle-usd').value) || 0;
 
             const totalDecUsd = efUsd + zelleUsd;
-            const totalDecBs = efBs + ptoBs + trfBs;
+            const totalDecBs  = efBs + posBs + pmBs + trfBs;
 
             const debeUsd = (turnoActivo.sumFondoUsd || 0) + (turnoActivo.sumIngresosUsd || 0) - (turnoActivo.sumEgresosUsd || 0);
             const debeBs = (turnoActivo.sumFondoBs || 0) + (turnoActivo.sumIngresosBs || 0) - (turnoActivo.sumEgresosBs || 0);
@@ -732,10 +836,29 @@
             document.getElementById('modal-cerrar-caja').classList.remove('flex');
         }
 
+        // ════════════════════════════════════════════════════════════════════
+        // ESTADO TEMPORAL DEL CIERRE EN PROCESO
+        // Almacena la verificación pendiente entre la solicitud y la aprobación
+        // ════════════════════════════════════════════════════════════════════
+        let cierreEnProceso = {
+            id_cierre: null,
+            id_verificacion: null,
+            metodo: null,           // 'AUTO_PIN' | 'SUPERVISOR'
+            desglose: null,
+            datosCierreFinal: null  // se llena tras aprobar
+        };
+
+        // ════════════════════════════════════════════════════════════════════
+        // FUNCIÓN PRINCIPAL DE CIERRE — FLUJO COMPLETO SUPERVISADO
+        //
+        // Paso 1: Solicita verificación → backend determina método (PIN o Supervisor)
+        // Paso 2A: Si AUTO_PIN → abre modal PIN
+        // Paso 2B: Si SUPERVISOR → muestra "esperando supervisor"
+        // ════════════════════════════════════════════════════════════════════
         async function procesarCierreCaja() {
             const btn = document.getElementById('btn-procesar-cierre');
 
-            // Validar: si hay descuadre, las observaciones son OBLIGATORIAS
+            // Validación de observaciones obligatorias si hay descuadre
             if (turnoActivo._tieneDescuadre) {
                 const obsCheck = document.getElementById('dec-observaciones').value.trim();
                 if (obsCheck.length < 10) {
@@ -743,97 +866,379 @@
                 }
             }
 
+            const msgConf = turnoActivo._tieneDescuadre
+                ? "⚠️ ATENCIÓN: La caja tiene un DESCUADRE.\n\nSe enviará a verificación pero el dinero NO se moverá a bóveda hasta confirmar.\n\n¿Continuar?"
+                : "¿Está seguro que desea CERRAR EL TURNO?\n\nSe enviará a verificación. El Reporte Z se imprimirá tras la aprobación.";
+
+            if (!confirm(msgConf)) return;
+
             btn.disabled = true;
-
-            if(!confirm(turnoActivo._tieneDescuadre
-                ? "⚠️ ATENCIÓN: La caja tiene un DESCUADRE. Se cerrará pero quedará marcada en el reporte. ¿Continuar?"
-                : "¿Está seguro que desea CERRAR EL TURNO? Se imprimirá el Reporte Z y la caja quedará bloqueada.")) {
-                btn.disabled = false; return;
-            }
-
-            mostrarCarga("Cuadrando Caja y Generando Reporte Z...");
+            mostrarCarga("Solicitando verificación de cierre...");
 
             try {
-                const decEfvoUsd = parseFloat(document.getElementById('dec-efectivo-usd').value) || 0;
-                const decEfvoBs = parseFloat(document.getElementById('dec-efectivo-bs').value) || 0;
-                const decPuntoBs = parseFloat(document.getElementById('dec-punto-bs').value) || 0;
-                const decTransfBs = parseFloat(document.getElementById('dec-transf-bs').value) || 0;
-                const decZelleUsd = parseFloat(document.getElementById('dec-zelle-usd').value) || 0;
-                const obs = document.getElementById('dec-observaciones').value.trim();
+                // Capturar valores del formulario
+                const efUsd    = parseFloat(document.getElementById('dec-efectivo-usd').value) || 0;
+                const efBs     = parseFloat(document.getElementById('dec-efectivo-bs').value) || 0;
+                const posBs    = parseFloat(document.getElementById('dec-pos-bs').value) || 0;
+                const pmBs     = parseFloat(document.getElementById('dec-pagomovil-bs').value) || 0;
+                const trfBs    = parseFloat(document.getElementById('dec-transferencia-bs').value) || 0;
+                const zelleUsd = parseFloat(document.getElementById('dec-zelle-usd').value) || 0;
+                const obs      = document.getElementById('dec-observaciones').value.trim();
 
-                const totalDeclaradoUsd = decEfvoUsd + decZelleUsd + (decEfvoBs / tasaBCV) + (decPuntoBs / tasaBCV) + (decTransfBs / tasaBCV);
-                const descuadreUsd = totalDeclaradoUsd - turnoActivo.totalCalculadoSistema;
-
-                const desglosePagos = {
-                    efectivo_usd: decEfvoUsd,
-                    efectivo_bs: decEfvoBs,
-                    punto_bs: decPuntoBs,
-                    transferencias_bs: decTransfBs,
-                    zelle_usd: decZelleUsd,
-                    descuadre_usd_detalle: turnoActivo._descuadreUsd || 0,
-                    descuadre_bs_detalle: turnoActivo._descuadreBs || 0,
-                    tiene_descuadre: !!turnoActivo._tieneDescuadre
+                // Desglose con nombres exactos que espera el backend
+                const desglose = {
+                    efectivo_usd:     efUsd,
+                    zelle_usd:        zelleUsd,
+                    efectivo_bs:      efBs,
+                    pos_bs:           posBs,
+                    pagomovil_bs:     pmBs,
+                    transferencia_bs: trfBs
                 };
 
-                const payload = {
+                // Primero sellar el cierre en cierres_caja (estatus CERRADA)
+                const totalDeclaradoUsd = efUsd + zelleUsd + (efBs / tasaBCV) + (posBs / tasaBCV) + (pmBs / tasaBCV) + (trfBs / tasaBCV);
+                const totalDeclaradoBs  = efBs + posBs + pmBs + trfBs;
+                const debeUsd = (turnoActivo.sumFondoUsd || 0) + (turnoActivo.sumIngresosUsd || 0) - (turnoActivo.sumEgresosUsd || 0);
+                const totalCalculadoSistemaUsd = debeUsd;
+
+                const sellarPayload = {
                     estatus: 'CERRADA',
                     fecha_cierre: new Date().toISOString(),
-                    total_calculado_sistema_usd: turnoActivo.totalCalculadoSistema,
+                    total_calculado_sistema_usd: totalCalculadoSistemaUsd,
                     total_declarado_cajero_usd: totalDeclaradoUsd,
-                    descuadre_usd: descuadreUsd,
-                    desglose_pagos: desglosePagos,
+                    total_declarado_cajero_bs: totalDeclaradoBs,
+                    descuadre_usd: turnoActivo._descuadreUsd || 0,
+                    descuadre_bs:  turnoActivo._descuadreBs  || 0,
+                    desglose_pagos: desglose,
                     observaciones: obs || null
                 };
 
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/cierres_caja?id_cierre=eq.${turnoActivo.id_cierre}`, { method: 'PATCH', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, body: JSON.stringify(payload) });
-                if(!res.ok) throw new Error("Fallo al sellar la caja.");
+                const resSellar = await fetch(`${SUPABASE_URL}/rest/v1/cierres_caja?id_cierre=eq.${turnoActivo.id_cierre}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': `Bearer ${TOKEN_JWT}`,
+                        'Content-Type': 'application/json',
+                        'Prefer': 'return=representation'
+                    },
+                    body: JSON.stringify(sellarPayload)
+                });
+                if (!resSellar.ok) throw new Error("Fallo al sellar el cierre. Reintente.");
 
-                const datosCierreFinal = (await res.json())[0];
+                // Llamar a la RPC de solicitud de verificación
+                const resRpc = await fetch(`${SUPABASE_URL}/rest/v1/rpc/solicitar_verificacion_cierre`, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': `Bearer ${TOKEN_JWT}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        p_id_cierre: turnoActivo.id_cierre,
+                        p_desglose: desglose,
+                        p_observaciones: obs || null
+                    })
+                });
 
-                imprimirReporteZ(datosCierreFinal);
+                if (!resRpc.ok) {
+                    const errTxt = await resRpc.text();
+                    throw new Error("Fallo en solicitud de verificación: " + errTxt);
+                }
+
+                const resultado = await resRpc.json();
+                cerrarErrorCarga();
+
+                if (!resultado || !resultado.ok) {
+                    throw new Error(resultado?.mensaje || "Respuesta inválida del servidor.");
+                }
+
+                // Guardar contexto del cierre en proceso
+                cierreEnProceso = {
+                    id_cierre: turnoActivo.id_cierre,
+                    id_verificacion: resultado.id_verificacion,
+                    metodo: resultado.metodo,
+                    desglose: desglose,
+                    datosCierreFinal: null
+                };
 
                 cerrarModalCierre();
-                await verificarTurnoActivo();
+
+                // Bifurcar según método de verificación
+                if (resultado.requiere_pin) {
+                    // AUTO_PIN: empresa mono-usuario, pedir PIN al cajero
+                    abrirModalPin();
+                } else {
+                    // SUPERVISOR: pantalla de espera, supervisor recibió notificación
+                    abrirModalEsperandoSupervisor();
+                }
+
+            } catch (e) {
                 cerrarErrorCarga();
-            } catch(e) { mostrarErrorConexion(e.message); } finally { btn.disabled = false; }
+                alert("❌ " + e.message);
+            } finally {
+                btn.disabled = false;
+            }
         }
 
+        // ════════════════════════════════════════════════════════════════════
+        // MODAL PIN — flujo auto-verificación
+        // ════════════════════════════════════════════════════════════════════
+        function abrirModalPin() {
+            document.getElementById('input-pin').value = '';
+            document.getElementById('pin-error').classList.add('hidden');
+            document.getElementById('modal-pin').classList.remove('hidden');
+            document.getElementById('modal-pin').classList.add('flex');
+            setTimeout(() => document.getElementById('input-pin').focus(), 100);
+        }
+
+        function cerrarModalPin() {
+            document.getElementById('modal-pin').classList.add('hidden');
+            document.getElementById('modal-pin').classList.remove('flex');
+        }
+
+        async function confirmarPin() {
+            const pin = document.getElementById('input-pin').value.trim();
+            const errDiv = document.getElementById('pin-error');
+            const btn = document.getElementById('btn-confirmar-pin');
+
+            errDiv.classList.add('hidden');
+
+            if (!/^[0-9]{4,6}$/.test(pin)) {
+                errDiv.textContent = "El PIN debe tener entre 4 y 6 dígitos.";
+                errDiv.classList.remove('hidden');
+                return;
+            }
+
+            btn.disabled = true;
+            mostrarCarga("Validando PIN y enviando dinero a bóveda...");
+
+            try {
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/aprobar_verificacion_cierre`, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': `Bearer ${TOKEN_JWT}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        p_id_verificacion: cierreEnProceso.id_verificacion,
+                        // En AUTO_PIN, el contado = el declarado (es la misma persona)
+                        p_desglose_contado: cierreEnProceso.desglose,
+                        p_pin: pin,
+                        p_observaciones: null
+                    })
+                });
+
+                cerrarErrorCarga();
+
+                if (!res.ok) {
+                    const errTxt = await res.text();
+                    let mensaje = "PIN incorrecto o error de validación.";
+                    try {
+                        const errJson = JSON.parse(errTxt);
+                        mensaje = errJson.message || errJson.hint || mensaje;
+                    } catch {}
+
+                    // Si el error indica que no hay PIN configurado, redirigir a perfil
+                    if (mensaje.toLowerCase().includes('pin configurado') || mensaje.toLowerCase().includes('no tiene pin')) {
+                        if (confirm("No tienes PIN configurado.\n\nVamos a tu perfil para crearlo. Una vez creado, vuelve a esta pantalla.")) {
+                            window.location.href = 'admin_perfil.html';
+                        }
+                        return;
+                    }
+
+                    errDiv.textContent = mensaje;
+                    errDiv.classList.remove('hidden');
+                    document.getElementById('input-pin').value = '';
+                    document.getElementById('input-pin').focus();
+                    return;
+                }
+
+                const resultado = await res.json();
+                if (!resultado || !resultado.ok) {
+                    errDiv.textContent = resultado?.mensaje || "Error desconocido.";
+                    errDiv.classList.remove('hidden');
+                    return;
+                }
+
+                // Éxito
+                cerrarModalPin();
+                await mostrarModalCierreAprobado(resultado);
+
+            } catch (e) {
+                cerrarErrorCarga();
+                errDiv.textContent = "Error de conexión: " + e.message;
+                errDiv.classList.remove('hidden');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        // ════════════════════════════════════════════════════════════════════
+        // MODAL ESPERANDO SUPERVISOR
+        // ════════════════════════════════════════════════════════════════════
+        function abrirModalEsperandoSupervisor() {
+            document.getElementById('modal-esperando-supervisor').classList.remove('hidden');
+            document.getElementById('modal-esperando-supervisor').classList.add('flex');
+        }
+
+        async function cerrarModalEsperandoSupervisor() {
+            document.getElementById('modal-esperando-supervisor').classList.add('hidden');
+            document.getElementById('modal-esperando-supervisor').classList.remove('flex');
+            await verificarTurnoActivo();
+        }
+
+        // ════════════════════════════════════════════════════════════════════
+        // MODAL CIERRE APROBADO — éxito tras AUTO_PIN o aprobación supervisor
+        // ════════════════════════════════════════════════════════════════════
+        async function mostrarModalCierreAprobado(resultado) {
+            // Recargar datos finales del cierre desde BD
+            try {
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/cierres_caja?id_cierre=eq.${cierreEnProceso.id_cierre}&select=*`, {
+                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` }
+                });
+                if (res.ok) {
+                    const arr = await res.json();
+                    cierreEnProceso.datosCierreFinal = arr[0] || null;
+                }
+            } catch {}
+
+            const header = document.getElementById('aprobado-header');
+            const icono = document.getElementById('aprobado-icono');
+            const titulo = document.getElementById('aprobado-titulo');
+            const mensaje = document.getElementById('aprobado-mensaje');
+            const descuadresWrap = document.getElementById('aprobado-descuadres');
+            const descuadresLista = document.getElementById('aprobado-descuadres-lista');
+
+            if (resultado.hay_descuadre) {
+                header.className = 'px-4 py-3 flex justify-between items-center shrink-0 bg-orange-500';
+                icono.textContent = '⚠️';
+                titulo.textContent = 'Verificado con descuadre';
+                titulo.className = 'text-sm font-black uppercase tracking-wider text-orange-700';
+                mensaje.textContent = resultado.mensaje;
+
+                // Mostrar descuadres detectados
+                const d = resultado.descuadres || {};
+                let html = '';
+                if (parseFloat(d.usd) !== 0)              html += `<div>💵 Efectivo USD: <b>${formatoSigno(d.usd)}</b></div>`;
+                if (parseFloat(d.zelle_usd) !== 0)        html += `<div>💸 Zelle USD: <b>${formatoSigno(d.zelle_usd)}</b></div>`;
+                if (parseFloat(d.bs) !== 0)               html += `<div>💴 Efectivo Bs: <b>${formatoSigno(d.bs, 'Bs.')}</b></div>`;
+                if (parseFloat(d.pos_bs) !== 0)           html += `<div>💳 POS Bs: <b>${formatoSigno(d.pos_bs, 'Bs.')}</b></div>`;
+                if (parseFloat(d.pagomovil_bs) !== 0)     html += `<div>📱 Pago Móvil Bs: <b>${formatoSigno(d.pagomovil_bs, 'Bs.')}</b></div>`;
+                if (parseFloat(d.transferencia_bs) !== 0) html += `<div>🏦 Transferencia Bs: <b>${formatoSigno(d.transferencia_bs, 'Bs.')}</b></div>`;
+                descuadresLista.innerHTML = html;
+                descuadresWrap.classList.remove('hidden');
+            } else {
+                header.className = 'px-4 py-3 flex justify-between items-center shrink-0 bg-green-600';
+                icono.textContent = '✅';
+                titulo.textContent = 'Dinero en bóveda';
+                titulo.className = 'text-sm font-black uppercase tracking-wider text-green-700';
+                mensaje.textContent = resultado.mensaje;
+                descuadresWrap.classList.add('hidden');
+            }
+
+            document.getElementById('modal-cierre-aprobado').classList.remove('hidden');
+            document.getElementById('modal-cierre-aprobado').classList.add('flex');
+        }
+
+        function formatoSigno(num, prefix = '$') {
+            const n = parseFloat(num) || 0;
+            const signo = n > 0 ? '+' : '';
+            return `${signo}${prefix === '$' ? '$' : 'Bs. '}${fmt(Math.abs(n)) === '0.00' ? '0.00' : (signo + fmt(n)).replace('+-', '-')}`;
+        }
+
+        async function cerrarModalCierreAprobado() {
+            document.getElementById('modal-cierre-aprobado').classList.add('hidden');
+            document.getElementById('modal-cierre-aprobado').classList.remove('flex');
+            await verificarTurnoActivo();
+        }
+
+        // Imprimir Reporte Z FINAL (Opción B: solo después de verificación)
+        function imprimirReporteZFinal() {
+            const cierre = cierreEnProceso.datosCierreFinal;
+            if (!cierre) {
+                alert("Datos del cierre no disponibles. Recarga la página.");
+                return;
+            }
+            imprimirReporteZ(cierre);
+        }
+
+        // ════════════════════════════════════════════════════════════════════
+        // FUNCIÓN OBSOLETA — mantenida solo para referencia/respaldo
+        // ════════════════════════════════════════════════════════════════════
+        async function procesarCierreCajaLegacy() {
+            // [conservada como respaldo si se requiere rollback]
+            console.warn("procesarCierreCajaLegacy() no debe usarse. Sistema migrado a flujo supervisado.");
+        }
+
+        // Imprime el Reporte Z FINAL (post-verificación)
+        // Incluye: declaración cajero + verificación supervisor + descuadres por método + sello bóveda
         function imprimirReporteZ(cierre) {
             const contenedor = document.getElementById('ticket-impresion');
             const fechaApertura = new Date(cierre.fecha_apertura).toLocaleString('es-VE');
-            const fechaCierre = new Date(cierre.fecha_cierre).toLocaleString('es-VE');
-            const descColor = cierre.descuadre_usd < -0.1 ? 'color: red;' : (cierre.descuadre_usd > 0.1 ? 'color: green;' : 'color: black;');
-            
+            const fechaCierre = cierre.fecha_cierre ? new Date(cierre.fecha_cierre).toLocaleString('es-VE') : '-';
+            const desglose = cierre.desglose_declarado_cajero || cierre.desglose_pagos || {};
+            const contado  = cierre.desglose_contado_supervisor || {};
+            const descTotalUsd = parseFloat(cierre.descuadre_usd) || 0;
+            const descColor = descTotalUsd < -0.1 ? 'color: red;' : (descTotalUsd > 0.1 ? 'color: green;' : 'color: black;');
+
+            // Estatus de verificación legible
+            let sellloVerif = '';
+            switch (cierre.estatus_verificacion) {
+                case 'AUTO_VERIFICADO':
+                    sellloVerif = '🔐 AUTO-VERIFICADO CON PIN'; break;
+                case 'VERIFICADO_OK':
+                    sellloVerif = '✅ VERIFICADO POR SUPERVISOR'; break;
+                case 'VERIFICADO_DESCUADRE':
+                    sellloVerif = '⚠️ VERIFICADO CON DESCUADRE'; break;
+                default:
+                    sellloVerif = 'PENDIENTE DE VERIFICACIÓN';
+            }
+
             contenedor.innerHTML = `
                 <div style="text-align: center; margin-bottom: 10px; border-bottom: 1px dashed #000; padding-bottom: 5px;">
                     <strong style="font-size: 1.3em;">REPORTE Z (CIERRE CAJA)</strong><br>
                     ID: ${cierre.id_cierre.split('-')[0].toUpperCase()}<br>
-                    Cajero: ${cierre.usuario_cajero}
+                    Cajero: ${cierre.usuario_cajero || '-'}
                 </div>
                 <div style="margin-bottom: 10px; font-size: 0.9em;">
                     <strong>Apertura:</strong> ${fechaApertura}<br>
                     <strong>Cierre:</strong> ${fechaCierre}
                 </div>
                 <div style="border-top: 1px dashed #000; border-bottom: 1px dashed #000; margin-bottom: 10px; padding: 5px 0;">
-                    <div style="display: flex; justify-content: space-between;"><span>Fondo Inicial:</span><strong>$${fmt(turnoActivo.sumFondoUsd)} | Bs.${fmt(turnoActivo.sumFondoBs)}</strong></div>
-                    <div style="display: flex; justify-content: space-between;"><span>Ventas/Cobros:</span><strong>+$${fmt(turnoActivo.sumIngresosUsd)} | +Bs.${fmt(turnoActivo.sumIngresosBs)}</strong></div>
-                    <div style="display: flex; justify-content: space-between;"><span>Retiros/Egresos:</span><strong>-$${fmt(turnoActivo.sumEgresosUsd)} | -Bs.${fmt(turnoActivo.sumEgresosBs)}</strong></div>
+                    <div style="display: flex; justify-content: space-between;"><span>Fondo Inicial:</span><strong>$${fmt(turnoActivo?.sumFondoUsd || 0)} | Bs.${fmt(turnoActivo?.sumFondoBs || 0)}</strong></div>
+                    <div style="display: flex; justify-content: space-between;"><span>Ventas/Cobros:</span><strong>+$${fmt(turnoActivo?.sumIngresosUsd || 0)} | +Bs.${fmt(turnoActivo?.sumIngresosBs || 0)}</strong></div>
+                    <div style="display: flex; justify-content: space-between;"><span>Retiros/Egresos:</span><strong>-$${fmt(turnoActivo?.sumEgresosUsd || 0)} | -Bs.${fmt(turnoActivo?.sumEgresosBs || 0)}</strong></div>
                     <div style="display: flex; justify-content: space-between; margin-top: 5px; font-weight: bold; border-top: 1px solid #000;"><span>TOTAL SISTEMA:</span><span>$${fmt(cierre.total_calculado_sistema_usd)}</span></div>
                 </div>
                 <div style="margin-bottom: 10px; padding: 5px 0;">
-                    <strong style="text-decoration: underline;">DECLARACIÓN CAJERO (USD/BS)</strong>
-                    <div style="display: flex; justify-content: space-between; font-size: 0.9em;"><span>Efectivo $:</span><span>$${fmt(cierre.desglose_pagos.efectivo_usd)}</span></div>
-                    <div style="display: flex; justify-content: space-between; font-size: 0.9em;"><span>Zelle $:</span><span>$${fmt(cierre.desglose_pagos.zelle_usd)}</span></div>
-                    <div style="display: flex; justify-content: space-between; font-size: 0.9em;"><span>Efectivo Bs:</span><span>Bs. ${fmt(cierre.desglose_pagos.efectivo_bs)}</span></div>
-                    <div style="display: flex; justify-content: space-between; font-size: 0.9em;"><span>Punto Bs:</span><span>Bs. ${fmt(cierre.desglose_pagos.punto_bs)}</span></div>
-                    <div style="display: flex; justify-content: space-between; font-size: 0.9em;"><span>P. Móvil Bs:</span><span>Bs. ${fmt(cierre.desglose_pagos.transferencias_bs)}</span></div>
+                    <strong style="text-decoration: underline;">DECLARACIÓN CAJERO</strong>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.9em;"><span>Efectivo $:</span><span>$${fmt(desglose.efectivo_usd)}</span></div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.9em;"><span>Zelle $:</span><span>$${fmt(desglose.zelle_usd)}</span></div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.9em;"><span>Efectivo Bs:</span><span>Bs. ${fmt(desglose.efectivo_bs)}</span></div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.9em;"><span>POS Bs:</span><span>Bs. ${fmt(desglose.pos_bs)}</span></div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.9em;"><span>P. Móvil Bs:</span><span>Bs. ${fmt(desglose.pagomovil_bs)}</span></div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.9em;"><span>Transf. Bs:</span><span>Bs. ${fmt(desglose.transferencia_bs)}</span></div>
                     <div style="display: flex; justify-content: space-between; margin-top: 5px; font-weight: bold; border-top: 1px solid #000;"><span>TOTAL DECLARADO:</span><span>$${fmt(cierre.total_declarado_cajero_usd)}</span></div>
                 </div>
+                ${Object.keys(contado).length > 0 ? `
+                <div style="margin-bottom: 10px; padding: 5px 0; background: #f9f9f9;">
+                    <strong style="text-decoration: underline;">CONTEO FÍSICO VERIFICADOR</strong>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.9em;"><span>Efectivo $:</span><span>$${fmt(contado.efectivo_usd)}</span></div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.9em;"><span>Zelle $:</span><span>$${fmt(contado.zelle_usd)}</span></div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.9em;"><span>Efectivo Bs:</span><span>Bs. ${fmt(contado.efectivo_bs)}</span></div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.9em;"><span>POS Bs:</span><span>Bs. ${fmt(contado.pos_bs)}</span></div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.9em;"><span>P. Móvil Bs:</span><span>Bs. ${fmt(contado.pagomovil_bs)}</span></div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.9em;"><span>Transf. Bs:</span><span>Bs. ${fmt(contado.transferencia_bs)}</span></div>
+                </div>` : ''}
                 <div style="text-align: center; border: 1px solid #000; padding: 5px; font-weight: bold; font-size: 1.1em; ${descColor}">
-                    DESCUADRE (FALTANTE/SOBRANTE)<br>
-                    $${fmt(cierre.descuadre_usd)}
+                    DESCUADRE TOTAL (USD)<br>
+                    $${fmt(descTotalUsd)}
                 </div>
-                <div style="text-align: center; margin-top: 15px; font-size: 0.8em; color: #555;">
+                <div style="text-align: center; margin-top: 10px; padding: 6px; background: #000; color: #fff; font-weight: bold; font-size: 0.85em;">
+                    ${sellloVerif}
+                </div>
+                <div style="text-align: center; margin-top: 8px; font-size: 0.8em; color: #555;">
                     Tasa Referencia Cierre: Bs. ${fmt(tasaBCV)}
                 </div>`;
             window.print();
