@@ -56,7 +56,22 @@
             #ticket-impresion, #ticket-impresion * { visibility: visible; }
             #ticket-impresion { position: absolute; left: 0; top: 0; margin: 0; padding: 0; color: #000; background: #fff; width: 78mm; font-family: 'Courier New', monospace; font-size: 11px; }
         }
-    </style>
+    
+        /* 🩹 FIX ESPACIO EN BLANCO SIDEBAR <-> MAIN
+           El <body> es contenedor flex. menu.js inyecta el <aside> dinámicamente.
+           Si quedan "hijos flex fantasma" (nodos de texto con espacios/&nbsp;, divs
+           vacíos, #ticket-impresion como hijo flex, o cualquier wrapper extra que
+           el menu.js pudiera dejar), generan un gap visible entre el sidebar y el
+           main. Esta normativa lo elimina de raíz. */
+        body { gap: 0 !important; }
+        body > aside { margin: 0 !important; flex-shrink: 0; }
+        body > main { margin-left: 0 !important; }
+
+        /* En pantalla, el ticket-impresion NUNCA debe ocupar espacio. */
+        @media screen {
+            #ticket-impresion { display: none !important; }
+        }
+    </style>
 </head>
 <body class="bg-[#f4f6f8] flex h-screen overflow-hidden text-gray-800"> 
 
@@ -129,13 +144,7 @@
                 <button onclick="procesarAbono()" id="btn-procesar-abono" class="w-full bg-secondary hover:opacity-90 text-white font-bold py-3 mt-2 rounded-lg shadow-md transition-all text-xs uppercase tracking-wider btn-press flex justify-center items-center gap-2"><i class="fa-solid fa-receipt text-white"></i> Procesar e Imprimir Recibo</button> 
             </div> 
         </div> 
-    </div> 
-
-    <div id="ticket-impresion" class="hidden print:block"></div> 
-
-    <script src="menu.js"></script> 
-    
-    <main class="flex-1 flex flex-col h-screen overflow-hidden w-full z-10 relative"> 
+    </div><main class="flex-1 flex flex-col h-screen overflow-hidden w-full z-10 relative"> 
         <header class="bg-white shadow-sm px-4 flex justify-between items-center z-10 shrink-0 border-b border-gray-200 h-12"> 
             <div class="flex items-center gap-3"> 
                 <button onclick="toggleMobileMenu()" class="md:hidden text-gray-600 hover:text-primary text-lg px-2"><i class="fa-solid fa-bars"></i></button> 
@@ -426,5 +435,14 @@
             window.print();
         }
     </script> 
+
+    <!-- Contenedor del Reporte Z (oculto en pantalla, visible al imprimir) -->
+    <div id="ticket-impresion" class="hidden print:block"></div>
+
+    <!-- ============================================================
+         MENU LATERAL: cargado al final del body. menu.js inyectará
+         el <aside> dinámicamente como hijo flex del body.
+         ============================================================ -->
+    <script src="menu.js"></script>
 </body> 
 </html>

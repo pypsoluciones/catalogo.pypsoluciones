@@ -45,7 +45,22 @@
         .btn-press:active { transform: scale(0.96); }
         .fade-in { animation: fadeIn 0.2s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(2px); } to { opacity: 1; transform: translateY(0); } }
-    </style>
+    
+        /* 🩹 FIX ESPACIO EN BLANCO SIDEBAR <-> MAIN
+           El <body> es contenedor flex. menu.js inyecta el <aside> dinámicamente.
+           Si quedan "hijos flex fantasma" (nodos de texto con espacios/&nbsp;, divs
+           vacíos, #ticket-impresion como hijo flex, o cualquier wrapper extra que
+           el menu.js pudiera dejar), generan un gap visible entre el sidebar y el
+           main. Esta normativa lo elimina de raíz. */
+        body { gap: 0 !important; }
+        body > aside { margin: 0 !important; flex-shrink: 0; }
+        body > main { margin-left: 0 !important; }
+
+        /* En pantalla, el ticket-impresion NUNCA debe ocupar espacio. */
+        @media screen {
+            #ticket-impresion { display: none !important; }
+        }
+    </style>
 </head>
 <body class="bg-[#f4f6f8] flex h-screen overflow-hidden text-gray-800">
 
@@ -56,10 +71,7 @@
         <div id="error-actions" class="hidden mt-6 flex gap-3"> 
             <button onclick="cerrarErrorCarga()" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2.5 rounded font-bold uppercase text-xs btn-press transition shadow">Cerrar Alerta</button> 
         </div> 
-    </div>
-
-    <script src="menu.js"></script>
-    <main class="flex-1 flex flex-col h-screen overflow-hidden bg-[#f4f6f8] w-full z-10 relative">
+    </div><main class="flex-1 flex flex-col h-screen overflow-hidden bg-[#f4f6f8] w-full z-10 relative">
         <header class="bg-white shadow-sm px-4 py-3 flex justify-between items-center z-10 border-b border-gray-200">
             <div class="flex items-center gap-3">
                 <button onclick="toggleMobileMenu()" class="md:hidden text-gray-600 hover:text-primary text-lg px-2"><i class="fa-solid fa-bars"></i></button>
@@ -830,5 +842,11 @@
         }
     </script>
    
+
+    <!-- ============================================================
+         MENU LATERAL: cargado al final del body. menu.js inyectará
+         el <aside> dinámicamente como hijo flex del body.
+         ============================================================ -->
+    <script src="menu.js"></script>
 </body>
 </html>
