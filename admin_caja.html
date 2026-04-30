@@ -54,6 +54,22 @@
             #ticket-impresion, #ticket-impresion * { visibility: visible; }
             #ticket-impresion { position: absolute; left: 0; top: 0; margin: 0; padding: 0; color: #000; background: #fff; width: 78mm; font-family: 'Courier New', monospace; font-size: 11px; }
         }
+
+        /* 🩹 FIX ESPACIO EN BLANCO SIDEBAR <-> MAIN
+           El <body> es contenedor flex. menu.js inyecta el <aside> dinámicamente.
+           Si quedan "hijos flex fantasma" (nodos de texto con espacios/&nbsp;, divs
+           vacíos, #ticket-impresion como hijo flex, o cualquier wrapper extra que
+           el menu.js pudiera dejar), generan un gap visible entre el sidebar y el
+           main. Esta normativa lo elimina de raíz. */
+        body { gap: 0 !important; }
+        body > aside { margin: 0 !important; flex-shrink: 0; }
+        body > main { margin-left: 0 !important; }
+
+        /* En pantalla, el ticket-impresion NUNCA debe ocupar espacio (era hijo
+           directo del body flex y, aunque ya tenía .hidden, reforzamos). */
+        @media screen {
+            #ticket-impresion { display: none !important; }
+        }
     </style>
 </head>
 <body class="bg-[#f4f6f8] flex h-screen overflow-hidden text-gray-800"> 
@@ -207,10 +223,6 @@
         </div>
     </div>
 
-    <div id="ticket-impresion" class="hidden print:block"></div> 
-
-    <script src="menu.js"></script> 
-    
     <main class="flex-1 flex flex-col h-screen overflow-hidden min-w-0 z-10 relative"> 
         <header class="bg-white shadow-sm px-4 flex justify-between items-center z-10 shrink-0 border-b border-gray-200 h-12"> 
             <div class="flex items-center gap-3"> 
@@ -806,5 +818,9 @@
             window.print();
         }
     </script>
-</body> 
+<div id="ticket-impresion" class="hidden print:block"></div> 
+
+    <script src="menu.js"></script> 
+    
+    </body> 
 </html>
