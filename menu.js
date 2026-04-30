@@ -1,3 +1,12 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   P&P ERP — MENÚ LATERAL GLOBAL
+   ═══════════════════════════════════════════════════════════════════════════
+   - Inyecta sidebar dinámicamente en todas las páginas admin
+   - Campana de notificaciones con badge dinámico (delegada a notificaciones.js)
+   - Branding marca blanca (logo desde localStorage)
+   - Sesión y logout
+   ═══════════════════════════════════════════════════════════════════════════ */
+
 document.addEventListener("DOMContentLoaded", () => {
     const currentPage = window.location.pathname.split('/').pop() || 'admin_dashboard.html';
 
@@ -59,14 +68,21 @@ document.addEventListener("DOMContentLoaded", () => {
             </div>
 
             <div class="space-y-1 pt-1">
-                <button type="button" onclick="document.getElementById('submenu-fin').classList.toggle('hidden')" class="w-full flex items-center justify-between p-2 rounded-md transition text-sm ${currentPage.includes('admin_cxc') || currentPage.includes('admin_caja') ? 'bg-white/5 text-white font-bold' : 'text-gray-300 hover:bg-white/10'}">
+                <button type="button" onclick="document.getElementById('submenu-fin').classList.toggle('hidden')" class="w-full flex items-center justify-between p-2 rounded-md transition text-sm ${currentPage.includes('admin_cxc') || currentPage.includes('admin_caja') || currentPage.includes('admin_verificacion') || currentPage.includes('admin_boveda') ? 'bg-white/5 text-white font-bold' : 'text-gray-300 hover:bg-white/10'}">
                     <div class="flex items-center"><i class="fa-solid fa-vault mr-3 w-4"></i> Finanzas & Caja</div>
                     <i class="fa-solid fa-chevron-down text-[10px]"></i>
                 </button>
-                <div id="submenu-fin" class="pl-6 space-y-1 mt-1 ${currentPage.includes('admin_cxc') || currentPage.includes('admin_caja') ? '' : 'hidden'}">
+                <div id="submenu-fin" class="pl-6 space-y-1 mt-1 ${currentPage.includes('admin_cxc') || currentPage.includes('admin_caja') || currentPage.includes('admin_verificacion') || currentPage.includes('admin_boveda') ? '' : 'hidden'}">
                     <a href="admin_caja.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_caja.html' ? estiloActivoSub : estiloInactivoSub}">Control de Caja</a>
+                    <a href="admin_verificacion_cierres.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_verificacion_cierres.html' ? estiloActivoSub : estiloInactivoSub}">
+                        <span class="flex items-center justify-between">
+                            <span>Verificación de Cierres</span>
+                            <span id="badge-cierres-pend" class="hidden bg-red-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full">0</span>
+                        </span>
+                    </a>
+                    <a href="admin_boveda.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_boveda.html' ? estiloActivoSub : estiloInactivoSub}">Bóveda Central</a>
                     <a href="admin_cxc.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_cxc.html' ? estiloActivoSub : estiloInactivoSub}">Cuentas por Cobrar</a>
-                    <a href="admin_bancos_finanzas.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_cxc.html' ? estiloActivoSub : estiloInactivoSub}">Bancos y Finanzas</a>
+                    <a href="admin_bancos_finanzas.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_bancos_finanzas.html' ? estiloActivoSub : estiloInactivoSub}">Bancos y Finanzas</a>
                 </div>
             </div>
             
@@ -104,11 +120,12 @@ document.addEventListener("DOMContentLoaded", () => {
             </div>
 
             <div class="space-y-1 pt-1">
-                <button type="button" onclick="document.getElementById('submenu-sis').classList.toggle('hidden')" class="w-full flex items-center justify-between p-2 rounded-md transition text-sm ${currentPage.includes('admin_empleados_roles') || currentPage.includes('admin_configuracion') ? 'bg-white/5 text-white font-bold' : 'text-gray-300 hover:bg-white/10'}">
+                <button type="button" onclick="document.getElementById('submenu-sis').classList.toggle('hidden')" class="w-full flex items-center justify-between p-2 rounded-md transition text-sm ${currentPage.includes('admin_empleados_roles') || currentPage.includes('admin_configuracion') || currentPage.includes('admin_perfil') ? 'bg-white/5 text-white font-bold' : 'text-gray-300 hover:bg-white/10'}">
                     <div class="flex items-center"><i class="fa-solid fa-gears mr-3 w-4"></i> Sistema</div>
                     <i class="fa-solid fa-chevron-down text-[10px]"></i>
                 </button>
-                <div id="submenu-sis" class="pl-6 space-y-1 mt-1 ${currentPage.includes('admin_empleados_roles') || currentPage.includes('admin_configuracion') ? '' : 'hidden'}">
+                <div id="submenu-sis" class="pl-6 space-y-1 mt-1 ${currentPage.includes('admin_empleados_roles') || currentPage.includes('admin_configuracion') || currentPage.includes('admin_perfil') ? '' : 'hidden'}">
+                    <a href="admin_perfil.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_perfil.html' ? estiloActivoSub : estiloInactivoSub}">Mi Perfil y PIN</a>
                     <a href="admin_empleados_roles.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_empleados_roles.html' ? estiloActivoSub : estiloInactivoSub}">Empleados y Roles</a>
                     <a href="admin_publicidad.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_publicidad.html' ? estiloActivoSub : estiloInactivoSub}">Publicidad TV</a>
                     <a href="admin_configuracion.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_configuracion.html' ? estiloActivoSub : estiloInactivoSub}">Marca Blanca</a>
@@ -140,6 +157,7 @@ document.addEventListener("DOMContentLoaded", () => {
     `;
     document.body.insertAdjacentHTML('afterbegin', menuHTML);
 
+    // Inyectar campana de notificaciones en el header (si existe)
     const headerRight = document.querySelector('header > div:last-child');
     if (headerRight) {
         const notifHTML = `
@@ -153,7 +171,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     <span><i class="fa-solid fa-bell mr-2 text-secondary"></i> Alertas</span>
                     <button onclick="toggleNotif()" class="text-white/50 hover:text-white"><i class="fa-solid fa-times"></i></button>
                 </div>
-                <div id="lista-notif" class="max-h-64 overflow-y-auto custom-scroll bg-slate-50 p-3 space-y-2 text-left">
+                <div id="lista-notif" class="max-h-80 overflow-y-auto custom-scroll bg-slate-50 p-3 text-left">
                     <div class="text-center text-gray-400 py-4"><i class="fa-solid fa-spinner fa-spin text-xl"></i></div>
                 </div>
             </div>
@@ -162,21 +180,83 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     cargarBrandingGlobal();
-    ejecutarMotorNotificaciones();
+
+    // Cargar notificaciones.js dinámicamente (si aún no está cargado)
+    if (!document.querySelector('script[src*="notificaciones.js"]')) {
+        const s = document.createElement('script');
+        s.src = 'notificaciones.js';
+        s.onload = () => {
+            if (typeof window.ejecutarMotorNotificaciones === 'function') {
+                window.ejecutarMotorNotificaciones();
+            }
+        };
+        document.head.appendChild(s);
+    } else {
+        // Ya estaba cargado, solo inicializar
+        if (typeof window.ejecutarMotorNotificaciones === 'function') {
+            window.ejecutarMotorNotificaciones();
+        }
+    }
+
+    // Cargar contador de cierres pendientes para el badge del menú lateral
+    cargarBadgeCierresPendientes();
 });
 
+// ═══════════════════════════════════════════════════════════════════════════
 // FUNCIONES GLOBALES
-window.toggleMobileMenu = function() { document.getElementById('sidebar').classList.toggle('-translate-x-full'); document.getElementById('mobile-overlay').classList.toggle('hidden'); };
-window.cerrarSesion = function() { if(confirm("¿Seguro que deseas salir?")) forzarCierreSesion(); };
-window.forzarCierreSesion = function() { localStorage.removeItem('pyp_token_seguro'); window.location.href = 'login.html'; };
-window.cargarBrandingGlobal = function() { 
-    const logoPc = localStorage.getItem('pyp_logo_pc_url'); 
-    if(logoPc) { 
-        const imgSidebar = document.getElementById('app-logo-sidebar'); 
-        const txtSidebar = document.getElementById('app-text-sidebar'); 
-        if(imgSidebar) { imgSidebar.src = logoPc; imgSidebar.classList.remove('hidden'); } 
-        if(txtSidebar) txtSidebar.classList.add('hidden'); 
-    } 
+// ═══════════════════════════════════════════════════════════════════════════
+
+window.toggleMobileMenu = function() {
+    document.getElementById('sidebar').classList.toggle('-translate-x-full');
+    document.getElementById('mobile-overlay').classList.toggle('hidden');
 };
-window.toggleNotif = function() { document.getElementById('panel-notif').classList.toggle('hidden'); };
-window.ejecutarMotorNotificaciones = async function() { /* Lógica Supabase se mantiene igual */ };
+
+window.cerrarSesion = function() {
+    if (confirm("¿Seguro que deseas salir?")) forzarCierreSesion();
+};
+
+window.forzarCierreSesion = function() {
+    localStorage.removeItem('pyp_token_seguro');
+    window.location.href = 'login.html';
+};
+
+window.cargarBrandingGlobal = function() {
+    const logoPc = localStorage.getItem('pyp_logo_pc_url');
+    if (logoPc) {
+        const imgSidebar = document.getElementById('app-logo-sidebar');
+        const txtSidebar = document.getElementById('app-text-sidebar');
+        if (imgSidebar) { imgSidebar.src = logoPc; imgSidebar.classList.remove('hidden'); }
+        if (txtSidebar) txtSidebar.classList.add('hidden');
+    }
+};
+
+// Placeholder por compatibilidad — la lógica real está en notificaciones.js
+window.toggleNotif = window.toggleNotif || function() {
+    document.getElementById('panel-notif')?.classList.toggle('hidden');
+};
+
+// Badge de cierres pendientes en el menú lateral
+window.cargarBadgeCierresPendientes = async function() {
+    const badge = document.getElementById('badge-cierres-pend');
+    if (!badge) return;
+    const token = localStorage.getItem('pyp_token_seguro');
+    if (!token || typeof SUPABASE_URL === 'undefined') return;
+
+    try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/cierres_pendientes_verificacion?select=id_cierre`, {
+            headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${token}` }
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        const n = data.length || 0;
+        if (n > 0) {
+            badge.textContent = n > 99 ? '99+' : String(n);
+            badge.classList.remove('hidden');
+        } else {
+            badge.classList.add('hidden');
+        }
+    } catch {}
+
+    // Refrescar cada 60 segundos
+    setTimeout(window.cargarBadgeCierresPendientes, 60_000);
+};
