@@ -1,597 +1,1076 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <script src="config.js"></script>
-
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>P&P Admin | Tesorería y Bancos</title>
-    
+    <title>Tesorería y Bancos - Admin P&P Soluciones</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <script src="config.js"></script>
     <script>
         const cPri = localStorage.getItem('pyp_color_primario') || '#143B62';
         const cSec = localStorage.getItem('pyp_color_secundario') || '#E67E22';
         const cTer = localStorage.getItem('pyp_color_terciario') || '#64748b';
         const fontFam = localStorage.getItem('pyp_fuente') || "'Inter', sans-serif";
         const fontSiz = localStorage.getItem('pyp_tamano') || "14px";
-        
-        document.documentElement.style.setProperty('--color-primary', cPri);
-        document.documentElement.style.setProperty('--color-secondary', cSec);
-        document.documentElement.style.setProperty('--color-tertiary', cTer);
-        document.documentElement.style.setProperty('--font-global', fontFam);
-        document.documentElement.style.setProperty('--size-global', fontSiz);
     </script>
-
-    <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;900&display=swap" rel="stylesheet">
-    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <script>
-        if (!localStorage.getItem('pyp_token_seguro')) window.location.href = 'login.html';
+        tailwind.config = {
+            theme: { extend: { colors: { primary: cPri, secondary: cSec, tertiary: cTer } } }
+        }
     </script>
-    
     <style>
-        body { 
-            font-family: var(--font-global); 
-            font-size: var(--size-global); 
-            margin: 0;
-            padding: 0;
-            display: flex !important; 
-            gap: 0 !important; 
-            overflow: hidden;
+        :root {
+            --color-primary: #143B62; --color-secondary: #E67E22; --color-tertiary: #64748b;
+            --color-primary-rgb: 20, 59, 98;
         }
-        
-        aside { flex-shrink: 0; margin: 0 !important; }
-
-        main { 
-            flex: 1;
-            min-width: 0;
-            display: flex;
-            flex-direction: column;
-            margin-left: 0 !important;
+        body {
+            font-family: var(--font-family, 'Inter', sans-serif);
+            font-size: var(--font-size, 14px);
+            background-color: #f1f5f9; color: #475569;
         }
-
-        .bg-primary { background-color: var(--color-primary) !important; }
-        .text-primary { color: var(--color-primary) !important; }
-        .bg-secondary { background-color: var(--color-secondary) !important; }
-        .text-secondary { color: var(--color-secondary) !important; }
-        .text-tertiary { color: var(--color-tertiary) !important; }
-        .border-primary { border-color: var(--color-primary) !important; }
-        .custom-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background-color: var(--color-primary); border-radius: 4px; }
-        .btn-press:active { transform: scale(0.96); }
-        .fade-in { animation: fadeIn 0.2s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(2px); } to { opacity: 1; transform: translateY(0); } }
-    
-        @media screen {
-            #ticket-impresion { display: none !important; }
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .btn-press:active { transform: scale(0.98); transition: transform 0.05s; }
+        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #e2e8f0; border-radius: 10px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: var(--color-tertiary); border-radius: 10px; }
+        .pulse-amber { animation: pulseAmber 2.5s ease-in-out infinite; }
+        @keyframes pulseAmber {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.5); }
+            50% { box-shadow: 0 0 0 8px rgba(245, 158, 11, 0); }
+        }
+        .boveda-card {
+            background: linear-gradient(135deg, #1e3a8a 0%, #143B62 100%);
+            color: white;
         }
     </style>
 </head>
-<body class="bg-[#f4f6f8] h-screen text-gray-800">
+<body class="overflow-x-hidden text-xs">
 
-    <main class="z-10 relative">
-        <header class="bg-white shadow-sm px-4 py-3 flex justify-between items-center z-10 border-b border-gray-200">
+<div class="flex h-screen bg-slate-100">
+    <main class="flex-1 flex flex-col overflow-hidden md:ml-0">
+        <header class="bg-white border-b border-gray-200 p-3 flex justify-between items-center shrink-0 shadow-sm h-16">
             <div class="flex items-center gap-3">
-                <button onclick="toggleMobileMenu()" class="md:hidden text-gray-600 hover:text-primary text-lg px-2"><i class="fa-solid fa-bars"></i></button>
-                <h1 class="text-base font-bold text-primary flex items-center gap-2"><i class="fa-solid fa-building-columns text-tertiary text-lg"></i> Tesorería y Bancos</h1>
+                <button onclick="toggleMobileMenu()" class="md:hidden text-tertiary text-xl"><i class="fa-solid fa-bars"></i></button>
+                <h1 class="text-base font-black text-primary uppercase tracking-wider"><i class="fa-solid fa-landmark text-secondary mr-2"></i>Tesorería y Bancos</h1>
             </div>
             <div class="flex items-center gap-2">
-                <button onclick="cargarDatos()" class="bg-slate-100 hover:bg-slate-200 text-primary w-8 h-8 rounded-full flex items-center justify-center transition shadow-sm btn-press" title="Refrescar">
-                    <i class="fa-solid fa-rotate-right text-xs"></i>
-                </button>
+                <button onclick="cargarDatos()" class="text-tertiary hover:text-primary text-lg p-1 transition" title="Recargar"><i class="fa-solid fa-arrows-rotate"></i></button>
             </div>
         </header>
 
-        <div class="overflow-y-auto p-4 md:p-6 custom-scroll">
-            <div class="w-full space-y-6 pb-6">
-                <div class="flex border-b border-gray-200 gap-4">
-                    <button onclick="cambiarTab('cuentas')" id="tab-cuentas" class="py-2 px-1 text-sm font-black border-b-2 border-primary text-primary transition uppercase tracking-wider">Cuentas y Bóvedas</button>
-                    <button onclick="cambiarTab('terminales')" id="tab-terminales" class="py-2 px-1 text-sm font-bold border-b-2 border-transparent text-gray-400 hover:text-gray-600 transition uppercase tracking-wider">Terminales POS</button>
-                </div>
+        <div class="flex-1 overflow-y-auto p-4 md:p-6 custom-scroll">
 
-                <div id="vista-cuentas" class="fade-in space-y-6">
-                    <div class="flex justify-between items-end">
-                        <div>
-                            <h2 class="text-xl font-black text-gray-800">Cuentas Financieras</h2>
-                            <p class="text-xs text-gray-500 font-medium">Bóvedas de efectivo, cuentas bancarias y cuentas de tránsito.</p>
-                        </div>
-                        <div class="flex gap-2">
-                            <button onclick="abrirModalAsignarFondo()" class="bg-primary hover:opacity-90 text-white px-4 py-2 rounded-lg font-bold shadow-sm transition btn-press text-[10px] uppercase tracking-wider flex items-center gap-2">
-                                <i class="fa-solid fa-money-bill-transfer"></i> Asignar Fondo a Cajero
-                            </button>
-                            <button onclick="abrirModalCuenta()" class="bg-secondary hover:opacity-90 text-white px-4 py-2 rounded-lg font-bold shadow-sm transition btn-press text-[10px] uppercase tracking-wider flex items-center gap-2">
-                                <i class="fa-solid fa-plus"></i> Nueva Cuenta
-                            </button>
-                        </div>
-                    </div>
-                    <div id="grid-cuentas" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div>
-                </div>
-
-                <div id="vista-terminales" class="hidden fade-in space-y-6">
-                    <div class="flex justify-between items-end">
-                        <div>
-                            <h2 class="text-xl font-black text-gray-800">Terminales Físicos (POS)</h2>
-                            <p class="text-xs text-gray-500 font-medium">Aparatos de cobro asociados a cuentas bancarias.</p>
-                        </div>
-                        <button onclick="abrirModalTerminal()" class="bg-primary hover:opacity-90 text-white px-4 py-2 rounded-lg font-bold shadow-sm transition btn-press text-[11px] uppercase tracking-wider flex items-center gap-2">
-                            <i class="fa-solid fa-plus"></i> Nuevo Terminal
-                        </button>
-                    </div>
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                        <table class="w-full text-left text-xs whitespace-nowrap">
-                            <thead class="bg-gray-50 border-b border-gray-200 text-gray-500 uppercase tracking-widest font-black text-[10px]">
-                                <tr>
-                                    <th class="py-3 px-4">Terminal POS</th>
-                                    <th class="py-3 px-4">Cuenta Receptora (Banco)</th>
-                                    <th class="py-3 px-4 text-center">Estado</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tabla-terminales" class="divide-y divide-gray-100"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <div id="loading-overlay" class="fixed inset-0 bg-white/95 z-[9999] hidden flex-col items-center justify-center p-6 text-center backdrop-blur-sm"> 
-        <i id="loading-icon" class="fa-solid fa-circle-notch fa-spin text-5xl text-primary mb-4"></i> 
-        <h2 id="loading-text" class="text-xl font-black text-primary uppercase mb-2">Cargando...</h2> 
-        <p id="loading-error" class="text-xs text-gray-500 font-medium max-w-sm hidden text-center"></p> 
-        <div id="error-actions" class="hidden mt-6 flex gap-3"> 
-            <button onclick="cerrarErrorCarga()" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2.5 rounded font-bold uppercase text-xs btn-press transition shadow">Cerrar Alerta</button> 
-        </div> 
-    </div>
-
-    <div id="modal-asignar-fondo" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[9990] hidden flex items-center justify-center p-4 fade-in">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col border border-gray-200">
-            <div class="bg-primary text-white px-4 py-3 flex justify-between items-center">
-                <h3 class="font-bold text-[12px] tracking-wide uppercase"><i class="fa-solid fa-hand-holding-dollar mr-2 text-tertiary"></i> Asignar Fondo de Caja</h3>
-                <button onclick="cerrarModalAsignarFondo()" class="text-gray-300 hover:text-white transition"><i class="fa-solid fa-times"></i></button>
-            </div>
-            <form id="form-asignar-fondo" onsubmit="procesarAsignacionFondo(event)" class="p-5 bg-gray-50 space-y-4">
-                <div>
-                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Usuario / Cajero Receptor *</label>
-                    <select id="asig-cajero" required class="w-full border border-gray-300 rounded px-3 py-2 text-xs font-bold uppercase focus:border-tertiary outline-none bg-white transition shadow-inner"></select>
-                </div>
-                <div class="bg-slate-50 border border-slate-200 rounded p-3 space-y-3">
-                    <div>
-                        <label class="block text-[10px] font-bold text-green-700 uppercase mb-1 border-b border-green-200 pb-1"><i class="fa-solid fa-dollar-sign"></i> Enviar Dólares (USD)</label>
-                        <div class="flex gap-2 items-center mt-2">
-                            <input type="number" id="asig-usd" step="0.01" min="0" placeholder="$0.00" class="w-1/3 border border-gray-300 rounded px-2 py-1.5 text-sm font-black text-center outline-none bg-white focus:border-tertiary transition-colors">
-                            <select id="asig-boveda-usd" class="w-2/3 border border-gray-300 rounded px-2 py-1.5 text-[10px] font-bold uppercase focus:border-tertiary outline-none bg-white transition shadow-inner">
-                                <option value="">(No enviar USD)</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-bold text-blue-700 uppercase mb-1 border-b border-blue-200 pb-1 mt-2"><i class="fa-solid fa-money-bill"></i> Enviar Bolívares (Bs)</label>
-                        <div class="flex gap-2 items-center mt-2">
-                            <input type="number" id="asig-bs" step="0.01" min="0" placeholder="Bs.0.00" class="w-1/3 border border-gray-300 rounded px-2 py-1.5 text-sm font-black text-center outline-none bg-white focus:border-tertiary transition-colors">
-                            <select id="asig-boveda-bs" class="w-2/3 border border-gray-300 rounded px-2 py-1.5 text-[10px] font-bold uppercase focus:border-tertiary outline-none bg-white transition shadow-inner">
-                                <option value="">(No enviar Bs)</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-                <button type="submit" id="btn-guardar-asig" class="w-full bg-secondary hover:opacity-90 text-white font-bold py-2.5 rounded shadow btn-press uppercase text-[11px] tracking-wider transition mt-2">Emitir Transferencia(s)</button>
-            </form>
-        </div>
-    </div>
-
-    <div id="modal-cuenta" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[9990] hidden flex items-center justify-center p-4 fade-in">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col border border-gray-200">
-            <div class="bg-primary text-white px-4 py-3 flex justify-between items-center">
-                <h3 id="modal-titulo-cuenta" class="font-bold text-[12px] tracking-wide uppercase"><i class="fa-solid fa-vault mr-2 text-tertiary"></i> Crear Cuenta</h3>
-                <button onclick="cerrarModalCuenta()" class="text-gray-300 hover:text-white transition"><i class="fa-solid fa-times"></i></button>
-            </div>
-            <form id="form-cuenta" onsubmit="guardarCuenta(event)" class="p-5 bg-gray-50 space-y-4">
-                <input type="hidden" id="cta-id">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="md:col-span-2">
-                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Nombre de la Cuenta *</label>
-                        <input type="text" id="cta-nombre" required placeholder="Ej: Bóveda Principal" class="w-full border border-gray-300 rounded px-3 py-2 text-xs font-bold uppercase focus:border-tertiary outline-none bg-white transition">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Número de Cuenta</label>
-                        <input type="text" id="cta-numero" placeholder="Ej: 0134-..." class="w-full border border-gray-300 rounded px-3 py-2 text-xs font-bold uppercase focus:border-tertiary outline-none bg-white transition">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Clasificación *</label>
-                        <select id="cta-tipo" required class="w-full border border-gray-300 rounded px-3 py-2 text-xs font-bold uppercase focus:border-tertiary outline-none bg-white transition">
-                            <option value="EFECTIVO">Caja Fuerte / Efectivo</option>
-                            <option value="BANCO">Cuenta Bancaria</option>
-                            <option value="PAGO_MOVIL">Pago Móvil (Bs)</option>
-                            <option value="ZELLE">Zelle (USD)</option>
-                            <option value="PUNTO_DE_VENTA">Punto de Venta / POS</option>
-                            <option value="TRANSFERENCIA">Transferencia Externa</option>
-                            <option value="TRANSITO">Caja de Verificación / Tránsito</option>
-                            <option value="GASTO">Cuenta de Gastos</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Moneda Base *</label>
-                        <select id="cta-moneda" required class="w-full border border-gray-300 rounded px-3 py-2 text-xs font-bold uppercase focus:border-tertiary outline-none bg-white transition">
-                            <option value="BS">Bolívares (Bs)</option>
-                            <option value="USD">Dólares ($)</option>
-                            <option value="EUR">Euros (€)</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Descripción / Agencia</label>
-                        <input type="text" id="cta-desc" placeholder="Detalles u oficina..." class="w-full border border-gray-300 rounded px-3 py-2 text-[10px] uppercase focus:border-tertiary outline-none bg-white transition">
-                    </div>
-                </div>
-                <div class="bg-blue-50 border border-blue-200 rounded p-3" id="caja-saldos-iniciales">
-                    <label class="block text-[10px] font-bold text-primary uppercase mb-1">Saldo Inicial (Solo Creación)</label>
-                    <div class="grid grid-cols-2 gap-3">
-                        <input type="number" id="cta-saldo-usd" step="0.01" placeholder="US$ 0.00" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-black text-center outline-none bg-white">
-                        <input type="number" id="cta-saldo-bs" step="0.01" placeholder="Bs. 0.00" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-black text-center outline-none bg-white">
-                    </div>
-                    <p class="text-[8px] text-gray-500 mt-1 font-medium leading-tight">Este saldo inicial quedará registrado en el Libro Mayor como un ajuste de apertura.</p>
-                </div>
-                <button type="submit" id="btn-guardar-cta" class="w-full bg-secondary hover:opacity-90 text-white font-bold py-2.5 rounded shadow btn-press uppercase text-[11px] tracking-wider transition">Guardar Cuenta</button>
-            </form>
-        </div>
-    </div>
-
-    <div id="modal-terminal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[9990] hidden flex items-center justify-center p-4 fade-in">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col border border-gray-200">
-            <div class="bg-primary text-white px-4 py-3 flex justify-between items-center">
-                <h3 class="font-bold text-[12px] tracking-wide uppercase"><i class="fa-solid fa-calculator mr-2 text-tertiary"></i> Configurar Terminal POS</h3>
-                <button onclick="cerrarModalTerminal()" class="text-gray-300 hover:text-white transition"><i class="fa-solid fa-times"></i></button>
-            </div>
-            <form id="form-terminal" onsubmit="guardarTerminal(event)" class="p-5 bg-gray-50 space-y-4">
-                <div>
-                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Nombre del Aparato *</label>
-                    <input type="text" id="term-nombre" required placeholder="Ej: Punto Banesco Inalámbrico" class="w-full border border-gray-300 rounded px-3 py-2 text-xs font-bold uppercase focus:border-tertiary outline-none bg-white transition">
-                </div>
-                <div>
-                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Cuenta Bancaria Asociada (Donde liquida) *</label>
-                    <select id="term-banco" required class="w-full border border-gray-300 rounded px-3 py-2 text-xs font-bold uppercase focus:border-tertiary outline-none bg-white transition shadow-inner"></select>
-                </div>
-                <div class="bg-yellow-50 border border-yellow-200 rounded p-2 text-[9px] text-yellow-700 font-bold uppercase text-center mt-2">
-                    <i class="fa-solid fa-triangle-exclamation"></i> Los lotes cerrados en este terminal enviarán el dinero a la cuenta seleccionada arriba.
-                </div>
-                <button type="submit" id="btn-guardar-term" class="w-full bg-primary hover:opacity-90 text-white font-bold py-2.5 rounded shadow btn-press uppercase text-[11px] tracking-wider transition mt-4">Guardar Terminal</button>
-            </form>
-        </div>
-    </div>
-
-    <div id="modal-recarga" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[9990] hidden flex items-center justify-center p-4 fade-in">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col border border-gray-200">
-            <div class="bg-secondary px-4 py-3 flex justify-between items-center shrink-0">
-                <h3 class="font-bold text-white text-[12px] tracking-wide uppercase">
-                    <i class="fa-solid fa-money-bill-transfer mr-2"></i> <span id="rec-titulo">Mover Dinero</span>
-                </h3>
-                <button onclick="cerrarModalRecarga()" class="text-white hover:text-gray-200 text-lg transition"><i class="fa-solid fa-times"></i></button>
-            </div>
-            <div class="p-4 bg-gray-50 space-y-3 max-h-[80vh] overflow-y-auto custom-scroll">
-                <div class="bg-blue-50 border border-blue-200 rounded p-2 text-[10px] text-blue-800 font-bold">
-                    <div id="rec-info-cuenta"></div>
-                    <div class="text-blue-600 mt-1" id="rec-info-saldo"></div>
-                </div>
-                <div>
-                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Tipo de Operación *</label>
-                    <select id="rec-tipo-op" onchange="cambiarTipoOperacion()" class="w-full border border-gray-300 rounded px-3 py-2 text-xs font-bold uppercase bg-white outline-none focus:border-secondary transition">
-                        <option value="DEPOSITO">📥 Depósito (entrada de dinero)</option>
-                        <option value="RETIRO">📤 Retiro (salida de dinero)</option>
-                        <option value="TRANSFERENCIA">🔄 Transferencia a otra cuenta</option>
-                        <option value="AJUSTE">⚙️ Ajuste de saldo (con motivo)</option>
-                    </select>
-                </div>
-                <div id="rec-cuenta-destino-wrap" class="hidden">
-                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Cuenta Destino *</label>
-                    <select id="rec-cuenta-destino" class="w-full border border-gray-300 rounded px-3 py-2 text-xs font-bold uppercase bg-white outline-none focus:border-secondary transition"></select>
-                </div>
-                <div>
-                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Monto * <span id="rec-monto-moneda" class="text-secondary"></span></label>
-                    <input type="number" id="rec-monto" step="0.01" required class="w-full border border-gray-300 rounded px-3 py-2 text-base font-black text-secondary outline-none focus:border-secondary transition text-right" placeholder="0.00">
-                </div>
-                <div>
-                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Origen / Justificación *</label>
-                    <input type="text" id="rec-origen" required maxlength="200" class="w-full border border-gray-300 rounded px-3 py-2 text-xs uppercase outline-none focus:border-secondary transition" placeholder="Ej: RETIRO BANCO, DEPÓSITO PROPIETARIO, AJUSTE INVENTARIO...">
-                </div>
-                <div>
-                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Nro. Referencia (opcional)</label>
-                    <input type="text" id="rec-referencia" maxlength="50" class="w-full border border-gray-300 rounded px-3 py-2 text-xs font-mono outline-none focus:border-secondary transition" placeholder="Nro. operación bancaria, cheque, etc.">
-                </div>
-                <div class="bg-gray-100 rounded p-2 text-[9px] text-gray-600 font-bold">
-                    <div>Nro. Operación interno: <span id="rec-numero-op" class="text-primary font-mono">OP-AAAA-MM-NNNNNN</span></div>
-                    <div class="mt-0.5">Quedará registrado con tu usuario y fecha actual.</div>
-                </div>
-                <button onclick="procesarMovimiento()" id="btn-rec-procesar" class="w-full bg-secondary hover:opacity-90 text-white font-bold py-3 rounded-lg shadow-md transition-all text-xs uppercase tracking-wider btn-press flex justify-center items-center gap-2">
-                    <i class="fa-solid fa-check"></i> Confirmar Operación
+            <!-- TABS -->
+            <div class="flex space-x-1 mb-6 border-b border-gray-200">
+                <button onclick="cambiarTab('cuentas')" id="tab-cuentas" class="py-2 px-4 text-sm font-black border-b-2 border-primary text-primary transition uppercase tracking-wider">
+                    <i class="fa-solid fa-vault mr-1"></i> Cuentas y Bóveda
+                </button>
+                <button onclick="cambiarTab('config')" id="tab-config" class="py-2 px-4 text-sm font-bold border-b-2 border-transparent text-gray-400 hover:text-gray-600 transition uppercase tracking-wider">
+                    <i class="fa-solid fa-sliders mr-1"></i> Configuración Pagos
+                    <span id="badge-config-pendiente" class="hidden ml-1 bg-orange-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full">!</span>
+                </button>
+                <button onclick="cambiarTab('terminales')" id="tab-terminales" class="py-2 px-4 text-sm font-bold border-b-2 border-transparent text-gray-400 hover:text-gray-600 transition uppercase tracking-wider">
+                    <i class="fa-solid fa-credit-card mr-1"></i> Terminales POS
                 </button>
             </div>
-        </div>
-    </div>
 
-    <script>
-        const TOKEN_JWT = localStorage.getItem('pyp_token_seguro');
-        let empresaActual = null;
-        let dbCuentas = [];
-        let dbTerminales = [];
+            <!-- ════════════════════════════════════════════════════════════
+                 VISTA: CUENTAS Y BÓVEDA
+                 ════════════════════════════════════════════════════════════ -->
+            <div id="vista-cuentas" class="fade-in space-y-6">
 
-        function fmt(num) { return parseFloat(num || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); } 
-        function redondear(num) { return Math.round((num + Number.EPSILON) * 100) / 100; }
-
-        window.onload = async () => {
-            mostrarCarga("Conectando con Bóveda...", "Cargando estructura financiera");
-            try {
-                const resUser = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?select=id_empresa&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
-                if (resUser.status === 401 || resUser.status === 403 || !TOKEN_JWT) throw new Error("Sesión inválida.");
-                if (!resUser.ok) throw new Error("Error de red.");
-                const dataUser = await resUser.json(); 
-                if (dataUser.length > 0) empresaActual = dataUser[0].id_empresa;
-                await cargarDatos();
-                cerrarErrorCarga();
-            } catch (e) { mostrarErrorConexion(e.message); }
-        };
-
-        function mostrarCarga(titulo, subtitulo = "") {
-            const ol = document.getElementById('loading-overlay');
-            document.getElementById('loading-text').innerText = titulo;
-            document.getElementById('loading-error').innerText = subtitulo;
-            document.getElementById('loading-error').classList.toggle('hidden', !subtitulo);
-            document.getElementById('error-actions').classList.add('hidden');
-            document.getElementById('loading-icon').className = "fa-solid fa-circle-notch fa-spin text-5xl text-primary mb-4";
-            ol.classList.remove('hidden'); ol.classList.add('flex');
-        }
-
-        function mostrarErrorConexion(msg) { 
-            if(msg.includes("Sesión") || msg.includes("token") || msg.includes("inválida")) { forzarCierreSesion(); return; }
-            const ol = document.getElementById('loading-overlay'); 
-            document.getElementById('loading-text').innerText = "Error del Sistema"; 
-            document.getElementById('loading-error').innerText = msg;  
-            document.getElementById('loading-error').classList.remove('hidden'); 
-            document.getElementById('error-actions').classList.remove('hidden'); 
-            document.getElementById('loading-icon').className = "fa-solid fa-triangle-exclamation text-5xl text-red-500 mb-4";  
-            ol.classList.remove('hidden'); ol.classList.add('flex'); 
-        } 
-        function cerrarErrorCarga() { document.getElementById('loading-overlay').classList.add('hidden'); } 
-        function forzarCierreSesion() { localStorage.removeItem('pyp_token_seguro'); window.location.href = 'login.html'; }
-
-        function cambiarTab(tab) {
-            document.getElementById('vista-cuentas').classList.toggle('hidden', tab !== 'cuentas');
-            document.getElementById('vista-terminales').classList.toggle('hidden', tab !== 'terminales');
-            document.getElementById('tab-cuentas').className = tab === 'cuentas' ? 'py-2 px-1 text-sm font-black border-b-2 border-primary text-primary transition uppercase tracking-wider' : 'py-2 px-1 text-sm font-bold border-b-2 border-transparent text-gray-400 hover:text-gray-600 transition uppercase tracking-wider';
-            document.getElementById('tab-terminales').className = tab === 'terminales' ? 'py-2 px-1 text-sm font-black border-b-2 border-primary text-primary transition uppercase tracking-wider' : 'py-2 px-1 text-sm font-bold border-b-2 border-transparent text-gray-400 hover:text-gray-600 transition uppercase tracking-wider';
-        }
-
-        async function cargarDatos() {
-            const filtroEmpresa = empresaActual ? `id_empresa=eq.${empresaActual}` : `id_empresa=is.null`;
-            const [resCuentas, resTerminales] = await Promise.all([
-                fetch(`${SUPABASE_URL}/rest/v1/fin_cuentas?${filtroEmpresa}&order=tipo_cuenta.asc,nombre.asc`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
-                fetch(`${SUPABASE_URL}/rest/v1/fin_terminales_pos?${filtroEmpresa}&select=*,fin_cuentas(nombre)&order=nombre.asc`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } })
-            ]);
-            if (resCuentas.ok) dbCuentas = await resCuentas.json();
-            if (resTerminales.ok) dbTerminales = await resTerminales.json();
-            renderCuentas(); renderTerminales(); actualizarSelectCuentasBanco();
-        }
-
-        function renderCuentas() {
-            const grid = document.getElementById('grid-cuentas');
-            if(dbCuentas.length === 0) {
-                grid.innerHTML = `<div class="col-span-full p-10 text-center text-gray-400 font-bold uppercase tracking-widest"><i class="fa-solid fa-vault text-4xl mb-3 block text-gray-300"></i> No hay cuentas creadas.</div>`;
-                return;
-            }
-            let html = '';
-            dbCuentas.forEach(c => {
-                let icon = 'fa-building-columns'; let color = 'text-primary'; let bgIcon = 'bg-primary/10';
-                if(c.tipo_cuenta === 'EFECTIVO') { icon = 'fa-vault'; color = 'text-green-600'; bgIcon = 'bg-green-100'; }
-                if(c.tipo_cuenta === 'TRANSITO') { icon = 'fa-right-left'; color = 'text-secondary'; bgIcon = 'bg-secondary/10'; }
-                if(c.tipo_cuenta === 'GASTO') { icon = 'fa-file-invoice'; color = 'text-red-500'; bgIcon = 'bg-red-100'; }
-                if(c.tipo_cuenta === 'PAGO_MOVIL') { icon = 'fa-mobile-screen-button'; color = 'text-purple-600'; bgIcon = 'bg-purple-100'; }
-                if(c.tipo_cuenta === 'ZELLE') { icon = 'fa-z'; color = 'text-pink-600'; bgIcon = 'bg-pink-100'; }
-                if(c.tipo_cuenta === 'PUNTO_DE_VENTA') { icon = 'fa-credit-card'; color = 'text-orange-600'; bgIcon = 'bg-orange-100'; }
-                if(c.tipo_cuenta === 'TRANSFERENCIA') { icon = 'fa-arrow-right-arrow-left'; color = 'text-blue-500'; bgIcon = 'bg-blue-100'; }
-                html += `<div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition">
-                    <div class="flex justify-between items-start mb-2">
-                        <div class="flex items-center gap-3 w-full pr-6">
-                            <div class="w-10 h-10 rounded-full ${bgIcon} ${color} flex items-center justify-center text-lg shrink-0"><i class="fa-solid ${icon}"></i></div>
-                            <div class="w-full"><h3 class="text-sm font-black text-gray-800 uppercase leading-tight line-clamp-2">${c.nombre}</h3><span class="text-[9px] font-bold text-gray-500 uppercase tracking-widest">${c.tipo_cuenta} • ${c.moneda}</span>${c.numero_cuenta ? `<p class="text-[9px] font-mono text-gray-400 mt-1">${c.numero_cuenta}</p>` : ''}</div>
-                        </div>
-                        <button onclick="abrirModalCuenta('${c.id}')" class="absolute top-4 right-4 text-gray-300 hover:text-secondary transition bg-gray-50 hover:bg-orange-50 w-6 h-6 rounded flex items-center justify-center shadow-sm"><i class="fa-solid fa-pen text-[10px]"></i></button>
+                <!-- Sección Cuentas -->
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-3">
+                    <div>
+                        <h2 class="text-lg font-black text-primary tracking-wide uppercase">Cuentas Financieras</h2>
+                        <p class="text-[11px] text-gray-500 font-medium">Bóveda de efectivo + cuentas bancarias + cajas chicas</p>
                     </div>
-                    <div class="border-t border-gray-100 pt-3 mt-2">${c.moneda === 'USD' ? `<div><p class="text-[8px] text-gray-400 font-bold uppercase">Saldo</p><p class="text-base font-black text-green-700 leading-none">$${fmt(c.saldo_usd || 0)}</p></div>` : `<div><p class="text-[8px] text-gray-400 font-bold uppercase">Saldo</p><p class="text-base font-black text-blue-700 leading-none">Bs. ${fmt(c.saldo_bs || 0)}</p></div>`}<button onclick="abrirModalRecarga('${c.id}','${c.nombre.replace(/'/g, "\\'")}','${c.moneda}','${c.tipo_cuenta}')" class="mt-2 w-full bg-gray-100 hover:bg-primary hover:text-white text-gray-600 px-3 py-1.5 rounded text-[10px] font-bold uppercase tracking-wider transition flex items-center justify-center gap-1"><i class="fa-solid fa-money-bill-transfer"></i> Mover dinero</button></div></div>`;
-            });
-            grid.innerHTML = html;
+                    <div class="flex gap-2">
+                        <button onclick="abrirModalAsignarFondo()" class="bg-primary hover:opacity-90 text-white px-4 py-2 rounded-lg font-bold shadow-sm transition btn-press text-[10px] uppercase tracking-wider flex items-center gap-2">
+                            <i class="fa-solid fa-money-bill-transfer"></i> Asignar Fondo a Cajero
+                        </button>
+                        <button onclick="abrirModalCuenta()" class="bg-secondary hover:opacity-90 text-white px-4 py-2 rounded-lg font-bold shadow-sm transition btn-press text-[10px] uppercase tracking-wider flex items-center gap-2">
+                            <i class="fa-solid fa-plus"></i> Nueva Cuenta
+                        </button>
+                    </div>
+                </div>
+
+                <div id="grid-cuentas" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div>
+
+                <!-- Sección Transferencias en Tránsito -->
+                <div id="seccion-transito" class="mt-8">
+                    <div class="flex items-center justify-between mb-3 border-b border-amber-200 pb-2">
+                        <div>
+                            <h2 class="text-base font-black text-amber-700 tracking-wide uppercase flex items-center gap-2">
+                                <i class="fa-solid fa-clock pulse-amber rounded-full bg-amber-100 text-amber-600 w-7 h-7 flex items-center justify-center"></i>
+                                Transferencias en Tránsito
+                            </h2>
+                            <p class="text-[11px] text-gray-500 font-medium ml-9">Fondos pendientes de aceptación o rechazo</p>
+                        </div>
+                        <span id="badge-transito-cantidad" class="hidden bg-amber-500 text-white px-3 py-1 rounded-full text-[10px] font-black uppercase">0 pendientes</span>
+                    </div>
+                    <div id="lista-transito" class="space-y-2"></div>
+                </div>
+            </div>
+
+            <!-- ════════════════════════════════════════════════════════════
+                 VISTA: CONFIGURACIÓN DE MÉTODOS DE PAGO
+                 ════════════════════════════════════════════════════════════ -->
+            <div id="vista-config" class="hidden fade-in space-y-6">
+                <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
+                    <div class="flex gap-3">
+                        <i class="fa-solid fa-circle-info text-blue-500 text-xl mt-1"></i>
+                        <div>
+                            <h3 class="font-black text-blue-900 text-sm uppercase tracking-wide">¿Por qué configurar mapeos?</h3>
+                            <p class="text-[11px] text-blue-700 mt-1 leading-relaxed">
+                                Cuando un cliente paga con Zelle, Pago Móvil o Transferencia, el dinero NO llega a la bóveda física: llega a una cuenta bancaria específica. Aquí defines a qué cuenta va cada método. Sin esta configuración, el sistema bloqueará los cierres con esos métodos.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h2 class="text-lg font-black text-primary tracking-wide uppercase mb-3">Mapeo de Métodos de Pago</h2>
+                    <div id="grid-mapeos" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+                </div>
+            </div>
+
+            <!-- ════════════════════════════════════════════════════════════
+                 VISTA: TERMINALES POS
+                 ════════════════════════════════════════════════════════════ -->
+            <div id="vista-terminales" class="hidden fade-in space-y-6">
+                <div class="flex items-center justify-between mb-3">
+                    <div>
+                        <h2 class="text-lg font-black text-primary tracking-wide uppercase">Terminales POS</h2>
+                        <p class="text-[11px] text-gray-500 font-medium">Cada terminal está vinculado a una cuenta bancaria que recibe los pagos POS</p>
+                    </div>
+                    <button onclick="abrirModalTerminal()" class="bg-secondary hover:opacity-90 text-white px-4 py-2 rounded-lg font-bold shadow-sm transition btn-press text-[10px] uppercase tracking-wider flex items-center gap-2">
+                        <i class="fa-solid fa-plus"></i> Nuevo Terminal
+                    </button>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <table class="w-full">
+                        <thead class="bg-gray-50 border-b border-gray-200">
+                            <tr>
+                                <th class="text-left p-3 text-[10px] font-black text-gray-500 uppercase tracking-wider">Terminal</th>
+                                <th class="text-left p-3 text-[10px] font-black text-gray-500 uppercase tracking-wider">Cuenta de Depósito</th>
+                                <th class="text-center p-3 text-[10px] font-black text-gray-500 uppercase tracking-wider">Estatus</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-terminales" class="divide-y divide-gray-100"></tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     LOADING OVERLAY
+     ════════════════════════════════════════════════════════════════ -->
+<div id="loading-overlay" class="fixed inset-0 bg-white/95 z-[9999] hidden flex-col items-center justify-center p-6 text-center backdrop-blur-sm">
+    <i id="loading-icon" class="fa-solid fa-circle-notch fa-spin text-5xl text-primary mb-4"></i>
+    <h2 id="loading-text" class="text-xl font-black text-primary uppercase mb-2">Cargando...</h2>
+    <p id="loading-error" class="text-xs text-gray-500 font-medium max-w-sm hidden text-center"></p>
+    <div id="error-actions" class="hidden mt-6 flex gap-3">
+        <button onclick="cerrarErrorCarga()" class="bg-primary text-white px-4 py-2 rounded-lg text-xs font-bold uppercase">Reintentar</button>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     MODAL: ASIGNAR FONDO A CAJERO (desde bóveda o cuenta)
+     ════════════════════════════════════════════════════════════════ -->
+<div id="modal-asignar-fondo" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[9990] hidden flex items-center justify-center p-4 fade-in">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col border border-gray-200">
+        <div class="bg-primary text-white p-3 flex justify-between items-center shrink-0">
+            <h3 class="font-bold text-[12px] tracking-wide uppercase"><i class="fa-solid fa-hand-holding-dollar mr-2 text-tertiary"></i> Asignar Fondo de Caja</h3>
+            <button onclick="cerrarModalAsignarFondo()" class="text-gray-300 hover:text-white transition"><i class="fa-solid fa-times"></i></button>
+        </div>
+        <form id="form-asignar-fondo" onsubmit="procesarAsignacionFondo(event)" class="p-5 bg-gray-50 space-y-4">
+            <div>
+                <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Origen del fondo *</label>
+                <select id="asig-origen" required onchange="actualizarLimitesAsignacion()" class="w-full border border-gray-300 rounded px-3 py-2 text-xs font-bold uppercase focus:border-secondary outline-none bg-white"></select>
+                <p class="text-[10px] text-gray-500 mt-1" id="asig-origen-info"></p>
+            </div>
+
+            <div>
+                <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Caja de destino *</label>
+                <select id="asig-destino" required class="w-full border border-gray-300 rounded px-3 py-2 text-xs font-bold uppercase focus:border-secondary outline-none bg-white"></select>
+            </div>
+
+            <div>
+                <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Asignar a Cajero (opcional)</label>
+                <select id="asig-cajero" class="w-full border border-gray-300 rounded px-3 py-2 text-xs font-bold uppercase focus:border-secondary outline-none bg-white">
+                    <option value="">(Cualquier cajero podrá aceptar)</option>
+                </select>
+                <p class="text-[10px] text-gray-500 mt-1">Si especificas un cajero, solo él podrá aceptar este fondo.</p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div class="bg-green-50 border border-green-200 rounded p-2">
+                    <label class="block text-[9px] font-bold text-green-800 uppercase mb-1">Monto USD ($)</label>
+                    <input type="number" id="asig-usd" step="0.01" min="0" placeholder="0.00" class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm font-black text-center outline-none bg-white focus:border-secondary">
+                    <p class="text-[9px] text-green-700 mt-1" id="asig-disp-usd">Disponible: $0.00</p>
+                </div>
+                <div class="bg-blue-50 border border-blue-200 rounded p-2">
+                    <label class="block text-[9px] font-bold text-blue-800 uppercase mb-1">Monto Bs</label>
+                    <input type="number" id="asig-bs" step="0.01" min="0" placeholder="0.00" class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm font-black text-center outline-none bg-white focus:border-secondary">
+                    <p class="text-[9px] text-blue-700 mt-1" id="asig-disp-bs">Disponible: Bs 0.00</p>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Concepto</label>
+                <input type="text" id="asig-concepto" maxlength="200" placeholder="Apertura turno, refuerzo de caja..." class="w-full border border-gray-300 rounded px-3 py-2 text-xs uppercase outline-none focus:border-secondary">
+            </div>
+
+            <button type="submit" id="btn-guardar-asig" class="w-full bg-secondary hover:opacity-90 text-white font-bold py-2.5 rounded shadow btn-press uppercase text-[11px] tracking-wider transition mt-2">Emitir Transferencia</button>
+        </form>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     MODAL: CREAR / EDITAR CUENTA
+     ════════════════════════════════════════════════════════════════ -->
+<div id="modal-cuenta" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[9990] hidden flex items-center justify-center p-4 fade-in">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col border border-gray-200">
+        <div class="bg-primary text-white p-3 flex justify-between items-center shrink-0">
+            <h3 id="modal-titulo-cuenta" class="font-bold text-[12px] tracking-wide uppercase"><i class="fa-solid fa-vault mr-2 text-tertiary"></i> Crear Cuenta</h3>
+            <button onclick="cerrarModalCuenta()" class="text-gray-300 hover:text-white transition"><i class="fa-solid fa-times"></i></button>
+        </div>
+        <form id="form-cuenta" onsubmit="guardarCuenta(event)" class="p-5 bg-gray-50 space-y-3">
+            <input type="hidden" id="cta-id">
+            <div>
+                <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Nombre *</label>
+                <input type="text" id="cta-nombre" required maxlength="120" placeholder="Ej: Cuenta Banesco Principal" class="w-full border border-gray-300 rounded px-3 py-2 text-xs font-bold uppercase focus:border-tertiary outline-none bg-white">
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Tipo *</label>
+                    <select id="cta-tipo" required class="w-full border border-gray-300 rounded px-3 py-2 text-xs font-bold uppercase focus:border-tertiary outline-none bg-white">
+                        <option value="BANCO">🏦 Banco</option>
+                        <option value="CAJA_CHICA">💰 Caja Chica</option>
+                        <option value="WALLET_DIGITAL">📱 Wallet Digital</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Banco/Titular</label>
+                    <input type="text" id="cta-banco-titular" maxlength="120" placeholder="Banesco, BBVA..." class="w-full border border-gray-300 rounded px-3 py-2 text-xs uppercase focus:border-tertiary outline-none bg-white">
+                </div>
+            </div>
+            <div>
+                <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Nro. de Cuenta</label>
+                <input type="text" id="cta-numero" maxlength="50" placeholder="0134-XXXX-XX-XXXXXXXXXX" class="w-full border border-gray-300 rounded px-3 py-2 text-xs font-mono focus:border-tertiary outline-none bg-white">
+            </div>
+            <div>
+                <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Descripción</label>
+                <input type="text" id="cta-desc" maxlength="200" placeholder="Detalles adicionales..." class="w-full border border-gray-300 rounded px-3 py-2 text-[10px] uppercase focus:border-tertiary outline-none bg-white">
+            </div>
+            <button type="submit" id="btn-guardar-cta" class="w-full bg-secondary hover:opacity-90 text-white font-bold py-2.5 rounded shadow btn-press uppercase text-[11px] tracking-wider transition">Guardar Cuenta</button>
+        </form>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     MODAL: CONFIGURAR MAPEO DE MÉTODO
+     ════════════════════════════════════════════════════════════════ -->
+<div id="modal-mapeo" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[9990] hidden flex items-center justify-center p-4 fade-in">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col border border-gray-200">
+        <div class="bg-primary text-white p-3 flex justify-between items-center shrink-0">
+            <h3 class="font-bold text-[12px] tracking-wide uppercase"><i class="fa-solid fa-link mr-2 text-tertiary"></i> Configurar Mapeo</h3>
+            <button onclick="cerrarModalMapeo()" class="text-gray-300 hover:text-white transition"><i class="fa-solid fa-times"></i></button>
+        </div>
+        <form id="form-mapeo" onsubmit="guardarMapeo(event)" class="p-5 bg-gray-50 space-y-4">
+            <input type="hidden" id="mapeo-metodo">
+            <div class="bg-blue-50 p-3 rounded border border-blue-200">
+                <p class="text-[10px] text-blue-800">
+                    <i class="fa-solid fa-circle-info mr-1"></i>
+                    Estás configurando: <span id="mapeo-titulo" class="font-black uppercase tracking-wide">...</span>
+                </p>
+                <p class="text-[10px] text-blue-700 mt-1" id="mapeo-descripcion"></p>
+            </div>
+            <div>
+                <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Cuenta destino *</label>
+                <select id="mapeo-cuenta" required class="w-full border border-gray-300 rounded px-3 py-2 text-xs font-bold uppercase focus:border-secondary outline-none bg-white"></select>
+                <p class="text-[10px] text-gray-500 mt-1">Solo cuentas tipo BANCO o WALLET_DIGITAL son válidas según el método.</p>
+            </div>
+            <div>
+                <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Observaciones (opcional)</label>
+                <input type="text" id="mapeo-obs" maxlength="200" placeholder="Notas adicionales..." class="w-full border border-gray-300 rounded px-3 py-2 text-xs focus:border-secondary outline-none bg-white">
+            </div>
+            <button type="submit" class="w-full bg-secondary hover:opacity-90 text-white font-bold py-2.5 rounded shadow btn-press uppercase text-[11px] tracking-wider transition">Guardar Mapeo</button>
+        </form>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     MODAL: TERMINAL POS
+     ════════════════════════════════════════════════════════════════ -->
+<div id="modal-terminal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[9990] hidden flex items-center justify-center p-4 fade-in">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col border border-gray-200">
+        <div class="bg-primary text-white p-3 flex justify-between items-center shrink-0">
+            <h3 class="font-bold text-[12px] tracking-wide uppercase"><i class="fa-solid fa-credit-card mr-2 text-tertiary"></i> Nuevo Terminal POS</h3>
+            <button onclick="cerrarModalTerminal()" class="text-gray-300 hover:text-white transition"><i class="fa-solid fa-times"></i></button>
+        </div>
+        <form id="form-terminal" onsubmit="guardarTerminal(event)" class="p-5 bg-gray-50 space-y-3">
+            <div>
+                <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Nombre *</label>
+                <input type="text" id="term-nombre" required maxlength="120" placeholder="Punto Banesco Inalámbrico" class="w-full border border-gray-300 rounded px-3 py-2 text-xs font-bold uppercase focus:border-tertiary outline-none bg-white">
+            </div>
+            <div>
+                <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Cuenta destinataria *</label>
+                <select id="term-banco" required class="w-full border border-gray-300 rounded px-3 py-2 text-xs font-bold uppercase focus:border-tertiary outline-none bg-white"></select>
+                <p class="text-[10px] text-gray-500 mt-1">Solo cuentas tipo BANCO. Aquí llega el dinero al cerrar lote.</p>
+            </div>
+            <button type="submit" id="btn-guardar-term" class="w-full bg-primary hover:opacity-90 text-white font-bold py-2.5 rounded shadow btn-press uppercase text-[11px] tracking-wider transition">Guardar Terminal</button>
+        </form>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     MODAL: RECHAZAR / ANULAR TRANSFERENCIA
+     ════════════════════════════════════════════════════════════════ -->
+<div id="modal-motivo" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[9990] hidden flex items-center justify-center p-4 fade-in">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col border border-gray-200">
+        <div id="motivo-header" class="bg-red-600 text-white p-3 flex justify-between items-center shrink-0">
+            <h3 id="motivo-titulo" class="font-bold text-[12px] tracking-wide uppercase"><i class="fa-solid fa-ban mr-2"></i> Rechazar Transferencia</h3>
+            <button onclick="cerrarModalMotivo()" class="text-gray-300 hover:text-white transition"><i class="fa-solid fa-times"></i></button>
+        </div>
+        <form id="form-motivo" onsubmit="procesarMotivo(event)" class="p-5 bg-gray-50 space-y-4">
+            <input type="hidden" id="motivo-id-transferencia">
+            <input type="hidden" id="motivo-accion">
+            <div>
+                <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Motivo (mínimo 10 caracteres) *</label>
+                <textarea id="motivo-texto" required minlength="10" maxlength="500" rows="3" placeholder="Explica claramente por qué..." class="w-full border border-gray-300 rounded px-3 py-2 text-xs focus:border-secondary outline-none bg-white"></textarea>
+            </div>
+            <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 rounded shadow btn-press uppercase text-[11px] tracking-wider transition">Confirmar</button>
+        </form>
+    </div>
+</div>
+
+<script>
+const TOKEN_JWT = localStorage.getItem('pyp_token_seguro');
+let empresaActual = null;
+let authIdActual = null;
+let rolActual = null;
+let dbCuentas = [];
+let dbBoveda = null;
+let dbTransferencias = [];
+let dbMapeos = [];
+let dbTerminales = [];
+let dbUsuarios = [];
+
+// ─── HELPERS ───────────────────────────────────────────────────────
+function fmt(n) { return parseFloat(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+function red(n) { return Math.round((n + Number.EPSILON) * 100) / 100; }
+function fechaRelativa(iso) {
+    const d = new Date(iso); const seg = Math.floor((Date.now() - d.getTime()) / 1000);
+    if (seg < 60) return 'hace un momento';
+    if (seg < 3600) return `hace ${Math.floor(seg/60)} min`;
+    if (seg < 86400) return `hace ${Math.floor(seg/3600)} h`;
+    return `hace ${Math.floor(seg/86400)} d`;
+}
+function escapeHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+function mostrarCarga(t, sub="") {
+    const ol = document.getElementById('loading-overlay');
+    document.getElementById('loading-text').innerText = t;
+    document.getElementById('loading-error').classList.add('hidden');
+    document.getElementById('error-actions').classList.add('hidden');
+    document.getElementById('loading-icon').className = "fa-solid fa-circle-notch fa-spin text-5xl text-primary mb-4";
+    ol.classList.remove('hidden'); ol.classList.add('flex');
+}
+function cerrarErrorCarga() { document.getElementById('loading-overlay').classList.add('hidden'); }
+function mostrarErrorConexion(msg) {
+    const ol = document.getElementById('loading-overlay');
+    document.getElementById('loading-text').innerText = "Error";
+    document.getElementById('loading-icon').className = "fa-solid fa-triangle-exclamation text-5xl text-red-500 mb-4";
+    document.getElementById('loading-error').innerText = msg;
+    document.getElementById('loading-error').classList.remove('hidden');
+    document.getElementById('error-actions').classList.remove('hidden');
+    ol.classList.remove('hidden'); ol.classList.add('flex');
+}
+function forzarCierreSesion() { localStorage.removeItem('pyp_token_seguro'); window.location.href = 'login.html'; }
+
+// ─── WRAPPERS API ──────────────────────────────────────────────────
+async function sb(url, opts={}) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${url}`, {
+        ...opts,
+        headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${TOKEN_JWT}`,
+            'Content-Type': 'application/json',
+            ...(opts.headers || {})
+        }
+    });
+    return res;
+}
+async function rpc(fn, payload) {
+    const res = await sb(`rpc/${fn}`, { method: 'POST', body: JSON.stringify(payload || {}) });
+    if (!res.ok) {
+        const txt = await res.text();
+        let msg = `RPC ${fn} falló (HTTP ${res.status})`;
+        try { const j = JSON.parse(txt); msg = j.message || j.hint || msg; } catch {}
+        throw new Error(msg);
+    }
+    return await res.json();
+}
+
+// ─── INICIALIZACIÓN ────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', async () => {
+    document.documentElement.style.setProperty('--font-family', fontFam);
+    document.documentElement.style.setProperty('--font-size', fontSiz);
+
+    if (!TOKEN_JWT) return forzarCierreSesion();
+
+    mostrarCarga("Cargando datos...");
+    try {
+        // Decodificar JWT para obtener auth_id
+        const payload = JSON.parse(atob(TOKEN_JWT.split('.')[1]));
+        authIdActual = payload.sub;
+
+        // Obtener perfil del usuario actual
+        const resUser = await sb(`usuarios?auth_id=eq.${authIdActual}&select=id_empresa,rol&limit=1`);
+        if (resUser.ok) {
+            const u = (await resUser.json())[0];
+            if (u) { empresaActual = u.id_empresa; rolActual = u.rol; }
         }
 
-        function renderTerminales() {
-            const tbody = document.getElementById('tabla-terminales');
-            if(dbTerminales.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="3" class="p-6 text-center text-gray-400 font-bold uppercase tracking-widest text-[10px]">No hay terminales registrados.</td></tr>`;
-                return;
-            }
-            let html = '';
-            dbTerminales.forEach(t => {
-                const bancoNom = t.fin_cuentas ? t.fin_cuentas.nombre : 'No Asignada';
-                html += `<tr class="hover:bg-blue-50 transition"><td class="py-3 px-4 font-black text-primary text-xs uppercase"><i class="fa-solid fa-calculator text-gray-400 mr-2"></i> ${t.nombre}</td><td class="py-3 px-4 text-gray-600 font-bold text-[11px] uppercase">${bancoNom}</td><td class="py-3 px-4 text-center"><span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-widest">${t.estatus}</span></td></tr>`;
-            });
-            tbody.innerHTML = html;
+        await cargarDatos();
+        cerrarErrorCarga();
+    } catch (e) {
+        mostrarErrorConexion("No se pudieron cargar los datos: " + e.message);
+    }
+});
+
+function cambiarTab(tab) {
+    ['cuentas', 'config', 'terminales'].forEach(t => {
+        document.getElementById('vista-' + t).classList.toggle('hidden', t !== tab);
+        const btn = document.getElementById('tab-' + t);
+        if (t === tab) {
+            btn.className = 'py-2 px-4 text-sm font-black border-b-2 border-primary text-primary transition uppercase tracking-wider';
+        } else {
+            btn.className = 'py-2 px-4 text-sm font-bold border-b-2 border-transparent text-gray-400 hover:text-gray-600 transition uppercase tracking-wider';
         }
+    });
+    if (tab === 'config') renderMapeos();
+    if (tab === 'terminales') renderTerminales();
+}
 
-        function actualizarSelectCuentasBanco() {
-            const select = document.getElementById('term-banco');
-            let html = '<option value="">Seleccione un Banco de destino...</option>';
-            dbCuentas.filter(c => c.tipo_cuenta === 'BANCO' || c.tipo_cuenta === 'EFECTIVO').forEach(c => { html += `<option value="${c.id}">${c.nombre} (${c.moneda})</option>`; });
-            select.innerHTML = html;
+// ─── CARGA DE DATOS ────────────────────────────────────────────────
+async function cargarDatos() {
+    try {
+        const [resCuentas, resBoveda, resTransf, resMapeos, resTerm, resUsu] = await Promise.all([
+            sb(`cuentas_unificadas?select=*&order=orden_tipo.asc,nombre.asc`),
+            sb(`boveda_resumen?select=*`),
+            sb(`transferencias_con_detalle?estado=eq.PENDIENTE&order=fecha_emision.desc`),
+            sb(`configuracion_pagos_estado?select=*`),
+            sb(`fin_terminales_pos?select=*,fin_cuentas(nombre,tipo_cuenta)&order=nombre.asc`),
+            sb(`usuarios?select=auth_id,nombre_completo,usuario_login,rol&estatus=eq.Activo&deleted_at=is.null&order=nombre_completo.asc`)
+        ]);
+
+        dbCuentas = resCuentas.ok ? await resCuentas.json() : [];
+        dbBoveda = resBoveda.ok ? (await resBoveda.json())[0] : null;
+        dbTransferencias = resTransf.ok ? await resTransf.json() : [];
+        dbMapeos = resMapeos.ok ? await resMapeos.json() : [];
+        dbTerminales = resTerm.ok ? await resTerm.json() : [];
+        dbUsuarios = resUsu.ok ? await resUsu.json() : [];
+
+        renderCuentas();
+        renderTransferencias();
+        renderTerminales();
+        renderMapeos();
+        actualizarBadgeConfig();
+    } catch (e) {
+        console.error("Error cargando datos:", e);
+    }
+}
+
+// ─── RENDER: CUENTAS Y BÓVEDA ──────────────────────────────────────
+function renderCuentas() {
+    const grid = document.getElementById('grid-cuentas');
+    if (!dbCuentas.length) {
+        grid.innerHTML = `<div class="col-span-full p-10 text-center text-gray-400 font-bold uppercase tracking-widest"><i class="fa-solid fa-vault text-4xl mb-3 block text-gray-300"></i> No hay cuentas configuradas.</div>`;
+        return;
+    }
+    let html = '';
+    for (const c of dbCuentas) {
+        if (c.es_boveda) {
+            html += renderTarjetaBoveda(c);
+        } else {
+            html += renderTarjetaCuenta(c);
         }
+    }
+    grid.innerHTML = html;
+}
 
-        function abrirModalCuenta(id = null) {
-            const form = document.getElementById('form-cuenta'); form.reset(); 
-            document.getElementById('cta-id').value = '';
-            const titulo = document.getElementById('modal-titulo-cuenta');
-            const btn = document.getElementById('btn-guardar-cta');
-            const cajaSaldos = document.getElementById('caja-saldos-iniciales');
-            if (id) {
-                const cta = dbCuentas.find(c => c.id === id);
-                if(cta) {
-                    document.getElementById('cta-id').value = cta.id;
-                    document.getElementById('cta-nombre').value = cta.nombre;
-                    document.getElementById('cta-numero').value = cta.numero_cuenta || '';
-                    document.getElementById('cta-tipo').value = cta.tipo_cuenta;
-                    document.getElementById('cta-moneda').value = cta.moneda;
-                    document.getElementById('cta-desc').value = cta.descripcion || '';
-                    titulo.innerHTML = '<i class="fa-solid fa-pen mr-2 text-tertiary"></i> Editar Cuenta';
-                    btn.innerText = 'Actualizar Cuenta'; cajaSaldos.classList.add('hidden'); 
-                }
-            } else {
-                titulo.innerHTML = '<i class="fa-solid fa-vault mr-2 text-tertiary"></i> Crear Cuenta';
-                btn.innerText = 'Guardar Cuenta'; cajaSaldos.classList.remove('hidden');
-            }
-            document.getElementById('modal-cuenta').classList.remove('hidden'); document.getElementById('modal-cuenta').classList.add('flex'); 
+function renderTarjetaBoveda(c) {
+    const enTransito = parseFloat(c.en_transito_usd) > 0 || parseFloat(c.en_transito_bs) > 0;
+    return `
+    <div class="boveda-card rounded-xl shadow-lg border border-blue-900 p-5 flex flex-col col-span-1 md:col-span-2 xl:col-span-1 relative overflow-hidden">
+        <div class="absolute -right-6 -top-6 w-24 h-24 rounded-full bg-white/5"></div>
+        <div class="absolute -right-2 -bottom-8 w-32 h-32 rounded-full bg-white/5"></div>
+
+        <div class="flex justify-between items-start mb-4 relative">
+            <div class="flex items-center gap-3">
+                <div class="w-11 h-11 rounded-full bg-yellow-400/20 text-yellow-300 flex items-center justify-center text-xl shadow-lg">
+                    <i class="fa-solid fa-vault"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm font-black text-white uppercase leading-tight tracking-wide">${escapeHtml(c.nombre)}</h3>
+                    <p class="text-[9px] font-bold text-blue-200 uppercase tracking-widest">Solo Efectivo Físico</p>
+                </div>
+            </div>
+            <span class="text-[8px] font-black bg-yellow-400 text-blue-900 px-2 py-1 rounded uppercase tracking-wider">PRINCIPAL</span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 relative">
+            <div class="bg-white/10 rounded-lg p-3 backdrop-blur-sm border border-white/10">
+                <p class="text-[9px] text-blue-200 font-bold uppercase">Efectivo USD</p>
+                <p class="text-xl font-black text-white leading-tight">$${fmt(c.saldo_bruto_usd)}</p>
+                ${parseFloat(c.en_transito_usd) > 0
+                    ? `<p class="text-[9px] text-amber-300 font-bold mt-1">↻ -$${fmt(c.en_transito_usd)} en tránsito</p>
+                       <p class="text-[10px] text-green-300 font-black">Disp: $${fmt(c.saldo_disponible_usd)}</p>`
+                    : ''}
+            </div>
+            <div class="bg-white/10 rounded-lg p-3 backdrop-blur-sm border border-white/10">
+                <p class="text-[9px] text-blue-200 font-bold uppercase">Efectivo Bs</p>
+                <p class="text-xl font-black text-white leading-tight">${fmt(c.saldo_bruto_bs)}</p>
+                ${parseFloat(c.en_transito_bs) > 0
+                    ? `<p class="text-[9px] text-amber-300 font-bold mt-1">↻ -${fmt(c.en_transito_bs)} en tránsito</p>
+                       <p class="text-[10px] text-green-300 font-black">Disp: Bs ${fmt(c.saldo_disponible_bs)}</p>`
+                    : ''}
+            </div>
+        </div>
+
+        ${enTransito
+            ? `<div class="mt-3 bg-amber-500/20 border border-amber-400/40 rounded p-2 relative">
+                 <p class="text-[10px] text-amber-100 font-bold flex items-center gap-1">
+                   <i class="fa-solid fa-clock"></i> ${c.cantidad_pendientes} transferencia${c.cantidad_pendientes>1?'s':''} pendiente${c.cantidad_pendientes>1?'s':''} de aceptación
+                 </p>
+               </div>`
+            : ''}
+    </div>`;
+}
+
+function renderTarjetaCuenta(c) {
+    const iconos = {
+        'BANCO': 'fa-building-columns',
+        'CAJA_CHICA': 'fa-cash-register',
+        'WALLET_DIGITAL': 'fa-wallet'
+    };
+    const colores = {
+        'BANCO': { bg: 'bg-blue-100', text: 'text-blue-600' },
+        'CAJA_CHICA': { bg: 'bg-green-100', text: 'text-green-600' },
+        'WALLET_DIGITAL': { bg: 'bg-purple-100', text: 'text-purple-600' }
+    };
+    const ic = iconos[c.tipo_cuenta] || 'fa-building-columns';
+    const col = colores[c.tipo_cuenta] || colores['BANCO'];
+    const enTransitoUsd = parseFloat(c.en_transito_usd) > 0;
+    const enTransitoBs = parseFloat(c.en_transito_bs) > 0;
+    const cajeroLabel = c.cajero_nombre ? `<p class="text-[9px] text-secondary font-bold mt-0.5"><i class="fa-solid fa-user mr-1"></i>${escapeHtml(c.cajero_nombre)}</p>` : '';
+
+    return `
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex flex-col justify-between relative overflow-hidden hover:shadow-md transition group">
+        <div class="flex justify-between items-start mb-2">
+            <div class="flex items-center gap-3 flex-1 pr-6">
+                <div class="w-10 h-10 rounded-full ${col.bg} ${col.text} flex items-center justify-center text-lg shrink-0">
+                    <i class="fa-solid ${ic}"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <h3 class="text-sm font-black text-gray-800 uppercase leading-tight truncate">${escapeHtml(c.nombre)}</h3>
+                    <p class="text-[9px] font-bold text-gray-500 uppercase tracking-widest">${c.tipo_cuenta}${c.banco_titular ? ' • ' + escapeHtml(c.banco_titular) : ''}</p>
+                    ${c.numero_cuenta ? `<p class="text-[9px] font-mono text-gray-400">${escapeHtml(c.numero_cuenta)}</p>` : ''}
+                    ${cajeroLabel}
+                </div>
+            </div>
+            <button onclick="abrirModalCuenta('${c.id}')" class="absolute top-3 right-3 text-gray-300 hover:text-secondary transition w-6 h-6 rounded flex items-center justify-center">
+                <i class="fa-solid fa-pen text-[10px]"></i>
+            </button>
+        </div>
+
+        <div class="border-t border-gray-100 pt-3 grid grid-cols-2 gap-2">
+            <div class="bg-green-50 rounded p-2">
+                <p class="text-[8px] text-green-600 font-bold uppercase">Saldo USD</p>
+                <p class="text-sm font-black text-green-700 leading-tight">$${fmt(c.saldo_bruto_usd)}</p>
+                ${enTransitoUsd
+                    ? `<p class="text-[8px] text-amber-600 font-bold">-$${fmt(c.en_transito_usd)} tránsito</p>
+                       <p class="text-[9px] text-green-700 font-black">Disp: $${fmt(c.saldo_disponible_usd)}</p>`
+                    : ''}
+            </div>
+            <div class="bg-blue-50 rounded p-2">
+                <p class="text-[8px] text-blue-600 font-bold uppercase">Saldo Bs</p>
+                <p class="text-sm font-black text-blue-700 leading-tight">${fmt(c.saldo_bruto_bs)}</p>
+                ${enTransitoBs
+                    ? `<p class="text-[8px] text-amber-600 font-bold">-${fmt(c.en_transito_bs)} tránsito</p>
+                       <p class="text-[9px] text-blue-700 font-black">Disp: Bs ${fmt(c.saldo_disponible_bs)}</p>`
+                    : ''}
+            </div>
+        </div>
+    </div>`;
+}
+
+// ─── RENDER: TRANSFERENCIAS PENDIENTES ─────────────────────────────
+function renderTransferencias() {
+    const cont = document.getElementById('lista-transito');
+    const badge = document.getElementById('badge-transito-cantidad');
+    const seccion = document.getElementById('seccion-transito');
+
+    if (!dbTransferencias.length) {
+        seccion.classList.add('hidden');
+        return;
+    }
+    seccion.classList.remove('hidden');
+    badge.classList.remove('hidden');
+    badge.textContent = `${dbTransferencias.length} pendiente${dbTransferencias.length>1?'s':''}`;
+
+    let html = '';
+    for (const t of dbTransferencias) {
+        const esReceptor = t.auth_id_receptor === authIdActual;
+        const esEmisor = t.auth_id_emisor === authIdActual;
+        const puedeAnular = esEmisor || ['SuperAdmin', 'Admin'].includes(rolActual);
+        const horas = parseFloat(t.horas_pendiente) || 0;
+        const horasLabel = horas > 24
+            ? `<span class="text-red-600 font-black">${Math.floor(horas/24)}d ${Math.floor(horas%24)}h</span>`
+            : `<span class="text-amber-600 font-black">${horas.toFixed(1)}h</span>`;
+
+        html += `
+        <div class="bg-white rounded-xl shadow-sm border border-amber-200 p-4 hover:shadow-md transition">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                <div class="flex items-start gap-3 flex-1 min-w-0">
+                    <div class="w-10 h-10 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center text-lg shrink-0">
+                        <i class="fa-solid fa-arrow-right-arrow-left"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-[10px] font-mono font-black text-primary tracking-wider">${escapeHtml(t.numero_operacion || '—')}</p>
+                        <p class="text-xs font-black text-gray-800 uppercase leading-tight">
+                            ${escapeHtml(t.origen_nombre || '?')} <i class="fa-solid fa-arrow-right text-gray-400 mx-1"></i> ${escapeHtml(t.destino_nombre || '?')}
+                        </p>
+                        <p class="text-[10px] text-gray-600">
+                            <i class="fa-solid fa-user mr-1"></i> ${escapeHtml(t.usuario_emisor||'?')} → ${escapeHtml(t.usuario_receptor||'cualquier cajero')}
+                        </p>
+                        ${t.concepto ? `<p class="text-[10px] text-gray-500 italic mt-0.5">"${escapeHtml(t.concepto)}"</p>` : ''}
+                    </div>
+                </div>
+                <div class="flex flex-col items-end shrink-0">
+                    <div class="text-right">
+                        ${parseFloat(t.monto_usd) > 0 ? `<p class="text-base font-black text-green-700 leading-none">$${fmt(t.monto_usd)}</p>` : ''}
+                        ${parseFloat(t.monto_bs) > 0 ? `<p class="text-base font-black text-blue-700 leading-none">Bs ${fmt(t.monto_bs)}</p>` : ''}
+                    </div>
+                    <p class="text-[9px] text-gray-400 mt-1"><i class="fa-regular fa-clock"></i> ${horasLabel}</p>
+                </div>
+            </div>
+            <div class="flex gap-2 mt-3 pt-3 border-t border-gray-100">
+                ${esReceptor ? `
+                    <button onclick="aceptarTransferencia('${t.id_transferencia}')" class="flex-1 bg-green-600 hover:bg-green-700 text-white text-[10px] font-black py-2 rounded uppercase tracking-wider btn-press transition">
+                        <i class="fa-solid fa-check mr-1"></i> Aceptar
+                    </button>
+                    <button onclick="abrirMotivo('rechazar','${t.id_transferencia}')" class="flex-1 bg-red-600 hover:bg-red-700 text-white text-[10px] font-black py-2 rounded uppercase tracking-wider btn-press transition">
+                        <i class="fa-solid fa-times mr-1"></i> Rechazar
+                    </button>
+                ` : t.auth_id_receptor ? `
+                    <p class="text-[10px] text-gray-500 italic flex-1 text-center py-1">
+                        <i class="fa-solid fa-user-clock mr-1"></i> Esperando que ${escapeHtml(t.usuario_receptor)} acepte
+                    </p>
+                ` : `
+                    <p class="text-[10px] text-gray-500 italic flex-1 text-center py-1">
+                        <i class="fa-solid fa-users mr-1"></i> Disponible para cualquier cajero
+                    </p>
+                `}
+                ${puedeAnular ? `
+                    <button onclick="abrirMotivo('anular','${t.id_transferencia}')" class="bg-gray-200 hover:bg-gray-300 text-gray-700 text-[10px] font-black px-3 py-2 rounded uppercase tracking-wider btn-press transition">
+                        <i class="fa-solid fa-ban mr-1"></i> Anular
+                    </button>
+                ` : ''}
+            </div>
+        </div>`;
+    }
+    cont.innerHTML = html;
+}
+
+// ─── RENDER: MAPEOS ────────────────────────────────────────────────
+function renderMapeos() {
+    const grid = document.getElementById('grid-mapeos');
+    const meta = {
+        'ZELLE_USD': { nombre: 'Zelle USD', icono: '💸', desc: 'Pagos en Zelle (USD electrónicos)', tipoEsperado: 'BANCO' },
+        'PAGOMOVIL_BS': { nombre: 'Pago Móvil Bs', icono: '📱', desc: 'Pago Móvil C2P en bolívares', tipoEsperado: 'BANCO' },
+        'TRANSFERENCIA_BS': { nombre: 'Transferencia Bs', icono: '🏦', desc: 'Transferencias bancarias en bolívares', tipoEsperado: 'BANCO' }
+    };
+    let html = '';
+    for (const m of dbMapeos) {
+        const info = meta[m.metodo] || { nombre: m.metodo, icono: '💰', desc: '' };
+        const configurado = m.estado === 'CONFIGURADO';
+        html += `
+        <div class="bg-white rounded-xl shadow-sm border-2 ${configurado ? 'border-green-200' : 'border-orange-200'} p-4">
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-2">
+                    <div class="text-2xl">${info.icono}</div>
+                    <div>
+                        <h3 class="text-sm font-black text-gray-800 uppercase">${info.nombre}</h3>
+                        <p class="text-[10px] text-gray-500">${info.desc}</p>
+                    </div>
+                </div>
+                ${configurado
+                    ? `<span class="bg-green-100 text-green-700 text-[9px] font-black px-2 py-0.5 rounded uppercase">✓ OK</span>`
+                    : `<span class="bg-orange-100 text-orange-700 text-[9px] font-black px-2 py-0.5 rounded uppercase">! Pendiente</span>`}
+            </div>
+            <div class="bg-gray-50 rounded p-3 mb-3 min-h-[60px]">
+                ${configurado
+                    ? `<p class="text-[10px] text-gray-500 uppercase font-bold">Cuenta destino:</p>
+                       <p class="text-sm font-black text-primary">${escapeHtml(m.nombre_cuenta)}</p>
+                       ${m.banco_titular ? `<p class="text-[10px] text-gray-600">${escapeHtml(m.banco_titular)}</p>` : ''}
+                       ${m.observaciones ? `<p class="text-[9px] text-gray-500 italic mt-1">"${escapeHtml(m.observaciones)}"</p>` : ''}`
+                    : `<p class="text-[10px] text-orange-700 font-bold flex items-center gap-2">
+                         <i class="fa-solid fa-triangle-exclamation"></i> Sin configurar
+                       </p>
+                       <p class="text-[9px] text-gray-600 mt-1">El sistema bloqueará cierres con este método hasta configurarlo.</p>`}
+            </div>
+            <button onclick="abrirModalMapeo('${m.metodo}')" class="w-full bg-${configurado ? 'gray' : 'secondary'} ${configurado ? 'bg-gray-200 text-gray-700 hover:bg-gray-300' : 'bg-secondary text-white hover:opacity-90'} font-black py-2 rounded uppercase text-[10px] tracking-wider btn-press transition">
+                ${configurado ? '✏️ Cambiar Cuenta' : '🔗 Configurar Ahora'}
+            </button>
+        </div>`;
+    }
+    grid.innerHTML = html;
+}
+
+function actualizarBadgeConfig() {
+    const pendientes = dbMapeos.filter(m => m.estado === 'PENDIENTE').length;
+    const badge = document.getElementById('badge-config-pendiente');
+    if (pendientes > 0) {
+        badge.classList.remove('hidden');
+        badge.textContent = pendientes;
+    } else {
+        badge.classList.add('hidden');
+    }
+}
+
+// ─── RENDER: TERMINALES ────────────────────────────────────────────
+function renderTerminales() {
+    const tbody = document.getElementById('tabla-terminales');
+    if (!dbTerminales.length) {
+        tbody.innerHTML = `<tr><td colspan="3" class="p-6 text-center text-gray-400 font-bold uppercase tracking-widest text-[10px]">No hay terminales registrados.</td></tr>`;
+        return;
+    }
+    tbody.innerHTML = dbTerminales.map(t => {
+        const cuenta = t.fin_cuentas ? `${escapeHtml(t.fin_cuentas.nombre)} (${t.fin_cuentas.tipo_cuenta})` : 'No asignada';
+        return `<tr class="hover:bg-blue-50 transition">
+            <td class="py-3 px-4 font-black text-primary text-xs uppercase"><i class="fa-solid fa-credit-card text-gray-400 mr-2"></i>${escapeHtml(t.nombre)}</td>
+            <td class="py-3 px-4 text-gray-600 font-bold text-[11px] uppercase">${cuenta}</td>
+            <td class="py-3 px-4 text-center"><span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-[9px] font-bold uppercase">${escapeHtml(t.estatus || 'ACTIVO')}</span></td>
+        </tr>`;
+    }).join('');
+}
+
+// ─── MODAL: ASIGNAR FONDO ──────────────────────────────────────────
+function abrirModalAsignarFondo() {
+    if (!['SuperAdmin','Admin','Supervisor'].includes(rolActual)) {
+        return alert("⛔ Solo SuperAdmin, Admin o Supervisor pueden asignar fondos.");
+    }
+    document.getElementById('form-asignar-fondo').reset();
+
+    // Origen: bóveda + cuentas tipo BANCO
+    const origenes = dbCuentas.filter(c => c.es_boveda || c.tipo_cuenta === 'BANCO');
+    document.getElementById('asig-origen').innerHTML = '<option value="">Selecciona origen...</option>' +
+        origenes.map(c => `<option value="${c.id}|${c.es_boveda ? 'BOVEDA' : 'CUENTA'}">${c.es_boveda ? '🏦 ' : '🏛️ '}${escapeHtml(c.nombre)}</option>`).join('');
+
+    // Destino: cajas chicas
+    const cajas = dbCuentas.filter(c => c.tipo_cuenta === 'CAJA_CHICA');
+    document.getElementById('asig-destino').innerHTML = '<option value="">Selecciona destino...</option>' +
+        cajas.map(c => `<option value="${c.id}">💰 ${escapeHtml(c.nombre)}${c.cajero_nombre ? ' (' + escapeHtml(c.cajero_nombre) + ')' : ''}</option>`).join('');
+
+    // Cajeros
+    const cajeros = dbUsuarios.filter(u => u.auth_id);
+    document.getElementById('asig-cajero').innerHTML = '<option value="">(Cualquier cajero podrá aceptar)</option>' +
+        cajeros.map(u => `<option value="${u.auth_id}">${escapeHtml(u.nombre_completo)} (${escapeHtml(u.usuario_login)})</option>`).join('');
+
+    actualizarLimitesAsignacion();
+
+    document.getElementById('modal-asignar-fondo').classList.remove('hidden');
+    document.getElementById('modal-asignar-fondo').classList.add('flex');
+}
+function cerrarModalAsignarFondo() {
+    document.getElementById('modal-asignar-fondo').classList.add('hidden');
+    document.getElementById('modal-asignar-fondo').classList.remove('flex');
+}
+function actualizarLimitesAsignacion() {
+    const sel = document.getElementById('asig-origen').value;
+    if (!sel) {
+        document.getElementById('asig-disp-usd').textContent = 'Disponible: $0.00';
+        document.getElementById('asig-disp-bs').textContent = 'Disponible: Bs 0.00';
+        document.getElementById('asig-origen-info').textContent = '';
+        return;
+    }
+    const [id] = sel.split('|');
+    const c = dbCuentas.find(x => x.id === id);
+    if (c) {
+        document.getElementById('asig-disp-usd').textContent = `Disponible: $${fmt(c.saldo_disponible_usd)}`;
+        document.getElementById('asig-disp-bs').textContent = `Disponible: Bs ${fmt(c.saldo_disponible_bs)}`;
+        document.getElementById('asig-usd').max = c.saldo_disponible_usd;
+        document.getElementById('asig-bs').max = c.saldo_disponible_bs;
+        let info = '';
+        if (parseFloat(c.en_transito_usd) > 0 || parseFloat(c.en_transito_bs) > 0) {
+            info = `⚠️ Esta cuenta tiene dinero en tránsito reservado.`;
         }
-        function cerrarModalCuenta() { document.getElementById('modal-cuenta').classList.add('hidden'); document.getElementById('modal-cuenta').classList.remove('flex'); }
-        function abrirModalTerminal() { document.getElementById('form-terminal').reset(); document.getElementById('modal-terminal').classList.remove('hidden'); document.getElementById('modal-terminal').classList.add('flex'); }
-        function cerrarModalTerminal() { document.getElementById('modal-terminal').classList.add('hidden'); document.getElementById('modal-terminal').classList.remove('flex'); }
+        document.getElementById('asig-origen-info').textContent = info;
+    }
+}
 
-        async function guardarCuenta(e) {
-            e.preventDefault();
-            const btn = document.getElementById('btn-guardar-cta'); btn.disabled = true; btn.innerHTML = "...";
-            const idCta = document.getElementById('cta-id').value;
-            mostrarCarga(idCta ? "Actualizando Cuenta..." : "Creando Cuenta...");
-            const sUsd = parseFloat(document.getElementById('cta-saldo-usd').value) || 0;
-            const sBs = parseFloat(document.getElementById('cta-saldo-bs').value) || 0;
-            try {
-                const payloadCta = { nombre: document.getElementById('cta-nombre').value.trim().toUpperCase(), tipo_cuenta: document.getElementById('cta-tipo').value, moneda: document.getElementById('cta-moneda').value, numero_cuenta: document.getElementById('cta-numero').value.trim(), descripcion: document.getElementById('cta-desc').value.trim() };
-                let method = 'POST'; let url = `${SUPABASE_URL}/rest/v1/fin_cuentas`;
-                if (idCta) { method = 'PATCH'; url += `?id=eq.${idCta}`; }
-                else { payloadCta.id_empresa = empresaActual || null; payloadCta.saldo_usd = redondear(sUsd); payloadCta.saldo_bs = redondear(sBs); }
-                const res = await fetch(url, { method: method, headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, body: JSON.stringify(payloadCta) });
-                if(!res.ok) throw new Error(idCta ? "No se pudo actualizar." : "No se pudo crear la cuenta.");
-                if(!idCta && (sUsd > 0 || sBs > 0)) {
-                    const ctaNueva = (await res.json())[0];
-                    const usuario = localStorage.getItem('pyp_usuario_nombre') || 'SISTEMA';
-                    const payloadMov = { id_empresa: empresaActual || null, id_cuenta: ctaNueva.id, tipo: 'INGRESO', monto_usd: redondear(sUsd), monto_bs: redondear(sBs), concepto: 'SALDO INICIAL DE APERTURA', usuario: usuario };
-                    await fetch(`${SUPABASE_URL}/rest/v1/fin_movimientos`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify(payloadMov) });
-                }
-                cerrarModalCuenta(); await cargarDatos(); cerrarErrorCarga();
-            } catch(error) { mostrarErrorConexion(error.message); } finally { btn.disabled = false; btn.innerHTML = idCta ? "Actualizar Cuenta" : "Guardar Cuenta"; }
+async function procesarAsignacionFondo(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btn-guardar-asig'); btn.disabled = true;
+
+    const origenSel = document.getElementById('asig-origen').value;
+    const destinoSel = document.getElementById('asig-destino').value;
+    const cajero = document.getElementById('asig-cajero').value || null;
+    const usd = parseFloat(document.getElementById('asig-usd').value) || 0;
+    const bs = parseFloat(document.getElementById('asig-bs').value) || 0;
+    const concepto = document.getElementById('asig-concepto').value.trim() || null;
+
+    if (!origenSel || !destinoSel) { alert("Selecciona origen y destino."); btn.disabled = false; return; }
+    if (usd === 0 && bs === 0) { alert("Debes asignar al menos USD o Bs."); btn.disabled = false; return; }
+
+    const [idOrigen, tipoOrigen] = origenSel.split('|');
+
+    mostrarCarga("Emitiendo transferencia...");
+    try {
+        const r = await rpc('solicitar_transferencia_fondo', {
+            p_id_origen: idOrigen,
+            p_tipo_origen: tipoOrigen,
+            p_id_cuenta_destino: destinoSel,
+            p_monto_usd: red(usd),
+            p_monto_bs: red(bs),
+            p_auth_id_receptor: cajero,
+            p_concepto: concepto
+        });
+        cerrarErrorCarga();
+        cerrarModalAsignarFondo();
+        alert(`✅ Transferencia emitida.\n\nNro. operación: ${r.numero_operacion}\n\nEl cajero${cajero ? '' : ' destino'} debe aceptarla.`);
+        await cargarDatos();
+    } catch (err) {
+        cerrarErrorCarga();
+        alert("❌ " + err.message);
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+// ─── ACCIONES TRANSFERENCIA ────────────────────────────────────────
+async function aceptarTransferencia(id) {
+    if (!confirm("¿Aceptar este fondo? El dinero se moverá a tu caja.")) return;
+    mostrarCarga("Aceptando fondo...");
+    try {
+        const r = await rpc('aceptar_transferencia_fondo', { p_id_transferencia: id });
+        cerrarErrorCarga();
+        alert(`✅ ${r.mensaje}\n\nNro. operación: ${r.numero_operacion}`);
+        await cargarDatos();
+    } catch (err) {
+        cerrarErrorCarga();
+        alert("❌ " + err.message);
+    }
+}
+
+function abrirMotivo(accion, idTransferencia) {
+    document.getElementById('motivo-id-transferencia').value = idTransferencia;
+    document.getElementById('motivo-accion').value = accion;
+    document.getElementById('motivo-texto').value = '';
+    const header = document.getElementById('motivo-header');
+    const titulo = document.getElementById('motivo-titulo');
+    if (accion === 'rechazar') {
+        header.className = 'bg-red-600 text-white p-3 flex justify-between items-center shrink-0';
+        titulo.innerHTML = '<i class="fa-solid fa-times-circle mr-2"></i> Rechazar Transferencia';
+    } else {
+        header.className = 'bg-gray-700 text-white p-3 flex justify-between items-center shrink-0';
+        titulo.innerHTML = '<i class="fa-solid fa-ban mr-2"></i> Anular Transferencia';
+    }
+    document.getElementById('modal-motivo').classList.remove('hidden');
+    document.getElementById('modal-motivo').classList.add('flex');
+}
+function cerrarModalMotivo() {
+    document.getElementById('modal-motivo').classList.add('hidden');
+    document.getElementById('modal-motivo').classList.remove('flex');
+}
+async function procesarMotivo(e) {
+    e.preventDefault();
+    const id = document.getElementById('motivo-id-transferencia').value;
+    const accion = document.getElementById('motivo-accion').value;
+    const motivo = document.getElementById('motivo-texto').value.trim();
+
+    mostrarCarga(accion === 'rechazar' ? "Rechazando..." : "Anulando...");
+    try {
+        const fn = accion === 'rechazar' ? 'rechazar_transferencia_fondo' : 'anular_transferencia_fondo';
+        const r = await rpc(fn, { p_id_transferencia: id, p_motivo: motivo });
+        cerrarErrorCarga();
+        cerrarModalMotivo();
+        alert(`✅ ${r.mensaje}`);
+        await cargarDatos();
+    } catch (err) {
+        cerrarErrorCarga();
+        alert("❌ " + err.message);
+    }
+}
+
+// ─── MODAL: CUENTA (crear/editar) ──────────────────────────────────
+function abrirModalCuenta(id = null) {
+    if (!['SuperAdmin','Admin'].includes(rolActual)) {
+        return alert("⛔ Solo SuperAdmin o Admin pueden gestionar cuentas.");
+    }
+    const form = document.getElementById('form-cuenta'); form.reset();
+    document.getElementById('cta-id').value = '';
+    if (id) {
+        const c = dbCuentas.find(x => x.id === id);
+        if (c) {
+            document.getElementById('cta-id').value = c.id;
+            document.getElementById('cta-nombre').value = c.nombre;
+            document.getElementById('cta-tipo').value = c.tipo_cuenta;
+            document.getElementById('cta-banco-titular').value = c.banco_titular || '';
+            document.getElementById('cta-numero').value = c.numero_cuenta || '';
+            document.getElementById('cta-desc').value = c.descripcion || '';
+            document.getElementById('modal-titulo-cuenta').innerHTML = '<i class="fa-solid fa-pen mr-2 text-tertiary"></i> Editar Cuenta';
         }
+    } else {
+        document.getElementById('modal-titulo-cuenta').innerHTML = '<i class="fa-solid fa-vault mr-2 text-tertiary"></i> Crear Cuenta';
+    }
+    document.getElementById('modal-cuenta').classList.remove('hidden');
+    document.getElementById('modal-cuenta').classList.add('flex');
+}
+function cerrarModalCuenta() {
+    document.getElementById('modal-cuenta').classList.add('hidden');
+    document.getElementById('modal-cuenta').classList.remove('flex');
+}
+async function guardarCuenta(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btn-guardar-cta'); btn.disabled = true;
+    const id = document.getElementById('cta-id').value;
+    const payload = {
+        nombre: document.getElementById('cta-nombre').value.trim().toUpperCase(),
+        tipo_cuenta: document.getElementById('cta-tipo').value,
+        banco_titular: document.getElementById('cta-banco-titular').value.trim() || null,
+        numero_cuenta: document.getElementById('cta-numero').value.trim() || null,
+        descripcion: document.getElementById('cta-desc').value.trim() || null,
+        estatus: 'ACTIVA'
+    };
+    mostrarCarga(id ? "Actualizando..." : "Creando...");
+    try {
+        const url = id ? `fin_cuentas?id=eq.${id}` : `fin_cuentas`;
+        const method = id ? 'PATCH' : 'POST';
+        const res = await sb(url, { method, body: JSON.stringify(payload), headers: {'Prefer':'return=representation'} });
+        if (!res.ok) throw new Error(await res.text());
+        cerrarErrorCarga(); cerrarModalCuenta(); await cargarDatos();
+    } catch (err) {
+        cerrarErrorCarga();
+        alert("❌ " + err.message);
+    } finally {
+        btn.disabled = false;
+    }
+}
 
-        async function guardarTerminal(e) {
-            e.preventDefault();
-            const btn = document.getElementById('btn-guardar-term'); btn.disabled = true; btn.innerHTML = "...";
-            mostrarCarga("Registrando Terminal...");
-            try {
-                const payloadTerm = { id_empresa: empresaActual || null, nombre: document.getElementById('term-nombre').value.trim().toUpperCase(), id_cuenta_banco: document.getElementById('term-banco').value };
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/fin_terminales_pos`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify(payloadTerm) });
-                if(!res.ok) throw new Error("No se pudo registrar el terminal.");
-                cerrarModalTerminal(); await cargarDatos(); cerrarErrorCarga();
-            } catch(error) { mostrarErrorConexion(error.message); } finally { btn.disabled = false; btn.innerHTML = "Guardar Terminal"; }
-        }
+// ─── MODAL: MAPEO ──────────────────────────────────────────────────
+function abrirModalMapeo(metodo) {
+    if (!['SuperAdmin','Admin'].includes(rolActual)) {
+        return alert("⛔ Solo SuperAdmin o Admin pueden configurar mapeos.");
+    }
+    const meta = {
+        'ZELLE_USD': { nombre: 'Zelle USD', desc: 'Selecciona la cuenta bancaria USD donde llegan los pagos por Zelle.', tipoFiltro: 'BANCO' },
+        'PAGOMOVIL_BS': { nombre: 'Pago Móvil Bs', desc: 'Selecciona la cuenta bancaria que recibe los Pagos Móviles.', tipoFiltro: 'BANCO' },
+        'TRANSFERENCIA_BS': { nombre: 'Transferencia Bs', desc: 'Selecciona la cuenta bancaria que recibe transferencias.', tipoFiltro: 'BANCO' }
+    };
+    const info = meta[metodo];
+    document.getElementById('mapeo-metodo').value = metodo;
+    document.getElementById('mapeo-titulo').textContent = info.nombre;
+    document.getElementById('mapeo-descripcion').textContent = info.desc;
+    document.getElementById('mapeo-obs').value = '';
 
-        async function abrirModalAsignarFondo() {
-            document.getElementById('form-asignar-fondo').reset();
-            const bovedasUsd = dbCuentas.filter(c => c.tipo_cuenta === 'EFECTIVO' && c.moneda === 'USD');
-            const bovedasBs = dbCuentas.filter(c => c.tipo_cuenta === 'EFECTIVO' && c.moneda === 'BS');
-            document.getElementById('asig-boveda-usd').innerHTML = '<option value="">(No enviar USD)</option>' + bovedasUsd.map(c => `<option value="${c.id}">${c.nombre} ($${fmt(c.saldo_usd)})</option>`).join('');
-            document.getElementById('asig-boveda-bs').innerHTML = '<option value="">(No enviar Bs)</option>' + bovedasBs.map(c => `<option value="${c.id}">${c.nombre} (Bs.${fmt(c.saldo_bs)})</option>`).join('');
-            mostrarCarga("Cargando cajeros...");
-            try {
-                const resUsr = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?select=usuario_login,nombre_completo`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
-                if(resUsr.ok) {
-                    const usuarios = await resUsr.json();
-                    if(usuarios.length > 0) document.getElementById('asig-cajero').innerHTML = usuarios.map(u => `<option value="${u.nombre_completo}">${u.nombre_completo} (${u.usuario_login})</option>`).join('');
-                    else throw new Error("No se encontraron usuarios.");
-                } else throw new Error("Fallo API de usuarios.");
-            } catch (e) { cerrarErrorCarga(); alert(e.message); return; }
-            cerrarErrorCarga(); document.getElementById('modal-asignar-fondo').classList.remove('hidden'); document.getElementById('modal-asignar-fondo').classList.add('flex');
-        }
-        function cerrarModalAsignarFondo() { document.getElementById('modal-asignar-fondo').classList.add('hidden'); document.getElementById('modal-asignar-fondo').classList.remove('flex'); }
+    const cuentasValidas = dbCuentas.filter(c => !c.es_boveda && c.tipo_cuenta === info.tipoFiltro);
+    if (!cuentasValidas.length) {
+        return alert(`No hay cuentas tipo ${info.tipoFiltro}. Crea una primero en "Cuentas y Bóveda".`);
+    }
+    document.getElementById('mapeo-cuenta').innerHTML = '<option value="">Selecciona cuenta...</option>' +
+        cuentasValidas.map(c => `<option value="${c.id}">${escapeHtml(c.nombre)}${c.banco_titular ? ' - ' + escapeHtml(c.banco_titular) : ''}</option>`).join('');
 
-        async function procesarAsignacionFondo(e) {
-            e.preventDefault();
-            const btn = document.getElementById('btn-guardar-asig'); btn.disabled = true; btn.innerHTML = "...";
-            const usd = parseFloat(document.getElementById('asig-usd').value) || 0;
-            const bs = parseFloat(document.getElementById('asig-bs').value) || 0;
-            const bovedaUsd = document.getElementById('asig-boveda-usd').value;
-            const bovedaBs = document.getElementById('asig-boveda-bs').value;
-            const cajero = document.getElementById('asig-cajero').value;
-            if(usd === 0 && bs === 0) { alert("Debes asignar al menos un monto en USD o Bs."); btn.disabled = false; btn.innerHTML = "Emitir Transferencia(s)"; return; }
-            if(usd > 0 && !bovedaUsd) { alert("Debes seleccionar de qué Bóveda saldrán los Dólares."); btn.disabled = false; btn.innerHTML = "Emitir Transferencia(s)"; return; }
-            if(bs > 0 && !bovedaBs) { alert("Debes seleccionar de qué Bóveda saldrán los Bolívares."); btn.disabled = false; btn.innerHTML = "Emitir Transferencia(s)"; return; }
-            mostrarCarga("Emitiendo Transferencia(s)...");
-            try {
-                const promesas = []; const emisor = localStorage.getItem('pyp_usuario_nombre') || 'ADMIN';
-                if (usd > 0) {
-                    const payloadUsd = { id_empresa: empresaActual, id_cuenta_origen: bovedaUsd, monto_usd: redondear(usd), monto_bs: 0, concepto: `ASIGNACIÓN DE FONDO (USD)`, usuario_emisor: emisor, usuario_receptor: cajero, estado: 'PENDIENTE' };
-                    promesas.push(fetch(`${SUPABASE_URL}/rest/v1/fin_transferencias`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify(payloadUsd) }));
-                }
-                if (bs > 0) {
-                    const payloadBs = { id_empresa: empresaActual, id_cuenta_origen: bovedaBs, monto_usd: 0, monto_bs: redondear(bs), concepto: `ASIGNACIÓN DE FONDO (BS)`, usuario_emisor: emisor, usuario_receptor: cajero, estado: 'PENDIENTE' };
-                    promesas.push(fetch(`${SUPABASE_URL}/rest/v1/fin_transferencias`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify(payloadBs) }));
-                }
-                const respuestas = await Promise.all(promesas);
-                for(let r of respuestas) { if(!r.ok) throw new Error("Fallo al emitir una de las transferencias."); }
-                alert(`Transferencia emitida. El cajero ${cajero} debe aceptarla al abrir su turno.`);
-                cerrarModalAsignarFondo(); cerrarErrorCarga();
-            } catch(error) { mostrarErrorConexion(error.message); } finally { btn.disabled = false; btn.innerHTML = "Emitir Transferencia(s)"; }
-        }
+    // Pre-seleccionar si ya hay mapeo
+    const m = dbMapeos.find(x => x.metodo === metodo);
+    if (m && m.id_cuenta) {
+        document.getElementById('mapeo-cuenta').value = m.id_cuenta;
+        document.getElementById('mapeo-obs').value = m.observaciones || '';
+    }
 
-        let cuentaSelRecarga = null;
-        function generarNumeroOperacion() { const ahora = new Date(); return `OP-${ahora.getFullYear()}-${String(ahora.getMonth() + 1).padStart(2, '0')}-${Math.floor(Math.random() * 999999).toString().padStart(6, '0')}`; }
+    document.getElementById('modal-mapeo').classList.remove('hidden');
+    document.getElementById('modal-mapeo').classList.add('flex');
+}
+function cerrarModalMapeo() {
+    document.getElementById('modal-mapeo').classList.add('hidden');
+    document.getElementById('modal-mapeo').classList.remove('flex');
+}
+async function guardarMapeo(e) {
+    e.preventDefault();
+    const metodo = document.getElementById('mapeo-metodo').value;
+    const id_cuenta = document.getElementById('mapeo-cuenta').value;
+    const obs = document.getElementById('mapeo-obs').value.trim() || null;
 
-        function abrirModalRecarga(idCuenta, nombreCuenta, moneda, tipoCuenta) {
-            cuentaSelRecarga = { id: idCuenta, nombre: nombreCuenta, moneda: moneda, tipo: tipoCuenta };
-            const rolUsuario = (localStorage.getItem('pyp_usuario_rol') || '').toUpperCase();
-            if (!['ADMIN', 'SUPERADMIN', 'SUPERVISOR', 'GERENTE'].includes(rolUsuario)) return alert("⛔ ACCESO DENEGADO: Solo usuarios con rol Admin o Supervisor pueden mover dinero entre cuentas.");
-            const cta = dbCuentas.find(c => c.id === idCuenta);
-            const saldoActual = moneda === 'USD' ? (cta.saldo_usd || 0) : (cta.saldo_bs || 0);
-            document.getElementById('rec-titulo').textContent = `Mover Dinero — ${nombreCuenta}`;
-            document.getElementById('rec-info-cuenta').innerHTML = `<i class="fa-solid fa-vault mr-1"></i> ${nombreCuenta} (${tipoCuenta} • ${moneda})`;
-            document.getElementById('rec-info-saldo').textContent = `Saldo actual: ${moneda === 'USD' ? '$' : 'Bs. '}${fmt(saldoActual)}`;
-            document.getElementById('rec-monto-moneda').textContent = `(${moneda === 'USD' ? '$' : 'Bs.'})`;
-            document.getElementById('rec-monto').value = ''; document.getElementById('rec-origen').value = ''; document.getElementById('rec-referencia').value = ''; document.getElementById('rec-tipo-op').value = 'DEPOSITO';
-            document.getElementById('rec-numero-op').textContent = generarNumeroOperacion();
-            const cuentasMismaMoneda = dbCuentas.filter(c => c.moneda === moneda && c.id !== idCuenta);
-            document.getElementById('rec-cuenta-destino').innerHTML = cuentasMismaMoneda.length === 0 ? '<option value="">No hay otras cuentas en esta moneda</option>' : cuentasMismaMoneda.map(c => `<option value="${c.id}">${c.nombre} (${c.tipo_cuenta})</option>`).join('');
-            cambiarTipoOperacion(); document.getElementById('modal-recarga').classList.remove('hidden'); document.getElementById('modal-recarga').classList.add('flex');
-        }
+    mostrarCarga("Configurando mapeo...");
+    try {
+        const r = await rpc('configurar_mapeo_metodo', {
+            p_metodo: metodo,
+            p_id_cuenta: id_cuenta,
+            p_observaciones: obs
+        });
+        cerrarErrorCarga();
+        cerrarModalMapeo();
+        alert(`✅ ${r.mensaje}`);
+        await cargarDatos();
+    } catch (err) {
+        cerrarErrorCarga();
+        alert("❌ " + err.message);
+    }
+}
 
-        function cerrarModalRecarga() { document.getElementById('modal-recarga').classList.add('hidden'); document.getElementById('modal-recarga').classList.remove('flex'); }
-        function cambiarTipoOperacion() { const tipo = document.getElementById('rec-tipo-op').value; document.getElementById('rec-cuenta-destino-wrap').classList.toggle('hidden', tipo !== 'TRANSFERENCIA'); }
+// ─── MODAL: TERMINAL ───────────────────────────────────────────────
+function abrirModalTerminal() {
+    if (!['SuperAdmin','Admin'].includes(rolActual)) {
+        return alert("⛔ Solo SuperAdmin o Admin pueden gestionar terminales.");
+    }
+    document.getElementById('form-terminal').reset();
+    const cuentasBanco = dbCuentas.filter(c => c.tipo_cuenta === 'BANCO');
+    if (!cuentasBanco.length) {
+        return alert("Debes crear al menos una cuenta tipo BANCO antes de registrar terminales.");
+    }
+    document.getElementById('term-banco').innerHTML = '<option value="">Selecciona cuenta destino...</option>' +
+        cuentasBanco.map(c => `<option value="${c.id}">${escapeHtml(c.nombre)} (${escapeHtml(c.banco_titular || c.tipo_cuenta)})</option>`).join('');
+    document.getElementById('modal-terminal').classList.remove('hidden');
+    document.getElementById('modal-terminal').classList.add('flex');
+}
+function cerrarModalTerminal() {
+    document.getElementById('modal-terminal').classList.add('hidden');
+    document.getElementById('modal-terminal').classList.remove('flex');
+}
+async function guardarTerminal(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btn-guardar-term'); btn.disabled = true;
+    const payload = {
+        nombre: document.getElementById('term-nombre').value.trim().toUpperCase(),
+        id_cuenta_banco: document.getElementById('term-banco').value,
+        estatus: 'ACTIVO'
+    };
+    mostrarCarga("Registrando terminal...");
+    try {
+        const res = await sb('fin_terminales_pos', { method: 'POST', body: JSON.stringify(payload) });
+        if (!res.ok) throw new Error(await res.text());
+        cerrarErrorCarga(); cerrarModalTerminal(); await cargarDatos();
+    } catch (err) {
+        cerrarErrorCarga();
+        alert("❌ " + err.message);
+    } finally {
+        btn.disabled = false;
+    }
+}
+</script>
 
-        async function procesarMovimiento() {
-            const tipo = document.getElementById('rec-tipo-op').value;
-            const monto = parseFloat(document.getElementById('rec-monto').value) || 0;
-            const origen = document.getElementById('rec-origen').value.trim();
-            const referencia = document.getElementById('rec-referencia').value.trim();
-            const cuentaDestinoId = document.getElementById('rec-cuenta-destino').value;
-            const numeroOp = document.getElementById('rec-numero-op').textContent;
-            if (monto <= 0) return alert("El monto debe ser mayor a 0.");
-            if (origen.length < 5) return alert("La justificación es obligatoria (mínimo 5 caracteres).");
-            if (tipo === 'TRANSFERENCIA' && !cuentaDestinoId) return alert("Selecciona la cuenta destino.");
-            const cta = dbCuentas.find(c => c.id === cuentaSelRecarga.id);
-            const saldoActual = cuentaSelRecarga.moneda === 'USD' ? (cta.saldo_usd || 0) : (cta.saldo_bs || 0);
-            if ((tipo === 'RETIRO' || tipo === 'TRANSFERENCIA') && monto > saldoActual) return alert(`Saldo insuficiente. Solo hay ${cuentaSelRecarga.moneda === 'USD' ? '$' : 'Bs. '}${fmt(saldoActual)} disponible.`);
-            if (!confirm(`¿Confirmar ${tipo} de ${cuentaSelRecarga.moneda === 'USD' ? '$' : 'Bs. '}${fmt(monto)}?\n\nNro. operación: ${numeroOp}`)) return;
-            const btn = document.getElementById('btn-rec-procesar'); btn.disabled = true; mostrarCarga("Procesando movimiento...");
-            try {
-                const usuario = localStorage.getItem('pyp_usuario_nombre') || 'SISTEMA'; const ahora = new Date().toISOString();
-                const conceptoBase = `${tipo} | ${origen}${referencia ? ' | Ref: ' + referencia : ''} | ${numeroOp}`;
-                const mUsd = cuentaSelRecarga.moneda === 'USD' ? monto : 0; const mBs = cuentaSelRecarga.moneda === 'BS' ? monto : 0;
-                const payloadMov = { id_empresa: empresaActual || null, id_cuenta: cuentaSelRecarga.id, fecha: ahora, tipo: (tipo === 'DEPOSITO' || tipo === 'AJUSTE') ? 'INGRESO' : 'EGRESO', concepto: conceptoBase, monto_usd: (tipo === 'RETIRO' || tipo === 'TRANSFERENCIA') && cuentaSelRecarga.moneda === 'USD' ? -mUsd : mUsd, monto_bs: (tipo === 'RETIRO' || tipo === 'TRANSFERENCIA') && cuentaSelRecarga.moneda === 'BS' ? -mBs : mBs, referencia: numeroOp, usuario: usuario };
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/fin_movimientos`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify(payloadMov) });
-                if (!res.ok) throw new Error("Fallo al registrar el movimiento.");
-                const nuevoSaldoOrigen = (tipo === 'DEPOSITO' || tipo === 'AJUSTE') ? saldoActual + monto : saldoActual - monto;
-                const campoSaldo = cuentaSelRecarga.moneda === 'USD' ? 'saldo_usd' : 'saldo_bs';
-                await fetch(`${SUPABASE_URL}/rest/v1/fin_cuentas?id=eq.${cuentaSelRecarga.id}`, { method: 'PATCH', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ [campoSaldo]: nuevoSaldoOrigen }) });
-                if (tipo === 'TRANSFERENCIA') {
-                    const ctaDest = dbCuentas.find(c => c.id === cuentaDestinoId);
-                    const saldoDest = cuentaSelRecarga.moneda === 'USD' ? (ctaDest.saldo_usd || 0) : (ctaDest.saldo_bs || 0);
-                    const payloadDest = { id_empresa: empresaActual || null, id_cuenta: cuentaDestinoId, fecha: ahora, tipo: 'INGRESO', concepto: conceptoBase + ` | DESDE: ${cuentaSelRecarga.nombre}`, monto_usd: mUsd, monto_bs: mBs, referencia: numeroOp, usuario: usuario };
-                    await fetch(`${SUPABASE_URL}/rest/v1/fin_movimientos`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify(payloadDest) });
-                    await fetch(`${SUPABASE_URL}/rest/v1/fin_cuentas?id=eq.${cuentaDestinoId}`, { method: 'PATCH', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ [campoSaldo]: saldoDest + monto }) });
-                }
-                cerrarErrorCarga(); cerrarModalRecarga(); alert(`✅ Operación completada.\nNro. operación: ${numeroOp}`); await cargarDatos();
-            } catch(e) { mostrarErrorConexion(e.message); } finally { btn.disabled = false; }
-        }
-    </script>
-
-    <script src="menu.js"></script>
+<script src="menu.js"></script>
 </body>
 </html>
