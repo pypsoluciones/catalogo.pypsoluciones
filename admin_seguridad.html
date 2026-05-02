@@ -65,6 +65,93 @@
         .badge-sens-ALTA    { background: #fef3c7; color: #b45309; }
         .badge-sens-CRITICA { background: #fee2e2; color: #b91c1c; }
         .grupo-card-predefinido { border-left: 4px solid var(--color-secondary); }
+
+        /* Matriz de permisos */
+        .matriz-wrap {
+            overflow: auto;
+            max-height: calc(100vh - 280px);
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background: white;
+        }
+        .matriz-table {
+            border-collapse: separate;
+            border-spacing: 0;
+            min-width: 100%;
+            font-size: 11px;
+        }
+        .matriz-table thead th {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: var(--color-primary);
+            color: white;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 10px 6px;
+            font-size: 10px;
+            text-align: center;
+            border-right: 1px solid rgba(255,255,255,0.1);
+            min-width: 80px;
+        }
+        .matriz-table thead th:first-child {
+            text-align: left;
+            min-width: 320px;
+            max-width: 380px;
+            z-index: 11;
+            left: 0;
+            padding-left: 12px;
+        }
+        .matriz-table tbody td:first-child {
+            position: sticky;
+            left: 0;
+            background: #f8fafc;
+            min-width: 320px;
+            max-width: 380px;
+            padding: 8px 12px;
+            border-right: 2px solid #e5e7eb;
+            font-weight: 500;
+            color: #1e293b;
+            z-index: 5;
+        }
+        .matriz-table tbody td {
+            padding: 6px;
+            text-align: center;
+            border-bottom: 1px solid #f1f5f9;
+            background: white;
+        }
+        .matriz-table tbody tr:hover td:not(:first-child) { background: #f0f9ff; }
+        .matriz-table tbody tr.modulo-header td {
+            background: linear-gradient(to right, #f1f5f9, #e2e8f0);
+            font-weight: 800;
+            color: var(--color-primary);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-top: 2px solid var(--color-primary);
+        }
+        .matriz-table tbody tr.modulo-header:hover td { background: linear-gradient(to right, #e0f2fe, #bae6fd); }
+        .matriz-table input[type=checkbox] {
+            width: 16px; height: 16px; cursor: pointer;
+            accent-color: var(--color-secondary);
+        }
+        .matriz-table input[type=checkbox]:disabled { cursor: not-allowed; opacity: 0.5; }
+        .perm-codigo { font-family: monospace; font-size: 10px; color: #475569; }
+        .perm-desc { font-size: 11px; line-height: 1.3; margin-top: 1px; }
+        .perm-flags { display: inline-flex; gap: 3px; margin-left: 6px; vertical-align: middle; }
+        .perm-flag {
+            font-size: 8px; font-weight: 800; padding: 1px 5px; border-radius: 3px;
+            text-transform: uppercase; letter-spacing: 0.3px;
+        }
+        .cambios-banner {
+            position: sticky; bottom: 0; background: #fef3c7; border: 2px solid #f59e0b;
+            padding: 10px 16px; border-radius: 8px; display: flex;
+            justify-content: space-between; align-items: center; margin-top: 10px;
+            box-shadow: 0 -4px 12px rgba(245, 158, 11, 0.2);
+        }
     </style>
 </head>
 <body class="bg-[#f4f6f8] text-gray-800 text-xs">
@@ -140,15 +227,54 @@
             </div>
 
             <!-- ════════════════════════════════════════════════════════════
-                 TAB 2: MATRIZ PERMISOS (placeholder, va en próximo turno)
+                 TAB 2: MATRIZ PERMISOS
                  ════════════════════════════════════════════════════════════ -->
-            <div id="vista-matriz" class="hidden fade-in">
-                <div class="bg-yellow-50 border border-yellow-300 rounded-lg p-6 text-center">
-                    <i class="fa-solid fa-tools text-3xl text-yellow-600 mb-3"></i>
-                    <h3 class="text-base font-black text-yellow-800 uppercase">Matriz de Permisos</h3>
-                    <p class="text-[11px] text-yellow-700 mt-2">
-                        Esta tab se entrega en el siguiente turno. Visualización completa de los 84 privilegios × 8 grupos con módulos colapsables.
-                    </p>
+            <div id="vista-matriz" class="hidden fade-in space-y-3">
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-3">
+                        <div>
+                            <h2 class="text-base font-black text-primary tracking-wide uppercase">
+                                <i class="fa-solid fa-table-cells mr-1"></i> Matriz de Permisos
+                            </h2>
+                            <p class="text-[10px] text-gray-500" id="matriz-resumen">Cargando...</p>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <input type="text" id="matriz-buscar" placeholder="🔍 Buscar permiso..." oninput="renderMatriz()" class="text-xs px-3 py-1.5 border border-gray-300 rounded outline-none focus:border-secondary w-48">
+                            <select id="matriz-filtro-sens" onchange="renderMatriz()" class="text-xs px-3 py-1.5 border border-gray-300 rounded outline-none focus:border-secondary font-bold uppercase">
+                                <option value="">Todas sensibilidades</option>
+                                <option value="NORMAL">🟦 Normal</option>
+                                <option value="ALTA">🟨 Alta</option>
+                                <option value="CRITICA">🟥 Crítica</option>
+                            </select>
+                            <button onclick="expandirColapsarTodos()" id="btn-expandir-todo" class="text-[10px] bg-tertiary hover:opacity-90 text-white px-3 py-1.5 rounded font-bold uppercase btn-press">
+                                <i class="fa-solid fa-up-down"></i> Colapsar todo
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="matriz-wrap custom-scroll" id="matriz-scroll">
+                        <table class="matriz-table" id="matriz-tabla">
+                            <thead id="matriz-thead"></thead>
+                            <tbody id="matriz-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="cambios-banner" class="cambios-banner hidden">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-circle-exclamation text-amber-700 text-lg"></i>
+                        <p class="text-xs font-bold text-amber-900">
+                            <span id="cambios-cantidad">0</span> cambio(s) sin guardar
+                        </p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="descartarCambios()" class="text-[10px] bg-white hover:bg-gray-100 border border-gray-300 text-gray-700 px-3 py-1.5 rounded font-bold uppercase btn-press">
+                            Descartar
+                        </button>
+                        <button onclick="guardarTodosCambios()" id="btn-guardar-cambios" class="text-[10px] bg-secondary hover:opacity-90 text-white px-4 py-1.5 rounded font-bold uppercase btn-press">
+                            <i class="fa-solid fa-save mr-1"></i> Guardar Cambios
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -247,6 +373,47 @@
             <button type="submit" id="btn-guardar-grupo" class="w-full bg-secondary hover:opacity-90 text-white font-bold py-2.5 rounded shadow btn-press uppercase text-[11px] tracking-wider transition mt-2">
                 Guardar Grupo
             </button>
+        </form>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     MODAL: CONFIRMACIÓN PIN (privilegios CRITICA)
+     ════════════════════════════════════════════════════════════════ -->
+<div id="modal-pin-critico" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[9990] hidden flex items-center justify-center p-4 fade-in">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col border border-red-300">
+        <div class="bg-red-600 text-white p-3 flex justify-between items-center shrink-0 pulse-red">
+            <h3 class="font-bold text-[12px] tracking-wide uppercase">
+                <i class="fa-solid fa-shield-halved mr-2"></i> Privilegio Crítico
+            </h3>
+            <button onclick="cancelarPinCritico()" class="text-gray-300 hover:text-white transition"><i class="fa-solid fa-times"></i></button>
+        </div>
+        <form id="form-pin-critico" onsubmit="confirmarPinCritico(event)" class="p-5 bg-red-50 space-y-4">
+            <div class="bg-white border-l-4 border-red-500 p-3 rounded">
+                <p class="text-[11px] text-red-900 font-bold mb-1">⚠️ ACCIÓN DE ALTA SENSIBILIDAD</p>
+                <p class="text-[10px] text-red-700 leading-relaxed">
+                    Vas a otorgar el privilegio crítico:
+                </p>
+                <p class="text-xs font-mono font-bold text-red-900 mt-1" id="pin-critico-codigo">—</p>
+                <p class="text-[10px] text-red-700 mt-1" id="pin-critico-descripcion">—</p>
+                <p class="text-[10px] text-red-700 mt-1">
+                    Al grupo: <span class="font-black uppercase" id="pin-critico-grupo">—</span>
+                </p>
+            </div>
+
+            <div>
+                <label class="block text-[10px] font-bold text-gray-700 uppercase mb-1">Tu PIN para confirmar *</label>
+                <input type="password" id="pin-critico-input" required maxlength="6" pattern="[0-9]{4,6}" placeholder="Ingresa tu PIN" class="w-full border-2 border-red-300 rounded px-3 py-2 text-base font-mono font-bold text-center outline-none focus:border-red-600 bg-white">
+            </div>
+
+            <div class="flex gap-2">
+                <button type="button" onclick="cancelarPinCritico()" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 rounded uppercase text-[10px] tracking-wider btn-press">
+                    Cancelar
+                </button>
+                <button type="submit" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded uppercase text-[10px] tracking-wider btn-press">
+                    <i class="fa-solid fa-check mr-1"></i> Confirmar
+                </button>
+            </div>
         </form>
     </div>
 </div>
@@ -632,10 +799,321 @@ async function confirmarEliminarGrupo(e) {
 
 // ─── Placeholder para llamada cruzada desde Tab Grupos a Tab Matriz ─
 function filtrarGrupoEnMatriz(idGrupo) {
-    // Esta función será implementada en el siguiente turno cuando se construya la tab Matriz
-    // Por ahora, solo cambia de tab visualmente
-    console.log('Filtro grupo:', idGrupo);
+    // Resalta visualmente la columna del grupo en la matriz
+    setTimeout(() => {
+        document.querySelectorAll('th[data-grupo-id]').forEach(th => {
+            if (th.getAttribute('data-grupo-id') === idGrupo) {
+                th.style.background = 'var(--color-secondary)';
+            } else {
+                th.style.background = '';
+            }
+        });
+    }, 200);
 }
+
+// ════════════════════════════════════════════════════════════════════════════
+// TAB 2: MATRIZ DE PERMISOS
+// ════════════════════════════════════════════════════════════════════════════
+let dbAsignaciones = [];   // {id_grupo, codigo_permiso}
+let cambiosPendientes = []; // {id_grupo, codigo_permiso, accion: 'asignar'|'quitar', sensibilidad}
+let modulosColapsados = new Set();
+let pinCriticoPending = null; // Almacena el cambio crítico esperando PIN
+
+async function cargarMatriz() {
+    try {
+        const res = await sb(`grupos_permisos?select=id_grupo,codigo_permiso`);
+        dbAsignaciones = res.ok ? await res.json() : [];
+    } catch (e) {
+        console.error("Error cargando matriz:", e);
+        dbAsignaciones = [];
+    }
+}
+
+function tieneAsignacion(idGrupo, codigoPermiso) {
+    // Estado real en BD
+    const enBd = dbAsignaciones.some(a => a.id_grupo === idGrupo && a.codigo_permiso === codigoPermiso);
+    // Buscar si hay un cambio pendiente que invierta esto
+    const cambio = cambiosPendientes.find(c => c.id_grupo === idGrupo && c.codigo_permiso === codigoPermiso);
+    if (cambio) return cambio.accion === 'asignar';
+    return enBd;
+}
+
+function renderMatriz() {
+    const buscar = (document.getElementById('matriz-buscar')?.value || '').toLowerCase().trim();
+    const filtroSens = document.getElementById('matriz-filtro-sens')?.value || '';
+
+    const grupos = dbGrupos.filter(g => g.estatus !== 'INACTIVO');
+    const permisos = dbPermisosCatalogo.filter(p => {
+        if (filtroSens && p.sensibilidad !== filtroSens) return false;
+        if (buscar) {
+            const txt = `${p.codigo} ${p.descripcion} ${p.modulo}`.toLowerCase();
+            if (!txt.includes(buscar)) return false;
+        }
+        return true;
+    });
+
+    document.getElementById('matriz-resumen').textContent =
+        `${permisos.length} de ${dbPermisosCatalogo.length} privilegios · ${grupos.length} grupos`;
+
+    // THEAD: primera columna "Privilegio", luego una por grupo
+    const thead = document.getElementById('matriz-thead');
+    let theadHtml = '<tr><th>Privilegio</th>';
+    grupos.forEach(g => {
+        const color = g.color_hex || '#143B62';
+        theadHtml += `<th data-grupo-id="${g.id}" title="${escapeHtml(g.descripcion || g.nombre)}" style="border-bottom: 3px solid ${color};">
+            <div class="flex flex-col items-center gap-1">
+                <i class="fa-solid ${g.icono || 'fa-people-group'}"></i>
+                <span class="text-[9px]">${escapeHtml(g.nombre.length > 14 ? g.nombre.substring(0,12) + '…' : g.nombre)}</span>
+            </div>
+        </th>`;
+    });
+    theadHtml += '</tr>';
+    thead.innerHTML = theadHtml;
+
+    // TBODY: agrupado por módulo
+    const porModulo = {};
+    permisos.forEach(p => {
+        if (!porModulo[p.modulo]) porModulo[p.modulo] = [];
+        porModulo[p.modulo].push(p);
+    });
+
+    const iconosPorModulo = {
+        SISTEMA: 'fa-sliders', USUARIOS: 'fa-users', VENTAS: 'fa-cash-register',
+        COMPRAS: 'fa-cart-shopping', INVENTARIO: 'fa-boxes-stacked', FINANZAS: 'fa-landmark',
+        CAJA: 'fa-key', CXC: 'fa-file-invoice', DIRECTORIO: 'fa-address-book',
+        TALLER: 'fa-screwdriver-wrench', REPORTES: 'fa-chart-pie'
+    };
+
+    const tbody = document.getElementById('matriz-tbody');
+    let tbodyHtml = '';
+
+    Object.keys(porModulo).forEach(modulo => {
+        const colapsado = modulosColapsados.has(modulo);
+        const iconoMod = iconosPorModulo[modulo] || 'fa-folder';
+        const iconoChevron = colapsado ? 'fa-chevron-right' : 'fa-chevron-down';
+
+        tbodyHtml += `<tr class="modulo-header" onclick="toggleModulo('${modulo}')">
+            <td colspan="${grupos.length + 1}">
+                <i class="fa-solid ${iconoChevron} mr-2"></i>
+                <i class="fa-solid ${iconoMod} mr-2"></i>
+                ${modulo} <span class="text-xs font-normal text-gray-500 ml-2">(${porModulo[modulo].length} privilegios)</span>
+            </td>
+        </tr>`;
+
+        if (!colapsado) {
+            porModulo[modulo].forEach(p => {
+                const flagPin = p.requiere_pin ? `<span class="perm-flag bg-yellow-100 text-yellow-800" title="Requiere PIN">PIN</span>` : '';
+                const flagSens = `<span class="perm-flag badge-sens-${p.sensibilidad}">${p.sensibilidad.charAt(0)}</span>`;
+
+                tbodyHtml += `<tr data-codigo="${p.codigo}">
+                    <td>
+                        <div class="perm-codigo">${escapeHtml(p.codigo)}<span class="perm-flags">${flagSens}${flagPin}</span></div>
+                        <div class="perm-desc">${escapeHtml(p.descripcion)}</div>
+                    </td>`;
+                grupos.forEach(g => {
+                    const checked = tieneAsignacion(g.id, p.codigo);
+                    const tienePend = cambiosPendientes.some(c => c.id_grupo === g.id && c.codigo_permiso === p.codigo);
+                    const styleExtra = tienePend ? 'background: #fef3c7;' : '';
+                    tbodyHtml += `<td style="${styleExtra}">
+                        <input type="checkbox" ${checked ? 'checked' : ''}
+                            data-grupo="${g.id}" data-grupo-nombre="${escapeHtml(g.nombre)}"
+                            data-codigo="${p.codigo}" data-sensibilidad="${p.sensibilidad}"
+                            data-descripcion="${escapeHtml(p.descripcion)}"
+                            onchange="toggleAsignacion(this)">
+                    </td>`;
+                });
+                tbodyHtml += '</tr>';
+            });
+        }
+    });
+
+    tbody.innerHTML = tbodyHtml;
+    actualizarBannerCambios();
+}
+
+function toggleModulo(modulo) {
+    if (modulosColapsados.has(modulo)) modulosColapsados.delete(modulo);
+    else modulosColapsados.add(modulo);
+    renderMatriz();
+}
+
+function expandirColapsarTodos() {
+    const btn = document.getElementById('btn-expandir-todo');
+    const todosColapsados = modulosColapsados.size > 0;
+    if (todosColapsados) {
+        modulosColapsados.clear();
+        btn.innerHTML = '<i class="fa-solid fa-up-down"></i> Colapsar todo';
+    } else {
+        const modulos = [...new Set(dbPermisosCatalogo.map(p => p.modulo))];
+        modulos.forEach(m => modulosColapsados.add(m));
+        btn.innerHTML = '<i class="fa-solid fa-down-left-and-up-right-to-center"></i> Expandir todo';
+    }
+    renderMatriz();
+}
+
+function toggleAsignacion(cb) {
+    const idGrupo = cb.getAttribute('data-grupo');
+    const grupoNombre = cb.getAttribute('data-grupo-nombre');
+    const codigo = cb.getAttribute('data-codigo');
+    const sensibilidad = cb.getAttribute('data-sensibilidad');
+    const descripcion = cb.getAttribute('data-descripcion');
+    const accion = cb.checked ? 'asignar' : 'quitar';
+
+    // Si es CRITICA y se está ASIGNANDO → pedir PIN antes
+    if (sensibilidad === 'CRITICA' && accion === 'asignar') {
+        // Revertir visualmente hasta confirmar PIN
+        cb.checked = false;
+        pinCriticoPending = { idGrupo, grupoNombre, codigo, descripcion, sensibilidad, accion };
+        document.getElementById('pin-critico-codigo').textContent = codigo;
+        document.getElementById('pin-critico-descripcion').textContent = descripcion;
+        document.getElementById('pin-critico-grupo').textContent = grupoNombre;
+        document.getElementById('pin-critico-input').value = '';
+        document.getElementById('modal-pin-critico').classList.remove('hidden');
+        document.getElementById('modal-pin-critico').classList.add('flex');
+        setTimeout(() => document.getElementById('pin-critico-input').focus(), 100);
+        return;
+    }
+
+    // Si es ALTA → confirmación simple
+    if (sensibilidad === 'ALTA' && accion === 'asignar') {
+        if (!confirm(`⚠️ Privilegio de ALTA sensibilidad\n\n"${descripcion}"\n\nSe otorgará al grupo "${grupoNombre}". ¿Confirmas?`)) {
+            cb.checked = false;
+            return;
+        }
+    }
+
+    aplicarCambio(idGrupo, codigo, accion, sensibilidad);
+}
+
+async function confirmarPinCritico(e) {
+    e.preventDefault();
+    if (!pinCriticoPending) return;
+
+    const pin = document.getElementById('pin-critico-input').value.trim();
+    if (!pin) return alert("PIN requerido");
+
+    mostrarCarga("Validando PIN...");
+    try {
+        const r = await rpc('validar_pin_si_requiere', {
+            p_codigo: pinCriticoPending.codigo,
+            p_pin: pin
+        });
+        cerrarErrorCarga();
+
+        if (r && r.ok) {
+            // PIN válido → aplicar cambio + marcar checkbox visualmente
+            const cb = document.querySelector(`input[data-grupo="${pinCriticoPending.idGrupo}"][data-codigo="${pinCriticoPending.codigo}"]`);
+            if (cb) cb.checked = true;
+            aplicarCambio(pinCriticoPending.idGrupo, pinCriticoPending.codigo, 'asignar', 'CRITICA');
+            cancelarPinCritico();
+        } else {
+            alert("❌ PIN inválido");
+        }
+    } catch (err) {
+        cerrarErrorCarga();
+        alert("❌ " + err.message);
+    }
+}
+
+function cancelarPinCritico() {
+    document.getElementById('modal-pin-critico').classList.add('hidden');
+    document.getElementById('modal-pin-critico').classList.remove('flex');
+    pinCriticoPending = null;
+}
+
+function aplicarCambio(idGrupo, codigo, accion, sensibilidad) {
+    // Eliminar cambio previo del mismo par (si existe)
+    cambiosPendientes = cambiosPendientes.filter(c => !(c.id_grupo === idGrupo && c.codigo_permiso === codigo));
+
+    // Verificar si el nuevo estado coincide con lo que ya está en BD (cancelaría el cambio)
+    const enBd = dbAsignaciones.some(a => a.id_grupo === idGrupo && a.codigo_permiso === codigo);
+    const nuevoEstadoIgualAtBd = (accion === 'asignar' && enBd) || (accion === 'quitar' && !enBd);
+
+    if (!nuevoEstadoIgualAtBd) {
+        cambiosPendientes.push({ id_grupo: idGrupo, codigo_permiso: codigo, accion, sensibilidad });
+    }
+
+    actualizarBannerCambios();
+    // Actualizar visualmente la celda (fondo amarillo si pendiente)
+    const cb = document.querySelector(`input[data-grupo="${idGrupo}"][data-codigo="${codigo}"]`);
+    if (cb) {
+        const td = cb.closest('td');
+        if (td) td.style.background = cambiosPendientes.some(c => c.id_grupo === idGrupo && c.codigo_permiso === codigo) ? '#fef3c7' : '';
+    }
+}
+
+function actualizarBannerCambios() {
+    const banner = document.getElementById('cambios-banner');
+    const cant = document.getElementById('cambios-cantidad');
+    if (cambiosPendientes.length === 0) {
+        banner.classList.add('hidden');
+    } else {
+        banner.classList.remove('hidden');
+        cant.textContent = cambiosPendientes.length;
+    }
+}
+
+function descartarCambios() {
+    if (!confirm(`Descartar ${cambiosPendientes.length} cambio(s) pendiente(s)?`)) return;
+    cambiosPendientes = [];
+    renderMatriz();
+}
+
+async function guardarTodosCambios() {
+    if (cambiosPendientes.length === 0) return;
+    const btn = document.getElementById('btn-guardar-cambios'); btn.disabled = true;
+
+    mostrarCarga(`Aplicando ${cambiosPendientes.length} cambios...`);
+
+    let exitos = 0, errores = [];
+
+    for (const cambio of cambiosPendientes) {
+        try {
+            if (cambio.accion === 'asignar') {
+                await rpc('asignar_permiso_a_grupo', {
+                    p_id_grupo: cambio.id_grupo,
+                    p_codigo_permiso: cambio.codigo_permiso
+                });
+            } else {
+                await rpc('quitar_permiso_de_grupo', {
+                    p_id_grupo: cambio.id_grupo,
+                    p_codigo_permiso: cambio.codigo_permiso
+                });
+            }
+            exitos++;
+        } catch (err) {
+            errores.push(`${cambio.codigo_permiso}: ${err.message}`);
+        }
+    }
+
+    cambiosPendientes = [];
+    cerrarErrorCarga();
+
+    if (errores.length > 0) {
+        alert(`⚠️ ${exitos} exitos, ${errores.length} errores:\n\n${errores.slice(0, 5).join('\n')}`);
+    } else {
+        alert(`✅ ${exitos} cambio(s) aplicado(s) correctamente.`);
+    }
+
+    btn.disabled = false;
+    await cargarTodo(); // Recarga grupos y matriz
+    await cargarMatriz();
+    renderMatriz();
+}
+
+// Hook al cambiar de tab: si es matriz, asegurarse que dbAsignaciones esté cargado
+const origCambiarTab = cambiarTab;
+cambiarTab = async function(tab) {
+    origCambiarTab(tab);
+    if (tab === 'matriz' && dbAsignaciones.length === 0) {
+        mostrarCarga("Cargando matriz...");
+        await cargarMatriz();
+        cerrarErrorCarga();
+        renderMatriz();
+    } else if (tab === 'matriz') {
+        renderMatriz();
+    }
+};
 
 </script>
 
