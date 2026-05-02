@@ -277,7 +277,62 @@
             listaRecepcion[index].tipo_impuesto = valor === "16" ? "GENERAL" : (valor === "8" ? "REDUCIDO" : "EXENTO");
             actualizarTotalesVisuales();
         }
+// --- LÓGICA DE MANEJO DE INVENTARIO Y RENGLONES ---
+        
+        function buscarProducto(valor) {
+            const container = document.getElementById('prod-search-results');
+            if(!valor) { container.style.display = 'none'; return; }
+            const resultados = fuseProd.search(valor).slice(0, 10); // Limitamos a 10 resultados para velocidad
+            
+            if(resultados.length === 0) {
+                container.innerHTML = `<div class="prov-result-item" style="color:#ef4444; text-align:center;">No encontrado</div>`;
+            } else {
+                container.innerHTML = resultados.map(r => {
+                    // Escapamos comillas simples en el nombre para evitar romper el onClick
+                    const nombreSeguro = (r.item.nombre || '').replace(/'/g, "\\'");
+                    return `<div class="prov-result-item" onclick="agregarProducto('${r.item.id_producto_sku}', '${nombreSeguro}')">
+                                <strong>${r.item.id_producto_sku}</strong> | ${r.item.nombre}
+                            </div>`;
+                }).join('');
+            }
+            container.style.display = 'block';
+        }
 
+        function agregarProducto(sku, nombre) {
+            const existe = listaRecepcion.find(x => x.id_producto_sku === sku);
+            if(!existe) {
+                // Inyectamos el producto con valores por defecto (Cantidad 1, Costo 0, IVA 16%)
+                listaRecepcion.push({
+                    id_producto_sku: sku,
+                    nombre: nombre,
+                    cantidad_recibida: 1,
+                    costo_unitario_usd: 0,
+                    impuesto_porcentaje: 16,
+                    tipo_impuesto: 'GENERAL'
+                });
+                renderListaRecepcion();
+            } else {
+                mostrarErrorUI("Este producto ya está en la lista de recepción.");
+            }
+            // Limpiamos el buscador
+            document.getElementById('prod-search-results').style.display = 'none';
+            document.getElementById('prod-nombre').value = '';
+        }
+
+        function cambiarCantidad(index, valor) {
+            listaRecepcion[index].cantidad_recibida = parseFloat(valor) || 1;
+            renderListaRecepcion(); // Re-renderiza para actualizar el subtotal de la fila
+        }
+
+        function cambiarCosto(index, valor) {
+            listaRecepcion[index].costo_unitario_usd = parseFloat(valor) || 0;
+            renderListaRecepcion(); // Re-renderiza para actualizar el subtotal de la fila
+        }
+
+        function eliminarRenglon(index) {
+            listaRecepcion.splice(index, 1);
+            renderListaRecepcion();
+        }
         // --- MAGIA: PROCESAR COMPRA V2CxP (ARQUITECTURA RPC V2) ---
         async function procesarCompraV2() {
             const provId = document.getElementById('prov-id-master').value;
