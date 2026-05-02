@@ -1,33 +1,31 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <!-- Configuración central P&P (cargada antes de cualquier otro script) -->
     <script src="config.js"></script>
 
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>P&P Admin | Ingreso de Compras</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>P&P Admin | Ingreso de Compras</title>
 
-    <script>
-        const cPri = localStorage.getItem('pyp_color_primario') || '#143B62';
-        const cSec = localStorage.getItem('pyp_color_secundario') || '#E67E22';
-        const cTer = localStorage.getItem('pyp_color_terciario') || '#64748b';
-        const fontFam = localStorage.getItem('pyp_fuente') || "'Inter', sans-serif";
-        const fontSiz = localStorage.getItem('pyp_tamano') || "14px";
-        
-        // Inyectamos variables CSS (Motor Marca Blanca)
-        document.documentElement.style.setProperty('--color-primary', cPri);
-        document.documentElement.style.setProperty('--color-secondary', cSec);
-        document.documentElement.style.setProperty('--color-tertiary', cTer);
-        document.documentElement.style.setProperty('--font-global', fontFam);
-        document.documentElement.style.setProperty('--size-global', fontSiz);
-    </script>
+    <script>
+        const cPri = localStorage.getItem('pyp_color_primario') || '#143B62';
+        const cSec = localStorage.getItem('pyp_color_secundario') || '#E67E22';
+        const cTer = localStorage.getItem('pyp_color_terciario') || '#64748b';
+        const fontFam = localStorage.getItem('pyp_fuente') || "'Inter', sans-serif";
+        const fontSiz = localStorage.getItem('pyp_tamano') || "14px";
+        
+        // Inyectamos variables CSS (Motor Marca Blanca)
+        document.documentElement.style.setProperty('--color-primary', cPri);
+        document.documentElement.style.setProperty('--color-secondary', cSec);
+        document.documentElement.style.setProperty('--color-tertiary', cTer);
+        document.documentElement.style.setProperty('--font-global', fontFam);
+        document.documentElement.style.setProperty('--size-global', fontSiz);
+    </script>
 
     <link rel="stylesheet" href="styles.css">
-
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.js"></script>
-    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.js"></script>
+    
     <script>
         // Guardián de Seguridad: Exige el Token Real
         if (!localStorage.getItem('pyp_token_seguro')) {
@@ -35,27 +33,8 @@
         }
     </script>
 
-    <style>
-        /* === MOTOR ESTRUCTURAL HOMOLOGADO === */
-        body { 
-            font-family: var(--font-global); 
-            font-size: var(--size-global); 
-            margin: 0; 
-            padding: 0; 
-            display: flex !important;
-            gap: 0 !important; 
-            overflow: hidden;
-        }
-        
-        aside { margin: 0 !important; flex-shrink: 0; }
-        
-        main { 
-            flex-grow: 1; 
-            margin-left: 0 !important; 
-            min-width: 0; 
-        }
-
-        /* === UTILIDADES DEL MÓDULO === */
+    <style>
+        body { font-family: var(--font-global); font-size: var(--size-global); }
         .bg-primary { background-color: var(--color-primary) !important; }
         .text-primary { color: var(--color-primary) !important; }
         .bg-secondary { background-color: var(--color-secondary) !important; }
@@ -66,11 +45,12 @@
         .btn-press:active { transform: scale(0.95); }
     </style>
 </head>
-<body class="bg-[#f0f2f5] h-screen text-gray-800" onclick="cerrarDropdowns()">
-    <main class="flex flex-col h-screen overflow-hidden z-10 relative bg-gray-50">
+<body class="bg-[#f0f2f5] font-sans flex w-full h-screen overflow-hidden text-gray-800 m-0 p-0" onclick="cerrarDropdowns()">
+
+    <main class="flex-1 w-0 flex flex-col h-screen overflow-hidden bg-gray-50">
         
-<header class="bg-white shadow-sm px-6 py-4 flex justify-between items-center z-10 shrink-0">
-            <h1 class="text-xl font-bold text-[#143B62]"><i class="fa-solid fa-file-invoice-dollar mr-2"></i> Factura de Compra</h1>    
+        <header class="bg-white shadow-sm px-6 py-4 flex justify-between items-center z-10 shrink-0">
+            <h1 class="text-xl font-bold text-[#143B62]"><i class="fa-solid fa-truck-ramp-box mr-2"></i> Recepción de Mercancía</h1>
             <div class="text-sm font-bold bg-green-50 text-green-700 px-3 py-1 rounded border border-green-200">
                 Tasa Actual: <span id="tasa-actual">Cargando...</span>
             </div>
@@ -271,7 +251,6 @@
 
         function limpiarTodo() { document.getElementById('prov-rif').value = ''; document.getElementById('prov-nombre').value = ''; document.getElementById('prov-factura-num').value = ''; listaRecepcion = []; actualizarTablaRecepcion(); }
 
-        // --- MAGIA: PROCESAR COMPRA Y ACTUALIZAR STOCK EN BUCLE ---
         async function procesarCompra() {
             if(listaRecepcion.length === 0) return alert("Debe agregar productos a la recepción.");
             const numFactura = document.getElementById('prov-factura-num').value.trim(); const provNombre = document.getElementById('prov-nombre').value.trim(); const provDoc = document.getElementById('prov-tipo').value + document.getElementById('prov-rif').value.trim();
@@ -284,7 +263,6 @@
             try {
                 const bodyFactura = { tipo_transaccion: 'Compra', numero_control_ext: numFactura, cliente_documento: provDoc, cliente_nombre: provNombre, subtotal_usd: totalUSD, total_usd: totalUSD, total_bs: totalBS, tasa_bcv_aplicada: tasaBCV, estatus: 'Completada' };
                 
-                // 1. Crear Factura Maestra
                 const resFactura = await fetch(`${SUPABASE_URL}/rest/v1/facturas`, { 
                     method: 'POST', 
                     headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, 
@@ -293,7 +271,6 @@
                 if(!resFactura.ok) throw new Error("Error registrando la compra matriz");
                 const facData = await resFactura.json();
                 
-                // 2. Crear Detalles
                 const bodyDetalles = listaRecepcion.map(item => ({ factura_id: facData[0].id_factura, producto_sku: item.id_producto_sku, producto_nombre: item.nombre, cantidad: item.cantidad_recibida, precio_unitario_usd: item.costo_unitario_usd, subtotal_usd: item.cantidad_recibida * item.costo_unitario_usd }));
                 const resDetalles = await fetch(`${SUPABASE_URL}/rest/v1/detalles_factura`, { 
                     method: 'POST', 
@@ -302,18 +279,15 @@
                 });
                 if(!resDetalles.ok) throw new Error("Error guardando renglones");
 
-                // 3. ACTUALIZAR STOCK Y COSTOS DE CADA PRODUCTO
                 for (const item of listaRecepcion) {
                     const nuevoStock = Number(item.stock_actual) + Number(item.cantidad_recibida);
                     
-                    // Actualizamos stock en Productos
                     await fetch(`${SUPABASE_URL}/rest/v1/productos?id_producto_sku=eq.${item.id_producto_sku}`, {
                         method: 'PATCH',
                         headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' },
                         body: JSON.stringify({ stock_actual: nuevoStock })
                     });
 
-                    // Actualizamos Costo en Precios (Último costo entra)
                     await fetch(`${SUPABASE_URL}/rest/v1/precios?id_producto_sku=eq.${item.id_producto_sku}`, {
                         method: 'PATCH',
                         headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' },
@@ -324,7 +298,6 @@
                 alert(`¡Compra registrada con éxito!\nEl stock y los costos han sido actualizados en el inventario.`); 
                 limpiarTodo();
                 
-                // Recargamos el inventario visualmente para que esté fresco
                 const resProd = await fetch(`${SUPABASE_URL}/rest/v1/vista_catalogo_web?select=*&limit=1000`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
                 inventario = await resProd.json();
                 fuseProd = new Fuse(inventario, { keys: ['nombre', 'id_producto_sku'], threshold: 0.3 });
@@ -332,8 +305,6 @@
             } catch (error) { alert("Ocurrió un error al procesar la compra. " + error.message); } 
             finally { btn.innerHTML = `<i class="fa-solid fa-check-double text-xl"></i> Registrar Compra y Sumar Stock`; btn.disabled = false; }
         }
-
-       
     </script>
     <script src="menu.js"></script>
 </body>
