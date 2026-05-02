@@ -78,7 +78,7 @@
             border-collapse: separate;
             border-spacing: 0;
             min-width: 100%;
-            font-size: 11px;
+            font-size: 12px;
         }
         .matriz-table thead th {
             position: sticky;
@@ -90,33 +90,33 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
             padding: 10px 6px;
-            font-size: 10px;
+            font-size: 11px;
             text-align: center;
             border-right: 1px solid rgba(255,255,255,0.1);
-            min-width: 80px;
+            min-width: 90px;
         }
         .matriz-table thead th:first-child {
             text-align: left;
-            min-width: 320px;
-            max-width: 380px;
+            min-width: 340px;
+            max-width: 400px;
             z-index: 11;
             left: 0;
-            padding-left: 12px;
+            padding-left: 14px;
         }
         .matriz-table tbody td:first-child {
             position: sticky;
             left: 0;
             background: #f8fafc;
-            min-width: 320px;
-            max-width: 380px;
-            padding: 8px 12px;
+            min-width: 340px;
+            max-width: 400px;
+            padding: 9px 14px;
             border-right: 2px solid #e5e7eb;
             font-weight: 500;
             color: #1e293b;
             z-index: 5;
         }
         .matriz-table tbody td {
-            padding: 6px;
+            padding: 7px;
             text-align: center;
             border-bottom: 1px solid #f1f5f9;
             background: white;
@@ -126,24 +126,25 @@
             background: linear-gradient(to right, #f1f5f9, #e2e8f0);
             font-weight: 800;
             color: var(--color-primary);
-            font-size: 11px;
+            font-size: 12px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
             cursor: pointer;
-            padding: 8px 12px;
+            padding: 9px 14px;
             border-top: 2px solid var(--color-primary);
+            text-align: left !important;
         }
         .matriz-table tbody tr.modulo-header:hover td { background: linear-gradient(to right, #e0f2fe, #bae6fd); }
         .matriz-table input[type=checkbox] {
-            width: 16px; height: 16px; cursor: pointer;
+            width: 18px; height: 18px; cursor: pointer;
             accent-color: var(--color-secondary);
         }
         .matriz-table input[type=checkbox]:disabled { cursor: not-allowed; opacity: 0.5; }
-        .perm-codigo { font-family: monospace; font-size: 10px; color: #475569; }
-        .perm-desc { font-size: 11px; line-height: 1.3; margin-top: 1px; }
+        .perm-codigo { font-family: monospace; font-size: 11px; color: #475569; }
+        .perm-desc { font-size: 12px; line-height: 1.35; margin-top: 2px; color: #334155; }
         .perm-flags { display: inline-flex; gap: 3px; margin-left: 6px; vertical-align: middle; }
         .perm-flag {
-            font-size: 8px; font-weight: 800; padding: 1px 5px; border-radius: 3px;
+            font-size: 9px; font-weight: 800; padding: 1px 5px; border-radius: 3px;
             text-transform: uppercase; letter-spacing: 0.3px;
         }
         .cambios-banner {
@@ -151,6 +152,41 @@
             padding: 10px 16px; border-radius: 8px; display: flex;
             justify-content: space-between; align-items: center; margin-top: 10px;
             box-shadow: 0 -4px 12px rgba(245, 158, 11, 0.2);
+        }
+
+        /* Panel Guía deslizable */
+        .panel-guia {
+            position: fixed; top: 0; right: -480px; width: 480px; max-width: 90vw;
+            height: 100vh; background: white; box-shadow: -10px 0 30px rgba(0,0,0,0.2);
+            transition: right 0.3s ease; z-index: 9991; overflow-y: auto;
+        }
+        .panel-guia.abierto { right: 0; }
+        .panel-guia-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+            z-index: 9990; opacity: 0; pointer-events: none; transition: opacity 0.3s;
+        }
+        .panel-guia-overlay.visible { opacity: 1; pointer-events: auto; }
+        .btn-guia-flotante {
+            position: fixed; bottom: 80px; right: 20px; z-index: 9989;
+            background: var(--color-secondary); color: white;
+            width: 52px; height: 52px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+            cursor: pointer; transition: transform 0.2s; font-size: 22px;
+        }
+        .btn-guia-flotante:hover { transform: scale(1.1); }
+        .guia-section { padding: 14px 18px; border-bottom: 1px solid #e5e7eb; }
+        .guia-section h4 {
+            font-size: 13px; font-weight: 800; color: var(--color-primary);
+            text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .guia-section p { font-size: 12px; color: #475569; line-height: 1.5; margin-bottom: 6px; }
+        .guia-section ul { font-size: 12px; color: #475569; padding-left: 18px; }
+        .guia-section li { margin-bottom: 4px; }
+        .guia-tag {
+            display: inline-block; font-size: 10px; font-weight: 800; padding: 2px 8px;
+            border-radius: 4px; text-transform: uppercase; letter-spacing: 0.3px; margin: 0 2px;
         }
     </style>
 </head>
@@ -246,6 +282,12 @@
                                 <option value="ALTA">🟨 Alta</option>
                                 <option value="CRITICA">🟥 Crítica</option>
                             </select>
+                            <select id="matriz-reset-grupo" class="text-xs px-3 py-1.5 border border-gray-300 rounded outline-none focus:border-secondary font-bold uppercase" title="Restaurar permisos predefinidos del grupo seleccionado">
+                                <option value="">🔄 Restaurar grupo...</option>
+                            </select>
+                            <button onclick="abrirModalResetTotal()" class="text-[10px] bg-red-100 hover:bg-red-200 text-red-700 px-3 py-1.5 rounded font-bold uppercase btn-press border border-red-300" title="Reset total de la matriz (requiere PIN)">
+                                <i class="fa-solid fa-warning"></i> Reset Total
+                            </button>
                             <button onclick="expandirColapsarTodos()" id="btn-expandir-todo" class="text-[10px] bg-tertiary hover:opacity-90 text-white px-3 py-1.5 rounded font-bold uppercase btn-press">
                                 <i class="fa-solid fa-up-down"></i> Colapsar todo
                             </button>
@@ -276,7 +318,86 @@
                         </button>
                     </div>
                 </div>
+
+                <!-- Botón flotante de Guía -->
+                <button onclick="abrirPanelGuia()" class="btn-guia-flotante" title="📖 Guía de Permisos">
+                    <i class="fa-solid fa-book-open"></i>
+                </button>
             </div>
+
+            <!-- ════════════════════════════════════════════════════════════
+                 PANEL DE GUÍA (deslizable desde derecha)
+                 ════════════════════════════════════════════════════════════ -->
+            <div id="panel-guia-overlay" class="panel-guia-overlay" onclick="cerrarPanelGuia()"></div>
+            <aside id="panel-guia" class="panel-guia">
+                <div class="bg-primary text-white p-4 flex justify-between items-center sticky top-0 z-10">
+                    <h3 class="font-black text-base uppercase tracking-wide">
+                        <i class="fa-solid fa-book-open mr-2 text-secondary"></i> Guía de Permisos
+                    </h3>
+                    <button onclick="cerrarPanelGuia()" class="text-white/70 hover:text-white text-xl">
+                        <i class="fa-solid fa-times"></i>
+                    </button>
+                </div>
+
+                <div class="guia-section">
+                    <h4><i class="fa-solid fa-circle-info text-blue-500"></i> ¿Cómo funciona la matriz?</h4>
+                    <p>La matriz es una grilla donde cada fila es un <b>privilegio</b> (acción del sistema) y cada columna es un <b>grupo</b> (Cajeros, Supervisores, etc.).</p>
+                    <p>Marca una casilla para otorgar ese privilegio al grupo. Desmárcala para quitarlo.</p>
+                    <p>Los cambios <b>NO se aplican inmediatamente</b>: aparecen en amarillo. Cuando termines, da clic en "Guardar Cambios" en la barra inferior.</p>
+                </div>
+
+                <div class="guia-section">
+                    <h4><i class="fa-solid fa-shield-halved text-amber-600"></i> Niveles de sensibilidad</h4>
+                    <p>Cada privilegio tiene un nivel de sensibilidad que define cuánta fricción tendrá al activarse:</p>
+                    <p><span class="guia-tag badge-sens-NORMAL">Normal</span> Acciones cotidianas: ver listados, crear cotizaciones, aceptar fondos. Cambio directo sin confirmación.</p>
+                    <p><span class="guia-tag badge-sens-ALTA">Alta</span> Acciones con impacto: anular órdenes, eliminar contactos, exportar datos. Pide confirmación con botón.</p>
+                    <p><span class="guia-tag badge-sens-CRITICA">Crítica</span> Acciones de máximo riesgo: ajustes contables, eliminar usuarios, cambiar claves. <b>Requiere tu PIN</b> para activarse.</p>
+                </div>
+
+                <div class="guia-section">
+                    <h4><i class="fa-solid fa-key text-yellow-600"></i> Privilegios con PIN</h4>
+                    <p>Algunos privilegios marcados con <span class="guia-tag" style="background:#fef3c7;color:#b45309;">PIN</span> exigen el PIN del usuario al ejecutarse en producción. Esto es independiente de la sensibilidad.</p>
+                    <p>Por ejemplo: <code class="bg-gray-100 px-1 rounded">ventas.anular_factura</code> es CRITICA + PIN. El cajero deberá ingresar PIN cada vez que anule una factura, no solo al asignar el permiso.</p>
+                </div>
+
+                <div class="guia-section">
+                    <h4><i class="fa-solid fa-people-group text-purple-600"></i> Grupos predefinidos vs personalizados</h4>
+                    <p><b>Predefinidos</b> (Administradores, Cajeros, etc.): vienen de fábrica. Puedes <b>editar sus permisos</b> según tu negocio. <b>No puedes eliminarlos</b>, pero sí desactivarlos.</p>
+                    <p><b>Personalizados</b>: los que creas tú (ej: "Mensajeros"). Totalmente flexibles. Puedes eliminarlos si no tienen usuarios asignados.</p>
+                </div>
+
+                <div class="guia-section">
+                    <h4><i class="fa-solid fa-rotate-left text-green-600"></i> Restaurar predefinidos</h4>
+                    <p>El selector "🔄 Restaurar grupo..." reaplica los permisos originales del Sprint 5 a un grupo predefinido específico. Útil si experimentaste y quieres volver al estándar.</p>
+                    <p>El botón "Reset Total" reinicia <b>TODA la matriz</b>: todos los grupos predefinidos vuelven a sus permisos originales. Requiere PIN.</p>
+                </div>
+
+                <div class="guia-section">
+                    <h4><i class="fa-solid fa-lightbulb text-orange-500"></i> Buenas prácticas</h4>
+                    <ul>
+                        <li>Otorga el mínimo de permisos necesarios (principio de menor privilegio).</li>
+                        <li>Usa grupos en vez de overrides individuales cuando sea posible (más fácil de mantener).</li>
+                        <li>Revisa la matriz cada vez que se agregue un módulo nuevo al sistema.</li>
+                        <li>Los cambios aplicados quedan en el audit log (auditoría completa).</li>
+                    </ul>
+                </div>
+
+                <div class="guia-section">
+                    <h4><i class="fa-solid fa-graduation-cap text-blue-600"></i> Ejemplo: Configurar un Almacenista</h4>
+                    <p>Si contratas un almacenista nuevo:</p>
+                    <ul>
+                        <li>1. El grupo <b>"Almacenistas"</b> ya viene preconfigurado con los permisos típicos.</li>
+                        <li>2. Ve a la pestaña <b>"Usuarios y Grupos"</b>.</li>
+                        <li>3. Asigna el usuario al grupo Almacenistas.</li>
+                        <li>4. Listo: hereda todos los permisos automáticamente.</li>
+                    </ul>
+                    <p>Si necesitas que ese almacenista también vea costos (algo que normalmente no hace), puedes:</p>
+                    <ul>
+                        <li>a) Agregar el permiso <code class="bg-gray-100 px-1 rounded">inventario.ver_costos</code> al grupo Almacenistas (afecta a todos).</li>
+                        <li>b) O crear un override individual GRANT solo para ese usuario (no afecta a otros).</li>
+                    </ul>
+                </div>
+            </aside>
 
             <!-- ════════════════════════════════════════════════════════════
                  TAB 3: USUARIOS Y GRUPOS (placeholder)
@@ -373,6 +494,48 @@
             <button type="submit" id="btn-guardar-grupo" class="w-full bg-secondary hover:opacity-90 text-white font-bold py-2.5 rounded shadow btn-press uppercase text-[11px] tracking-wider transition mt-2">
                 Guardar Grupo
             </button>
+        </form>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     MODAL: RESET TOTAL DE LA MATRIZ (con PIN)
+     ════════════════════════════════════════════════════════════════ -->
+<div id="modal-reset-total" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[9990] hidden flex items-center justify-center p-4 fade-in">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col border border-red-300">
+        <div class="bg-red-600 text-white p-3 flex justify-between items-center shrink-0 pulse-red">
+            <h3 class="font-bold text-[12px] tracking-wide uppercase">
+                <i class="fa-solid fa-warning mr-2"></i> Reset Total de Matriz
+            </h3>
+            <button onclick="cerrarModalResetTotal()" class="text-gray-300 hover:text-white transition"><i class="fa-solid fa-times"></i></button>
+        </div>
+        <form id="form-reset-total" onsubmit="confirmarResetTotal(event)" class="p-5 bg-red-50 space-y-4">
+            <div class="bg-white border-l-4 border-red-500 p-3 rounded">
+                <p class="text-[11px] text-red-900 font-bold mb-2">⚠️ ACCIÓN IRREVERSIBLE Y MASIVA</p>
+                <p class="text-[10px] text-red-700 leading-relaxed">
+                    Vas a <b>borrar TODOS los permisos actuales</b> de los 8 grupos predefinidos y reaplicar los predefinidos del Sprint 5 base.
+                </p>
+                <p class="text-[10px] text-red-700 leading-relaxed mt-2">
+                    Los <b>grupos personalizados que tú creaste no se afectan</b>. Tampoco los overrides individuales.
+                </p>
+                <p class="text-[10px] text-red-700 leading-relaxed mt-2">
+                    Esto solo se justifica si experimentaste mucho y quieres volver al estándar de fábrica.
+                </p>
+            </div>
+
+            <div>
+                <label class="block text-[10px] font-bold text-gray-700 uppercase mb-1">Tu PIN para confirmar *</label>
+                <input type="password" id="reset-total-pin" required maxlength="6" pattern="[0-9]{4,6}" placeholder="Ingresa tu PIN" class="w-full border-2 border-red-300 rounded px-3 py-2 text-base font-mono font-bold text-center outline-none focus:border-red-600 bg-white">
+            </div>
+
+            <div class="flex gap-2">
+                <button type="button" onclick="cerrarModalResetTotal()" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 rounded uppercase text-[10px] tracking-wider btn-press">
+                    Cancelar
+                </button>
+                <button type="submit" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded uppercase text-[10px] tracking-wider btn-press">
+                    <i class="fa-solid fa-warning mr-1"></i> Reset Total
+                </button>
+            </div>
         </form>
     </div>
 </div>
@@ -1110,10 +1273,273 @@ cambiarTab = async function(tab) {
         await cargarMatriz();
         cerrarErrorCarga();
         renderMatriz();
+        actualizarSelectorResetGrupo();
     } else if (tab === 'matriz') {
         renderMatriz();
+        actualizarSelectorResetGrupo();
     }
 };
+
+// ════════════════════════════════════════════════════════════════════════════
+// PANEL DE GUÍA
+// ════════════════════════════════════════════════════════════════════════════
+function abrirPanelGuia() {
+    document.getElementById('panel-guia').classList.add('abierto');
+    document.getElementById('panel-guia-overlay').classList.add('visible');
+}
+function cerrarPanelGuia() {
+    document.getElementById('panel-guia').classList.remove('abierto');
+    document.getElementById('panel-guia-overlay').classList.remove('visible');
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// MATRIZ PREDEFINIDA — los permisos originales del Sprint 5
+// (idéntica a sprint5_3_provision_y_matriz.sql)
+// ════════════════════════════════════════════════════════════════════════════
+const MATRIZ_PREDEFINIDA = {
+    ADMINISTRADORES: '*', // Todos los privilegios
+    SUPERVISORES: [
+        'sistema.acceso_base','sistema.acceso_dashboard_completo','sistema.exportar_datos_masivos',
+        'ventas.acceso_pos','ventas.crear_factura','ventas.aplicar_descuento_pequeno','ventas.aplicar_descuento_medio',
+        'ventas.aplicar_descuento_grande','ventas.cambiar_precio_manual','ventas.crear_cotizacion','ventas.crear_nota_entrega',
+        'ventas.anular_factura','ventas.procesar_devolucion','ventas.ver_historial_completo',
+        'compras.acceso','compras.crear_orden','compras.recibir_mercancia','compras.anular_orden','compras.ver_costos_proveedor','compras.gestionar_proveedores',
+        'inventario.acceso','inventario.ver_listado','inventario.ver_costos','inventario.ver_ganancias',
+        'inventario.crear_producto','inventario.editar_producto','inventario.editar_precios','inventario.eliminar_producto',
+        'inventario.ajustar_stock','inventario.transferir_almacen',
+        'finanzas.acceso_bancos','finanzas.crear_ingreso_manual','finanzas.crear_egreso_manual','finanzas.transferencia_entre_cuentas',
+        'finanzas.depositar_a_banco','finanzas.asignar_fondo_cajero','finanzas.ver_movimientos_completos','finanzas.exportar_estados_cuenta',
+        'caja.abrir_turno_propio','caja.cerrar_turno_propio','caja.aceptar_fondo_asignado','caja.rechazar_fondo_asignado',
+        'caja.auto_verificar_cierre_propio','caja.verificar_cierre_ajeno','caja.rechazar_cierre_ajeno','caja.ver_cierres_historicos',
+        'cxc.acceso','cxc.registrar_abono','cxc.condonar_deuda','cxc.exportar_estado_cuenta',
+        'directorio.acceso','directorio.crear_contacto','directorio.editar_contacto','directorio.eliminar_contacto',
+        'taller.acceso','taller.gestionar_ordenes','taller.gestionar_garantias',
+        'reportes.acceso_basicos','reportes.acceso_financieros'
+    ],
+    CAJEROS: [
+        'sistema.acceso_base',
+        'ventas.acceso_pos','ventas.crear_factura','ventas.aplicar_descuento_pequeno','ventas.crear_cotizacion','ventas.crear_nota_entrega',
+        'caja.abrir_turno_propio','caja.cerrar_turno_propio','caja.aceptar_fondo_asignado','caja.rechazar_fondo_asignado','caja.auto_verificar_cierre_propio',
+        'cxc.registrar_abono',
+        'directorio.acceso','directorio.crear_contacto',
+        'reportes.acceso_basicos'
+    ],
+    ALMACENISTAS: [
+        'sistema.acceso_base',
+        'inventario.acceso','inventario.ver_listado','inventario.crear_producto','inventario.editar_producto',
+        'inventario.ajustar_stock','inventario.transferir_almacen',
+        'compras.recibir_mercancia',
+        'reportes.acceso_basicos'
+    ],
+    COMPRADORES: [
+        'sistema.acceso_base',
+        'compras.acceso','compras.crear_orden','compras.recibir_mercancia','compras.anular_orden','compras.ver_costos_proveedor','compras.gestionar_proveedores',
+        'inventario.acceso','inventario.ver_listado','inventario.ver_costos',
+        'directorio.acceso','directorio.crear_contacto','directorio.editar_contacto',
+        'reportes.acceso_basicos'
+    ],
+    CONTADORES: [
+        'sistema.acceso_base','sistema.acceso_dashboard_completo','sistema.ver_audit_log','sistema.exportar_datos_masivos',
+        'ventas.ver_historial_completo','ventas.exportar_seniat',
+        'inventario.acceso','inventario.ver_listado','inventario.ver_costos','inventario.ver_ganancias',
+        'finanzas.acceso_bancos','finanzas.ver_movimientos_completos','finanzas.exportar_estados_cuenta','finanzas.conciliar_bancos',
+        'caja.ver_cierres_historicos',
+        'cxc.acceso','cxc.exportar_estado_cuenta',
+        'directorio.acceso',
+        'reportes.acceso_basicos','reportes.acceso_financieros','reportes.acceso_directivos'
+    ],
+    VENDEDORES_EXT: [
+        'sistema.acceso_base',
+        'ventas.crear_cotizacion','ventas.crear_nota_entrega',
+        'inventario.acceso','inventario.ver_listado',
+        'directorio.acceso','directorio.crear_contacto','directorio.editar_contacto',
+        'reportes.acceso_basicos'
+    ],
+    SOLO_LECTURA: [
+        'sistema.acceso_base','sistema.acceso_dashboard_completo','sistema.ver_audit_log',
+        'ventas.ver_historial_completo',
+        'inventario.acceso','inventario.ver_listado','inventario.ver_costos','inventario.ver_ganancias',
+        'compras.acceso','compras.ver_costos_proveedor',
+        'finanzas.acceso_bancos','finanzas.ver_movimientos_completos','finanzas.exportar_estados_cuenta',
+        'caja.ver_cierres_historicos',
+        'cxc.acceso','cxc.exportar_estado_cuenta',
+        'directorio.acceso',
+        'taller.acceso',
+        'reportes.acceso_basicos','reportes.acceso_financieros','reportes.acceso_directivos',
+        'usuarios.ver_listado'
+    ]
+};
+
+// ════════════════════════════════════════════════════════════════════════════
+// RESET POR GRUPO
+// ════════════════════════════════════════════════════════════════════════════
+function actualizarSelectorResetGrupo() {
+    const select = document.getElementById('matriz-reset-grupo');
+    if (!select) return;
+    // Solo grupos predefinidos
+    const predef = dbGrupos.filter(g => g.predefinido && g.estatus === 'ACTIVO');
+    select.innerHTML = '<option value="">🔄 Restaurar grupo...</option>' +
+        predef.map(g => `<option value="${g.id}|${g.codigo}|${escapeHtml(g.nombre)}">↺ ${escapeHtml(g.nombre)}</option>`).join('');
+    select.onchange = () => {
+        if (select.value) {
+            const [id, codigo, nombre] = select.value.split('|');
+            confirmarResetGrupo(id, codigo, nombre);
+            select.value = '';
+        }
+    };
+}
+
+async function confirmarResetGrupo(idGrupo, codigoGrupo, nombreGrupo) {
+    const permisosOriginales = MATRIZ_PREDEFINIDA[codigoGrupo];
+    if (!permisosOriginales) {
+        alert(`No hay matriz predefinida para el grupo ${codigoGrupo}`);
+        return;
+    }
+
+    let listaPermisosOriginales;
+    if (permisosOriginales === '*') {
+        listaPermisosOriginales = dbPermisosCatalogo.map(p => p.codigo);
+    } else {
+        listaPermisosOriginales = permisosOriginales;
+    }
+
+    const permisosActuales = dbAsignaciones
+        .filter(a => a.id_grupo === idGrupo)
+        .map(a => a.codigo_permiso);
+
+    const aAgregar = listaPermisosOriginales.filter(p => !permisosActuales.includes(p));
+    const aQuitar = permisosActuales.filter(p => !listaPermisosOriginales.includes(p));
+
+    if (aAgregar.length === 0 && aQuitar.length === 0) {
+        alert(`✅ El grupo "${nombreGrupo}" ya está en su configuración predefinida.\n\nNo hay cambios que aplicar.`);
+        return;
+    }
+
+    const mensaje = `Restaurar permisos predefinidos para el grupo "${nombreGrupo}":\n\n` +
+                    `+ Se otorgarán ${aAgregar.length} permiso(s)\n` +
+                    `- Se quitarán ${aQuitar.length} permiso(s)\n\n` +
+                    `Esto sobrescribe el estado actual del grupo. ¿Confirmas?`;
+
+    if (!confirm(mensaje)) return;
+
+    mostrarCarga(`Restaurando ${nombreGrupo}...`);
+    let exitos = 0, errores = 0;
+
+    for (const codigo of aAgregar) {
+        try {
+            await rpc('asignar_permiso_a_grupo', { p_id_grupo: idGrupo, p_codigo_permiso: codigo });
+            exitos++;
+        } catch (e) { errores++; }
+    }
+    for (const codigo of aQuitar) {
+        try {
+            await rpc('quitar_permiso_de_grupo', { p_id_grupo: idGrupo, p_codigo_permiso: codigo });
+            exitos++;
+        } catch (e) { errores++; }
+    }
+
+    cerrarErrorCarga();
+    cambiosPendientes = [];
+
+    if (errores > 0) {
+        alert(`⚠️ ${exitos} cambios aplicados, ${errores} errores.`);
+    } else {
+        alert(`✅ Grupo "${nombreGrupo}" restaurado correctamente.\n\n${exitos} cambios aplicados.`);
+    }
+
+    await cargarTodo();
+    await cargarMatriz();
+    renderMatriz();
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// RESET TOTAL DE LA MATRIZ
+// ════════════════════════════════════════════════════════════════════════════
+function abrirModalResetTotal() {
+    document.getElementById('reset-total-pin').value = '';
+    document.getElementById('modal-reset-total').classList.remove('hidden');
+    document.getElementById('modal-reset-total').classList.add('flex');
+    setTimeout(() => document.getElementById('reset-total-pin').focus(), 100);
+}
+function cerrarModalResetTotal() {
+    document.getElementById('modal-reset-total').classList.add('hidden');
+    document.getElementById('modal-reset-total').classList.remove('flex');
+}
+
+async function confirmarResetTotal(e) {
+    e.preventDefault();
+    const pin = document.getElementById('reset-total-pin').value.trim();
+    if (!pin) return alert("PIN requerido");
+
+    mostrarCarga("Validando PIN...");
+    try {
+        // Validar PIN usando un privilegio crítico cualquiera (validar_pin_si_requiere)
+        const r = await rpc('validar_pin_si_requiere', {
+            p_codigo: 'finanzas.crear_ajuste_contable',  // crítico, requiere PIN
+            p_pin: pin
+        });
+        if (!r || !r.ok) {
+            cerrarErrorCarga();
+            alert("❌ PIN inválido");
+            return;
+        }
+    } catch (err) {
+        cerrarErrorCarga();
+        alert("❌ " + err.message);
+        return;
+    }
+
+    cerrarModalResetTotal();
+    mostrarCarga("Reseteando matriz completa...");
+
+    const grupos = dbGrupos.filter(g => g.predefinido && g.estatus === 'ACTIVO');
+    let totalExitos = 0, totalErrores = 0;
+
+    for (const g of grupos) {
+        const permisosOriginales = MATRIZ_PREDEFINIDA[g.codigo];
+        if (!permisosOriginales) continue;
+
+        let listaPermisosOriginales;
+        if (permisosOriginales === '*') {
+            listaPermisosOriginales = dbPermisosCatalogo.map(p => p.codigo);
+        } else {
+            listaPermisosOriginales = permisosOriginales;
+        }
+
+        const permisosActuales = dbAsignaciones
+            .filter(a => a.id_grupo === g.id)
+            .map(a => a.codigo_permiso);
+
+        const aAgregar = listaPermisosOriginales.filter(p => !permisosActuales.includes(p));
+        const aQuitar = permisosActuales.filter(p => !listaPermisosOriginales.includes(p));
+
+        for (const codigo of aAgregar) {
+            try {
+                await rpc('asignar_permiso_a_grupo', { p_id_grupo: g.id, p_codigo_permiso: codigo });
+                totalExitos++;
+            } catch (e) { totalErrores++; }
+        }
+        for (const codigo of aQuitar) {
+            try {
+                await rpc('quitar_permiso_de_grupo', { p_id_grupo: g.id, p_codigo_permiso: codigo });
+                totalExitos++;
+            } catch (e) { totalErrores++; }
+        }
+    }
+
+    cerrarErrorCarga();
+    cambiosPendientes = [];
+
+    if (totalErrores > 0) {
+        alert(`⚠️ Reset Total: ${totalExitos} cambios aplicados, ${totalErrores} errores.`);
+    } else {
+        alert(`✅ Reset Total completado.\n\n${totalExitos} cambios aplicados en ${grupos.length} grupos predefinidos.`);
+    }
+
+    await cargarTodo();
+    await cargarMatriz();
+    renderMatriz();
+}
 
 </script>
 
