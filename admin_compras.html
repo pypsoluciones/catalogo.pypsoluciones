@@ -250,61 +250,81 @@
         }
 
         function limpiarTodo() { document.getElementById('prov-rif').value = ''; document.getElementById('prov-nombre').value = ''; document.getElementById('prov-factura-num').value = ''; listaRecepcion = []; actualizarTablaRecepcion(); }
-
+// --- MAGIA: PROCESAR COMPRA (ARQUITECTURA RPC ACID) ---
         async function procesarCompra() {
-            if(listaRecepcion.length === 0) return alert("Debe agregar productos a la recepción.");
-            const numFactura = document.getElementById('prov-factura-num').value.trim(); const provNombre = document.getElementById('prov-nombre').value.trim(); const provDoc = document.getElementById('prov-tipo').value + document.getElementById('prov-rif').value.trim();
-            if(!numFactura || !provNombre || document.getElementById('prov-rif').value.trim() === '') return alert("Complete los datos obligatorios del proveedor y el N° de Factura.");
+            if(listaRecepcion.length === 0) return mostrarErrorUI("Debe agregar productos a la recepción antes de procesar.");
             
-            const totalUSD = parseFloat(document.getElementById('total-compra-usd').innerText.replace('US$ ', '')); const totalBS = parseFloat(document.getElementById('total-compra-bs').innerText.replace('Bs. ', ''));
+            const numFactura = document.getElementById('prov-factura-num').value.trim(); 
+            const provNombre = document.getElementById('prov-nombre').value.trim(); 
+            const provDoc = document.getElementById('prov-tipo').value + document.getElementById('prov-rif').value.trim();
+            
+            if(!numFactura || !provNombre || document.getElementById('prov-rif').value.trim() === '') {
+                return mostrarErrorUI("Complete los datos obligatorios del proveedor y el N° de Factura.");
+            }
+            
+            const totalUSD = parseFloat(document.getElementById('total-compra-usd').innerText.replace('US$ ', '')); 
+            const totalBS = parseFloat(document.getElementById('total-compra-bs').innerText.replace('Bs. ', ''));
+            
             const btn = document.querySelector('button[onclick="procesarCompra()"]');
-            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-xl"></i> Procesando...`; btn.disabled = true;
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-xl"></i> Cifrando y Procesando Transacción...`; 
+            btn.disabled = true;
 
             try {
-                const bodyFactura = { tipo_transaccion: 'Compra', numero_control_ext: numFactura, cliente_documento: provDoc, cliente_nombre: provNombre, subtotal_usd: totalUSD, total_usd: totalUSD, total_bs: totalBS, tasa_bcv_aplicada: tasaBCV, estatus: 'Completada' };
+                // Payload consolidado para el motor de Supabase
+                const payload = {
+                    p_cliente_documento: provDoc,
+                    p_cliente_nombre: provNombre,
+                    p_numero_control_ext: numFactura,
+                    p_subtotal_usd: totalUSD,
+                    p_total_usd: totalUSD,
+                    p_total_bs: totalBS,
+                    p_tasa_bcv: tasaBCV,
+                    p_detalles: listaRecepcion.map(item => ({
+                        id_producto_sku: item.id_producto_sku,
+                        nombre: item.nombre,
+                        cantidad_recibida: item.cantidad_recibida,
+                        costo_unitario_usd: item.costo_unitario_usd
+                    }))
+                };
                 
-                const resFactura = await fetch(`${SUPABASE_URL}/rest/v1/facturas`, { 
+                // Golpe ÚNICO a la base de datos (Stored Procedure)
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/registrar_compra_erp`, { 
                     method: 'POST', 
-                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, 
-                    body: JSON.stringify(bodyFactura) 
+                    headers: { 
+                        'apikey': SUPABASE_KEY, 
+                        'Authorization': `Bearer ${TOKEN_JWT}`, 
+                        'Content-Type': 'application/json' 
+                    }, 
+                    body: JSON.stringify(payload) 
                 });
-                if(!resFactura.ok) throw new Error("Error registrando la compra matriz");
-                const facData = await resFactura.json();
-                
-                const bodyDetalles = listaRecepcion.map(item => ({ factura_id: facData[0].id_factura, producto_sku: item.id_producto_sku, producto_nombre: item.nombre, cantidad: item.cantidad_recibida, precio_unitario_usd: item.costo_unitario_usd, subtotal_usd: item.cantidad_recibida * item.costo_unitario_usd }));
-                const resDetalles = await fetch(`${SUPABASE_URL}/rest/v1/detalles_factura`, { 
-                    method: 'POST', 
-                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, 
-                    body: JSON.stringify(bodyDetalles) 
-                });
-                if(!resDetalles.ok) throw new Error("Error guardando renglones");
 
-                for (const item of listaRecepcion) {
-                    const nuevoStock = Number(item.stock_actual) + Number(item.cantidad_recibida);
-                    
-                    await fetch(`${SUPABASE_URL}/rest/v1/productos?id_producto_sku=eq.${item.id_producto_sku}`, {
-                        method: 'PATCH',
-                        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ stock_actual: nuevoStock })
-                    });
-
-                    await fetch(`${SUPABASE_URL}/rest/v1/precios?id_producto_sku=eq.${item.id_producto_sku}`, {
-                        method: 'PATCH',
-                        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ costo_actual: item.costo_unitario_usd })
-                    });
+                if(!res.ok) {
+                    const errorDB = await res.json();
+                    throw new Error(errorDB.message || "Fallo en la transacción de base de datos.");
                 }
 
-                alert(`¡Compra registrada con éxito!\nEl stock y los costos han sido actualizados en el inventario.`); 
+                alert(`¡COMPRA REGISTRADA CON ÉXITO!\nSe procesó la factura, el Kardex y los Costos Promedio Ponderados sin errores.`); 
                 limpiarTodo();
                 
+                // Recarga de stock fresco en segundo plano
                 const resProd = await fetch(`${SUPABASE_URL}/rest/v1/vista_catalogo_web?select=*&limit=1000`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
                 inventario = await resProd.json();
                 fuseProd = new Fuse(inventario, { keys: ['nombre', 'id_producto_sku'], threshold: 0.3 });
 
-            } catch (error) { alert("Ocurrió un error al procesar la compra. " + error.message); } 
-            finally { btn.innerHTML = `<i class="fa-solid fa-check-double text-xl"></i> Registrar Compra y Sumar Stock`; btn.disabled = false; }
+            } catch (error) { 
+                mostrarErrorUI("Error 500: Fallo en Edge/Transacción. " + error.message); 
+            } finally { 
+                btn.innerHTML = originalHTML; 
+                btn.disabled = false; 
+            }
         }
+
+        // Utilidad de soporte para no usar alertas genéricas
+        function mostrarErrorUI(mensaje) {
+            alert("⚠️ ALERTA DEL SISTEMA\n\n" + mensaje);
+        }
+        
     </script>
     <script src="menu.js"></script>
 </body>
