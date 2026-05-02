@@ -1,198 +1,231 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <script src="config.js"></script>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Motor de Compras ERP SAAS - Marca Blanca - V2CxP</title>
-    <script src="https://kit.fontawesome.com/64d1f2e96d.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2"></script>
+    <title>P&P Admin | Recepción de Mercancía V2</title>
+
+    <script>
+        const cPri = localStorage.getItem('pyp_color_primario') || '#143B62';
+        const cSec = localStorage.getItem('pyp_color_secundario') || '#E67E22';
+        const cTer = localStorage.getItem('pyp_color_terciario') || '#64748b';
+        const fontFam = localStorage.getItem('pyp_fuente') || "'Inter', sans-serif";
+        const fontSiz = localStorage.getItem('pyp_tamano') || "14px";
+        
+        document.documentElement.style.setProperty('--color-primary', cPri);
+        document.documentElement.style.setProperty('--color-secondary', cSec);
+        document.documentElement.style.setProperty('--color-tertiary', cTer);
+        document.documentElement.style.setProperty('--font-global', fontFam);
+        document.documentElement.style.setProperty('--size-global', fontSiz);
+    </script>
+
+    <script>
+        if (!localStorage.getItem('pyp_token_seguro')) {
+            window.location.href = 'login.html';
+        }
+    </script>
+
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.js"></script>
+
     <style>
-        :root { --brand-color: #3b82f6; --brand-secondary: #f3f4f6; --text-color: #1f2937; --success-color: #22c55e; }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
-        body { background: #f9fafb; display: grid; grid-template-columns: 80px 1fr; height: 100vh; overflow: hidden; }
-        .sidebar { background: #1e293b; display: flex; flex-direction: column; align-items: center; padding: 20px 0; gap: 20px; }
-        .brand-logo { width: 50px; height: 50px; border-radius: 12px; background: white; }
-        .nav-icon { color: white; opacity: 0.7; font-size: 1.5rem; }
-        main { display: grid; grid-template-rows: 60px 1fr; overflow: hidden; }
-        header { background: white; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; padding: 0 30px; }
-        h1 { font-size: 1.25rem; }
+        body { font-family: var(--font-global); font-size: var(--size-global); background: #f4f7fa; color: #333; }
+        .bg-primary { background-color: var(--color-primary) !important; }
+        .text-primary { color: var(--color-primary) !important; }
+        .btn-brand { background-color: var(--color-primary); color: white; transition: 0.3s; }
+        .btn-brand:hover { filter: brightness(1.2); }
         
-        /* Contenedor Principal Optimización Profit/Saint */
-        .workspace { padding: 20px; overflow-y: auto; display: grid; grid-template-columns: 1fr 300px; gap: 20px; }
-        .billing-interface { display: flex; flex-direction: column; gap: 15px; }
+        /* Layout ERP Clase Mundial */
+        main { display: grid; grid-template-rows: 65px 1fr; height: 100vh; }
+        header { background: white; border-bottom: 2px solid var(--color-secondary); display: flex; justify-content: space-between; align-items: center; padding: 0 25px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        
+        .workspace { display: grid; grid-template-columns: 1fr 350px; gap: 20px; padding: 20px; overflow: hidden; }
+        .billing-area { display: flex; flex-direction: column; gap: 20px; overflow-y: auto; padding-right: 5px; }
+        
+        .card { background: white; border-radius: 12px; border: 1px solid #e2e8f0; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        .grid-header { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
+        .full-width { grid-column: span 2; }
+        
+        .section-title { font-size: 0.85rem; font-weight: 800; text-transform: uppercase; color: var(--color-primary); border-bottom: 1px solid #edf2f7; padding-bottom: 8px; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
+        
+        label { font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 5px; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.9rem; outline: none; }
+        input:focus { border-color: var(--color-secondary); }
+        input[readonly] { background: #f8fafc; cursor: not-allowed; }
 
-        /* HEADER FORM - Reingeniería Profesional */
-        .form-header-group { background: white; padding: 15px; border-radius: 12px; border: 1px solid #e5e7eb; display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
-        .section-separator { grid-column: span 2; border-bottom: 1px solid #e5e7eb; padding-bottom: 5px; margin-bottom: 5px; color: var(--brand-color); font-weight: 700; font-size: 0.9rem; }
-        .form-field { display: flex; flex-direction: column; gap: 5px; }
-        label { font-size: 0.8rem; font-weight: 600; color: #6b7280; }
-        input, select { padding: 10px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.9rem; }
-        input[readonly] { background: #f3f4f6; color: #4b5563; }
-        
-        /* Sección Directorio Maestro (Busqueda Profesional) */
-        .directorio-field { grid-column: span 2; position: relative; }
-        .prov-search-results { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #d1d5db; border-radius: 8px; z-index: 10; max-height: 200px; overflow-y: auto; display: none; }
-        .prov-result-item { padding: 10px; cursor: pointer; border-bottom: 1px solid #eee; }
-        .prov-result-item:hover { background: #f3f4f6; }
-        
-        /* Visualizador de Recepción V2 Visual (Profit Style) */
-        .billing-body { background: white; padding: 15px; border-radius: 12px; border: 1px solid #e5e7eb; min-height: 300px; }
-        .renglones-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-        .renglones-table th { text-align: left; border-bottom: 2px solid #eee; padding: 10px; color: #6b7280; }
-        .renglones-table td { padding: 10px; border-bottom: 1px solid #eee; }
-        
-        /* Panel Derecho: Buscador y Totales */
-        .billing-sidebar { display: flex; flex-direction: column; gap: 20px; }
-        
-        /* Totales (Modo Bancario: Privacidad) */
-        .totals-panel { background: #1e293b; color: white; padding: 20px; border-radius: 12px; display: flex; flex-direction: column; gap: 10px; position: relative; }
-        .privacidad-total { position: absolute; top: 10px; right: 10px; color: white; opacity: 0.5; cursor: pointer; }
-        .privacidad-total:hover { opacity: 1; }
-        .totals-bs { font-size: 0.9rem; opacity: 0.8; }
-        .totals-usd { font-size: 1.5rem; font-weight: 700; color: #4ade80; }
-        
-        /* DIFUMINADO MODO BANCARIO */
-        .banco-blur { filter: blur(5px); pointer-events: none; transition: 0.2s; }
+        /* Tabla de Renglones */
+        .table-container { background: white; border-radius: 12px; border: 1px solid #e2e8f0; flex-grow: 1; overflow-y: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        thead { position: sticky; top: 0; background: #f8fafc; z-index: 5; }
+        th { text-align: left; padding: 12px; font-size: 0.75rem; color: #64748b; border-bottom: 2px solid #e2e8f0; }
+        td { padding: 12px; border-bottom: 1px solid #f1f5f9; font-size: 0.9rem; }
 
+        /* Buscadores Predictivos */
+        .search-wrapper { position: relative; }
+        .search-results { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #e2e8f0; border-radius: 8px; z-index: 50; max-height: 250px; overflow-y: auto; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); display: none; }
+        .search-item { padding: 12px; cursor: pointer; border-bottom: 1px solid #f1f5f9; }
+        .search-item:hover { background: #f1f5f9; color: var(--color-primary); font-weight: 600; }
+
+        /* Panel Lateral de Totales (Modo Bancario) */
+        .totals-card { background: #1e293b; color: white; display: flex; flex-direction: column; gap: 15px; }
+        .total-row { display: flex; justify-content: space-between; align-items: center; }
+        .total-val { font-family: 'Courier New', monospace; font-weight: bold; }
+        .grand-total { font-size: 1.8rem; color: #4ade80; border-top: 1px solid #334155; pt: 10px; }
+        .blur { filter: blur(6px); user-select: none; }
+        
+        .btn-process { width: 100%; padding: 15px; border-radius: 10px; border: none; font-weight: 800; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 10px; }
     </style>
 </head>
-<body>
-    <aside class="sidebar">
-        <img src="https://i.ibb.co/hL41Z5y/isotipo-horizontal.png" alt="Logo" class="brand-logo">
-        <i class="fa-solid fa-file-invoice nav-icon" style="color:var(--brand-color)"></i>
-        <i class="fa-solid fa-boxes-stacked nav-icon"></i>
-    </aside>
+<body onclick="cerrarBuscadores()">
+
     <main>
         <header>
-            <h1><span id="nav-company-name">ERP</span> :: Facturación de Compras (Recepcion V2)</h1>
-            <div id="status-bar"><i class="fa-solid fa-circle text-success-color"></i> Tasa BCV: <span id="header-bcv-val">...</span></div>
+            <div style="display:flex; align-items:center; gap:15px">
+                <i class="fa-solid fa-truck-loading text-primary" style="font-size: 1.8rem;"></i>
+                <h1 style="color: var(--color-primary); font-weight: 900;">RECEPCIÓN DE COMPRAS V2</h1>
+            </div>
+            <div style="display:flex; gap:20px; align-items:center;">
+                <div class="card" style="padding: 5px 15px; border-color: var(--color-secondary); color: var(--color-secondary); font-weight: 800;">
+                    TASA BCV: <span id="val-tasa-bcv">0.00</span>
+                </div>
+            </div>
         </header>
+
         <div class="workspace">
-            <div class="billing-interface">
-                <div class="form-header-group">
+            <div class="billing-area">
+                <div class="card grid-header">
+                    <div class="section-title full-width"><i class="fa-solid fa-address-card"></i> Datos del Proveedor y Factura</div>
                     
-                    <div class="section-separator"><i class="fa-solid fa-address-book"></i> SECCIÓN A: CONEXIÓN AL DIRECTORIO MAESTRO</div>
-                    <div class="form-field directorio-field">
-                        <label for="prov-nombre">Razón Social / Proveedor (Busque aquí)</label>
-                        <input type="text" id="prov-nombre" placeholder="Escriba RIF o Nombre para buscar..." onkeyup="buscarProveedor(this.value)">
-                        <div id="prov-search-results" class="prov-search-results"></div>
-                        <input type="hidden" id="prov-id-master">
-                    </div>
-                    <div class="form-field">
-                        <label for="prov-rif">Documento de Identidad (RIF)</label>
-                        <input type="text" id="prov-rif" readonly placeholder="Rif Autocompletado">
-                    </div>
-                    <div class="form-field">
-                        <label for="prov-direccion">Dirección Fiscal</label>
-                        <input type="text" id="prov-direccion" readonly placeholder="Dirección Autocompletada">
+                    <div class="search-wrapper full-width">
+                        <label>Buscar Proveedor (Directorio Maestro)</label>
+                        <input type="text" id="bus-prov" placeholder="Escribe RIF o Razón Social..." onkeyup="buscarProv(this.value)" onclick="event.stopPropagation()">
+                        <div id="res-prov" class="search-results"></div>
+                        <input type="hidden" id="prov-id">
                     </div>
 
-                    <div class="section-separator"><i class="fa-solid fa-file-signature"></i> SECCIÓN B: DATOS COMERCIALES FACTURA (SEGÚN IMAGEN)</div>
-                    <div class="form-field">
-                        <label for="fac-num">N° Factura Física</label>
-                        <input type="text" id="fac-num" placeholder="Ej: F31603 (Según imagen)">
+                    <div>
+                        <label>Razón Social</label>
+                        <input type="text" id="prov-nombre" readonly>
                     </div>
-                    <div class="form-field">
-                        <label for="fac-control">N° Control de Factura (Obligatorio)</label>
-                        <input type="text" id="fac-control" placeholder="Ej: 00-00123">
+                    <div>
+                        <label>RIF / Documento</label>
+                        <input type="text" id="prov-rif" readonly>
                     </div>
-                    <div class="form-field">
-                        <label for="fac-vendedor">Atendido por (Vendedor Proveedor)</label>
-                        <input type="text" id="fac-vendedor" placeholder="Ej: YOLIMAR C (Según imagen)">
+
+                    <div class="section-title full-width" style="margin-top:10px;"><i class="fa-solid fa-file-invoice-dollar"></i> Información del Documento</div>
+                    
+                    <div>
+                        <label>N° de Factura</label>
+                        <input type="text" id="fac-nro" placeholder="Ej: F-12345">
                     </div>
-                    <div class="form-field">
-                        <label for="fac-condicion">Condición de Pago</label>
+                    <div>
+                        <label>N° de Control</label>
+                        <input type="text" id="fac-control" placeholder="Ej: 00-999">
+                    </div>
+                    <div>
+                        <label>Vendedor (Proveedor)</label>
+                        <input type="text" id="fac-vendedor" placeholder="Nombre del vendedor">
+                    </div>
+                    <div>
+                        <label>Condición de Pago</label>
                         <select id="fac-condicion" onchange="toggleCredito(this.value)">
                             <option value="Contado">Contado</option>
                             <option value="Crédito">Crédito (Afecta CxP)</option>
                         </select>
                     </div>
-                    <div class="form-field" id="cxp-field-group" style="display:none">
-                        <label for="fac-dias">Días de Crédito (CxP)</label>
-                        <input type="number" id="fac-dias" value="15" min="1">
+                    <div id="div-dias" style="display:none">
+                        <label>Días de Crédito</label>
+                        <input type="number" id="fac-dias" value="15">
                     </div>
-
-                    <div class="section-separator"><i class="fa-solid fa-money-bill-trend-up"></i> SECCIÓN C: MULTIMONEDA</div>
-                    <div class="form-field">
-                        <label for="tasa-bcv">Tasa USD (BCV/Pública)</label>
-                        <input type="number" id="tasa-bcv" value="36.50" onkeyup="tasaBCV = this.value; actualizarTotalesVisuales();">
-                    </div>
-                    <div class="form-field">
-                        <label for="tasa-eur">Tasa EUR (Referencia)</label>
-                        <input type="number" id="tasa-eur" placeholder="Ej: 1.0850 (Eur/Usd)">
+                    <div>
+                        <label>Tasa EUR (Ref)</label>
+                        <input type="number" id="tasa-eur" step="0.0001" placeholder="Ej: 1.085">
                     </div>
                 </div>
 
-                <div class="billing-body">
-                    <table class="renglones-table" id="tabla-recepcion">
+                <div class="table-container">
+                    <table>
                         <thead>
                             <tr>
-                                <th>Item</th>
-                                <th>Nombre Producto</th>
+                                <th style="width: 40%;">Producto</th>
                                 <th>IVA</th>
-                                <th>Cantidad</th>
-                                <th>Costo Unit (USD)</th>
-                                <th>Subtotal (USD)</th>
-                                <th>Accion</th>
+                                <th style="text-align: center;">Cantidad</th>
+                                <th style="text-align: right;">Costo USD</th>
+                                <th style="text-align: right;">Subtotal</th>
+                                <th style="width: 50px;"></th>
                             </tr>
                         </thead>
-                        <tbody id="lista-recepcion">
-                            </tbody>
+                        <tbody id="lista-items">
+                            <tr><td colspan="6" style="text-align:center; padding: 40px; color: #94a3b8;">No hay productos agregados.</td></tr>
+                        </tbody>
                     </table>
                 </div>
             </div>
 
-            <div class="billing-sidebar">
-                <div class="form-field directorio-field">
-                    <label for="prod-nombre">Buscar Producto para agregar</label>
-                    <input type="text" id="prod-nombre" placeholder="Nombre o SKU..." onkeyup="buscarProducto(this.value)">
-                    <div id="prod-search-results" class="prov-search-results"></div>
-                </div>
-                
-                <div class="totals-panel">
-                    <i class="fa-solid fa-eye privacidad-total" onclick="toggleModoBancario()"></i>
-                    <div class="totals-title">Total Base Imponible</div>
-                    <div class="totals-bs" banco-maskable>Bs. ...</div>
-                    <div class="totals-usd banco-blur" id="total-recepcion-base-usd" banco-maskable>US$ 0.00</div>
-                    <div class="totals-separator" style="margin:5px 0; border-bottom:1px solid rgba(255,255,255,0.1)"></div>
-                    <div class="totals-title">Total IVA (USD)</div>
-                    <div class="totals-usd banco-blur" style="color:#ef4444" id="total-recepcion-iva-usd" banco-maskable>US$ 0.00</div>
-                    <div class="totals-separator" style="margin:5px 0; border-bottom:2px solid rgba(255,255,255,0.1)"></div>
-                    <div class="totals-title">TOTAL COMPRA V2</div>
-                    <div class="totals-usd banco-blur" style="font-size:1.8rem" id="total-recepcion-final-usd" banco-maskable>US$ 0.00</div>
+            <div style="display: flex; flex-direction: column; gap: 20px;">
+                <div class="card">
+                    <div class="section-title"><i class="fa-solid fa-barcode"></i> Agregar Productos</div>
+                    <div class="search-wrapper">
+                        <input type="text" id="bus-prod" placeholder="SKU o Nombre..." onkeyup="buscarProd(this.value)" onclick="event.stopPropagation()">
+                        <div id="res-prod" class="search-results"></div>
+                    </div>
                 </div>
 
-                <button class="form-header-group" onclick="procesarCompraV2()" style="justify-content:center; background: var(--brand-color); color:white; font-size:1.1rem; font-weight:700; gap:10px">
-                    <i class="fa-solid fa-cloud-upload-alt"></i> Procesar Recepción V2 y CxP
+                <div class="card totals-card">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px">
+                        <span style="font-size: 0.7rem; font-weight: 800; opacity: 0.7;">TOTALES DE RECEPCIÓN</span>
+                        <i class="fa-solid fa-eye" id="eye-toggle" style="cursor:pointer" onclick="toggleBlur()"></i>
+                    </div>
+                    <div class="total-row">
+                        <span>Base Imponible</span>
+                        <span class="total-val blur" id="tot-base">US$ 0.00</span>
+                    </div>
+                    <div class="total-row">
+                        <span>Impuestos (IVA)</span>
+                        <span class="total-val blur" id="tot-iva" style="color: #f87171;">US$ 0.00</span>
+                    </div>
+                    <div class="total-row grand-total">
+                        <span>TOTAL</span>
+                        <span class="total-val blur" id="tot-final">US$ 0.00</span>
+                    </div>
+                    <div class="total-row" style="opacity: 0.8; font-size: 0.85rem;">
+                        <span>Equivalente</span>
+                        <span class="total-val blur" id="tot-bs">Bs. 0.00</span>
+                    </div>
+                </div>
+
+                <button class="btn-process btn-brand" onclick="procesarCompra()">
+                    <i class="fa-solid fa-check-double"></i> REGISTRAR COMPRA
                 </button>
-                <button class="form-header-group" onclick="limpiarTodo()" style="justify-content:center; color: #ef4444; margin-top:-10px; padding: 10px;">
-                    <i class="fa-solid fa-trash"></i> Cancelar
+                <button class="btn-process" style="background:#f1f5f9; color:#64748b;" onclick="location.reload()">
+                    <i class="fa-solid fa-rotate-left"></i> CANCELAR
                 </button>
             </div>
         </div>
     </main>
 
     <script>
-        // --- CONSTANTES DEL SAAS (Multitenant dinámica en Marca Blanca) ---
-        const SUPABASE_URL = localStorage.getItem('erp_supabase_url'); 
-        const SUPABASE_KEY = localStorage.getItem('erp_supabase_key');
-        const TOKEN_JWT = localStorage.getItem('erp_jwt');
-
-        // Estado del módulo
-        let inventario = []; let fuseProd; 
+        const TOKEN_JWT = localStorage.getItem('pyp_token_seguro');
+        let inventario = []; let fuseProd;
         let directorio = []; let fuseProv;
         let listaRecepcion = [];
-        let tasaBCV = 36.50;
-        let modoBancarioActivo = true; // Filosofía: Privacidad por defecto
+        let tasaBCV = 1;
+        let esBlur = true;
 
-        // INICIALIZACIÓN (Garantía de rendimiento: Cachear catálogos)
-        async function loadERPData() {
+        window.onload = async () => {
             try {
-                // Descarga paralela (más rápido)
-                const [pRes, dRes, eRes] = await Promise.all([
-                    fetch(`${SUPABASE_URL}/rest/v1/vista_catalogo_web?select=*&limit=1000`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
-                    fetch(`${SUPABASE_URL}/rest/v1/directorio_maestro?select=*&limit=1000`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
-                    fetch(`${SUPABASE_URL}/rest/v1/empresas?select=nombre_empresa&id_empresa=eq.${localStorage.getItem('erp_empresa_id')}`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } })
+                // 1. Cargar Tasa
+                const resTasa = await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?select=tasa&order=fecha_actualizacion.desc&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                const dTasa = await resTasa.json();
+                if(dTasa[0]) { tasaBCV = dTasa[0].tasa; document.getElementById('val-tasa-bcv').innerText = tasaBCV.toFixed(2); }
+
+                // 2. Cargar Datos
+                const [pRes, dRes] = await Promise.all([
+                    fetch(`${SUPABASE_URL}/rest/v1/vista_catalogo_web?select=*&limit=2000`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
+                    fetch(`${SUPABASE_URL}/rest/v1/directorio_maestro?select=*&limit=1000`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } })
                 ]);
                 
                 inventario = await pRes.json();
@@ -200,203 +233,139 @@
                 
                 directorio = await dRes.json();
                 fuseProv = new Fuse(directorio, { keys: ['nombre_razon_social', 'documento_identidad'], threshold: 0.3 });
-                
-                const empresa = await eRes.json();
-                if(empresa[0]) document.getElementById('nav-company-name').innerText = empresa[0].nombre_empresa.substring(0,6);
+            } catch(e) { console.error(e); }
+        };
 
-                document.getElementById('header-bcv-val').innerText = tasaBCV;
-            } catch (error) { mostrarErrorUI("No se pudo conectar con Supabase. Cierre sesión y reintente."); }
+        function cerrarBuscadores() { 
+            document.getElementById('res-prov').style.display = 'none'; 
+            document.getElementById('res-prod').style.display = 'none'; 
         }
 
-        // Lógica de Búsqueda y Selección en Directorio Maestro (Multitenant)
-        function buscarProveedor(valor) {
-            const container = document.getElementById('prov-search-results');
-            if(!valor) { container.style.display = 'none'; return; }
-            const resultados = fuseProv.search(valor);
-            container.innerHTML =resultados.map(r => `<div class="prov-result-item" onclick="seleccionarProveedor('${r.item.id}')"><strong>${r.item.documento_identidad}</strong> | ${r.item.nombre_razon_social}</div>`).join('');
-            container.style.display = 'block';
+        function buscarProv(v) {
+            const res = document.getElementById('res-prov');
+            if(!v) return res.style.display = 'none';
+            const r = fuseProv.search(v).slice(0, 6);
+            res.innerHTML = r.map(i => `<div class="search-item" onclick="selProv('${i.item.id}')"><strong>${i.item.documento_identidad}</strong> - ${i.item.nombre_razon_social}</div>`).join('');
+            res.style.display = 'block';
         }
 
-        function seleccionarProveedor(id) {
+        function selProv(id) {
             const p = directorio.find(x => x.id === id);
-            document.getElementById('prov-id-master').value = p.id;
+            document.getElementById('prov-id').value = p.id;
             document.getElementById('prov-nombre').value = p.nombre_razon_social;
             document.getElementById('prov-rif').value = p.documento_identidad;
-            document.getElementById('prov-direccion').value = p.direccion_principal;
-            if(p.dias_credito) { document.getElementById('fac-dias').value = p.dias_credito; }
-            document.getElementById('prov-search-results').style.display = 'none';
+            if(p.dias_credito) document.getElementById('fac-dias').value = p.dias_credito;
+            cerrarBuscadores();
         }
 
-        // Lógica de Impuestos por Producto (Vía Visual)
-        // Se inyecta select de IVA dinámico por renglón
-        function actualizarTotalesVisuales() {
-            let baseUSD = 0; let totalIVA = 0;
-            listaRecepcion.forEach(item => {
-                const renglonBase = item.cantidad_recibida * item.costo_unitario_usd;
-                const renglonIVA = renglonBase * (item.impuesto_porcentaje / 100);
-                baseUSD += renglonBase; totalIVA += renglonIVA;
+        function buscarProd(v) {
+            const res = document.getElementById('res-prod');
+            if(!v) return res.style.display = 'none';
+            const r = fuseProd.search(v).slice(0, 10);
+            res.innerHTML = r.map(i => `<div class="search-item" onclick="addProd('${i.item.id_producto_sku}')"><strong>${i.item.id_producto_sku}</strong><br><small>${i.item.nombre}</small></div>`).join('');
+            res.style.display = 'block';
+        }
+
+        function addProd(sku) {
+            if(listaRecepcion.some(x => x.id_producto_sku === sku)) return alert("Ya agregado");
+            const p = inventario.find(x => x.id_producto_sku === sku);
+            listaRecepcion.push({
+                id_producto_sku: p.id_producto_sku,
+                nombre: p.nombre,
+                cantidad_recibida: 1,
+                costo_unitario_usd: 0,
+                impuesto_porcentaje: 16,
+                tipo_impuesto: 'GENERAL'
             });
-            
-            const totalFinalUSD = baseUSD + totalIVA;
-            
-            document.getElementById('total-recepcion-base-usd').innerText = `US$ ${baseUSD.toFixed(2)}`;
-            document.getElementById('total-recepcion-iva-usd').innerText = `US$ ${totalIVA.toFixed(2)}`;
-            document.getElementById('total-recepcion-final-usd').innerText = `US$ ${totalFinalUSD.toFixed(2)}`;
-            document.querySelector('.totals-bs').innerText = `Bs. ${(totalFinalUSD * tasaBCV).toFixed(2)}`;
+            cerrarBuscadores();
+            render();
         }
 
-        // Inyección de renglón con motor de cálculo visual
-        function renderListaRecepcion() {
-            const tbody = document.getElementById('lista-recepcion');
-            tbody.innerHTML = listaRecepcion.map((item, index) => {
-                const cost = item.costo_unitario_usd || 0;
-                const cant = item.cantidad_recibida || 0;
-                const sub = cost * cant;
-                // Motor Visual IVA: 16%, 8%, 0%
+        function editItem(idx, campo, val) {
+            listaRecepcion[idx][campo] = (campo === 'tipo_impuesto') ? val : parseFloat(val) || 0;
+            if(campo === 'tipo_impuesto') listaRecepcion[idx].impuesto_porcentaje = (val==='GENERAL'?16:(val==='REDUCIDO'?8:0));
+            render();
+        }
+
+        function render() {
+            const cont = document.getElementById('lista-items');
+            if(listaRecepcion.length === 0) { cont.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 40px; color: #94a3b8;">No hay productos.</td></tr>'; return updateTotals(0,0); }
+            
+            let b = 0; let i = 0;
+            cont.innerHTML = listaRecepcion.map((item, index) => {
+                const sub = item.cantidad_recibida * item.costo_unitario_usd;
+                const iva = sub * (item.impuesto_porcentaje / 100);
+                b += sub; i += iva;
                 return `<tr>
-                    <td>${index + 1}</td>
-                    <td>${item.nombre} <br><small style="color:#6b7280">${item.id_producto_sku}</small></td>
+                    <td><strong>${item.id_producto_sku}</strong><br><small>${item.nombre}</small></td>
                     <td>
-                        <select onchange="actualizarImpuesto(${index}, this.value)" style="padding:5px; border-radius:5px">
-                            <option value="16" ${item.impuesto_porcentaje == 16 ? 'selected' : ''}>16% G</option>
-                            <option value="8" ${item.impuesto_porcentaje == 8 ? 'selected' : ''}>8% R</option>
-                            <option value="0" ${item.impuesto_porcentaje == 0 ? 'selected' : ''}>Exento</option>
+                        <select onchange="editItem(${index}, 'tipo_impuesto', this.value)">
+                            <option value="GENERAL" ${item.tipo_impuesto==='GENERAL'?'selected':''}>16%</option>
+                            <option value="REDUCIDO" ${item.tipo_impuesto==='REDUCIDO'?'selected':''}>8%</option>
+                            <option value="EXENTO" ${item.tipo_impuesto==='EXENTO'?'selected':''}>Exento</option>
                         </select>
                     </td>
-                    <td><input type="number" value="${item.cantidad_recibida}" onchange="cambiarCantidad(${index}, this.value)" min="1" style="width:60px; padding:5px; text-align:center"></td>
-                    <td><input type="number" value="${item.costo_unitario_usd}" onchange="cambiarCosto(${index}, this.value)" min="0.01" step="0.01" style="width:80px; padding:5px; text-align:center"></td>
-                    <td><strong>$ ${sub.toFixed(2)}</strong></td>
-                    <td><i class="fa-solid fa-times-circle" style="color:#ef4444; cursor:pointer" onclick="eliminarRenglon(${index})"></i></td>
+                    <td><input type="number" value="${item.cantidad_recibida}" style="text-align:center" onchange="editItem(${index}, 'cantidad_recibida', this.value)"></td>
+                    <td><input type="number" value="${item.costo_unitario_usd}" style="text-align:right" onchange="editItem(${index}, 'costo_unitario_usd', this.value)"></td>
+                    <td style="text-align:right; font-weight:bold;">$ ${sub.toFixed(2)}</td>
+                    <td><i class="fa-solid fa-trash" style="color:#cbd5e1; cursor:pointer" onclick="listaRecepcion.splice(${index},1); render();"></i></td>
                 </tr>`;
             }).join('');
-            actualizarTotalesVisuales();
+            updateTotals(b, i);
         }
 
-        function actualizarImpuesto(index, valor) {
-            listaRecepcion[index].impuesto_porcentaje = parseFloat(valor);
-            listaRecepcion[index].tipo_impuesto = valor === "16" ? "GENERAL" : (valor === "8" ? "REDUCIDO" : "EXENTO");
-            actualizarTotalesVisuales();
-        }
-// --- LÓGICA DE MANEJO DE INVENTARIO Y RENGLONES ---
-        
-        function buscarProducto(valor) {
-            const container = document.getElementById('prod-search-results');
-            if(!valor) { container.style.display = 'none'; return; }
-            const resultados = fuseProd.search(valor).slice(0, 10); // Limitamos a 10 resultados para velocidad
-            
-            if(resultados.length === 0) {
-                container.innerHTML = `<div class="prov-result-item" style="color:#ef4444; text-align:center;">No encontrado</div>`;
-            } else {
-                container.innerHTML = resultados.map(r => {
-                    // Escapamos comillas simples en el nombre para evitar romper el onClick
-                    const nombreSeguro = (r.item.nombre || '').replace(/'/g, "\\'");
-                    return `<div class="prov-result-item" onclick="agregarProducto('${r.item.id_producto_sku}', '${nombreSeguro}')">
-                                <strong>${r.item.id_producto_sku}</strong> | ${r.item.nombre}
-                            </div>`;
-                }).join('');
-            }
-            container.style.display = 'block';
+        function updateTotals(b, i) {
+            document.getElementById('tot-base').innerText = `US$ ${b.toFixed(2)}`;
+            document.getElementById('tot-iva').innerText = `US$ ${i.toFixed(2)}`;
+            const f = b + i;
+            document.getElementById('tot-final').innerText = `US$ ${f.toFixed(2)}`;
+            document.getElementById('tot-bs').innerText = `Bs. ${(f * tasaBCV).toFixed(2)}`;
         }
 
-        function agregarProducto(sku, nombre) {
-            const existe = listaRecepcion.find(x => x.id_producto_sku === sku);
-            if(!existe) {
-                // Inyectamos el producto con valores por defecto (Cantidad 1, Costo 0, IVA 16%)
-                listaRecepcion.push({
-                    id_producto_sku: sku,
-                    nombre: nombre,
-                    cantidad_recibida: 1,
-                    costo_unitario_usd: 0,
-                    impuesto_porcentaje: 16,
-                    tipo_impuesto: 'GENERAL'
-                });
-                renderListaRecepcion();
-            } else {
-                mostrarErrorUI("Este producto ya está en la lista de recepción.");
-            }
-            // Limpiamos el buscador
-            document.getElementById('prod-search-results').style.display = 'none';
-            document.getElementById('prod-nombre').value = '';
-        }
+        async function procesarCompra() {
+            const pId = document.getElementById('prov-id').value;
+            const fac = document.getElementById('fac-nro').value.trim();
+            const con = document.getElementById('fac-control').value.trim();
+            if(!pId || !fac || !con || listaRecepcion.length === 0) return alert("Faltan datos obligatorios.");
 
-        function cambiarCantidad(index, valor) {
-            listaRecepcion[index].cantidad_recibida = parseFloat(valor) || 1;
-            renderListaRecepcion(); // Re-renderiza para actualizar el subtotal de la fila
-        }
+            const btn = document.querySelector('.btn-brand');
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> PROCESANDO...`; btn.disabled = true;
 
-        function cambiarCosto(index, valor) {
-            listaRecepcion[index].costo_unitario_usd = parseFloat(valor) || 0;
-            renderListaRecepcion(); // Re-renderiza para actualizar el subtotal de la fila
-        }
-
-        function eliminarRenglon(index) {
-            listaRecepcion.splice(index, 1);
-            renderListaRecepcion();
-        }
-        // --- MAGIA: PROCESAR COMPRA V2CxP (ARQUITECTURA RPC V2) ---
-        async function procesarCompraV2() {
-            const provId = document.getElementById('prov-id-master').value;
-            const facNum = document.getElementById('fac-num').value.trim();
-            const facControl = document.getElementById('fac-control').value.trim();
-            const tasaEur = document.getElementById('tasa-eur').value;
-
-            if(!provId) return mostrarErrorUI("Seleccione un proveedor del Directorio Maestro.");
-            if(!facNum || !facControl) return mostrarErrorUI("El N° Factura y N° Control son obligatorios.");
-            if(listaRecepcion.length === 0) return mostrarErrorUI("Diligencie al menos un renglón de compra.");
-            
-            if(document.getElementById('fac-condicion').value === 'Crédito' && !document.getElementById('fac-dias').value) {
-                return mostrarErrorUI("Para compras a Crédito, diligencie los días de plazo para CxP.");
-            }
-
-            const btn = document.querySelector('button[onclick="procesarCompraV2()"]');
-            btn.innerHTML = `<i class="fa-solid fa-lock fa-spin text-xl"></i> Bloqueando y Transaccionando...`; btn.disabled = true;
-
-            const totalUSD = parseFloat(document.getElementById('total-recepcion-final-usd').innerText.replace('US$ ', ''));
-            const totalBS = parseFloat(document.getElementById('total-recepcion-final-usd').innerText.replace('US$ ', '')) * tasaBCV;
-            const baseImponibleUSD = parseFloat(document.getElementById('total-recepcion-base-usd').innerText.replace('US$ ', ''));
-            const totalIVAUSD = parseFloat(document.getElementById('total-recepcion-iva-usd').innerText.replace('US$ ', ''));
+            const base = parseFloat(document.getElementById('tot-base').innerText.replace('US$ ',''));
+            const iva = parseFloat(document.getElementById('tot-iva').innerText.replace('US$ ',''));
+            const total = base + iva;
 
             try {
-                // Payload V2 Profesional (Conectando todos los pilares)
                 const payload = {
-                    p_id_proveedor: provId,
-                    p_numero_factura: facNum,
-                    p_numero_control: facControl,
-                    p_vendedor_proveedor: document.getElementById('fac-vendedor').value.trim(),
+                    p_id_proveedor: pId,
+                    p_numero_factura: fac,
+                    p_numero_control: con,
+                    p_vendedor_proveedor: document.getElementById('fac-vendedor').value,
                     p_condicion_pago: document.getElementById('fac-condicion').value,
                     p_dias_credito: parseInt(document.getElementById('fac-dias').value) || 0,
-                    p_base_imponible_usd: baseImponibleUSD,
-                    p_total_iva_usd: totalIVAUSD,
-                    p_total_usd: totalUSD,
-                    p_total_bs: totalBS,
+                    p_base_imponible_usd: base,
+                    p_total_iva_usd: iva,
+                    p_total_usd: total,
+                    p_total_bs: total * tasaBCV,
                     p_tasa_bcv: tasaBCV,
-                    p_tasa_eur: parseFloat(tasaEur) || 0,
-                    p_detalles: listaRecepcion // El motor de IVAs se configuró visualmente por renglón
+                    p_tasa_eur: parseFloat(document.getElementById('tasa-eur').value) || 0,
+                    p_detalles: listaRecepcion
                 };
 
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/registrar_compra_erp_v2`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/registrar_compra_erp_v2`, { 
+                    method: 'POST', 
+                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify(payload) 
+                });
 
-                if(!res.ok) { const erDB = await res.json(); throw new Error(erDB.message || "Fallo transaccional."); }
-
-                alert(`¡COMPRA V2 REGISTRADA CON ÉXITO!\nInventario sumado, Kardex generado y Deuda registrada en CxP.\n\nClase mundial.`);
-                limpiarTodo();
-            } catch (error) { mostrarErrorUI("Error 500 Transaccional: " + error.message); } 
-            finally { btn.innerHTML = `<i class="fa-solid fa-cloud-upload-alt"></i> Procesar Recepción V2 y CxP`; btn.disabled = false; }
+                if(!res.ok) throw await res.json();
+                alert("¡Compra procesada con éxito! Inventario y CxP actualizados.");
+                location.reload();
+            } catch(e) { alert("Error: " + (e.message || "Fallo en servidor")); btn.innerHTML = `<i class="fa-solid fa-check-double"></i> REGISTRAR COMPRA`; btn.disabled = false; }
         }
 
-        // Utilidades UI (Filosofía Cero Soporte / Privacidad)
-        function toggleModoBancario() {
-            modoBancarioActivo = !modoBancarioActivo;
-            document.querySelectorAll('[banco-maskable]').forEach(el => modoBancarioActivo ? el.classList.add('banco-blur') : el.classList.remove('banco-blur') );
-            document.querySelector('.privacidad-total').className = modoBancarioActivo ? 'fa-solid fa-eye privacidad-total' : 'fa-solid fa-eye-slash privacidad-total';
-        }
-
-        function toggleCredito(val) { document.getElementById('cxp-field-group').style.display = val === 'Crédito' ? 'flex' : 'none'; }
-        function mostrarErrorUI(msg) { alert("⚠️ SISTEMA ERP\n\n" + msg); }
-        function limpiarTodo() { listaRecepcion = []; renderListaRecepcion(); document.querySelectorAll('input').forEach(i => i.value = ''); document.getElementById('tasa-bcv').value = 36.50; document.getElementById('nav-company-name').innerText = 'ERP'; document.getElementById('fac-condicion').value = 'Contado'; toggleCredito('Contado'); loadERPData(); }
-
-        // Start
-        window.onload = loadERPData;
+        function toggleBlur() { esBlur = !esBlur; document.querySelectorAll('.total-val').forEach(e => esBlur ? e.classList.add('blur') : e.classList.remove('blur')); document.getElementById('eye-toggle').className = esBlur ? 'fa-solid fa-eye' : 'fa-solid fa-eye-slash'; }
+        function toggleCredito(v) { document.getElementById('div-dias').style.display = (v === 'Crédito' ? 'block' : 'none'); }
     </script>
 </body>
 </html>
