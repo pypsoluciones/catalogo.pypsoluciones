@@ -1,10 +1,17 @@
 /* ═══════════════════════════════════════════════════════════════════════════
-   P&P ERP — MENÚ LATERAL GLOBAL
+   P&P ERP — MENÚ LATERAL GLOBAL v2 (Sprint 5 reorganizado)
    ═══════════════════════════════════════════════════════════════════════════
-   - Inyecta sidebar dinámicamente en todas las páginas admin
-   - Campana de notificaciones con badge dinámico (delegada a notificaciones.js)
-   - Branding marca blanca (logo desde localStorage)
-   - Sesión y logout
+   Cambios v2:
+   - "Ventas (POS)" → "Ventas"
+   - Notas de Entrega y Cotizaciones movidos DENTRO de Ventas
+   - Eliminada pestaña independiente "Notas de Entrega"
+   - "Gestión de Compras" → "Factura de Compra"
+   - "Maestro de Productos" → "Productos"
+   - "Finanzas & Caja" → "Finanzas"
+   - "Bancos y Finanzas" → "Bancos y Cajas"
+   - Bóveda Central NO es ítem separado (está dentro de Bancos y Cajas)
+   - "Seguridad y Permisos" MOVIDO dentro de Sistema
+   - Slot deshabilitado para "Facturación" (próximo sprint)
    ═══════════════════════════════════════════════════════════════════════════ */
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -12,6 +19,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const estiloActivoSub = "bg-white/10 text-white font-bold border-l-4 border-secondary pl-2 shadow-inner backdrop-blur-sm";
     const estiloInactivoSub = "text-gray-400 hover:text-white hover:bg-white/5 pl-2";
+    const estiloDeshabilitado = "text-gray-600 cursor-not-allowed pl-2 italic";
 
     const menuHTML = `
     <div id="mobile-overlay" onclick="toggleMobileMenu()" class="fixed inset-0 bg-gray-900/60 z-40 hidden backdrop-blur-sm md:hidden transition-opacity"></div>
@@ -35,12 +43,15 @@ document.addEventListener("DOMContentLoaded", () => {
             </a>
             
             <div class="space-y-1 pt-1">
-                <button type="button" onclick="document.getElementById('submenu-ven').classList.toggle('hidden')" class="w-full flex items-center justify-between p-2 rounded-md transition text-sm ${currentPage.includes('admin_ventas') ? 'bg-white/5 text-white font-bold' : 'text-gray-300 hover:bg-white/10'}">
-                    <div class="flex items-center"><i class="fa-solid fa-cash-register mr-3 w-4"></i> Ventas (POS)</div>
+                <button type="button" onclick="document.getElementById('submenu-ven').classList.toggle('hidden')" class="w-full flex items-center justify-between p-2 rounded-md transition text-sm ${currentPage.includes('admin_ventas') || currentPage.includes('admin_facturacion') || currentPage.includes('admin_cotizaciones') || currentPage.includes('admin_notas') ? 'bg-white/5 text-white font-bold' : 'text-gray-300 hover:bg-white/10'}">
+                    <div class="flex items-center"><i class="fa-solid fa-cash-register mr-3 w-4"></i> Ventas</div>
                     <i class="fa-solid fa-chevron-down text-[10px]"></i>
                 </button>
-                <div id="submenu-ven" class="pl-6 space-y-1 mt-1 ${currentPage.includes('admin_ventas') ? '' : 'hidden'}">
-                    <a href="admin_ventas.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_ventas.html' ? estiloActivoSub : estiloInactivoSub}">Terminal POS</a>
+                <div id="submenu-ven" class="pl-6 space-y-1 mt-1 ${currentPage.includes('admin_ventas') || currentPage.includes('admin_facturacion') || currentPage.includes('admin_cotizaciones') || currentPage.includes('admin_notas') ? '' : 'hidden'}">
+                    <a href="admin_ventas.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_ventas.html' ? estiloActivoSub : estiloInactivoSub}">POS</a>
+                    <span class="block py-1.5 px-3 text-xs rounded-md ${estiloDeshabilitado}" title="Próximo sprint">Facturación <i class="fa-solid fa-clock text-[8px] ml-1"></i></span>
+                    <a href="admin_cotizaciones.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_cotizaciones.html' ? estiloActivoSub : estiloInactivoSub}">Cotizaciones</a>
+                    <a href="admin_notas.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_notas.html' ? estiloActivoSub : estiloInactivoSub}">Notas de Entrega</a>
                     <a href="admin_ventas_historial.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_ventas_historial.html' ? estiloActivoSub : estiloInactivoSub}">Historial de Ventas</a>
                     <a href="admin_ventas_parametros.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_ventas_parametros.html' ? estiloActivoSub : estiloInactivoSub}">Parámetros POS</a>
                 </div>
@@ -52,27 +63,28 @@ document.addEventListener("DOMContentLoaded", () => {
                     <i class="fa-solid fa-chevron-down text-[10px]"></i>
                 </button>
                 <div id="submenu-com" class="pl-6 space-y-1 mt-1 ${currentPage.includes('admin_compras') ? '' : 'hidden'}">
-                    <a href="admin_compras.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_compras.html' ? estiloActivoSub : estiloInactivoSub}">Gestión de Compras</a>
+                    <a href="admin_compras.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_compras.html' ? estiloActivoSub : estiloInactivoSub}">Factura de Compra</a>
                 </div>
             </div>
 
             <div class="space-y-1 pt-1">
-                <button type="button" onclick="document.getElementById('submenu-not').classList.toggle('hidden')" class="w-full flex items-center justify-between p-2 rounded-md transition text-sm ${currentPage.includes('admin_notas') ? 'bg-white/5 text-white font-bold' : 'text-gray-300 hover:bg-white/10'}">
-                    <div class="flex items-center"><i class="fa-solid fa-file-invoice mr-3 w-4"></i> Notas de Entrega</div>
+                <button type="button" onclick="document.getElementById('submenu-inv').classList.toggle('hidden')" class="w-full flex items-center justify-between p-2 rounded-md transition text-sm ${currentPage.includes('admin_productos') ? 'bg-white/5 text-white font-bold' : 'text-gray-300 hover:bg-white/10'}">
+                    <div class="flex items-center"><i class="fa-solid fa-boxes-stacked mr-3 w-4"></i> Inventario</div>
                     <i class="fa-solid fa-chevron-down text-[10px]"></i>
                 </button>
-                <div id="submenu-not" class="pl-6 space-y-1 mt-1 ${currentPage.includes('admin_notas') ? '' : 'hidden'}">
-                    <a href="admin_notas.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_notas.html' ? estiloActivoSub : estiloInactivoSub}">Gestión de Notas</a>
-                    <a href="admin_cotizaciones.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_cotizaciones.html' ? estiloActivoSub : estiloInactivoSub}">Cotizaciones</a>
+                <div id="submenu-inv" class="pl-6 space-y-1 mt-1 ${currentPage.includes('admin_productos') ? '' : 'hidden'}">
+                    <a href="admin_productos.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_productos.html' ? estiloActivoSub : estiloInactivoSub}">Productos</a>
+                    <a href="admin_productos_parametros.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_productos_parametros.html' ? estiloActivoSub : estiloInactivoSub}">Parámetros de Productos</a>
                 </div>
             </div>
 
             <div class="space-y-1 pt-1">
-                <button type="button" onclick="document.getElementById('submenu-fin').classList.toggle('hidden')" class="w-full flex items-center justify-between p-2 rounded-md transition text-sm ${currentPage.includes('admin_cxc') || currentPage.includes('admin_caja') || currentPage.includes('admin_verificacion') || currentPage.includes('admin_boveda') ? 'bg-white/5 text-white font-bold' : 'text-gray-300 hover:bg-white/10'}">
-                    <div class="flex items-center"><i class="fa-solid fa-vault mr-3 w-4"></i> Finanzas & Caja</div>
+                <button type="button" onclick="document.getElementById('submenu-fin').classList.toggle('hidden')" class="w-full flex items-center justify-between p-2 rounded-md transition text-sm ${currentPage.includes('admin_cxc') || currentPage.includes('admin_caja') || currentPage.includes('admin_verificacion') || currentPage.includes('admin_bancos') ? 'bg-white/5 text-white font-bold' : 'text-gray-300 hover:bg-white/10'}">
+                    <div class="flex items-center"><i class="fa-solid fa-landmark mr-3 w-4"></i> Finanzas</div>
                     <i class="fa-solid fa-chevron-down text-[10px]"></i>
                 </button>
-                <div id="submenu-fin" class="pl-6 space-y-1 mt-1 ${currentPage.includes('admin_cxc') || currentPage.includes('admin_caja') || currentPage.includes('admin_verificacion') || currentPage.includes('admin_boveda') ? '' : 'hidden'}">
+                <div id="submenu-fin" class="pl-6 space-y-1 mt-1 ${currentPage.includes('admin_cxc') || currentPage.includes('admin_caja') || currentPage.includes('admin_verificacion') || currentPage.includes('admin_bancos') ? '' : 'hidden'}">
+                    <a href="admin_bancos_finanzas.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_bancos_finanzas.html' ? estiloActivoSub : estiloInactivoSub}">Bancos y Cajas</a>
                     <a href="admin_caja.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_caja.html' ? estiloActivoSub : estiloInactivoSub}">Control de Caja</a>
                     <a href="admin_verificacion_cierres.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_verificacion_cierres.html' ? estiloActivoSub : estiloInactivoSub}">
                         <span class="flex items-center justify-between">
@@ -80,20 +92,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             <span id="badge-cierres-pend" class="hidden bg-red-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full">0</span>
                         </span>
                     </a>
-                    <a href="admin_boveda.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_boveda.html' ? estiloActivoSub : estiloInactivoSub}">Bóveda Central</a>
                     <a href="admin_cxc.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_cxc.html' ? estiloActivoSub : estiloInactivoSub}">Cuentas por Cobrar</a>
-                    <a href="admin_bancos_finanzas.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_bancos_finanzas.html' ? estiloActivoSub : estiloInactivoSub}">Bancos y Finanzas</a>
-                </div>
-            </div>
-            
-            <div class="space-y-1 pt-1">
-                <button type="button" onclick="document.getElementById('submenu-inv').classList.toggle('hidden')" class="w-full flex items-center justify-between p-2 rounded-md transition text-sm ${currentPage.includes('admin_productos') ? 'bg-white/5 text-white font-bold' : 'text-gray-300 hover:bg-white/10'}">
-                    <div class="flex items-center"><i class="fa-solid fa-boxes-stacked mr-3 w-4"></i> Inventario</div>
-                    <i class="fa-solid fa-chevron-down text-[10px]"></i>
-                </button>
-                <div id="submenu-inv" class="pl-6 space-y-1 mt-1 ${currentPage.includes('admin_productos') ? '' : 'hidden'}">
-                    <a href="admin_productos.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_productos.html' ? estiloActivoSub : estiloInactivoSub}">Maestro de Productos</a>
-                    <a href="admin_productos_parametros.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_productos_parametros.html' ? estiloActivoSub : estiloInactivoSub}">Parametros de Productos</a>
                 </div>
             </div>
 
@@ -120,11 +119,14 @@ document.addEventListener("DOMContentLoaded", () => {
             </div>
 
             <div class="space-y-1 pt-1">
-                <button type="button" onclick="document.getElementById('submenu-sis').classList.toggle('hidden')" class="w-full flex items-center justify-between p-2 rounded-md transition text-sm ${currentPage.includes('admin_empleados_roles') || currentPage.includes('admin_configuracion') || currentPage.includes('admin_perfil') ? 'bg-white/5 text-white font-bold' : 'text-gray-300 hover:bg-white/10'}">
+                <button type="button" onclick="document.getElementById('submenu-sis').classList.toggle('hidden')" class="w-full flex items-center justify-between p-2 rounded-md transition text-sm ${currentPage.includes('admin_seguridad') || currentPage.includes('admin_empleados_roles') || currentPage.includes('admin_configuracion') || currentPage.includes('admin_perfil') || currentPage.includes('admin_publicidad') ? 'bg-white/5 text-white font-bold' : 'text-gray-300 hover:bg-white/10'}">
                     <div class="flex items-center"><i class="fa-solid fa-gears mr-3 w-4"></i> Sistema</div>
                     <i class="fa-solid fa-chevron-down text-[10px]"></i>
                 </button>
-                <div id="submenu-sis" class="pl-6 space-y-1 mt-1 ${currentPage.includes('admin_empleados_roles') || currentPage.includes('admin_configuracion') || currentPage.includes('admin_perfil') ? '' : 'hidden'}">
+                <div id="submenu-sis" class="pl-6 space-y-1 mt-1 ${currentPage.includes('admin_seguridad') || currentPage.includes('admin_empleados_roles') || currentPage.includes('admin_configuracion') || currentPage.includes('admin_perfil') || currentPage.includes('admin_publicidad') ? '' : 'hidden'}">
+                    <a href="admin_seguridad.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_seguridad.html' ? estiloActivoSub : estiloInactivoSub}">
+                        <i class="fa-solid fa-shield-halved mr-1 text-[10px]"></i> Seguridad y Permisos
+                    </a>
                     <a href="admin_perfil.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_perfil.html' ? estiloActivoSub : estiloInactivoSub}">Mi Perfil y PIN</a>
                     <a href="admin_empleados_roles.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_empleados_roles.html' ? estiloActivoSub : estiloInactivoSub}">Empleados y Roles</a>
                     <a href="admin_publicidad.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_publicidad.html' ? estiloActivoSub : estiloInactivoSub}">Publicidad TV</a>
@@ -181,7 +183,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     cargarBrandingGlobal();
 
-    // Cargar notificaciones.js dinámicamente (si aún no está cargado)
     if (!document.querySelector('script[src*="notificaciones.js"]')) {
         const s = document.createElement('script');
         s.src = 'notificaciones.js';
@@ -192,13 +193,11 @@ document.addEventListener("DOMContentLoaded", () => {
         };
         document.head.appendChild(s);
     } else {
-        // Ya estaba cargado, solo inicializar
         if (typeof window.ejecutarMotorNotificaciones === 'function') {
             window.ejecutarMotorNotificaciones();
         }
     }
 
-    // Cargar contador de cierres pendientes para el badge del menú lateral
     cargarBadgeCierresPendientes();
 });
 
@@ -230,12 +229,10 @@ window.cargarBrandingGlobal = function() {
     }
 };
 
-// Placeholder por compatibilidad — la lógica real está en notificaciones.js
 window.toggleNotif = window.toggleNotif || function() {
     document.getElementById('panel-notif')?.classList.toggle('hidden');
 };
 
-// Badge de cierres pendientes en el menú lateral
 window.cargarBadgeCierresPendientes = async function() {
     const badge = document.getElementById('badge-cierres-pend');
     if (!badge) return;
@@ -257,6 +254,5 @@ window.cargarBadgeCierresPendientes = async function() {
         }
     } catch {}
 
-    // Refrescar cada 60 segundos
     setTimeout(window.cargarBadgeCierresPendientes, 60_000);
 };
