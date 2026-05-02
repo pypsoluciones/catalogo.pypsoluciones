@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seguridad y Permisos - Admin P&P Soluciones</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <script src="config.js"></script>
+    <script>
+        const cPri = localStorage.getItem('pyp_color_primario') || '#143B62';
+        const cSec = localStorage.getItem('pyp_color_secundario') || '#E67E22';
+        const cTer = localStorage.getItem('pyp_color_terciario') || '#64748b';
+        const fontFam = localStorage.getItem('pyp_fuente') || "'Inter', sans-serif";
+        const fontSiz = localStorage.getItem('pyp_tamano') || "14px";
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: { extend: { colors: { primary: cPri, secondary: cSec, tertiary: cTer } } }
+        }
+    </script>
+    <style>
+        :root { --color-primary: #143B62; --color-secondary: #E67E22; --color-tertiary: #64748b; }
+        body {
+            font-family: var(--font-family, 'Inter', sans-serif);
+            font-size: var(--font-size, 14px);
+            background-color: #f1f5f9; color: #475569;
+        }
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .btn-press:active { transform: scale(0.98); transition: transform 0.05s; }
+        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #e2e8f0; border-radius: 10px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: var(--color-tertiary); border-radius: 10px; }
+        .pulse-red { animation: pulseRed 2s ease-in-out infinite; }
+        @keyframes pulseRed {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.5); }
+            50% { box-shadow: 0 0 0 6px rgba(220, 38, 38, 0); }
+        }
+        .badge-sens-NORMAL  { background: #dbeafe; color: #1d4ed8; }
+        .badge-sens-ALTA    { background: #fef3c7; color: #b45309; }
+        .badge-sens-CRITICA { background: #fee2e2; color: #b91c1c; }
+        .grupo-card-predefinido { border-left: 4px solid var(--color-secondary); }
+    </style>
+</head>
+<body class="overflow-x-hidden text-xs">
+
+<div class="flex h-screen bg-slate-100">
+    <main class="flex-1 flex flex-col overflow-hidden">
+        <header class="bg-white border-b border-gray-200 p-3 flex justify-between items-center shrink-0 shadow-sm h-16">
+            <div class="flex items-center gap-3">
+                <button onclick="toggleMobileMenu()" class="md:hidden text-tertiary text-xl"><i class="fa-solid fa-bars"></i></button>
+                <h1 class="text-base font-black text-primary uppercase tracking-wider">
+                    <i class="fa-solid fa-shield-halved text-secondary mr-2"></i>Seguridad y Permisos
+                </h1>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="cargarTodo()" class="text-tertiary hover:text-primary text-lg p-1 transition" title="Recargar">
+                    <i class="fa-solid fa-arrows-rotate"></i>
+                </button>
+            </div>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-4 md:p-6 custom-scroll">
+
+            <!-- TABS -->
+            <div class="flex flex-wrap gap-1 mb-6 border-b border-gray-200 overflow-x-auto custom-scroll">
+                <button onclick="cambiarTab('grupos')" id="tab-grupos"
+                        class="py-2 px-4 text-sm font-black border-b-2 border-primary text-primary transition uppercase tracking-wider whitespace-nowrap">
+                    <i class="fa-solid fa-people-group mr-1"></i> Grupos
+                </button>
+                <button onclick="cambiarTab('matriz')" id="tab-matriz"
+                        class="py-2 px-4 text-sm font-bold border-b-2 border-transparent text-gray-400 hover:text-gray-600 transition uppercase tracking-wider whitespace-nowrap">
+                    <i class="fa-solid fa-table-cells mr-1"></i> Matriz Permisos
+                </button>
+                <button onclick="cambiarTab('usuarios')" id="tab-usuarios"
+                        class="py-2 px-4 text-sm font-bold border-b-2 border-transparent text-gray-400 hover:text-gray-600 transition uppercase tracking-wider whitespace-nowrap">
+                    <i class="fa-solid fa-user-tag mr-1"></i> Usuarios y Grupos
+                </button>
+                <button onclick="cambiarTab('overrides')" id="tab-overrides"
+                        class="py-2 px-4 text-sm font-bold border-b-2 border-transparent text-gray-400 hover:text-gray-600 transition uppercase tracking-wider whitespace-nowrap">
+                    <i class="fa-solid fa-user-shield mr-1"></i> Overrides Individuales
+                </button>
+            </div>
+
+            <!-- ════════════════════════════════════════════════════════════
+                 TAB 1: GRUPOS
+                 ════════════════════════════════════════════════════════════ -->
+            <div id="vista-grupos" class="fade-in space-y-4">
+                <div class="bg-blue-50 border-l-4 border-blue-500 p-3 rounded">
+                    <div class="flex gap-2">
+                        <i class="fa-solid fa-circle-info text-blue-500 text-base mt-0.5"></i>
+                        <div>
+                            <p class="text-[11px] text-blue-800 leading-relaxed">
+                                <span class="font-black">Grupos predefinidos:</span> los 8 grupos creados automáticamente al iniciar tu empresa.
+                                Puedes <span class="font-bold">editar sus permisos</span> desde la pestaña "Matriz Permisos", pero no puedes eliminarlos.
+                                <span class="font-black">Grupos personalizados:</span> los que tú crees aquí — totalmente flexibles.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-3">
+                    <div>
+                        <h2 class="text-lg font-black text-primary tracking-wide uppercase">Grupos de Seguridad</h2>
+                        <p class="text-[11px] text-gray-500 font-medium" id="grupos-resumen">Cargando...</p>
+                    </div>
+                    <button onclick="abrirModalGrupo()" class="bg-secondary hover:opacity-90 text-white px-4 py-2 rounded-lg font-bold shadow-sm transition btn-press text-[10px] uppercase tracking-wider flex items-center gap-2">
+                        <i class="fa-solid fa-plus"></i> Nuevo Grupo
+                    </button>
+                </div>
+
+                <div id="grid-grupos" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Grupos renderizados por JS -->
+                </div>
+            </div>
+
+            <!-- ════════════════════════════════════════════════════════════
+                 TAB 2: MATRIZ PERMISOS (placeholder, va en próximo turno)
+                 ════════════════════════════════════════════════════════════ -->
+            <div id="vista-matriz" class="hidden fade-in">
+                <div class="bg-yellow-50 border border-yellow-300 rounded-lg p-6 text-center">
+                    <i class="fa-solid fa-tools text-3xl text-yellow-600 mb-3"></i>
+                    <h3 class="text-base font-black text-yellow-800 uppercase">Matriz de Permisos</h3>
+                    <p class="text-[11px] text-yellow-700 mt-2">
+                        Esta tab se entrega en el siguiente turno. Visualización completa de los 84 privilegios × 8 grupos con módulos colapsables.
+                    </p>
+                </div>
+            </div>
+
+            <!-- ════════════════════════════════════════════════════════════
+                 TAB 3: USUARIOS Y GRUPOS (placeholder)
+                 ════════════════════════════════════════════════════════════ -->
+            <div id="vista-usuarios" class="hidden fade-in">
+                <div class="bg-yellow-50 border border-yellow-300 rounded-lg p-6 text-center">
+                    <i class="fa-solid fa-tools text-3xl text-yellow-600 mb-3"></i>
+                    <h3 class="text-base font-black text-yellow-800 uppercase">Usuarios y Grupos</h3>
+                    <p class="text-[11px] text-yellow-700 mt-2">
+                        Tab pendiente. Asignar usuarios a grupos múltiples. Vista por usuario y por grupo.
+                    </p>
+                </div>
+            </div>
+
+            <!-- ════════════════════════════════════════════════════════════
+                 TAB 4: OVERRIDES (placeholder)
+                 ════════════════════════════════════════════════════════════ -->
+            <div id="vista-overrides" class="hidden fade-in">
+                <div class="bg-yellow-50 border border-yellow-300 rounded-lg p-6 text-center">
+                    <i class="fa-solid fa-tools text-3xl text-yellow-600 mb-3"></i>
+                    <h3 class="text-base font-black text-yellow-800 uppercase">Overrides Individuales</h3>
+                    <p class="text-[11px] text-yellow-700 mt-2">
+                        Tab pendiente. GRANT/DENY individuales con expiración opcional.
+                    </p>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     LOADING OVERLAY
+     ════════════════════════════════════════════════════════════════ -->
+<div id="loading-overlay" class="fixed inset-0 bg-white/95 z-[9999] hidden flex-col items-center justify-center p-6 text-center backdrop-blur-sm">
+    <i id="loading-icon" class="fa-solid fa-circle-notch fa-spin text-5xl text-primary mb-4"></i>
+    <h2 id="loading-text" class="text-xl font-black text-primary uppercase mb-2">Cargando...</h2>
+    <p id="loading-error" class="text-xs text-gray-500 font-medium max-w-sm hidden text-center"></p>
+    <div id="error-actions" class="hidden mt-6 flex gap-3">
+        <button onclick="cerrarErrorCarga()" class="bg-primary text-white px-4 py-2 rounded-lg text-xs font-bold uppercase">Reintentar</button>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     MODAL: CREAR / EDITAR GRUPO
+     ════════════════════════════════════════════════════════════════ -->
+<div id="modal-grupo" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[9990] hidden flex items-center justify-center p-4 fade-in">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col border border-gray-200">
+        <div class="bg-primary text-white p-3 flex justify-between items-center shrink-0">
+            <h3 id="modal-grupo-titulo" class="font-bold text-[12px] tracking-wide uppercase">
+                <i class="fa-solid fa-people-group mr-2 text-tertiary"></i> Nuevo Grupo
+            </h3>
+            <button onclick="cerrarModalGrupo()" class="text-gray-300 hover:text-white transition"><i class="fa-solid fa-times"></i></button>
+        </div>
+        <form id="form-grupo" onsubmit="guardarGrupo(event)" class="p-5 bg-gray-50 space-y-3">
+            <input type="hidden" id="grp-id">
+            <input type="hidden" id="grp-modo" value="crear">
+
+            <div>
+                <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Código *</label>
+                <input type="text" id="grp-codigo" required maxlength="50" placeholder="Ej: VENDEDOR_MOSTRADOR" class="w-full border border-gray-300 rounded px-3 py-2 text-xs font-mono uppercase focus:border-secondary outline-none bg-white">
+                <p class="text-[10px] text-gray-500 mt-1">Solo letras, números y guion bajo. Se convertirá a mayúsculas.</p>
+            </div>
+
+            <div>
+                <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Nombre visible *</label>
+                <input type="text" id="grp-nombre" required maxlength="100" placeholder="Vendedor de Mostrador" class="w-full border border-gray-300 rounded px-3 py-2 text-xs font-bold focus:border-secondary outline-none bg-white">
+            </div>
+
+            <div>
+                <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Descripción</label>
+                <textarea id="grp-descripcion" maxlength="300" rows="2" placeholder="Para qué sirve este grupo..." class="w-full border border-gray-300 rounded px-3 py-2 text-xs focus:border-secondary outline-none bg-white"></textarea>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Color</label>
+                    <input type="color" id="grp-color" value="#143B62" class="w-full h-10 border border-gray-300 rounded outline-none bg-white cursor-pointer">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Icono FA</label>
+                    <input type="text" id="grp-icono" maxlength="50" placeholder="fa-user" class="w-full border border-gray-300 rounded px-3 py-2 text-xs font-mono focus:border-secondary outline-none bg-white">
+                </div>
+            </div>
+
+            <div id="grp-estatus-row" class="hidden">
+                <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Estatus</label>
+                <select id="grp-estatus" class="w-full border border-gray-300 rounded px-3 py-2 text-xs font-bold uppercase focus:border-secondary outline-none bg-white">
+                    <option value="ACTIVO">Activo</option>
+                    <option value="INACTIVO">Inactivo</option>
+                </select>
+            </div>
+
+            <button type="submit" id="btn-guardar-grupo" class="w-full bg-secondary hover:opacity-90 text-white font-bold py-2.5 rounded shadow btn-press uppercase text-[11px] tracking-wider transition mt-2">
+                Guardar Grupo
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     MODAL: ELIMINAR GRUPO (con motivo)
+     ════════════════════════════════════════════════════════════════ -->
+<div id="modal-eliminar-grupo" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[9990] hidden flex items-center justify-center p-4 fade-in">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col border border-gray-200">
+        <div class="bg-red-600 text-white p-3 flex justify-between items-center shrink-0">
+            <h3 class="font-bold text-[12px] tracking-wide uppercase">
+                <i class="fa-solid fa-trash mr-2"></i> Eliminar Grupo
+            </h3>
+            <button onclick="cerrarModalEliminarGrupo()" class="text-gray-300 hover:text-white transition"><i class="fa-solid fa-times"></i></button>
+        </div>
+        <form id="form-eliminar-grupo" onsubmit="confirmarEliminarGrupo(event)" class="p-5 bg-gray-50 space-y-3">
+            <input type="hidden" id="elim-grp-id">
+
+            <div class="bg-red-50 border-l-4 border-red-500 p-3 rounded">
+                <p class="text-[11px] text-red-800 font-bold">
+                    <i class="fa-solid fa-triangle-exclamation mr-1"></i> Acción irreversible
+                </p>
+                <p class="text-[10px] text-red-700 mt-1">
+                    El grupo "<span id="elim-grp-nombre" class="font-black"></span>" será eliminado.
+                    No podrás eliminarlo si tiene usuarios asignados.
+                </p>
+            </div>
+
+            <div>
+                <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Motivo (opcional)</label>
+                <textarea id="elim-grp-motivo" maxlength="200" rows="2" placeholder="Por qué eliminas este grupo..." class="w-full border border-gray-300 rounded px-3 py-2 text-xs focus:border-red-500 outline-none bg-white"></textarea>
+            </div>
+
+            <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 rounded shadow btn-press uppercase text-[11px] tracking-wider transition">
+                Confirmar Eliminación
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════════════════════════
+// GLOBALES
+// ════════════════════════════════════════════════════════════════════════════
+const TOKEN_JWT = localStorage.getItem('pyp_token_seguro');
+let empresaActual = null;
+let authIdActual = null;
+let idUsuarioActual = null;
+let rolActual = null;
+let dbGrupos = [];
+let dbPermisosCatalogo = [];
+let tabActual = 'grupos';
+
+// ════════════════════════════════════════════════════════════════════════════
+// HELPERS
+// ════════════════════════════════════════════════════════════════════════════
+function escapeHtml(s) {
+    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function fmt(n) { return parseFloat(n || 0).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }); }
+
+function mostrarCarga(t) {
+    const ol = document.getElementById('loading-overlay');
+    document.getElementById('loading-text').innerText = t;
+    document.getElementById('loading-error').classList.add('hidden');
+    document.getElementById('error-actions').classList.add('hidden');
+    document.getElementById('loading-icon').className = "fa-solid fa-circle-notch fa-spin text-5xl text-primary mb-4";
+    ol.classList.remove('hidden'); ol.classList.add('flex');
+}
+function cerrarErrorCarga() { document.getElementById('loading-overlay').classList.add('hidden'); }
+function mostrarErrorConexion(msg) {
+    const ol = document.getElementById('loading-overlay');
+    document.getElementById('loading-text').innerText = "Error";
+    document.getElementById('loading-icon').className = "fa-solid fa-triangle-exclamation text-5xl text-red-500 mb-4";
+    document.getElementById('loading-error').innerText = msg;
+    document.getElementById('loading-error').classList.remove('hidden');
+    document.getElementById('error-actions').classList.remove('hidden');
+    ol.classList.remove('hidden'); ol.classList.add('flex');
+}
+function forzarCierreSesion() { localStorage.removeItem('pyp_token_seguro'); window.location.href = 'login.html'; }
+
+// ════════════════════════════════════════════════════════════════════════════
+// API WRAPPERS
+// ════════════════════════════════════════════════════════════════════════════
+async function sb(url, opts={}) {
+    return fetch(`${SUPABASE_URL}/rest/v1/${url}`, {
+        ...opts,
+        headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${TOKEN_JWT}`,
+            'Content-Type': 'application/json',
+            ...(opts.headers || {})
+        }
+    });
+}
+async function rpc(fn, payload) {
+    const res = await sb(`rpc/${fn}`, { method: 'POST', body: JSON.stringify(payload || {}) });
+    if (!res.ok) {
+        const txt = await res.text();
+        let msg = `RPC ${fn} falló (HTTP ${res.status})`;
+        try { const j = JSON.parse(txt); msg = j.message || j.hint || msg; } catch {}
+        throw new Error(msg);
+    }
+    return await res.json();
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// INICIALIZACIÓN
+// ════════════════════════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', async () => {
+    document.documentElement.style.setProperty('--font-family', fontFam);
+    document.documentElement.style.setProperty('--font-size', fontSiz);
+
+    if (!TOKEN_JWT) return forzarCierreSesion();
+
+    mostrarCarga("Cargando seguridad...");
+    try {
+        const payload = JSON.parse(atob(TOKEN_JWT.split('.')[1]));
+        authIdActual = payload.sub;
+
+        const resUser = await sb(`usuarios?auth_id=eq.${authIdActual}&select=id_usuario,id_empresa,rol&limit=1`);
+        if (resUser.ok) {
+            const u = (await resUser.json())[0];
+            if (u) {
+                idUsuarioActual = u.id_usuario;
+                empresaActual = u.id_empresa;
+                rolActual = u.rol;
+            }
+        }
+
+        // Verificar privilegio mínimo: solo Admin/SuperAdmin pueden entrar
+        const r = await rpc('tiene_privilegio', { p_codigo: 'permisos.crear_grupos' });
+        if (!r) {
+            cerrarErrorCarga();
+            document.body.innerHTML = `<div class="flex h-screen items-center justify-center bg-red-50">
+                <div class="text-center max-w-md p-8">
+                    <i class="fa-solid fa-shield-xmark text-6xl text-red-500 mb-4"></i>
+                    <h1 class="text-xl font-black text-red-700 uppercase mb-2">Acceso Denegado</h1>
+                    <p class="text-sm text-red-600">No tienes permisos para acceder al módulo de Seguridad.</p>
+                    <p class="text-xs text-gray-500 mt-3">Necesitas el privilegio: <span class="font-mono font-bold">permisos.crear_grupos</span></p>
+                    <a href="dashboard.html" class="inline-block mt-6 bg-primary text-white px-4 py-2 rounded text-xs font-bold uppercase">Volver al Dashboard</a>
+                </div></div>`;
+            return;
+        }
+
+        await cargarTodo();
+        cerrarErrorCarga();
+    } catch (e) {
+        mostrarErrorConexion("Error: " + e.message);
+    }
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+// CAMBIO DE TAB
+// ════════════════════════════════════════════════════════════════════════════
+function cambiarTab(tab) {
+    tabActual = tab;
+    ['grupos', 'matriz', 'usuarios', 'overrides'].forEach(t => {
+        document.getElementById('vista-' + t).classList.toggle('hidden', t !== tab);
+        const btn = document.getElementById('tab-' + t);
+        if (t === tab) {
+            btn.className = 'py-2 px-4 text-sm font-black border-b-2 border-primary text-primary transition uppercase tracking-wider whitespace-nowrap';
+        } else {
+            btn.className = 'py-2 px-4 text-sm font-bold border-b-2 border-transparent text-gray-400 hover:text-gray-600 transition uppercase tracking-wider whitespace-nowrap';
+        }
+    });
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// CARGA DE DATOS
+// ════════════════════════════════════════════════════════════════════════════
+async function cargarTodo() {
+    try {
+        const [resGrupos, resPerms] = await Promise.all([
+            sb(`grupos_resumen?select=*&order=predefinido.desc,nombre.asc`),
+            sb(`permisos_catalogo?select=*&order=orden.asc`)
+        ]);
+
+        dbGrupos = resGrupos.ok ? await resGrupos.json() : [];
+        dbPermisosCatalogo = resPerms.ok ? await resPerms.json() : [];
+
+        renderGrupos();
+    } catch (e) {
+        console.error("Error cargando datos:", e);
+    }
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// TAB 1: GRUPOS
+// ════════════════════════════════════════════════════════════════════════════
+function renderGrupos() {
+    const grid = document.getElementById('grid-grupos');
+    const resumen = document.getElementById('grupos-resumen');
+
+    const predef = dbGrupos.filter(g => g.predefinido).length;
+    const custom = dbGrupos.length - predef;
+    resumen.textContent = `${dbGrupos.length} grupos · ${predef} predefinidos · ${custom} personalizados`;
+
+    if (!dbGrupos.length) {
+        grid.innerHTML = `<div class="col-span-full p-10 text-center text-gray-400 font-bold uppercase tracking-widest">
+            <i class="fa-solid fa-people-group text-4xl mb-3 block text-gray-300"></i>
+            No hay grupos configurados.
+        </div>`;
+        return;
+    }
+
+    grid.innerHTML = dbGrupos.map(g => {
+        const color = g.color_hex || '#143B62';
+        const icono = g.icono || 'fa-people-group';
+        const claseExtra = g.predefinido ? 'grupo-card-predefinido' : '';
+        const badgePredef = g.predefinido
+            ? `<span class="bg-amber-100 text-amber-800 text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wide">Predefinido</span>`
+            : `<span class="bg-purple-100 text-purple-800 text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wide">Personalizado</span>`;
+        const badgeEstatus = g.estatus === 'INACTIVO'
+            ? `<span class="bg-gray-200 text-gray-600 text-[8px] font-black px-2 py-0.5 rounded uppercase">Inactivo</span>`
+            : '';
+
+        return `
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 ${claseExtra} p-4 flex flex-col hover:shadow-md transition">
+            <div class="flex justify-between items-start mb-3">
+                <div class="flex items-center gap-3 flex-1 min-w-0">
+                    <div class="w-12 h-12 rounded-full flex items-center justify-center text-xl shrink-0" style="background-color: ${color}20; color: ${color};">
+                        <i class="fa-solid ${icono}"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h3 class="text-sm font-black text-gray-800 uppercase leading-tight truncate" title="${escapeHtml(g.nombre)}">${escapeHtml(g.nombre)}</h3>
+                        <p class="text-[9px] font-mono text-gray-500 uppercase tracking-widest truncate">${escapeHtml(g.codigo)}</p>
+                    </div>
+                </div>
+            </div>
+
+            <p class="text-[10px] text-gray-600 mb-3 leading-relaxed min-h-[28px]">${escapeHtml(g.descripcion || '(Sin descripción)')}</p>
+
+            <div class="flex items-center gap-2 mb-3 flex-wrap">
+                ${badgePredef}
+                ${badgeEstatus}
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 border-t border-gray-100 pt-3 mb-3">
+                <div class="text-center">
+                    <p class="text-[8px] text-gray-500 font-bold uppercase">Permisos</p>
+                    <p class="text-base font-black" style="color: ${color};">${fmt(g.cantidad_permisos)}</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-[8px] text-gray-500 font-bold uppercase">Usuarios</p>
+                    <p class="text-base font-black text-tertiary">${fmt(g.cantidad_usuarios)}</p>
+                </div>
+            </div>
+
+            <div class="flex gap-2 mt-auto">
+                <button onclick="abrirModalGrupo('${g.id}')" class="flex-1 bg-blue-100 hover:bg-blue-200 text-blue-700 text-[10px] font-black py-2 rounded uppercase tracking-wider btn-press transition">
+                    <i class="fa-solid fa-pen mr-1"></i> Editar
+                </button>
+                <button onclick="cambiarTab('matriz'); setTimeout(() => filtrarGrupoEnMatriz('${g.id}'), 100);" class="flex-1 bg-secondary hover:opacity-90 text-white text-[10px] font-black py-2 rounded uppercase tracking-wider btn-press transition">
+                    <i class="fa-solid fa-key mr-1"></i> Permisos
+                </button>
+                ${!g.predefinido ? `
+                    <button onclick="abrirModalEliminarGrupo('${g.id}','${escapeHtml(g.nombre)}')" class="bg-red-100 hover:bg-red-200 text-red-700 text-[10px] font-black px-3 py-2 rounded uppercase tracking-wider btn-press transition" title="Eliminar grupo">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                ` : ''}
+            </div>
+        </div>`;
+    }).join('');
+}
+
+// ─── Modal Crear/Editar ───────────────────────────────────────────
+function abrirModalGrupo(idGrupo = null) {
+    const form = document.getElementById('form-grupo');
+    form.reset();
+
+    document.getElementById('grp-color').value = '#143B62';
+    document.getElementById('grp-icono').value = 'fa-people-group';
+
+    if (idGrupo) {
+        const g = dbGrupos.find(x => x.id === idGrupo);
+        if (!g) return;
+
+        document.getElementById('grp-id').value = g.id;
+        document.getElementById('grp-modo').value = 'editar';
+        document.getElementById('grp-codigo').value = g.codigo;
+        document.getElementById('grp-codigo').disabled = true;  // No se cambia el código al editar
+        document.getElementById('grp-nombre').value = g.nombre;
+        document.getElementById('grp-descripcion').value = g.descripcion || '';
+        document.getElementById('grp-color').value = g.color_hex || '#143B62';
+        document.getElementById('grp-icono').value = g.icono || 'fa-people-group';
+        document.getElementById('grp-estatus').value = g.estatus || 'ACTIVO';
+        document.getElementById('grp-estatus-row').classList.remove('hidden');
+
+        document.getElementById('modal-grupo-titulo').innerHTML = `<i class="fa-solid fa-pen mr-2 text-tertiary"></i> Editar Grupo`;
+    } else {
+        document.getElementById('grp-id').value = '';
+        document.getElementById('grp-modo').value = 'crear';
+        document.getElementById('grp-codigo').disabled = false;
+        document.getElementById('grp-estatus-row').classList.add('hidden');
+        document.getElementById('modal-grupo-titulo').innerHTML = `<i class="fa-solid fa-people-group mr-2 text-tertiary"></i> Nuevo Grupo`;
+    }
+
+    document.getElementById('modal-grupo').classList.remove('hidden');
+    document.getElementById('modal-grupo').classList.add('flex');
+}
+function cerrarModalGrupo() {
+    document.getElementById('modal-grupo').classList.add('hidden');
+    document.getElementById('modal-grupo').classList.remove('flex');
+}
+async function guardarGrupo(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btn-guardar-grupo'); btn.disabled = true;
+
+    const modo = document.getElementById('grp-modo').value;
+    const id = document.getElementById('grp-id').value;
+    const codigo = document.getElementById('grp-codigo').value.trim().toUpperCase().replace(/[^A-Z0-9_]/g, '_');
+    const nombre = document.getElementById('grp-nombre').value.trim();
+    const descripcion = document.getElementById('grp-descripcion').value.trim() || null;
+    const color = document.getElementById('grp-color').value;
+    const icono = document.getElementById('grp-icono').value.trim() || null;
+
+    if (!nombre || codigo.length < 3) {
+        alert("Código (mín 3 caracteres) y nombre son obligatorios.");
+        btn.disabled = false; return;
+    }
+
+    mostrarCarga(modo === 'crear' ? "Creando grupo..." : "Actualizando grupo...");
+    try {
+        if (modo === 'crear') {
+            await rpc('crear_grupo', {
+                p_codigo: codigo,
+                p_nombre: nombre,
+                p_descripcion: descripcion,
+                p_color_hex: color,
+                p_icono: icono
+            });
+        } else {
+            const estatus = document.getElementById('grp-estatus').value;
+            await rpc('editar_grupo', {
+                p_id_grupo: id,
+                p_nombre: nombre,
+                p_descripcion: descripcion,
+                p_color_hex: color,
+                p_icono: icono,
+                p_estatus: estatus
+            });
+        }
+        cerrarErrorCarga();
+        cerrarModalGrupo();
+        await cargarTodo();
+    } catch (err) {
+        cerrarErrorCarga();
+        alert("❌ " + err.message);
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+// ─── Modal Eliminar ───────────────────────────────────────────────
+function abrirModalEliminarGrupo(idGrupo, nombreGrupo) {
+    document.getElementById('elim-grp-id').value = idGrupo;
+    document.getElementById('elim-grp-nombre').textContent = nombreGrupo;
+    document.getElementById('elim-grp-motivo').value = '';
+    document.getElementById('modal-eliminar-grupo').classList.remove('hidden');
+    document.getElementById('modal-eliminar-grupo').classList.add('flex');
+}
+function cerrarModalEliminarGrupo() {
+    document.getElementById('modal-eliminar-grupo').classList.add('hidden');
+    document.getElementById('modal-eliminar-grupo').classList.remove('flex');
+}
+async function confirmarEliminarGrupo(e) {
+    e.preventDefault();
+    const id = document.getElementById('elim-grp-id').value;
+    const motivo = document.getElementById('elim-grp-motivo').value.trim() || null;
+
+    mostrarCarga("Eliminando grupo...");
+    try {
+        await rpc('eliminar_grupo', { p_id_grupo: id, p_motivo: motivo });
+        cerrarErrorCarga();
+        cerrarModalEliminarGrupo();
+        await cargarTodo();
+    } catch (err) {
+        cerrarErrorCarga();
+        alert("❌ " + err.message);
+    }
+}
+
+// ─── Placeholder para llamada cruzada desde Tab Grupos a Tab Matriz ─
+function filtrarGrupoEnMatriz(idGrupo) {
+    // Esta función será implementada en el siguiente turno cuando se construya la tab Matriz
+    // Por ahora, solo cambia de tab visualmente
+    console.log('Filtro grupo:', idGrupo);
+}
+
+</script>
+
+<script src="menu.js"></script>
+</body>
+</html>
