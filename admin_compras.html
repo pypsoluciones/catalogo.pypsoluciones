@@ -65,8 +65,9 @@
                         <button onclick="abrirModalProveedor()" class="bg-blue-50 text-blue-600 px-2 py-1 rounded text-[9px] font-black uppercase hover:bg-blue-600 hover:text-white transition">+ Nuevo Proveedor</button>
                     </div>
 
-                    <div class="relative mb-4">
+                  <div class="relative mb-4">
                         <i class="fa-solid fa-search absolute left-3 top-3 text-gray-300"></i>
+                        <input type="hidden" id="prov-id">
                         <input type="text" id="bus-prov" oninput="motorBusquedaProv(this.value)" placeholder="BUSCAR RIF O RAZÓN SOCIAL..." class="w-full pl-9 pr-3 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-xs font-bold outline-none focus:border-primary transition-all">
                         <div id="res-prov" class="absolute w-full bg-white border shadow-2xl rounded-xl mt-1 hidden z-50 max-h-48 overflow-y-auto custom-scroll"></div>
                     </div>
@@ -140,7 +141,7 @@
                     </button>
                     <div class="flex-1 relative">
                         <i class="fa-solid fa-barcode absolute left-4 top-4 text-primary opacity-40"></i>
-                        <input type="text" id="bus-prod" oninput="motorBusquedaProd(this.value)" placeholder="ESCANEAR CÓDIGO O BUSCAR POR NOMBRE/SKU..." class="w-full bg-blue-50 border border-blue-100 rounded-2xl pl-12 pr-4 py-4 text-sm font-black text-primary focus:ring-4 focus:ring-blue-100 outline-none transition-all">
+                        <input type="text" id="bus-prod" oninput="motorBusquedaProd(this.value)" onkeypress="escanerFisico(event, this.value)" placeholder="ESCANEAR CÓDIGO O BUSCAR POR NOMBRE/SKU..." class="w-full bg-blue-50 border border-blue-100 rounded-2xl pl-12 pr-4 py-4 text-sm font-black text-primary focus:ring-4 focus:ring-blue-100 outline-none transition-all">
                         <div id="res-prod" class="absolute w-full bg-white border shadow-2xl rounded-2xl mt-2 hidden z-50 max-h-64 overflow-y-auto custom-scroll"></div>
                     </div>
                 </div>
@@ -304,8 +305,52 @@
             const res = document.getElementById('res-prov'); const clean = normalize(t);
             if(!clean) return res.classList.add('hidden');
             const r = fuseProv.search(clean).slice(0, 6);
-            res.innerHTML = r.length ? r.map(i => `<div onclick="seleccionarProv('${i.item.id}')" class="p-3 border-b hover:bg-blue-50 cursor-pointer flex flex-col transition-all"><span class="text-xs font-black text-primary">${i.item.nombre_razon_social}</span><span class="text-[9px] font-bold text-gray-400">${i.item.documento_identidad}</span></div>`).join('') : '<p class="p-3 text-red-500 font-black text-[10px] text-center uppercase tracking-widest">Proveedor no registrado</p>';
+            // CAMBIO: onmousedown asegura el clic antes de que el body cierre el dropdown
+            res.innerHTML = r.length ? r.map(i => `<div onmousedown="seleccionarProv('${i.item.id}'); event.preventDefault();" class="p-3 border-b hover:bg-blue-50 cursor-pointer flex flex-col transition-all"><span class="text-xs font-black text-primary">${i.item.nombre_razon_social}</span><span class="text-[9px] font-bold text-gray-400">${i.item.documento_identidad}</span></div>`).join('') : '<p class="p-3 text-red-500 font-black text-[10px] text-center uppercase tracking-widest">Proveedor no registrado</p>';
             res.classList.remove('hidden');
+        }
+
+        function seleccionarProv(id) {
+            const p = directorio.find(x => x.id === id);
+            document.getElementById('prov-id').value = p.id;
+            document.getElementById('prov-rif').value = p.documento_identidad;
+            document.getElementById('prov-nombre').value = p.nombre_razon_social;
+            document.getElementById('prov-direccion').value = p.direccion_principal || 'DIRECCIÓN NO REGISTRADA';
+            document.getElementById('prov-telefono').value = p.telefono_principal || '';
+            if(p.vendedor_asignado) document.getElementById('fac-vendedor').value = p.vendedor_asignado;
+            if(p.celular_vendedor) document.getElementById('fac-vendedor-tel').value = p.celular_vendedor;
+            if(p.dias_credito) document.getElementById('fac-dias').value = p.dias_credito;
+            document.getElementById('bus-prov').value = ''; 
+            cerrarDropdowns();
+        }
+
+        function motorBusquedaProd(t) {
+            const res = document.getElementById('res-prod'); const clean = normalize(t);
+            if(!clean) return res.classList.add('hidden');
+            const r = fuseProd.search(clean).slice(0, 10);
+            // CAMBIO: onmousedown asegura el clic antes de que el body cierre el dropdown
+            res.innerHTML = r.length ? r.map(i => `<div onmousedown="agregarRenglon('${i.item.id_producto_sku}', '${i.item.nombre.replace(/'/g,"")}'); event.preventDefault();" class="p-4 border-b hover:bg-blue-50 cursor-pointer flex flex-col gap-1 transition-all"><span class="text-[11px] font-black text-primary">${i.item.nombre}</span><span class="text-[9px] font-bold text-gray-400">SKU: ${i.item.id_producto_sku} ${i.item.codigo_barras ? '| CB: '+i.item.codigo_barras : ''}</span></div>`).join('') : '<p class="p-4 text-red-500 font-black text-[10px] text-center uppercase tracking-widest">Producto no existe</p>';
+            res.classList.remove('hidden');
+        }
+
+        // NUEVO: Procesador directo para Lector de Código de Barras Físico
+        function escanerFisico(e, v) {
+            if(e.key === 'Enter') {
+                e.preventDefault();
+                const clean = normalize(v);
+                if(!clean) return;
+                
+                const prod = inventario.find(p => normalize(p.codigo_barras) === clean || normalize(p.id_producto_sku) === clean);
+                
+                if(prod) {
+                    agregarRenglon(prod.id_producto_sku, prod.nombre);
+                } else {
+                    alert("PRODUCTO NO ENCONTRADO EN INVENTARIO.");
+                }
+                
+                document.getElementById('bus-prod').value = '';
+                cerrarDropdowns();
+            }
         }
 
         function seleccionarProv(id) {
