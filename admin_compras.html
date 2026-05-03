@@ -11,7 +11,6 @@
         const cSec = localStorage.getItem('pyp_color_secundario') || '#E67E22';
         const fontFam = localStorage.getItem('pyp_fuente') || "'Inter', sans-serif";
         const fontSiz = localStorage.getItem('pyp_tamano') || "14px";
-        
         document.documentElement.style.setProperty('--color-primary', cPri);
         document.documentElement.style.setProperty('--color-secondary', cSec);
         document.documentElement.style.setProperty('--font-global', fontFam);
@@ -22,245 +21,230 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.js"></script>
+    <script src="https://unpkg.com/@zxing/library@latest"></script>
     
     <script>
         if (!localStorage.getItem('pyp_token_seguro')) { window.location.href = 'login.html'; }
     </script>
 
     <style>
-        body { font-family: var(--font-global); font-size: var(--size-global); }
-        .text-primary { color: var(--color-primary) !important; }
-        .bg-primary { background-color: var(--color-primary) !important; }
-        .border-primary { border-color: var(--color-primary) !important; }
-        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
-        
-        /* Forzar mayúsculas en inputs */
+        body { font-family: var(--font-global); font-size: var(--size-global); overflow: hidden; }
         input[type="text"], textarea { text-transform: uppercase; }
-        
-        .modal-overlay { background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(4px); }
+        .custom-scroll::-webkit-scrollbar { width: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .modal-scan { background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); }
     </style>
 </head>
 
-<body class="bg-[#f0f2f5] font-sans flex h-screen overflow-hidden text-gray-800" onclick="cerrarDropdowns()">
+<body class="bg-gray-100 flex h-screen" onclick="cerrarDropdowns()">
 
-    <main class="flex-1 flex flex-col h-screen overflow-hidden bg-gray-50">
+    <main class="flex-1 flex flex-col h-screen overflow-hidden">
         
-        <header class="bg-white shadow-sm px-6 py-3 flex justify-between items-center z-10 shrink-0 border-b border-gray-200">
-            <h1 class="text-xl font-black text-primary uppercase"><i class="fa-solid fa-file-invoice mr-2"></i> FACTURA DE COMPRA</h1>
-            <div class="flex gap-4">
-                <div class="text-sm font-bold bg-green-50 text-green-700 px-3 py-1.5 rounded border border-green-200 flex items-center gap-2 shadow-sm">
-                    <i class="fa-solid fa-dollar-sign"></i> BCV: <span id="tasa-actual">Cargando...</span>
+        <header class="bg-white border-b p-3 flex justify-between items-center shadow-sm">
+            <h1 class="text-lg font-black text-primary"><i class="fa-solid fa-file-invoice-dollar mr-2"></i> FACTURA DE COMPRA</h1>
+            <div class="flex gap-3">
+                <div class="bg-green-100 text-green-800 px-3 py-1 rounded-lg border border-green-200 text-xs font-black">
+                    $ BCV: <span id="tasa-usd">0.00</span>
                 </div>
-                <div class="text-sm font-bold bg-blue-50 text-blue-700 px-3 py-1.5 rounded border border-blue-200 flex items-center gap-2 shadow-sm">
-                    <i class="fa-solid fa-euro-sign"></i> EUR: 
-                    <input type="number" id="tasa-eur-header" step="any" class="bg-transparent w-24 outline-none font-black text-blue-800 border-b border-blue-300 px-1" placeholder="0.00" oninput="sincronizarEUR(this.value)">
+                <div class="bg-blue-100 text-blue-800 px-3 py-1 rounded-lg border border-blue-200 text-xs font-black flex items-center gap-2">
+                    € EUR: <input type="number" id="input-tasa-eur" step="any" class="bg-transparent w-20 outline-none border-b border-blue-400 text-center" placeholder="0.00" oninput="actualizarEUR(this.value)">
                 </div>
             </div>
         </header>
 
-        <div class="flex-1 overflow-y-auto p-3 custom-scroll flex flex-col xl:flex-row gap-3">
+        <div class="flex-1 p-3 flex flex-col xl:flex-row gap-3 overflow-hidden">
             
-            <div class="w-full xl:w-[320px] flex flex-col gap-3 shrink-0">
+            <div class="w-full xl:w-[320px] flex flex-col gap-3 shrink-0 custom-scroll overflow-y-auto">
                 
-                <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm relative">
-                    <div class="flex justify-between items-center mb-3 border-b pb-1">
-                        <h3 class="text-xs font-black text-gray-500 uppercase tracking-wider"><i class="fa-solid fa-building"></i> 1. Proveedor</h3>
-                        <button onclick="abrirModalProveedor()" class="bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white border border-blue-200 px-2 py-0.5 rounded text-[10px] font-bold transition flex items-center gap-1 shadow-sm">
-                            <i class="fa-solid fa-plus"></i> Nuevo
-                        </button>
-                    </div>
-                    
-                    <div class="mb-3 relative">
-                        <div class="relative">
-                            <i class="fa-solid fa-search absolute left-3 top-2 text-gray-400 text-xs"></i>
-                            <input type="text" id="buscador-prov" oninput="buscarProvPredictivo(this.value)" onclick="event.stopPropagation()" placeholder="BUSCAR PROVEEDOR..." class="w-full bg-gray-50 border border-gray-300 rounded pl-8 pr-3 py-1.5 text-xs font-bold focus:outline-none focus:border-primary">
-                        </div>
-                        <div id="lista-prov" class="absolute w-full bg-white shadow-xl rounded-b-lg border border-gray-200 mt-1 hidden z-50 max-h-48 overflow-y-auto custom-scroll"></div>
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+                    <div class="flex justify-between items-center mb-3">
+                        <span class="text-[10px] font-black text-gray-400 uppercase tracking-tighter">Datos del Proveedor</span>
+                        <button onclick="abrirModalProveedor()" class="text-blue-600 text-[10px] font-black uppercase hover:underline">+ Nuevo</button>
                     </div>
 
-                    <div class="space-y-2 pt-2 border-t border-gray-100">
-                        <input type="hidden" id="prov-id">
+                    <div class="relative mb-3">
+                        <i class="fa-solid fa-search absolute left-3 top-2.5 text-gray-300"></i>
+                        <input type="text" id="bus-prov" oninput="buscarProv(this.value)" placeholder="BUSCAR RIF O NOMBRE..." class="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-xs font-bold outline-none focus:border-primary">
+                        <div id="res-prov" class="absolute w-full bg-white border shadow-2xl rounded-b-lg mt-1 hidden z-50 max-h-40 overflow-y-auto"></div>
+                    </div>
+
+                    <div class="space-y-2">
                         <div class="flex gap-2">
-                            <div class="w-1/3">
-                                <label class="block text-[9px] font-bold text-gray-400 uppercase">RIF *</label>
-                                <input type="text" id="prov-rif" readonly class="w-full bg-gray-50 border border-gray-200 rounded px-2 py-1 text-xs font-bold text-gray-600 cursor-not-allowed">
+                            <div class="w-1/2">
+                                <label class="text-[9px] font-black text-gray-400 uppercase">RIF (OBLIGATORIO) *</label>
+                                <input type="text" id="prov-rif" readonly class="w-full p-1.5 bg-gray-50 border border-gray-200 rounded text-xs font-bold text-gray-500">
                             </div>
                             <div class="flex-1">
-                                <label class="block text-[9px] font-bold text-gray-400 uppercase">Teléfono</label>
-                                <input type="text" id="prov-telefono" readonly class="w-full bg-gray-50 border border-gray-200 rounded px-2 py-1 text-xs font-bold text-blue-600 cursor-not-allowed">
+                                <label class="text-[9px] font-black text-gray-400 uppercase">Condición *</label>
+                                <select id="fac-condicion" onchange="toggleCredito(this.value)" class="w-full p-1.5 border border-gray-300 rounded text-xs font-black bg-yellow-50 focus:border-primary">
+                                    <option value="Contado">CONTADO</option>
+                                    <option value="Crédito">CRÉDITO (CXP)</option>
+                                </select>
                             </div>
                         </div>
+
                         <div>
-                            <label class="block text-[9px] font-bold text-gray-400 uppercase">Razón Social *</label>
-                            <input type="text" id="prov-nombre" readonly class="w-full bg-gray-50 border border-gray-200 rounded px-2 py-1 text-xs font-black text-gray-800 cursor-not-allowed">
+                            <label class="text-[9px] font-black text-gray-400 uppercase">Razón Social *</label>
+                            <input type="text" id="prov-nombre" readonly class="w-full p-1.5 bg-gray-50 border border-gray-200 rounded text-xs font-black text-gray-800">
                         </div>
+
                         <div>
-                            <label class="block text-[9px] font-bold text-gray-400 uppercase">Dirección Fiscal *</label>
-                            <textarea id="prov-direccion" readonly rows="3" class="w-full bg-gray-50 border border-gray-200 rounded px-2 py-1 text-sm font-bold text-gray-700 cursor-not-allowed resize-none"></textarea>
+                            <label class="text-[9px] font-black text-gray-400 uppercase">Dirección Fiscal *</label>
+                            <textarea id="prov-direccion" readonly rows="3" class="w-full p-2 bg-gray-50 border border-gray-200 rounded text-sm font-bold text-gray-700 leading-tight cursor-not-allowed"></textarea>
+                        </div>
+
+                        <div>
+                            <label class="text-[9px] font-black text-gray-400 uppercase">Teléfono Principal</label>
+                            <input type="text" id="prov-telefono" readonly class="w-full p-1.5 bg-gray-50 border border-gray-200 rounded text-xs font-bold text-blue-600">
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm relative">
-                    <h3 class="text-xs font-black text-gray-500 uppercase tracking-wider mb-3 border-b pb-1"><i class="fa-solid fa-file-invoice"></i> 2. Documento</h3>
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+                    <span class="text-[10px] font-black text-gray-400 uppercase block mb-3 border-b pb-1">Datos del Documento</span>
                     <div class="space-y-2">
                         <div class="flex gap-2">
                             <div class="flex-1">
-                                <label class="block text-[9px] font-bold text-gray-400 uppercase">N° Factura *</label>
-                                <input type="text" id="fac-num" class="w-full border border-gray-300 rounded px-2 py-1 text-xs font-bold focus:border-primary">
+                                <label class="text-[9px] font-black text-gray-400 uppercase">N° Factura *</label>
+                                <input type="text" id="fac-nro" class="w-full p-1.5 border border-gray-300 rounded text-xs font-bold focus:border-primary">
                             </div>
                             <div class="flex-1">
-                                <label class="block text-[9px] font-bold text-gray-400 uppercase">N° Control *</label>
-                                <input type="text" id="fac-control" class="w-full border border-gray-300 rounded px-2 py-1 text-xs font-bold focus:border-primary">
+                                <label class="text-[9px] font-black text-gray-400 uppercase">N° Control *</label>
+                                <input type="text" id="fac-control" class="w-full p-1.5 border border-gray-300 rounded text-xs font-bold focus:border-primary">
                             </div>
                         </div>
-                        <div class="flex gap-2">
-                            <div class="flex-1">
-                                <label class="block text-[9px] font-bold text-gray-400 uppercase">Vendedor</label>
-                                <input type="text" id="fac-vendedor" class="w-full border border-gray-300 rounded px-2 py-1 text-xs focus:border-primary">
-                            </div>
-                            <div class="w-1/3">
-                                <label class="block text-[9px] font-bold text-gray-400 uppercase">Celular</label>
-                                <input type="text" id="fac-vendedor-telefono" oninput="formatearTelFront(this)" class="w-full border border-gray-300 rounded px-2 py-1 text-xs focus:border-primary">
-                            </div>
+                        
+                        <div id="div-dias" style="display:none">
+                            <label class="text-[9px] font-black text-gray-400 uppercase">Días de Crédito (CXP)</label>
+                            <input type="number" id="fac-dias" value="15" class="w-full p-1.5 border border-gray-300 rounded text-xs font-bold">
                         </div>
-                        <div class="flex gap-2">
-                            <div class="flex-1">
-                                <label class="block text-[9px] font-bold text-gray-400 uppercase">Condición</label>
-                                <select id="fac-condicion" onchange="toggleCredito(this.value)" class="w-full border border-gray-300 rounded px-2 py-1 text-xs font-bold focus:border-primary">
-                                    <option value="Contado">CONTADO</option>
-                                    <option value="Crédito">CRÉDITO (CxP)</option>
-                                </select>
-                            </div>
-                            <div class="w-20" id="div-dias" style="display:none">
-                                <label class="block text-[9px] font-bold text-gray-400 uppercase">Días</label>
-                                <input type="number" id="fac-dias" value="15" class="w-full border border-gray-300 rounded px-2 py-1 text-xs text-center font-bold">
-                            </div>
+
+                        <div>
+                            <label class="text-[9px] font-black text-gray-400 uppercase">Nombre Vendedor</label>
+                            <input type="text" id="fac-vendedor" class="w-full p-1.5 border border-gray-300 rounded text-xs focus:border-primary">
+                        </div>
+                        <div>
+                            <label class="text-[9px] font-black text-gray-400 uppercase">Teléfono Vendedor</label>
+                            <input type="text" id="fac-vendedor-tel" oninput="formatearTelFront(this)" class="w-full p-1.5 border border-gray-300 rounded text-xs focus:border-primary">
                         </div>
                     </div>
                 </div>
-
             </div>
 
             <div class="flex-1 flex flex-col gap-3 overflow-hidden">
                 
-                <div class="bg-white p-3 rounded-xl border border-gray-200 shadow-sm shrink-0 flex items-center gap-3 relative">
-                    <i class="fa-solid fa-barcode text-primary text-xl ml-2"></i>
+                <div class="bg-white p-3 rounded-xl border border-gray-200 shadow-sm flex items-center gap-3 relative">
+                    <button onclick="iniciarEscaneo()" class="w-12 h-12 bg-gray-100 border border-gray-200 rounded-lg flex items-center justify-center text-primary hover:bg-primary hover:text-white transition shadow-sm">
+                        <i class="fa-solid fa-camera text-xl"></i>
+                    </button>
                     <div class="flex-1 relative">
-                        <input type="text" id="buscador-prod" oninput="buscarProdPredictivo(this.value)" onclick="event.stopPropagation()" placeholder="ESCANEE CÓDIGO O BUSQUE POR NOMBRE/SKU..." class="w-full bg-blue-50 border border-blue-200 rounded-lg pl-4 pr-3 py-3 text-sm font-black text-primary focus:outline-none focus:border-primary focus:ring-2 focus:ring-blue-100 transition">
-                        <div id="lista-busqueda-prod" class="absolute w-full bg-white shadow-2xl rounded-b-lg border border-gray-200 mt-1 hidden z-50 max-h-60 overflow-y-auto custom-scroll"></div>
+                        <i class="fa-solid fa-barcode absolute left-4 top-3.5 text-primary opacity-50"></i>
+                        <input type="text" id="bus-prod" oninput="buscarProd(this.value)" placeholder="BUSCAR POR SKU, NOMBRE O ESCANEAR CÓDIGO..." class="w-full bg-blue-50 border border-blue-200 rounded-xl pl-12 pr-4 py-3 text-sm font-black text-primary focus:ring-2 focus:ring-blue-100 outline-none transition">
+                        <div id="res-prod" class="absolute w-full bg-white border shadow-2xl rounded-b-xl mt-1 hidden z-50 max-h-60 overflow-y-auto"></div>
                     </div>
                 </div>
 
                 <div class="flex-1 bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col overflow-hidden">
                     <div class="p-3 bg-gray-50 border-b flex justify-between items-center shrink-0">
-                        <h3 class="text-xs font-black text-primary uppercase"><i class="fa-solid fa-list-check"></i> Renglones</h3>
-                        <button onclick="limpiarTodo()" class="text-red-500 hover:text-red-700 text-[10px] font-bold transition"><i class="fa-solid fa-trash"></i> Limpiar Todo</button>
+                        <h3 class="text-[10px] font-black text-primary uppercase"><i class="fa-solid fa-list-check mr-1"></i> Detalle de Factura</h3>
+                        <button onclick="location.reload()" class="text-red-500 text-[10px] font-black uppercase hover:underline">Limpiar Todo</button>
                     </div>
-                    <div class="flex-1 overflow-auto custom-scroll p-0">
-                        <table class="w-full text-left border-collapse whitespace-nowrap">
-                            <thead class="bg-white sticky top-0 z-10 shadow-sm">
-                                <tr class="text-[10px] text-gray-500 uppercase border-b-2 border-gray-200">
-                                    <th class="p-2 pl-4">Producto / SKU</th>
-                                    <th class="p-2 text-center w-24">Tipo IVA</th>
-                                    <th class="p-2 text-center w-20">Cantidad</th>
-                                    <th class="p-2 text-right w-28">Costo (USD)</th>
-                                    <th class="p-2 text-right w-28">Subtotal</th>
-                                    <th class="p-2 text-center w-10"></th>
+                    <div class="flex-1 overflow-auto custom-scroll">
+                        <table class="w-full text-left border-collapse">
+                            <thead class="bg-white sticky top-0 border-b-2 z-10">
+                                <tr class="text-[10px] text-gray-400 uppercase font-black">
+                                    <th class="p-3">Item / SKU</th>
+                                    <th class="p-3 text-center w-24">IVA</th>
+                                    <th class="p-3 text-center w-24">Cant.</th>
+                                    <th class="p-3 text-right w-32">Costo ($)</th>
+                                    <th class="p-3 text-right w-32">Subtotal</th>
+                                    <th class="p-3 w-10"></th>
                                 </tr>
                             </thead>
                             <tbody id="tabla-recepcion" class="divide-y divide-gray-100">
-                                <tr><td colspan="6" class="py-12 text-center text-gray-400 font-bold uppercase"><i class="fa-solid fa-barcode text-4xl mb-2 opacity-30 block"></i> Usa el buscador superior para agregar productos</td></tr>
+                                <tr><td colspan="6" class="p-10 text-center text-gray-300 font-black uppercase text-xs">Agregue productos desde el buscador</td></tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
 
-                <div class="bg-[#1e293b] rounded-xl shadow-lg p-4 shrink-0 text-white flex flex-col md:flex-row justify-between items-center gap-4">
-                    <div class="flex gap-6 w-full md:w-auto">
+                <div class="bg-[#1e293b] rounded-xl p-5 text-white flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div class="flex gap-8 w-full md:w-auto">
                         <div>
-                            <p class="text-[9px] font-bold text-gray-400 uppercase">Base Imponible</p>
-                            <p class="text-lg font-black" id="tot-base">US$ 0.00</p>
+                            <p class="text-[9px] font-black text-gray-400 uppercase">Base Imponible</p>
+                            <p class="text-xl font-black" id="tot-base">US$ 0.00</p>
                         </div>
                         <div>
-                            <p class="text-[9px] font-bold text-gray-400 uppercase">IVA</p>
-                            <p class="text-lg font-black text-red-400" id="tot-iva">US$ 0.00</p>
+                            <p class="text-[9px] font-black text-red-400 uppercase">IVA Total</p>
+                            <p class="text-xl font-black text-red-400" id="tot-iva">US$ 0.00</p>
                         </div>
-                        <div class="border-l border-gray-600 pl-6">
-                            <p class="text-[10px] font-bold text-green-400 uppercase">TOTAL COMPRA</p>
-                            <p class="text-2xl font-black text-green-400" id="tot-final">US$ 0.00</p>
-                            <p class="text-[10px] text-gray-400 font-bold mt-1" id="tot-bs">Bs. 0.00</p>
+                        <div class="border-l border-gray-600 pl-8">
+                            <p class="text-[10px] font-black text-green-400 uppercase">TOTAL FACTURA</p>
+                            <p class="text-3xl font-black text-green-400" id="tot-final">US$ 0.00</p>
+                            <p class="text-[10px] text-gray-400 font-bold" id="tot-bs">Bs. 0.00</p>
                         </div>
                     </div>
                     
-                    <button onclick="procesarCompraV2()" class="w-full md:w-auto bg-primary hover:brightness-110 text-white font-black py-3 px-6 rounded-lg shadow-md transition text-xs uppercase flex justify-center items-center gap-2">
-                        <i class="fa-solid fa-lock"></i> PROCESAR FACTURA
+                    <button onclick="procesarCompraV2()" class="w-full md:w-auto bg-primary hover:brightness-125 text-white font-black py-4 px-10 rounded-xl shadow-lg transition uppercase text-sm flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-lock"></i> Registrar en ERP
                     </button>
                 </div>
             </div>
-
         </div>
     </main>
 
-    <div id="modal-proveedor" class="fixed inset-0 modal-overlay hidden z-50 flex justify-center items-center overflow-y-auto py-6">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl mx-4 transform transition-all">
-            <div class="bg-primary p-3 text-white flex justify-between items-center rounded-t-xl">
-                <h3 class="font-black uppercase text-xs"><i class="fa-solid fa-address-card"></i> Ficha Maestra de Proveedor</h3>
-                <button onclick="cerrarModalProveedor()" class="text-white hover:text-red-300"><i class="fa-solid fa-times text-lg"></i></button>
+    <div id="modal-scan" class="fixed inset-0 modal-scan hidden z-[100] flex flex-col items-center justify-center p-4">
+        <div class="bg-white rounded-2xl overflow-hidden w-full max-w-lg shadow-2xl relative">
+            <div class="p-4 bg-primary text-white flex justify-between items-center">
+                <span class="font-black text-xs uppercase"><i class="fa-solid fa-camera mr-2"></i> Lector de Códigos</span>
+                <button onclick="cerrarEscaneo()"><i class="fa-solid fa-times text-xl"></i></button>
             </div>
-            
-            <div class="p-5 space-y-4">
+            <div class="relative bg-black aspect-video">
+                <video id="video-scan" class="w-full h-full object-cover"></video>
+                <div class="absolute inset-0 border-[40px] border-black/40 pointer-events-none">
+                    <div class="w-full h-full border-2 border-primary border-dashed rounded-lg animate-pulse"></div>
+                </div>
+            </div>
+            <div class="p-4 text-center text-[10px] font-bold text-gray-500 uppercase">Apunta el código de barras del producto al centro del recuadro</div>
+        </div>
+    </div>
+
+    <div id="modal-prov" class="fixed inset-0 modal-scan hidden z-[100] flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-2xl w-full max-w-4xl shadow-2xl overflow-hidden">
+            <div class="p-4 bg-primary text-white flex justify-between items-center">
+                <span class="font-black text-xs uppercase"><i class="fa-solid fa-address-card mr-2"></i> Ficha Maestra Proveedor</span>
+                <button onclick="cerrarModalProveedor()"><i class="fa-solid fa-times text-xl"></i></button>
+            </div>
+            <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[80vh] overflow-y-auto custom-scroll">
                 <div>
-                    <h4 class="text-[10px] font-black text-gray-400 uppercase border-b pb-1 mb-2">A. Identificación y Ubicación</h4>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <h4 class="text-[10px] font-black text-gray-400 uppercase border-b mb-3">Identificación Fiscal</h4>
+                    <div class="space-y-3">
                         <div class="flex gap-2">
-                            <select id="np-tipo" class="border border-gray-300 rounded px-2 py-1.5 text-xs font-bold focus:border-primary w-16">
+                            <select id="np-tipo" class="p-2 border border-gray-300 rounded font-black text-xs w-16">
                                 <option value="J">J</option><option value="G">G</option><option value="V">V</option><option value="E">E</option>
                             </select>
-                            <input type="text" id="np-rif" placeholder="NÚMERO DE RIF *" class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-xs font-bold focus:border-primary bg-yellow-50">
+                            <input type="text" id="np-rif" placeholder="NÚMERO RIF *" class="flex-1 p-2 border border-gray-300 rounded font-black text-xs bg-yellow-50">
                         </div>
-                        <div>
-                            <input type="text" id="np-nombre" placeholder="RAZÓN SOCIAL COMPLETA *" class="w-full border border-gray-300 rounded px-3 py-1.5 text-xs font-bold focus:border-primary bg-yellow-50">
-                        </div>
-                        <div class="md:col-span-2">
-                            <textarea id="np-direccion-prin" placeholder="DIRECCIÓN PRINCIPAL O FISCAL *" rows="2" class="w-full border border-gray-300 rounded px-3 py-1.5 text-xs font-bold focus:border-primary resize-none bg-yellow-50"></textarea>
-                        </div>
+                        <input type="text" id="np-nombre" placeholder="RAZÓN SOCIAL COMPLETA *" class="w-full p-2 border border-gray-300 rounded font-black text-xs bg-yellow-50">
+                        <textarea id="np-dir" placeholder="DIRECCIÓN FISCAL *" rows="3" class="w-full p-2 border border-gray-300 rounded font-black text-xs bg-yellow-50 resize-none"></textarea>
                     </div>
                 </div>
-
                 <div>
-                    <h4 class="text-[10px] font-black text-gray-400 uppercase border-b pb-1 mb-2">B. Datos de Contacto (Formato Libre en Pantalla)</h4>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        <input type="text" id="np-tlf-prin" placeholder="TLF PRINCIPAL (Ej: 0414 1234567)" oninput="formatearTelFront(this)" class="w-full border border-gray-300 rounded px-3 py-1.5 text-xs font-bold focus:border-primary">
-                        <input type="text" id="np-tlf-sec" placeholder="TLF SECUNDARIO" oninput="formatearTelFront(this)" class="w-full border border-gray-300 rounded px-3 py-1.5 text-xs font-bold focus:border-primary">
-                        <input type="email" id="np-email" placeholder="CORREO ELECTRÓNICO" class="w-full border border-gray-300 rounded px-3 py-1.5 text-xs font-bold focus:border-primary lowercase" style="text-transform: none;">
-                        <input type="text" id="np-vend-asig" placeholder="VENDEDOR ASIGNADO" class="w-full border border-gray-300 rounded px-3 py-1.5 text-xs font-bold focus:border-primary">
-                        <input type="text" id="np-cel-vend" placeholder="CELULAR VENDEDOR" oninput="formatearTelFront(this)" class="w-full border border-gray-300 rounded px-3 py-1.5 text-xs font-bold focus:border-primary">
-                    </div>
-                </div>
-
-                <div>
-                    <h4 class="text-[10px] font-black text-gray-400 uppercase border-b pb-1 mb-2">C. Parámetros</h4>
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
-                        <input type="number" id="np-dias" placeholder="DÍAS CRÉDITO" value="0" class="w-full border border-gray-300 rounded px-3 py-1.5 text-xs font-bold focus:border-primary">
-                        <select id="np-categoria" class="w-full border border-gray-300 rounded px-3 py-1.5 text-xs font-bold focus:border-primary uppercase">
-                            <option value="PROVEEDOR_NACIONAL">Nacional</option><option value="PROVEEDOR_INTERNACIONAL">Internacional</option>
-                        </select>
-                        <select id="np-tipo-contrib" class="w-full border border-gray-300 rounded px-3 py-1.5 text-xs font-bold focus:border-primary uppercase">
-                            <option value="ORDINARIO">Ordinario</option><option value="ESPECIAL">Especial</option>
-                        </select>
-                        <select id="np-tipo-per" class="w-full border border-gray-300 rounded px-3 py-1.5 text-xs font-bold focus:border-primary uppercase">
-                            <option value="JURIDICA">Jurídica</option><option value="NATURAL">Natural</option>
+                    <h4 class="text-[10px] font-black text-gray-400 uppercase border-b mb-3">Contacto y Comerciales</h4>
+                    <div class="grid grid-cols-2 gap-3">
+                        <input type="text" id="np-tel" placeholder="TELÉFONO PRINCIPAL" oninput="formatearTelFront(this)" class="p-2 border border-gray-300 rounded font-black text-xs">
+                        <input type="email" id="np-email" placeholder="CORREO ELECTRÓNICO" class="p-2 border border-gray-300 rounded font-black text-xs lowercase" style="text-transform:none">
+                        <input type="text" id="np-vend" placeholder="VENDEDOR ASIGNADO" class="p-2 border border-gray-300 rounded font-black text-xs">
+                        <input type="text" id="np-vend-tel" placeholder="CELULAR VENDEDOR" oninput="formatearTelFront(this)" class="p-2 border border-gray-300 rounded font-black text-xs">
+                        <input type="number" id="np-dias" placeholder="DÍAS CRÉDITO" value="0" class="p-2 border border-gray-300 rounded font-black text-xs">
+                        <select id="np-contrib" class="p-2 border border-gray-300 rounded font-black text-xs">
+                            <option value="ORDINARIO">ORDINARIO</option><option value="ESPECIAL">ESPECIAL</option>
                         </select>
                     </div>
                 </div>
-
-                <div class="flex justify-end pt-3 border-t border-gray-200 gap-4">
-                    <button onclick="cerrarModalProveedor()" class="text-xs font-bold text-gray-500 hover:text-gray-800">CANCELAR</button>
-                    <button onclick="guardarProveedorRápido()" class="bg-green-600 hover:bg-green-700 text-white font-black py-2 px-6 rounded-lg transition uppercase text-xs shadow-md">
-                        <i class="fa-solid fa-save mr-2"></i> GUARDAR Y SELECCIONAR
-                    </button>
+                <div class="md:col-span-2 pt-4 flex justify-end gap-3">
+                    <button onclick="cerrarModalProveedor()" class="text-xs font-black text-gray-400 uppercase">Cancelar</button>
+                    <button onclick="guardarProvMaster()" class="bg-green-600 text-white font-black px-8 py-3 rounded-xl uppercase text-xs shadow-md">Guardar Proveedor</button>
                 </div>
             </div>
         </div>
@@ -268,39 +252,19 @@
 
     <script>
         const TOKEN_JWT = localStorage.getItem('pyp_token_seguro');
-        let inventario = []; let fuseProd; 
-        let directorio = []; let fuseProv;
-        let listaRecepcion = [];
-        let tasaBCV = 1; let tasaEUR = 0;
+        let inventario = []; let fuseProd; let directorio = []; let fuseProv;
+        let listaRecepcion = []; let tasaBCV = 0; let tasaEUR = 0;
         let idEmpresaGlobal = null;
+        let scanner = null;
 
-        // Limpiador Fonético y Acentos (Motor Inteligente)
-        const normalizeText = (text) => {
-            if(!text) return '';
-            return text.toString().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
-        };
-
-        // Formateador Front-end para Teléfonos (Ej: +58 412 1234567)
-        function formatearTelFront(input) {
-            let val = input.value.replace(/[^\d+]/g, ''); // Permite solo numeros y +
-            if (val.length > 3 && !val.includes(' ')) {
-                // Pequeña máscara visual básica
-                val = val.replace(/(\+\d{2})(\d{3})(\d+)/, '$1 $2 $3');
-            }
-            input.value = val;
-        }
-
-        // Limpiador Back-end para Base de Datos (Internacional estricto)
-        function limpiarTelDB(val) {
-            if(!val) return '';
-            return val.replace(/[^\d+]/g, ''); // Se guarda limpio, ej: +584121234567
-        }
+        // --- MOTOR DE BÚSQUEDA INTELIGENTE (Copia de Ventas) ---
+        const normalize = (t) => t ? t.toString().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase() : '';
 
         window.onload = async () => {
             try {
                 const resTasa = await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?select=tasa&order=fecha_actualizacion.desc&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
-                const dTasa = await resTasa.json();
-                if(dTasa && dTasa.length > 0) { tasaBCV = dTasa[0].tasa; document.getElementById('tasa-actual').innerText = tasaBCV.toFixed(2); }
+                const dT = await resTasa.json();
+                if(dT[0]) { tasaBCV = dT[0].tasa; document.getElementById('tasa-usd').innerText = tasaBCV.toFixed(2); }
 
                 const [pRes, dRes] = await Promise.all([
                     fetch(`${SUPABASE_URL}/rest/v1/vista_catalogo_web?select=*&limit=3000`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
@@ -309,232 +273,147 @@
                 
                 inventario = await pRes.json();
                 directorio = await dRes.json();
-                
-                if(inventario.length > 0) idEmpresaGlobal = inventario[0].id_empresa;
-                else if (directorio.length > 0) idEmpresaGlobal = directorio[0].id_empresa;
+                if(inventario[0]) idEmpresaGlobal = inventario[0].id_empresa;
 
-                // Preparación de Array Inteligente para Productos (Acentos, Código Barras, SKU)
-                const invPredictivo = inventario.map(p => ({
-                    ...p,
-                    busqueda_sucia: normalizeText(`${p.id_producto_sku} ${p.nombre} ${p.codigo_barras || ''}`)
-                }));
+                // Indexación Reforzada
+                const invIdx = inventario.map(p => ({ ...p, s: normalize(`${p.id_producto_sku} ${p.nombre} ${p.codigo_barras || ''}`) }));
+                fuseProd = new Fuse(invIdx, { keys: ['s', 'id_producto_sku', 'codigo_barras'], threshold: 0.35 });
 
-                // Configuración agresiva de Fuse.js (Tolerancia a errores 40%)
-                fuseProd = new Fuse(invPredictivo, { 
-                    keys: ['busqueda_sucia', 'codigo_barras', 'id_producto_sku'], 
-                    threshold: 0.4, 
-                    ignoreLocation: true 
-                });
-                
-                const dirPredictivo = directorio.map(p => ({
-                    ...p, busqueda_sucia: normalizeText(`${p.documento_identidad} ${p.nombre_razon_social}`)
-                }));
-
-                fuseProv = new Fuse(dirPredictivo, { keys: ['busqueda_sucia'], threshold: 0.3 });
-
-            } catch(e) { console.error("Error ERP:", e); }
+                const dirIdx = directorio.map(p => ({ ...p, s: normalize(`${p.documento_identidad} ${p.nombre_razon_social}`) }));
+                fuseProv = new Fuse(dirIdx, { keys: ['s'], threshold: 0.3 });
+            } catch(e) { console.error(e); }
         };
 
-        function cerrarDropdowns() { 
-            document.getElementById('lista-prov').classList.add('hidden'); 
-            document.getElementById('lista-busqueda-prod').classList.add('hidden');
-        }
-        
-        function toggleCredito(val) { document.getElementById('div-dias').style.display = val === 'Crédito' ? 'block' : 'none'; }
-        function sincronizarEUR(val) { tasaEUR = parseFloat(val) || 0; }
-        
-        // --- PROVEEDORES ---
-        function buscarProvPredictivo(texto) {
-            const cont = document.getElementById('lista-prov');
-            const cleanText = normalizeText(texto);
-            if (!cleanText) { cont.classList.add('hidden'); return; }
-            
-            const res = fuseProv.search(cleanText).slice(0, 6);
-            if(res.length === 0) cont.innerHTML = '<p class="p-2 text-[10px] text-red-500 font-bold text-center">NO ENCONTRADO</p>';
-            else cont.innerHTML = res.map(r => `<div class="p-2 border-b hover:bg-gray-50 cursor-pointer flex flex-col" onclick="seleccionarProv('${r.item.id}')"><span class="text-xs font-black text-primary">${r.item.nombre_razon_social}</span><span class="text-[10px] text-gray-500 font-bold">${r.item.documento_identidad}</span></div>`).join('');
-            cont.classList.remove('hidden');
+        // --- MANEJO UI ---
+        function cerrarDropdowns() { document.getElementById('res-prov').classList.add('hidden'); document.getElementById('res-prod').classList.add('hidden'); }
+        function toggleCredito(v) { document.getElementById('div-dias').style.display = v === 'Crédito' ? 'block' : 'none'; }
+        function actualizarEUR(v) { tasaEUR = parseFloat(v) || 0; }
+        function formatearTelFront(i) { let v = i.value.replace(/[^\d+]/g, ''); if(v.length > 3 && !v.includes(' ')) v = v.replace(/(\+\d{2})(\d{3})(\d+)/, '$1 $2 $3'); i.value = v; }
+        function limpiarTel(v) { return v ? v.replace(/[^\d+]/g, '') : ''; }
+
+        // --- LÓGICA DE BÚSQUEDA ---
+        function buscarProv(t) {
+            const res = document.getElementById('res-prov'); const clean = normalize(t);
+            if(!clean) return res.classList.add('hidden');
+            const r = fuseProv.search(clean).slice(0, 6);
+            res.innerHTML = r.length ? r.map(i => `<div onclick="selProv('${i.item.id}')" class="p-2 border-b hover:bg-gray-50 cursor-pointer flex flex-col"><span class="text-xs font-black text-primary">${i.item.nombre_razon_social}</span><span class="text-[9px] font-bold text-gray-400">${i.item.documento_identidad}</span></div>`).join('') : '<p class="p-2 text-red-500 font-black text-[10px] text-center">NO EXISTE</p>';
+            res.classList.remove('hidden');
         }
 
-        function seleccionarProv(id) {
+        function selProv(id) {
             const p = directorio.find(x => x.id === id);
             document.getElementById('prov-id').value = p.id;
-            document.getElementById('prov-rif').value = p.documento_identidad || '';
-            document.getElementById('prov-nombre').value = p.nombre_razon_social || '';
+            document.getElementById('prov-rif').value = p.documento_identidad;
+            document.getElementById('prov-nombre').value = p.nombre_razon_social;
             document.getElementById('prov-direccion').value = p.direccion_principal || 'S/D';
-            
-            // Visualmente con máscara (si existe), en DB estará limpio
             document.getElementById('prov-telefono').value = p.telefono_principal || '';
             if(p.vendedor_asignado) document.getElementById('fac-vendedor').value = p.vendedor_asignado;
-            if(p.celular_vendedor) document.getElementById('fac-vendedor-telefono').value = p.celular_vendedor;
+            if(p.celular_vendedor) document.getElementById('fac-vendedor-tel').value = p.celular_vendedor;
             if(p.dias_credito) document.getElementById('fac-dias').value = p.dias_credito;
-            
-            document.getElementById('buscador-prov').value = '';
             cerrarDropdowns();
         }
 
-        function abrirModalProveedor() { document.getElementById('modal-proveedor').classList.remove('hidden'); }
-        function cerrarModalProveedor() { document.getElementById('modal-proveedor').classList.add('hidden'); }
-        
-        async function guardarProveedorRápido() {
-            if(!idEmpresaGlobal) return alert("Error estructural.");
-            const rif = document.getElementById('np-tipo').value + document.getElementById('np-rif').value.trim().toUpperCase();
-            const nombre = document.getElementById('np-nombre').value.trim().toUpperCase();
-            const dirPrin = document.getElementById('np-direccion-prin').value.trim().toUpperCase();
+        function buscarProd(t) {
+            const res = document.getElementById('res-prod'); const clean = normalize(t);
+            if(!clean) return res.classList.add('hidden');
+            const r = fuseProd.search(clean).slice(0, 10);
+            res.innerHTML = r.length ? r.map(i => `<div onclick="addItem('${i.item.id_producto_sku}', '${i.item.nombre.replace(/'/g,"")}')" class="p-3 border-b hover:bg-blue-50 cursor-pointer flex flex-col gap-1 transition"><span class="text-[11px] font-black text-primary">${i.item.nombre}</span><span class="text-[9px] font-bold text-gray-400">SKU: ${i.item.id_producto_sku} ${i.item.codigo_barras ? '| CB: '+i.item.codigo_barras : ''}</span></div>`).join('') : '<p class="p-3 text-red-500 font-black text-[10px] text-center">NO REGISTRADO</p>';
+            res.classList.remove('hidden');
+        }
 
-            if(!rif || !nombre || !dirPrin) return alert("Faltan campos marcados con (*).");
+        // --- ESCÁNER DE CÁMARA (LÓGICA ZXING) ---
+        function iniciarEscaneo() {
+            document.getElementById('modal-scan').classList.remove('hidden');
+            scanner = new ZXing.BrowserMultiFormatReader();
+            scanner.decodeFromVideoDevice(null, 'video-scan', (result, err) => {
+                if (result) {
+                    cerrarEscaneo();
+                    const b = normalize(result.text);
+                    const prod = inventario.find(p => normalize(p.codigo_barras) === b || normalize(p.id_producto_sku) === b);
+                    if(prod) addItem(prod.id_producto_sku, prod.nombre);
+                    else alert("Código no reconocido en inventario: " + result.text);
+                }
+            });
+        }
+        function cerrarEscaneo() { if(scanner) scanner.reset(); document.getElementById('modal-scan').classList.add('hidden'); }
 
+        // --- GESTIÓN DE TABLA ---
+        function addItem(sku, nombre) {
+            if(listaRecepcion.some(i => i.id_producto_sku === sku)) return alert("Ya agregado");
+            listaRecepcion.unshift({ id_producto_sku: sku, nombre: nombre, cantidad_recibida: 1, costo_unitario_usd: 0, impuesto_porcentaje: 16, tipo_impuesto: 'GENERAL' });
+            document.getElementById('bus-prod').value = ''; cerrarDropdowns(); render();
+        }
+        function edit(idx, k, v) { 
+            listaRecepcion[idx][k] = (k==='tipo_impuesto') ? v : parseFloat(v) || 0;
+            if(k==='tipo_impuesto') listaRecepcion[idx].impuesto_porcentaje = (v==='GENERAL'?16:(v==='REDUCIDO'?8:0));
+            render(); 
+        }
+        function render() {
+            const tb = document.getElementById('tabla-recepcion'); let b = 0; let i = 0;
+            if(!listaRecepcion.length) { tb.innerHTML = '<tr><td colspan="6" class="p-10 text-center text-gray-300 font-black uppercase text-xs">Agregue productos desde el buscador</td></tr>'; update(0,0); return; }
+            tb.innerHTML = listaRecepcion.map((item, idx) => {
+                const sub = item.cantidad_recibida * item.costo_unitario_usd;
+                const mIva = sub * (item.impuesto_porcentaje / 100); b += sub; i += mIva;
+                return `<tr class="border-b border-gray-100 hover:bg-gray-50">
+                    <td class="p-3"><p class="text-[11px] font-black text-primary line-clamp-1">${item.nombre}</p><p class="text-[9px] font-bold text-gray-400">${item.id_producto_sku}</p></td>
+                    <td class="p-3 text-center"><select onchange="edit(${idx}, 'tipo_impuesto', this.value)" class="border rounded p-1 text-[10px] font-black outline-none"><option value="GENERAL" ${item.tipo_impuesto==='GENERAL'?'selected':''}>16%</option><option value="REDUCIDO" ${item.tipo_impuesto==='REDUCIDO'?'selected':''}>8%</option><option value="EXENTO" ${item.tipo_impuesto==='EXENTO'?'selected':''}>EXN</option></select></td>
+                    <td class="p-3 text-center"><input type="number" value="${item.cantidad_recibida}" onchange="edit(${idx}, 'cantidad_recibida', this.value)" class="w-16 border rounded p-1 text-center font-bold text-xs"></td>
+                    <td class="p-3 text-right"><input type="number" step="0.01" value="${item.costo_unitario_usd}" onchange="edit(${idx}, 'costo_unitario_usd', this.value)" class="w-24 border rounded p-1 text-right font-black text-xs"></td>
+                    <td class="p-3 text-right font-black text-gray-800 text-xs">$ ${sub.toFixed(2)}</td>
+                    <td class="p-3 text-center"><button onclick="listaRecepcion.splice(${idx},1); render();" class="text-red-300 hover:text-red-500"><i class="fa-solid fa-times-circle text-lg"></i></button></td>
+                </tr>`;
+            }).join('');
+            update(b, i);
+        }
+        function update(b, i) {
+            document.getElementById('tot-base').innerText = `US$ ${b.toFixed(2)}`;
+            document.getElementById('tot-iva').innerText = `US$ ${i.toFixed(2)}`;
+            document.getElementById('tot-final').innerText = `US$ ${(b+i).toFixed(2)}`;
+            document.getElementById('tot-bs').innerText = `Bs. ${((b+i)*tasaBCV).toFixed(2)}`;
+        }
+
+        // --- MAESTRO PROVEEDOR ---
+        function abrirModalProveedor() { document.getElementById('modal-prov').classList.remove('hidden'); }
+        function cerrarModalProveedor() { document.getElementById('modal-prov').classList.add('hidden'); }
+        async function guardarProvMaster() {
+            const r = document.getElementById('np-tipo').value + document.getElementById('np-rif').value.trim().toUpperCase();
+            const n = document.getElementById('np-nombre').value.trim().toUpperCase();
+            const d = document.getElementById('np-dir').value.trim().toUpperCase();
+            if(!r || !n || !d) return alert("Faltan campos con (*)");
             try {
-                // Inyectamos a Base de Datos con teléfonos limpiados de espacios
-                const body = { 
-                    id_empresa: idEmpresaGlobal, 
-                    documento_identidad: rif, 
-                    nombre_razon_social: nombre, 
-                    direccion_principal: dirPrin,
-                    telefono_principal: limpiarTelDB(document.getElementById('np-tlf-prin').value),
-                    telefono_secundario: limpiarTelDB(document.getElementById('np-tlf-sec').value),
-                    correo_electronico: document.getElementById('np-email').value.trim().toLowerCase(),
-                    vendedor_asignado: document.getElementById('np-vend-asig').value.trim().toUpperCase(),
-                    celular_vendedor: limpiarTelDB(document.getElementById('np-cel-vend').value),
-                    dias_credito: parseInt(document.getElementById('np-dias').value) || 0,
-                    categoria_contacto: document.getElementById('np-categoria').value,
-                    tipo_contribuyente: document.getElementById('np-tipo-contrib').value,
-                    tipo_persona: document.getElementById('np-tipo-per').value,
-                    estatus: 'ACTIVO' 
-                };
-
+                const body = { id_empresa: idEmpresaGlobal, documento_identidad: r, nombre_razon_social: n, direccion_principal: d, telefono_principal: limpiarTel(document.getElementById('np-tel').value), correo_electronico: document.getElementById('np-email').value, vendedor_asignado: document.getElementById('np-vend').value.toUpperCase(), celular_vendedor: limpiarTel(document.getElementById('np-vend-tel').value), dias_credito: parseInt(document.getElementById('np-dias').value)||0, tipo_contribuyente: document.getElementById('np-contrib').value, estatus: 'ACTIVO' };
                 const res = await fetch(`${SUPABASE_URL}/rest/v1/directorio_maestro`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, body: JSON.stringify(body) });
-                if(!res.ok) throw new Error("Fallo guardando proveedor.");
-                
-                const data = await res.json();
-                directorio.push(data[0]);
-                
-                const dirPredictivo = directorio.map(p => ({ ...p, busqueda_sucia: normalizeText(`${p.documento_identidad} ${p.nombre_razon_social}`) }));
-                fuseProv = new Fuse(dirPredictivo, { keys: ['busqueda_sucia'], threshold: 0.3 });
-                
-                cerrarModalProveedor();
-                seleccionarProv(data[0].id);
+                const dat = await res.json();
+                directorio.push(dat[0]); 
+                const dirIdx = directorio.map(p => ({ ...p, s: normalize(`${p.documento_identidad} ${p.nombre_razon_social}`) }));
+                fuseProv = new Fuse(dirIdx, { keys: ['s'], threshold: 0.3 });
+                cerrarModalProveedor(); selProv(dat[0].id);
             } catch(e) { alert("Error: " + e.message); }
         }
 
-        // --- MOTOR PRODUCTOS ---
-        function buscarProdPredictivo(texto) {
-            const cont = document.getElementById('lista-busqueda-prod');
-            const cleanText = normalizeText(texto);
-            
-            if (!cleanText) { cont.classList.add('hidden'); return; }
-            
-            const res = fuseProd.search(cleanText).slice(0, 10);
-            cont.classList.remove('hidden');
-            
-            if(res.length === 0) {
-                cont.innerHTML = `<div class="p-3 text-center"><p class="text-xs text-red-500 font-bold">NO ENCONTRADO</p></div>`;
-            } else {
-                cont.innerHTML = res.map(r => {
-                    const n = (r.item.nombre || 'SIN NOMBRE').replace(/'/g, "\\'");
-                    const sku = r.item.id_producto_sku || '';
-                    const cb = r.item.codigo_barras ? ` | CB: ${r.item.codigo_barras}` : '';
-                    return `<div onclick="agregarARecepcion('${sku}', '${n}')" class="p-3 border-b hover:bg-blue-50 cursor-pointer flex flex-col gap-1 transition">
-                                <p class="text-[11px] font-black text-primary">${r.item.nombre}</p>
-                                <p class="text-[10px] text-gray-500 font-bold">SKU: ${sku}${cb}</p>
-                            </div>`;
-                }).join('');
-            }
-        }
-
-        function agregarARecepcion(sku, nombre) {
-            if (listaRecepcion.some(item => item.id_producto_sku === sku)) return alert("El producto ya está en la factura.");
-            listaRecepcion.unshift({ id_producto_sku: sku, nombre: nombre, cantidad_recibida: 1, costo_unitario_usd: 0, impuesto_porcentaje: 16, tipo_impuesto: 'GENERAL' });
-            document.getElementById('buscador-prod').value = '';
-            document.getElementById('lista-busqueda-prod').classList.add('hidden');
-            actualizarTablaRecepcion();
-        }
-
-        function actualizarLinea(idx, campo, valor) {
-            listaRecepcion[idx][campo] = (campo === 'tipo_impuesto') ? valor : parseFloat(valor) || 0;
-            if(campo === 'tipo_impuesto') listaRecepcion[idx].impuesto_porcentaje = (valor==='GENERAL'?16:(valor==='REDUCIDO'?8:0));
-            actualizarTablaRecepcion();
-        }
-
-        function eliminarLinea(idx) { listaRecepcion.splice(idx, 1); actualizarTablaRecepcion(); }
-
-        function actualizarTablaRecepcion() {
-            const tbody = document.getElementById('tabla-recepcion'); 
-            let baseUSD = 0; let ivaUSD = 0;
-
-            if(listaRecepcion.length === 0) { 
-                tbody.innerHTML = '<tr><td colspan="6" class="py-12 text-center text-gray-400 font-bold uppercase"><i class="fa-solid fa-barcode text-4xl mb-2 opacity-30 block"></i> Usa el buscador superior para agregar productos</td></tr>'; 
-                document.getElementById('tot-base').innerText = 'US$ 0.00'; document.getElementById('tot-iva').innerText = 'US$ 0.00'; document.getElementById('tot-final').innerText = 'US$ 0.00'; document.getElementById('tot-bs').innerText = 'Bs. 0.00'; 
-                return; 
-            }
-
-            tbody.innerHTML = listaRecepcion.map((item, i) => {
-                const subT = item.cantidad_recibida * item.costo_unitario_usd;
-                const mIva = subT * (item.impuesto_porcentaje / 100);
-                baseUSD += subT; ivaUSD += mIva;
-
-                return `<tr class="border-b border-gray-100 hover:bg-gray-50">
-                    <td class="p-2 pl-4"><p class="text-[11px] font-black text-primary line-clamp-1">${item.nombre}</p><p class="text-[9px] font-bold text-gray-400">${item.id_producto_sku}</p></td>
-                    <td class="p-2 text-center">
-                        <select onchange="actualizarLinea(${i}, 'tipo_impuesto', this.value)" class="w-full border border-gray-300 rounded px-1 py-1 text-[10px] font-bold focus:border-primary bg-white outline-none">
-                            <option value="GENERAL" ${item.tipo_impuesto==='GENERAL'?'selected':''}>16%</option>
-                            <option value="REDUCIDO" ${item.tipo_impuesto==='REDUCIDO'?'selected':''}>8%</option>
-                            <option value="EXENTO" ${item.tipo_impuesto==='EXENTO'?'selected':''}>EXN</option>
-                        </select>
-                    </td>
-                    <td class="p-2 text-center"><input type="number" value="${item.cantidad_recibida}" min="1" onchange="actualizarLinea(${i}, 'cantidad_recibida', this.value)" class="w-16 border border-gray-300 rounded px-1 py-1 text-center text-xs font-bold focus:border-primary outline-none"></td>
-                    <td class="p-2 text-right"><input type="number" step="0.01" value="${item.costo_unitario_usd}" onchange="actualizarLinea(${i}, 'costo_unitario_usd', this.value)" class="w-24 border border-gray-300 rounded px-1 py-1 text-right text-xs font-bold focus:border-primary outline-none"></td>
-                    <td class="p-2 text-right text-xs font-black text-gray-800">$ ${subT.toFixed(2)}</td>
-                    <td class="p-2 text-center"><button onclick="eliminarLinea(${i})" class="text-red-300 hover:text-red-500 transition"><i class="fa-solid fa-times-circle text-lg"></i></button></td>
-                </tr>`;
-            }).join('');
-
-            document.getElementById('tot-base').innerText = `US$ ${baseUSD.toFixed(2)}`;
-            document.getElementById('tot-iva').innerText = `US$ ${ivaUSD.toFixed(2)}`;
-            document.getElementById('tot-final').innerText = `US$ ${(baseUSD + ivaUSD).toFixed(2)}`;
-            document.getElementById('tot-bs').innerText = `Bs. ${((baseUSD + ivaUSD) * tasaBCV).toFixed(2)}`;
-        }
-
-        // --- TRANSACCIÓN V2 ---
+        // --- PROCESAR FACTURA ---
         async function procesarCompraV2() {
             const pId = document.getElementById('prov-id').value;
-            if(!pId) return alert("Seleccione un proveedor.");
-            if(!document.getElementById('fac-num').value.trim() || !document.getElementById('fac-control').value.trim()) return alert("N° Factura y N° Control obligatorios.");
-            if(tasaEUR <= 0) return alert("ATENCIÓN: Tasa EUR en la cabecera no puede ser cero.");
-            if(listaRecepcion.length === 0) return alert("Agregue al menos un producto.");
+            if(!pId || !document.getElementById('fac-nro').value.trim() || !document.getElementById('fac-control').value.trim()) return alert("Faltan datos obligatorios (Proveedor, Factura, Control)");
+            if(tasaEUR <= 0) return alert("Ingrese la Tasa EUR en la cabecera.");
+            if(!listaRecepcion.length) return alert("Factura vacía.");
 
-            const base = parseFloat(document.getElementById('tot-base').innerText.replace('US$ ',''));
-            const iva = parseFloat(document.getElementById('tot-iva').innerText.replace('US$ ',''));
+            const b = parseFloat(document.getElementById('tot-base').innerText.replace('US$ ',''));
+            const i = parseFloat(document.getElementById('tot-iva').innerText.replace('US$ ',''));
             const btn = document.querySelector('button[onclick="procesarCompraV2()"]');
-            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> REGISTRANDO...`; btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> PROCESANDO...`; btn.disabled = true;
 
             try {
-                const celDB = limpiarTelDB(document.getElementById('fac-vendedor-telefono').value);
-                let vendFin = document.getElementById('fac-vendedor').value.trim();
-                if(celDB) vendFin += ` (TLF: ${celDB})`;
+                let vend = document.getElementById('fac-vendedor').value.trim();
+                const cT = limpiarTel(document.getElementById('fac-vendedor-tel').value);
+                if(cT) vend += ` (TLF: ${cT})`;
 
-                const payload = {
-                    p_id_proveedor: pId,
-                    p_numero_factura: document.getElementById('fac-num').value.trim(),
-                    p_numero_control: document.getElementById('fac-control').value.trim(),
-                    p_vendedor_proveedor: vendFin,
-                    p_condicion_pago: document.getElementById('fac-condicion').value,
-                    p_dias_credito: parseInt(document.getElementById('fac-dias').value) || 0,
-                    p_base_imponible_usd: base,
-                    p_total_iva_usd: iva,
-                    p_total_usd: base + iva,
-                    p_total_bs: (base + iva) * tasaBCV,
-                    p_tasa_bcv: tasaBCV,
-                    p_tasa_eur: tasaEUR,
-                    p_detalles: listaRecepcion
-                };
-
+                const payload = { p_id_proveedor: pId, p_numero_factura: document.getElementById('fac-nro').value.toUpperCase(), p_numero_control: document.getElementById('fac-control').value.toUpperCase(), p_vendedor_proveedor: vend.toUpperCase(), p_condicion_pago: document.getElementById('fac-condicion').value, p_dias_credito: parseInt(document.getElementById('fac-dias').value)||0, p_base_imponible_usd: b, p_total_iva_usd: i, p_total_usd: b+i, p_total_bs: (b+i)*tasaBCV, p_tasa_bcv: tasaBCV, p_tasa_eur: tasaEUR, p_detalles: listaRecepcion };
                 const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/registrar_compra_erp_v2`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
                 if(!res.ok) throw await res.json();
-                
                 alert("FACTURA REGISTRADA EXITOSAMENTE."); location.reload();
-            } catch(e) { alert("ERROR: " + (e.message||"Desconocido")); btn.innerHTML = `<i class="fa-solid fa-lock"></i> PROCESAR FACTURA`; btn.disabled = false; }
+            } catch(e) { alert("ERROR: " + (e.message||"Fallo RPC")); btn.innerHTML = `<i class="fa-solid fa-lock"></i> Registrar en ERP`; btn.disabled = false; }
         }
-        function limpiarTodo() { location.reload(); }
     </script>
     <script src="menu.js"></script>
 </body>
