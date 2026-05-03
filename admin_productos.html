@@ -298,20 +298,18 @@
                 <div class="flex flex-wrap items-center gap-2 w-full xl:flex-1">
 
                     <!-- BUSCADOR con pistola + botón cámara -->
-                    <div class="relative w-full md:min-w-[260px] flex-1 flex items-center gap-1">
-                        <div class="relative flex-1">
-                            <i class="fa-solid fa-search absolute left-3 top-2.5 text-gray-400 text-xs"></i>
+                 <div class="relative w-full md:min-w-[260px] flex-1">
+                        <div class="relative flex items-center w-full">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3 text-gray-400 text-xs"></i>
                             <input type="text" id="buscador-inv" oninput="filtrarInventario()"
-                                placeholder="Buscar SKU, código de barra o nombre..."
-                                class="w-full border border-gray-300 rounded-lg pl-8 pr-4 py-1.5 text-xs focus:outline-none focus:border-tertiary uppercase transition font-bold shadow-inner">
+                                placeholder="Buscar SKU, Código o Nombre..."
+                                class="w-full border border-gray-300 rounded-lg pl-8 pr-10 py-1.5 text-xs focus:outline-none focus:border-primary transition font-bold shadow-sm bg-white">
+                            <button type="button" id="btn-abrir-escaner" onclick="abrirEscaner('buscador')"
+                                title="Escanear con cámara"
+                                class="absolute right-2 text-gray-400 hover:text-green-600 transition p-1 rounded hover:bg-green-50 btn-press">
+                                <i class="fa-solid fa-camera text-sm"></i>
+                            </button>
                         </div>
-                        <!-- Botón escáner por cámara -->
-                        <button id="btn-abrir-escaner" onclick="abrirEscaner()"
-                            title="Escanear con cámara"
-                            class="flex items-center gap-1 bg-gray-900 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg transition text-xs font-bold border border-gray-700 btn-press whitespace-nowrap">
-                            <i class="fa-solid fa-camera"></i>
-                            <span class="hidden sm:inline">Cámara</span>
-                        </button>
                     </div>
 
                     <select id="filtro-cat-inv"    onchange="filtrarInventario()" class="w-full md:w-auto flex-1 min-w-[110px] border border-gray-300 rounded-lg px-2 py-1.5 text-[10px] font-bold text-primary outline-none bg-gray-50 uppercase focus:border-tertiary transition"><option value="TODAS">CATEGORÍA: TODAS</option></select>
@@ -439,12 +437,17 @@
                                     oninput="this.value = this.value.toUpperCase().replace(/[^A-Z0-9\-_]/g,'')"
                                     class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-black uppercase focus:border-tertiary transition outline-none">
                             </div>
-                            <div>
+                            <div class="relative">
                                 <label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Código de Barras</label>
-                                <!-- type="text" preserva ceros a la izquierda (EAN-8/13) -->
-                                <input type="text" id="prod-cod-barra" inputmode="numeric" pattern="[0-9]*"
-                                    oninput="this.value=this.value.replace(/\D/g,'')"
-                                    class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-mono focus:border-tertiary transition outline-none">
+                                <div class="relative flex items-center">
+                                    <input type="text" id="prod-cod-barra" inputmode="numeric" pattern="[0-9]*"
+                                        oninput="this.value=this.value.replace(/\D/g,'')"
+                                        class="w-full border border-gray-300 rounded px-2 py-1.5 pr-8 text-xs font-mono focus:border-tertiary transition outline-none">
+                                    <button type="button" onclick="abrirEscaner('ficha')" title="Escanear con cámara" 
+                                        class="absolute right-1 text-gray-400 hover:text-secondary transition p-1.5 rounded hover:bg-orange-50 btn-press flex items-center justify-center">
+                                        <i class="fa-solid fa-barcode text-sm"></i>
+                                    </button>
+                                </div>
                             </div>
                             <div class="md:col-span-2">
                                 <label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Nombre / Descripción *</label>
@@ -1458,43 +1461,52 @@ function exportarCSV() {
 // — Soporta: pistola lectora (teclado global) + BarcodeDetector API (cámara)
 // — Fallback: jsQR para navegadores sin BarcodeDetector nativo (iOS/Antiguos)
 // ================================================================
+// ================================================================
+// ESCÁNER DE CÓDIGO DE BARRAS (CONTEXT-AWARE)
+// ================================================================
 let _escanerStream     = null;
 let _escanerInterval   = null;
 let _escanerDetector   = null;
 let _linterna          = false;
 let _escanerActivo     = false;
+let _escanerDestino    = 'buscador'; // Sabe si va al buscador o a la ficha
 
-// ── Pistola lectora: detecta secuencias rápidas de teclas a nivel GLOBAL ──
+// ── Pistola lectora: detecta secuencias rápidas y decide dónde escribir ──
 function _initPistolaLectora() {
     let buffer  = '';
     let lastKey = 0;
 
     document.addEventListener('keydown', e => {
         const ahora = Date.now();
-        
-        // Si pasan más de 50ms entre teclas, es un humano escribiendo. Limpiamos el buffer.
-        if (ahora - lastKey > 50) {
-            buffer = '';
-        }
+        if (ahora - lastKey > 50) buffer = '';
 
-        // Las pistolas lectoras siempre envían un 'Enter' al final de la lectura
         if (e.key === 'Enter' && buffer.length >= 4) {
-            const inp = document.getElementById('buscador-inv');
-            if (inp) {
-                inp.value = buffer;
-                filtrarInventario();
-                _flashBuscador();
+            const modalFicha = document.getElementById('modal-producto');
+            const isModalOpen = modalFicha && !modalFicha.classList.contains('hidden');
+
+            if (isModalOpen) {
+                // Si la ficha está abierta, la pistola llena el código de barras
+                const inpFicha = document.getElementById('prod-cod-barra');
+                if (inpFicha) {
+                    inpFicha.value = buffer.replace(/\D/g, ''); // Solo números
+                    inpFicha.classList.add('border-green-500', 'bg-green-50');
+                    setTimeout(() => inpFicha.classList.remove('border-green-500', 'bg-green-50'), 800);
+                }
+            } else {
+                // Si la ficha está cerrada, la pistola busca en el inventario
+                const inp = document.getElementById('buscador-inv');
+                if (inp) {
+                    inp.value = buffer;
+                    filtrarInventario();
+                    _flashBuscador();
+                }
             }
             buffer = '';
             e.preventDefault();
             return;
         }
 
-        // Acumular caracteres válidos ignorando teclas de control
-        if (e.key.length === 1) {
-            buffer += e.key;
-        }
-        
+        if (e.key.length === 1) buffer += e.key;
         lastKey = ahora;
     });
 }
@@ -1507,25 +1519,23 @@ function _flashBuscador() {
 }
 
 // ── Apertura del modal de cámara ──
-async function abrirEscaner() {
+async function abrirEscaner(destino = 'buscador') {
+    _escanerDestino = destino; // Guardamos quién llamó a la cámara
+    
     const modal = document.getElementById('modal-escaner');
     modal.classList.remove('hidden'); modal.classList.add('flex');
     _escanerActivo = true;
-    document.getElementById('btn-abrir-escaner').classList.add('scan-active');
 
     try {
-        // Listar cámaras disponibles
         const dispositivos = await navigator.mediaDevices.enumerateDevices();
         const camaras = dispositivos.filter(d => d.kind === 'videoinput');
         const sel = document.getElementById('escaner-cam-select');
         sel.innerHTML = camaras.map((c, i) => `<option value="${c.deviceId}">${c.label || 'Cámara ' + (i + 1)}</option>`).join('');
 
-        // Preferir cámara trasera
         const trasera = camaras.find(c => /back|rear|environment/i.test(c.label));
         const deviceId = trasera ? trasera.deviceId : camaras[0]?.deviceId;
         await _iniciarStream(deviceId);
 
-        // Inicializar BarcodeDetector si está disponible nativamente
         if ('BarcodeDetector' in window) {
             const formatos = await BarcodeDetector.getSupportedFormats();
             _escanerDetector = new BarcodeDetector({ formats: formatos });
@@ -1534,7 +1544,7 @@ async function abrirEscaner() {
 
     } catch (err) {
         document.getElementById('escaner-status').innerHTML =
-            `<span class="bg-red-900/70 text-red-300 text-[10px] font-black px-3 py-1 rounded-full">Sin acceso a cámara: ${err.message}</span>`;
+            `<span class="bg-red-900/70 text-red-300 text-[10px] font-black px-3 py-1 rounded-full">Sin acceso a cámara</span>`;
     }
 }
 
@@ -1549,7 +1559,6 @@ async function _iniciarStream(deviceId) {
     const video = document.getElementById('escaner-video');
     video.srcObject = _escanerStream;
 
-    // Verificar si tiene linterna
     const track = _escanerStream.getVideoTracks()[0];
     const caps  = track.getCapabilities?.() || {};
     document.getElementById('btn-linterna').classList.toggle('hidden', !caps.torch);
@@ -1568,25 +1577,15 @@ function _iniciarScanLoop() {
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
         try {
-            // Motor 1: API Nativa (Ultra rápida)
             if (_escanerDetector) {
                 const barcodes = await _escanerDetector.detect(canvas);
-                if (barcodes.length > 0) {
-                    _onCodigoDetectado(barcodes[0].rawValue);
-                    return;
-                }
-            } 
-            // Motor 2: Fallback Universal jsQR (iOS y compatibilidad cruzada)
-            else if (typeof jsQR !== 'undefined') {
+                if (barcodes.length > 0) return _onCodigoDetectado(barcodes[0].rawValue);
+            } else if (typeof jsQR !== 'undefined') {
                 const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                const code = jsQR(imageData.data, imageData.width, imageData.height, {
-                    inversionAttempts: "dontInvert",
-                });
-                if (code) {
-                    _onCodigoDetectado(code.data);
-                }
+                const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: "dontInvert" });
+                if (code) return _onCodigoDetectado(code.data);
             }
-        } catch { /* Frame descartado, se ignora para no bloquear el hilo */ }
+        } catch {} 
     }, 300);
 }
 
@@ -1594,7 +1593,6 @@ function _onCodigoDetectado(codigo) {
     clearInterval(_escanerInterval);
     _escanerActivo = false;
 
-    // Feedback visual
     document.getElementById('escaner-status').innerHTML =
         `<span class="bg-green-900/80 text-green-300 text-[10px] font-black px-3 py-1 rounded-full">
             <i class="fa-solid fa-check mr-1"></i> ${codigo}
@@ -1602,13 +1600,24 @@ function _onCodigoDetectado(codigo) {
 
     setTimeout(() => {
         cerrarEscaner();
-        // Cargar el código en el buscador y filtrar
-        const inp = document.getElementById('buscador-inv');
-        if (inp) {
-            inp.value = codigo;
-            filtrarInventario();
-            _flashBuscador();
+        
+        // Asignación Inteligente
+        if (_escanerDestino === 'buscador') {
+            const inp = document.getElementById('buscador-inv');
+            if (inp) {
+                inp.value = codigo;
+                filtrarInventario();
+                _flashBuscador();
+            }
+        } else if (_escanerDestino === 'ficha') {
+            const inpFicha = document.getElementById('prod-cod-barra');
+            if (inpFicha) {
+                inpFicha.value = codigo;
+                inpFicha.classList.add('border-green-500', 'bg-green-50');
+                setTimeout(() => inpFicha.classList.remove('border-green-500', 'bg-green-50'), 800);
+            }
         }
+        
         toast(`Código detectado: ${codigo}`, "success");
     }, 600);
 }
@@ -1637,9 +1646,7 @@ function cerrarEscaner() {
     _linterna = false;
     document.getElementById('modal-escaner').classList.add('hidden');
     document.getElementById('modal-escaner').classList.remove('flex');
-    document.getElementById('btn-abrir-escaner').classList.remove('scan-active');
     
-    // Resetear estado visual
     document.getElementById('escaner-status').innerHTML =
         `<span class="bg-black/60 text-green-400 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider">Apunta al código de barras</span>`;
     document.getElementById('escaner-cam-select').innerHTML = '<option value="">Cargando cámaras...</option>';
