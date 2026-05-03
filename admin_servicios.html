@@ -454,22 +454,29 @@
         // --- MOTOR DE COTIZACIÓN INTERNA DE TALLER ---
         async function cargarInventarioParaTaller() {
             try {
-                // NOTA: Estas consultas usan nombres estándar. Las ajustaremos apenas me confirmes tu BD.
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/productos?select=id_producto_sku,nombre&estado_producto=eq.ACTIVO`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
-                const resPre = await fetch(`${SUPABASE_URL}/rest/v1/precios?select=id_producto_sku,precio_general_usd`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
-                
-                if (!res.ok) throw new Error("Fallo en tabla de productos: " + await res.text());
-                if (!resPre.ok) throw new Error("Fallo en tabla de precios: " + await resPre.text());
+                // 1. Obtenemos el ID de la empresa del usuario actual (Seguridad Multi-Tenant)
+                const resUser = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?select=id_empresa&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                let filtroEmpresa = '';
+                if (resUser.ok) {
+                    const dataUser = await resUser.json();
+                    if (dataUser.length > 0 && dataUser[0].id_empresa) filtroEmpresa = `id_empresa=eq.${dataUser[0].id_empresa}&`;
+                }
 
+                // 2. Descargamos catálogo y precios aplicando estrictamente el filtro de empresa
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/productos?${filtroEmpresa}select=id_producto_sku,nombre&estado_producto=eq.ACTIVO`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                const resPre = await fetch(`${SUPABASE_URL}/rest/v1/precios?${filtroEmpresa}select=id_producto_sku,precio_general_usd`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                
+                if(!res.ok || !resPre.ok) throw new Error("Bloqueo de Supabase al descargar catálogo");
+                
                 const prods = await res.json(); 
                 const pres = await resPre.json();
                 
-                inventarioTaller = prods.map(p => { 
-                    const pre = pres.find(pr => pr.id_producto_sku === p.id_producto_sku); 
-                    return { ...p, precio_usd: pre ? pre.precio_general_usd : 0 }; 
+                inventarioTaller = prods.map(p => {
+                    const pre = pres.find(pr => pr.id_producto_sku === p.id_producto_sku);
+                    return { ...p, precio_usd: pre ? pre.precio_general_usd : 0 };
                 });
 
-                // Motor de Búsqueda Avanzado con Normalización (Ignora mayúsculas y tildes)
+                // 3. Inicializamos el motor de búsqueda con normalización de acentos
                 fuseInventarioTaller = new Fuse(inventarioTaller, { 
                     keys: ['id_producto_sku', 'nombre'], 
                     threshold: 0.3, 
@@ -480,10 +487,7 @@
                         return typeof val === 'string' ? val.normalize("NFD").replace(/[\u0300-\u036f]/g, "") : val;
                     }
                 });
-                console.log("Inventario Taller cargado con éxito. Ítems:", inventarioTaller.length);
-            } catch(e) { 
-                console.error("Fallo CRÍTICO cargando inventario del taller:", e); 
-            }
+            } catch(e) { console.warn("Fallo cargando inventario taller:", e); }
         }
 
         async function abrirPanelOrden(id_orden) {
