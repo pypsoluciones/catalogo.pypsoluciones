@@ -268,7 +268,7 @@
                 // Tasa BCV
                 const resTasa = await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?select=tasa&order=fecha_actualizacion.desc&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
                 const dT = await resTasa.json();
-                if(dT[0]) { tasaBCV = dT[0].tasa; document.getElementById('tasa-usd-val').innerText = tasaBCV.toFixed(2); }
+                if(Array.isArray(dT) && dT[0]) { tasaBCV = dT[0].tasa; document.getElementById('tasa-usd-val').innerText = tasaBCV.toFixed(2); }
 
                 // Carga de Datos
                 const [pRes, dRes] = await Promise.all([
@@ -276,14 +276,67 @@
                     fetch(`${SUPABASE_URL}/rest/v1/directorio_maestro?select=*&limit=2000`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } })
                 ]);
                 
-                inventario = await pRes.json();
-                directorio = await dRes.json();
+                const dataInv = await pRes.json();
+                const dataDir = await dRes.json();
+
+                // BLINDAJE ESTRUCTURAL: Garantizamos que sean arreglos. Si Supabase arroja un error (ej. RLS), evitamos que JS colapse.
+                inventario = Array.isArray(dataInv) ? dataInv : [];
+                directorio = Array.isArray(dataDir) ? dataDir : [];
+                
+                if(!Array.isArray(dataInv)) console.error("🚨 ERP Error: vista_catalogo_web falló o bloqueada por RLS.", dataInv);
+                if(!Array.isArray(dataDir)) console.error("🚨 ERP Error: directorio_maestro falló o bloqueada por RLS.", dataDir);
+
                 if(inventario[0]) idEmpresaGlobal = inventario[0].id_empresa;
 
-                // Indexación de Buscadores (Blindado contra nulos)
+                // Indexación obligatoria
                 indexarBuscadores();
-            } catch(e) { console.error("Falla en Carga ERP:", e); }
+            } catch(e) { console.error("🚨 Falla Crítica en Carga ERP:", e); }
         };
+
+        function indexarBuscadores() {
+            // Protección contra valores nulos internos en la base de datos
+            const invIdx = inventario.map(p => ({ ...p, s: normalize(`${p.id_producto_sku || ''} ${p.nombre || ''} ${p.codigo_barras || ''}`) }));
+            fuseProd = new Fuse(invIdx, { keys: ['s', 'id_producto_sku', 'codigo_barras'], threshold: 0.35, ignoreLocation: true });
+
+            const dirIdx = directorio.map(p => ({ ...p, s: normalize(`${p.documento_identidad || ''} ${p.nombre_razon_social || ''}`) }));
+            fuseProv = new Fuse(dirIdx, { keys: ['s'], threshold: 0.3 });
+        }
+
+        // --- BUSCADORES BLINDADOS ---
+        function motorBusquedaProv(t) {
+            const res = document.getElementById('res-prov'); const clean = normalize(t);
+            if(!clean) return res.classList.add('hidden');
+            if(!fuseProv) return; // Cortafuegos si Fuse no cargó
+
+            const r = fuseProv.search(clean).slice(0, 6);
+            res.innerHTML = r.length ? r.map(i => `<div onmousedown="seleccionarProv('${i.item.id}'); event.preventDefault();" class="p-3 border-b hover:bg-blue-50 cursor-pointer flex flex-col transition-all"><span class="text-xs font-black text-primary">${i.item.nombre_razon_social}</span><span class="text-[9px] font-bold text-gray-400">${i.item.documento_identidad}</span></div>`).join('') : '<p class="p-3 text-red-500 font-black text-[10px] text-center uppercase tracking-widest">Proveedor no registrado</p>';
+            res.classList.remove('hidden');
+        }
+
+        function seleccionarProv(id) {
+            const p = directorio.find(x => x.id === id);
+            if(!p) return;
+            document.getElementById('prov-id').value = p.id;
+            document.getElementById('prov-rif').value = p.documento_identidad;
+            document.getElementById('prov-nombre').value = p.nombre_razon_social;
+            document.getElementById('prov-direccion').value = p.direccion_principal || 'DIRECCIÓN NO REGISTRADA';
+            document.getElementById('prov-telefono').value = p.telefono_principal || '';
+            if(p.vendedor_asignado) document.getElementById('fac-vendedor').value = p.vendedor_asignado;
+            if(p.celular_vendedor) document.getElementById('fac-vendedor-tel').value = p.celular_vendedor;
+            if(p.dias_credito) document.getElementById('fac-dias').value = p.dias_credito;
+            document.getElementById('bus-prov').value = ''; 
+            cerrarDropdowns();
+        }
+
+        function motorBusquedaProd(t) {
+            const res = document.getElementById('res-prod'); const clean = normalize(t);
+            if(!clean) return res.classList.add('hidden');
+            if(!fuseProd) return; // Cortafuegos
+
+            const r = fuseProd.search(clean).slice(0, 10);
+            res.innerHTML = r.length ? r.map(i => `<div onmousedown="agregarRenglon('${i.item.id_producto_sku}', '${i.item.nombre.replace(/'/g,"")}'); event.preventDefault();" class="p-4 border-b hover:bg-blue-50 cursor-pointer flex flex-col gap-1 transition-all"><span class="text-[11px] font-black text-primary">${i.item.nombre}</span><span class="text-[9px] font-bold text-gray-400">SKU: ${i.item.id_producto_sku} ${i.item.codigo_barras ? '| CB: '+i.item.codigo_barras : ''}</span></div>`).join('') : '<p class="p-4 text-red-500 font-black text-[10px] text-center uppercase tracking-widest">Producto no existe</p>';
+            res.classList.remove('hidden');
+        }
 
         function indexarBuscadores() {
             const invIdx = inventario.map(p => ({ ...p, s: normalize(`${p.id_producto_sku} ${p.nombre} ${p.codigo_barras || ''}`) }));
