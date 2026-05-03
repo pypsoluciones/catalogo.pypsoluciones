@@ -64,18 +64,24 @@
         .dynamic-grid-table { display: flex; flex-direction: column; gap: 0.25rem; }
 
         /* --- MODO SUPERMERCADO (CAJA RÁPIDA PROFESIONAL) --- */
-        .layout-supermercado #panel-izquierdo { width: 40% !important; background: #f8fafc; justify-content: center; padding: 2rem; border-right: 2px dashed #cbd5e1; transition: all 0.3s; }
-        .layout-supermercado #panel-izquierdo > div:first-child { flex-direction: column; background: transparent; border: none; padding: 0; width: 100%; }
-        .layout-supermercado #grid-productos, 
+        .layout-supermercado #panel-izquierdo { width: 40% !important; background: #f8fafc; padding: 1rem; border-right: 2px dashed #cbd5e1; transition: all 0.3s; }
+        .layout-supermercado #panel-izquierdo > div:first-child { flex-direction: column; background: transparent; border: none; padding: 0; width: 100%; margin-bottom: 1rem; }
+        
+        /* Ocultamos solo los filtros y botones. Dejamos el grid libre para JS */
         .layout-supermercado #filtro-cat-pos, 
         .layout-supermercado #filtro-stock-pos, 
-        .layout-supermercado .btn-vista-tabla-pos { display: none !important; }
-        .layout-supermercado #buscador-pos { font-size: 1.25rem !important; padding: 1.5rem 1.5rem 1.5rem 3rem !important; border: 2px solid var(--color-primary) !important; border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); height: auto; }
-        .layout-supermercado #panel-izquierdo .fa-barcode { font-size: 1.5rem !important; top: 1.5rem !important; left: 1rem !important; color: var(--color-primary) !important; }
+        .layout-supermercado .btn-vista-tabla-pos,
+        .layout-supermercado #btn-vista-grid-pos { display: none !important; }
+        
+        .layout-supermercado #buscador-pos { font-size: 1.25rem !important; padding: 1rem 1rem 1rem 2.5rem !important; border: 2px solid var(--color-primary) !important; border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); height: auto; }
+        .layout-supermercado #panel-izquierdo .fa-barcode { font-size: 1.2rem !important; top: 1.2rem !important; left: 1rem !important; color: var(--color-primary) !important; }
         .layout-supermercado #panel-izquierdo::before { content: 'MODO ESCÁNER ACTIVO'; display: block; text-align: center; font-weight: 900; color: var(--color-primary); margin-bottom: 1rem; font-size: 1.2rem; letter-spacing: 0.05em; }
         .layout-supermercado #panel-derecho { width: 60% !important; max-width: 100% !important; transition: all 0.3s; }
         .layout-supermercado #lista-carrito .bg-white { transform: scale(1.01); margin-bottom: 0.5rem; border: 1px solid #e2e8f0; border-left: 4px solid var(--color-secondary); padding: 10px; }
         .layout-supermercado #lista-carrito h4 { font-size: 13px !important; }
+
+        /* Clase dinámica inyectada por JS */
+        .grid-escondido { display: none !important; }
 
         /* FEEDBACK VISUAL */
         @keyframes cartFlash { 0%{background:rgba(230,126,34,0.35);} 100%{background:transparent;} }
@@ -690,11 +696,16 @@
                 main.classList.add('layout-supermercado');
                 btn.innerHTML = `<i class="fa-solid fa-compress mr-1 text-tertiary"></i> MODO NORMAL`;
                 btn.classList.replace('bg-slate-800', 'bg-tertiary');
+                
+                document.getElementById('buscador-pos').value = ''; // Limpia textos viejos
+                buscarProductos(); // Esto obligará a ocultar la grilla por el Motor Reactivo
                 setTimeout(() => document.getElementById('buscador-pos').focus(), 300);
             } else {
                 main.classList.remove('layout-supermercado');
                 btn.innerHTML = `<i class="fa-solid fa-barcode mr-1 text-tertiary"></i> MODO LECTOR`;
                 btn.classList.replace('bg-tertiary', 'bg-slate-800');
+                
+                buscarProductos(); // Esto restaurará el catálogo normal
             }
         }
 // ================================================================
@@ -1086,17 +1097,35 @@
             }
         }
 
-        function buscarProductos() {
+       function buscarProductos() {
             let query = document.getElementById('buscador-pos').value.trim();
             const cat = document.getElementById('filtro-cat-pos').value;
             const stockFilter = document.getElementById('filtro-stock-pos').value;
             let data = dbInventario;
-            if (query !== '') { const qN = query.normalize("NFD").replace(/[\u0300-\u036f]/g, ""); data = fuseInventario.search(qN).map(r => r.item); }
+
+            const grid = document.getElementById('grid-productos');
+
+            // MOTOR REACTIVO: En modo supermercado, ocultar la grilla si no hay texto escrito
+            if (modoSupermercado && query === '') {
+                grid.classList.add('grid-escondido');
+                return; // Cortamos aquí para ahorrar memoria RAM
+            } else {
+                grid.classList.remove('grid-escondido');
+            }
+
+            if (query !== '') { 
+                const qN = query.normalize("NFD").replace(/[\u0300-\u036f]/g, ""); 
+                data = fuseInventario.search(qN).map(r => r.item); 
+            }
             if (cat !== 'TODAS') data = data.filter(p => p.categoria_del_producto === cat);
             if (stockFilter === 'DISPONIBLE') data = data.filter(p => p.stock_actual > 0 || p.permitir_negativo);
-            const grid = document.getElementById('grid-productos');
+            
             let html = '';
-            if (data.length === 0) { grid.className = "flex flex-col gap-1"; grid.innerHTML = `<div class="col-span-full p-10 text-center text-gray-400 font-medium text-xs">Sin resultados.</div>`; return; }
+            if (data.length === 0) { 
+                grid.className = "flex flex-col gap-1"; 
+                grid.innerHTML = `<div class="col-span-full p-10 text-center text-gray-400 font-medium text-xs uppercase"><i class="fa-solid fa-box-open mb-2 text-2xl block"></i>Sin resultados</div>`; 
+                return; 
+            }
 
             if (posVistaActual === 'tabla') {
                 grid.className = "dynamic-grid-table";
@@ -1105,7 +1134,7 @@
                     const pUsd = p.pre && p.pre.es_precio_fijo_bs ? (p.pre.precio_fijo_bs / tasaBCV) : (p.pre ? p.pre.precio_general_usd : 0);
                     const prodStr = encodeURIComponent(JSON.stringify({ ...p, pUsd }));
                     const bStkColor = p.stock_actual > 0 ? "text-gray-900 font-bold" : "text-red-600 font-bold";
-                    html += `<tr class="hover:bg-blue-50 transition cursor-pointer" onclick="agregarAlCarrito('${prodStr}')"><td class="py-1 px-2 text-center"><button onclick="event.stopPropagation(); abrirInfoProducto('${prodStr}')" class="text-tertiary hover:opacity-80 transition"><i class="fa-solid fa-info-circle text-xs"></i></button></td><td class="py-1 px-2 font-mono text-gray-500">${p.id_producto_sku}</td><td class="py-1 px-2 font-bold text-primary truncate max-w-[150px]">${p.nombre}</td><td class="py-1 px-2 text-center ${bStkColor}">${p.stock_actual}</td><td class="py-1 px-2 text-right font-black text-primary">$${fmt(pUsd)}</td><td class="py-1 px-2 text-center"><button class="bg-secondary text-white px-2 py-0.5 rounded text-[8px] font-bold">Agregar</button></td></tr>`;
+                    html += `<tr class="hover:bg-blue-50 transition cursor-pointer" onclick="agregarAlCarrito('${prodStr}')"><td class="py-1 px-2 text-center"><button onclick="event.stopPropagation(); abrirInfoProducto('${prodStr}')" class="text-tertiary hover:opacity-80 transition"><i class="fa-solid fa-info-circle text-xs"></i></button></td><td class="py-1 px-2 font-mono text-gray-500">${p.id_producto_sku}</td><td class="py-1 px-2 font-bold text-primary truncate max-w-[150px]">${p.nombre}</td><td class="py-1 px-2 text-center ${bStkColor}">${p.stock_actual}</td><td class="py-1 px-2 text-right font-black text-primary">$${fmt(pUsd)}</td><td class="py-1 px-2 text-center"><button class="bg-secondary text-white px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider">Agregar</button></td></tr>`;
                 });
                 html += `</tbody></table></div>`;
             } else {
@@ -1117,7 +1146,7 @@
                     const prodStr = encodeURIComponent(JSON.stringify({ ...p, pUsd }));
                     let btnInfo = `<button onclick="event.stopPropagation(); abrirInfoProducto('${prodStr}')" class="absolute top-1 left-1 bg-tertiary text-white w-5 h-5 rounded flex items-center justify-center transition shadow hover:opacity-90 z-10"><i class="fa-solid fa-info text-[8px]"></i></button>`;
                     const bStkColor = p.stock_actual > 0 ? "text-gray-900 bg-gray-100 border-gray-300" : "text-red-600 bg-red-50 border-red-300";
-                    html += `<div class="bg-white border border-gray-200 rounded-lg p-1.5 flex flex-col shadow-sm hover:shadow-md transition cursor-pointer active:scale-95 fade-in relative" onclick="agregarAlCarrito('${prodStr}')">${btnInfo}<div class="h-16 w-full mb-1 bg-white flex items-center justify-center rounded"><img src="${img}" class="max-h-full max-w-full object-contain"></div><div class="flex-1 flex flex-col justify-between min-w-0"><h4 class="text-[9px] font-bold text-primary leading-tight line-clamp-2 mb-1 uppercase">${p.nombre}</h4><div class="mt-auto pt-1 border-t border-gray-100"><div class="flex items-baseline mb-0.5"><span class="text-[8px] font-bold text-gray-900 mr-0.5">Bs.</span><span class="text-sm font-black text-gray-900 leading-none">${fmt(pBs)}</span></div><div class="text-[12px] font-black text-tertiary">$${fmt(pUsd)}</div><div class="text-right text-[11px] font-medium ${bStkColor} border px-1.5 py-0.5 rounded w-fit ml-auto mt-0.5">${p.stock_actual} und</div></div></div></div>`;
+                    html += `<div class="bg-white border border-gray-200 rounded-lg p-1.5 flex flex-col shadow-sm hover:shadow-md transition cursor-pointer active:scale-95 fade-in relative" onclick="agregarAlCarrito('${prodStr}')">${btnInfo}<div class="h-16 w-full mb-1 bg-white flex items-center justify-center rounded"><img src="${img}" class="max-h-full max-w-full object-contain"></div><div class="flex-1 flex flex-col justify-between min-w-0"><h4 class="text-[9px] font-black text-primary leading-tight line-clamp-2 mb-1 uppercase">${p.nombre}</h4><div class="mt-auto pt-1 border-t border-gray-100"><div class="flex items-baseline mb-0.5"><span class="text-[8px] font-bold text-gray-900 mr-0.5">Bs.</span><span class="text-sm font-black text-gray-900 leading-none">${fmt(pBs)}</span></div><div class="text-[12px] font-black text-tertiary">$${fmt(pUsd)}</div><div class="text-right text-[11px] font-medium ${bStkColor} border px-1.5 py-0.5 rounded w-fit ml-auto mt-0.5">${p.stock_actual} und</div></div></div></div>`;
                 });
             }
             grid.innerHTML = html;
