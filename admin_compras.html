@@ -21,8 +21,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.js"></script>
-    <!-- FIX #3: Versión fija de ZXing para evitar API deprecada en @latest -->
-    <script src="https://unpkg.com/@zxing/library@0.19.1/umd/index.min.js"></script>
     
     <script>
         if (!localStorage.getItem('pyp_token_seguro')) { window.location.href = 'login.html'; }
@@ -85,13 +83,13 @@
 
                     <div class="space-y-3">
                         <div class="flex gap-2">
-                            <div class="w-1/2">
+                            <div class="flex-1">
                                 <label class="text-[9px] font-black text-gray-400 uppercase">Documento RIF *</label>
-                                <input type="text" id="prov-rif" readonly class="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-black text-gray-500">
+                                <input type="text" id="prov-rif" readonly class="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-black text-gray-500" style="font-size:12px">
                             </div>
                             <div class="flex-1">
                                 <label class="text-[9px] font-black text-primary uppercase">Condición Pago *</label>
-                                <select id="fac-condicion" onchange="toggleCredito(this.value)" class="w-full p-2 border border-gray-300 rounded-lg text-xs font-black bg-yellow-50 focus:border-primary outline-none">
+                                <select id="fac-condicion" onchange="toggleCredito(this.value)" class="w-full p-2 border border-gray-300 rounded-lg text-xs font-black bg-yellow-50 focus:border-primary outline-none" style="font-size:12px">
                                     <option value="Contado">CONTADO</option>
                                     <option value="Crédito">CRÉDITO (CXP)</option>
                                 </select>
@@ -545,93 +543,112 @@
         }
 
         // =============================================
-        // FIX #3: ESCÁNER CORREGIDO
-        // Soporte para: cámara (ZXing) y escáner USB/Bluetooth (input físico)
+        // ESCÁNER: BarcodeDetector (nativo, Chrome/Android) 
+        // + fallback a getUserMedia+canvas para otros navegadores
         // =============================================
+        let scanStream = null;
+        let scanLoop = null;
+
         async function verificarCapacidadEscaneo() {
             const btn = document.getElementById('btn-scan');
             try {
                 const devices = await navigator.mediaDevices.enumerateDevices();
                 const tieneCamara = devices.some(d => d.kind === 'videoinput');
-                if (tieneCamara) {
-                    camaraDisponible = true;
-                    btn.title = "Abrir cámara para escanear";
-                } else {
-                    // Sin cámara: el botón activa modo de escáner físico (foco en input)
+                if (!tieneCamara) {
                     camaraDisponible = false;
                     btn.innerHTML = `<i class="fa-solid fa-barcode text-xl"></i><span class="text-[8px] font-black uppercase">Escáner</span>`;
-                    btn.title = "Activar escáner físico USB/BT";
+                    btn.title = "Sin cámara — use escáner USB/BT";
+                } else {
+                    camaraDisponible = true;
+                    btn.title = "Abrir cámara para escanear";
                 }
-            } catch(e) {
-                // Sin permisos de enumeración: mostrar ambas opciones
-                camaraDisponible = false;
-            }
+            } catch(e) { camaraDisponible = false; }
         }
 
         function iniciarEscaneo() {
             if (!camaraDisponible) {
-                // Modo escáner físico: solo enfocar el campo
                 const inp = document.getElementById('bus-prod');
-                inp.focus();
-                inp.value = '';
+                inp.focus(); inp.value = '';
                 inp.placeholder = 'LISTO — ESCANEE EL CÓDIGO DE BARRAS...';
                 setTimeout(() => inp.placeholder = 'ESCANEAR CÓDIGO O BUSCAR POR NOMBRE/SKU...', 5000);
                 return;
             }
-            // Modo cámara
             document.getElementById('modal-scan').classList.remove('hidden');
             document.getElementById('scan-status').innerText = 'Iniciando cámara...';
-            
+            _abrirCamara();
+        }
+
+        async function _abrirCamara() {
             try {
-                // FIX #3: Usar la API correcta de ZXing 0.19.x
-                scanner = new ZXing.BrowserMultiFormatReader();
-                
-                scanner.listVideoInputDevices().then(devices => {
-                    // Preferir cámara trasera en móviles
-                    const camTrasera = devices.find(d => d.label.toLowerCase().includes('back') || d.label.toLowerCase().includes('rear') || d.label.toLowerCase().includes('environment'));
-                    const deviceId = camTrasera ? camTrasera.deviceId : undefined;
-                    
-                    document.getElementById('scan-status').innerText = 'Apunte al código de barras...';
-                    
-                    scanner.decodeFromVideoDevice(deviceId, 'video-scan', (result, err) => {
-                        if (result) {
-                            cerrarEscaneo();
-                            const codigo = normalize(result.getText());
-                            const prod = inventario.find(p =>
-                                normalize(p.codigo_barras) === codigo ||
-                                normalize(p.id_producto_sku) === codigo
-                            );
-                            if (prod) {
-                                agregarRenglon(prod.id_producto_sku, prod.nombre);
-                            } else {
-                                // Poner el código en el buscador para búsqueda manual
-                                const inp = document.getElementById('bus-prod');
-                                inp.value = result.getText();
-                                motorBusquedaProd(result.getText());
-                                alert("Código no reconocido en inventario: " + result.getText() + "\nVerifique en la lista desplegada.");
+                // Preferir cámara trasera en móviles
+                scanStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }
+                });
+                const video = document.getElementById('video-scan');
+                video.srcObject = scanStream;
+                await video.play();
+                document.getElementById('scan-status').innerText = 'Apunte al código de barras...';
+
+                // Usar BarcodeDetector si está disponible (Chrome 83+, Android)
+                if ('BarcodeDetector' in window) {
+                    const detector = new BarcodeDetector({ formats: ['ean_13','ean_8','code_128','code_39','qr_code','upc_a','upc_e','itf','data_matrix'] });
+                    const _scan = async () => {
+                        if (!scanStream) return;
+                        try {
+                            const codes = await detector.detect(video);
+                            if (codes.length > 0) {
+                                _procesarCodigoEscaneado(codes[0].rawValue);
+                                return; // Detener loop al encontrar
                             }
-                        }
-                        // Ignorar errores de "no encontrado" (son continuos durante el scan)
-                        if (err && !(err instanceof ZXing.NotFoundException)) {
-                            console.warn("ZXing error:", err);
+                        } catch(e) {}
+                        scanLoop = requestAnimationFrame(_scan);
+                    };
+                    scanLoop = requestAnimationFrame(_scan);
+                } else {
+                    // Fallback: canvas + análisis cada 400ms (navegadores sin BarcodeDetector)
+                    document.getElementById('scan-status').innerText = 'Modo manual — ingrese código y presione Enter';
+                    const inp = document.createElement('input');
+                    inp.type = 'text'; inp.placeholder = 'CÓDIGO DE BARRAS';
+                    inp.className = 'w-full p-3 border-2 border-primary rounded-xl text-center font-black text-sm outline-none mt-2';
+                    inp.style.textTransform = 'uppercase';
+                    const statusEl = document.getElementById('scan-status');
+                    statusEl.innerHTML = '';
+                    statusEl.appendChild(inp);
+                    inp.focus();
+                    inp.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter' && inp.value.trim()) {
+                            _procesarCodigoEscaneado(inp.value.trim());
                         }
                     });
-                }).catch(e => {
-                    document.getElementById('scan-status').innerText = 'Error al acceder a la cámara.';
-                    console.error("ZXing listDevices error:", e);
-                });
+                }
             } catch(e) {
-                document.getElementById('scan-status').innerText = 'ZXing no disponible.';
-                console.error("ZXing init error:", e);
-                // Fallback a modo escáner físico
-                cerrarEscaneo();
-                camaraDisponible = false;
-                iniciarEscaneo();
+                document.getElementById('scan-status').innerText = 'Sin permiso de cámara. Use el buscador de texto.';
+                console.error('Camera error:', e);
+            }
+        }
+
+        function _procesarCodigoEscaneado(rawCode) {
+            cerrarEscaneo();
+            const codigo = normalize(rawCode);
+            const prod = inventario.find(p =>
+                normalize(String(p.codigo_barras)) === codigo ||
+                normalize(p.id_producto_sku) === codigo
+            );
+            if (prod) {
+                agregarRenglon(prod.id_producto_sku, prod.nombre);
+            } else {
+                const inp = document.getElementById('bus-prod');
+                inp.value = rawCode;
+                motorBusquedaProd(rawCode);
+                inp.focus();
             }
         }
 
         function cerrarEscaneo() {
-            if (scanner) { try { scanner.reset(); } catch(e) {} scanner = null; }
+            if (scanLoop) { cancelAnimationFrame(scanLoop); scanLoop = null; }
+            if (scanStream) { scanStream.getTracks().forEach(t => t.stop()); scanStream = null; }
+            const video = document.getElementById('video-scan');
+            if (video) { video.srcObject = null; }
             document.getElementById('modal-scan').classList.add('hidden');
             document.getElementById('scan-status').innerText = '';
         }
