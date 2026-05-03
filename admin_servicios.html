@@ -318,21 +318,36 @@
         }
 
         // --- DIRECTORIO MAESTRO COMPARTIDO ---
+       // --- DIRECTORIO MAESTRO COMPARTIDO ---
         async function cargarDirectorio() {
             try {
-                const resCli = await fetch(`${SUPABASE_URL}/rest/v1/directorio_maestro?select=documento_identidad,nombre_razon_social&tipo_directorio=eq.CLIENTE`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                // FIX: Apuntamos a 'tipo_persona' y traemos solo los activos para no ensuciar la memoria RAM.
+                const resCli = await fetch(`${SUPABASE_URL}/rest/v1/directorio_maestro?select=documento_identidad,nombre_razon_social&tipo_persona=eq.CLIENTE&estatus=eq.ACTIVO`, { 
+                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } 
+                });
                 clientesUnicos = resCli.ok ? await resCli.json() : [];
-                fuseCli = new Fuse(clientesUnicos, { keys: ['nombre_razon_social', 'documento_identidad'], threshold: 0.3 });
+                
+                // FIX: Motor Fuse configurado con normalización de acentos (Ignora tildes al buscar)
+                fuseCli = new Fuse(clientesUnicos, { 
+                    keys: ['nombre_razon_social', 'documento_identidad'], 
+                    threshold: 0.3,
+                    ignoreLocation: true,
+                    getFn: (obj, path) => {
+                        let val = obj;
+                        for (let i = 0; i < path.length; i++) val = val ? val[path[i]] : null;
+                        return typeof val === 'string' ? val.normalize("NFD").replace(/[\u0300-\u036f]/g, "") : val;
+                    }
+                });
             } catch(e) { console.warn("Error cargando directorio: ", e); }
         }
 
-        function abrirModalDirectorio(destino) { 
-            destinoDirectorio = destino;
-            dibujarTablaModal(clientesUnicos); 
-            document.getElementById('buscador-modal').value = ''; 
-            document.getElementById('modal-directorio').classList.remove('hidden'); 
-            document.getElementById('modal-directorio').classList.add('flex');
-            setTimeout(() => document.getElementById('buscador-modal').focus(), 100);
+        function filtrarModalDirectorio() { 
+            const txt = document.getElementById('buscador-modal').value.trim(); 
+            if(txt === '') return dibujarTablaModal(clientesUnicos); 
+            
+            // Normalizar el texto escrito por el usuario
+            const txtNormalizado = txt.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            dibujarTablaModal(fuseCli.search(txtNormalizado).map(r => r.item)); 
         }
         
         function cerrarModalDirectorio() { 
