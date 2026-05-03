@@ -161,22 +161,27 @@
         };
 
         // --- 1. CARGA Y RENDERIZADO DE LA TABLA ---
+       // --- 1. CARGA Y RENDERIZADO DE LA TABLA (MULTI-TENANT) ---
         async function cargarPresupuestos() {
             try {
-                // Descargamos solo las cotizaciones (tipo_documento = 'COTIZACION')
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/ventas_documentos?tipo_documento=eq.COTIZACION&order=fecha_emision.desc`, {
+                // Obtenemos empresa actual para filtrar
+                const resUser = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?select=id_empresa&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                let filtroEmpresa = '';
+                if (resUser.ok) {
+                    const dataUser = await resUser.json();
+                    if (dataUser.length > 0 && dataUser[0].id_empresa) filtroEmpresa = `id_empresa=eq.${dataUser[0].id_empresa}&`;
+                }
+
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/ventas_documentos?${filtroEmpresa}tipo_documento=eq.COTIZACION&order=fecha_emision.desc`, {
                     headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` }
                 });
 
                 if (!res.ok) throw new Error("Fallo al descargar presupuestos.");
-                
                 presupuestosGlobal = await res.json();
                 
-                // Inicializamos el buscador predictivo
                 fusePresupuestos = new Fuse(presupuestosGlobal, {
                     keys: ['correlativo', 'cliente_nombre', 'cliente_documento'],
-                    threshold: 0.3,
-                    ignoreLocation: true,
+                    threshold: 0.3, ignoreLocation: true,
                     getFn: (obj, path) => {
                         let val = obj;
                         for (let i = 0; i < path.length; i++) val = val ? val[path[i]] : null;
@@ -186,7 +191,7 @@
 
                 renderizarTabla(presupuestosGlobal);
             } catch (e) {
-                document.getElementById('tabla-presupuestos').innerHTML = `<tr><td colspan="7" class="p-10 text-center text-red-500 font-bold uppercase"><i class="fa-solid fa-triangle-exclamation mb-2 text-2xl block"></i>Error de conexión.</td></tr>`;
+                document.getElementById('tabla-presupuestos').innerHTML = `<tr><td colspan="7" class="p-10 text-center text-red-500 font-bold uppercase"><i class="fa-solid fa-triangle-exclamation mb-2 text-2xl block"></i>Error de conexión o permisos RLS.</td></tr>`;
             }
         }
 
