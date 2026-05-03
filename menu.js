@@ -130,7 +130,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     <a href="admin_perfil.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_perfil.html' ? estiloActivoSub : estiloInactivoSub}">Mi Perfil y PIN</a>
                     <a href="admin_empleados_roles.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_empleados_roles.html' ? estiloActivoSub : estiloInactivoSub}">Empleados y Roles</a>
                     <a href="admin_publicidad.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_publicidad.html' ? estiloActivoSub : estiloInactivoSub}">Publicidad TV</a>
-                    <a href="admin_configuracion.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_configuracion.html' ? estiloActivoSub : estiloInactivoSub}">Marca Blanca</a>
+                    <a href="admin_configuracion.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_configuracion.html' ? estiloActivoSub : estiloInactivoSub}">Parámetros del Sistema</a>
                 </div>
             </div>
 
