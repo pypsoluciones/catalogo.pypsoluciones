@@ -57,25 +57,26 @@
         input[type=date]::-webkit-calendar-picker-indicator { cursor: pointer; opacity: 0.6; transition: 0.2s; }
         input[type=date]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
 
-        /* GRID DINÁMICO DE PRODUCTOS (Max 4 Columnas) */
+       /* GRID DINÁMICO DE PRODUCTOS (Max 3 Columnas) */
         .dynamic-grid-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.375rem; }
-        @media (min-width: 640px) { .dynamic-grid-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-        @media (min-width: 1024px) { .dynamic-grid-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+        @media (min-width: 768px) { .dynamic-grid-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
         .dynamic-grid-table { display: flex; flex-direction: column; gap: 0.25rem; }
 
         /* --- MODO SUPERMERCADO (CAJA RÁPIDA PROFESIONAL) --- */
         .layout-supermercado #panel-izquierdo { width: 40% !important; background: #f8fafc; padding: 1rem; border-right: 2px dashed #cbd5e1; transition: all 0.3s; }
-        .layout-supermercado #panel-izquierdo > div:first-child { flex-direction: column; background: transparent; border: none; padding: 0; width: 100%; margin-bottom: 1rem; }
+        .layout-supermercado #panel-izquierdo > div:first-child { flex-direction: column; background: transparent; border: none; padding: 0; width: 100%; margin-bottom: 0.5rem; }
         
-        /* Ocultamos solo los filtros y botones. Dejamos el grid libre para JS */
+        /* Ocultamos SOLO los filtros. Dejamos los botones de vista libres */
         .layout-supermercado #filtro-cat-pos, 
-        .layout-supermercado #filtro-stock-pos, 
-        .layout-supermercado .btn-vista-tabla-pos,
-        .layout-supermercado #btn-vista-grid-pos { display: none !important; }
+        .layout-supermercado #filtro-stock-pos { display: none !important; }
         
-        .layout-supermercado #buscador-pos { font-size: 1.25rem !important; padding: 1rem 1rem 1rem 2.5rem !important; border: 2px solid var(--color-primary) !important; border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); height: auto; }
-        .layout-supermercado #panel-izquierdo .fa-barcode { font-size: 1.2rem !important; top: 1.2rem !important; left: 1rem !important; color: var(--color-primary) !important; }
-        .layout-supermercado #panel-izquierdo::before { content: 'MODO ESCÁNER ACTIVO'; display: block; text-align: center; font-weight: 900; color: var(--color-primary); margin-bottom: 1rem; font-size: 1.2rem; letter-spacing: 0.05em; }
+        /* Alineación del contenedor de botones de vista en modo supermercado */
+        .layout-supermercado #panel-izquierdo > div:first-child > div.flex.bg-gray-100 { align-self: flex-end; margin-top: 0.5rem; }
+        
+        /* Buscador proporcionado y profesional */
+        .layout-supermercado #buscador-pos { font-size: 1rem !important; padding: 0.6rem 1rem 0.6rem 2.2rem !important; border: 2px solid var(--color-primary) !important; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); height: auto; }
+        .layout-supermercado #panel-izquierdo .fa-barcode { font-size: 1rem !important; top: 0.8rem !important; left: 0.8rem !important; color: var(--color-primary) !important; }
+        .layout-supermercado #panel-izquierdo::before { content: 'ESCÁNER ACTIVO'; display: block; text-align: center; font-weight: 900; color: var(--color-primary); margin-bottom: 0.5rem; font-size: 1rem; letter-spacing: 0.05em; }
         .layout-supermercado #panel-derecho { width: 60% !important; max-width: 100% !important; transition: all 0.3s; }
         .layout-supermercado #lista-carrito .bg-white { transform: scale(1.01); margin-bottom: 0.5rem; border: 1px solid #e2e8f0; border-left: 4px solid var(--color-secondary); padding: 10px; }
         .layout-supermercado #lista-carrito h4 { font-size: 13px !important; }
@@ -1127,9 +1128,9 @@
                 return; 
             }
 
-            if (posVistaActual === 'tabla') {
+           if (posVistaActual === 'tabla') {
                 grid.className = "dynamic-grid-table";
-                html = `<div class="bg-white rounded shadow-sm border border-gray-200 overflow-hidden"><table class="w-full text-left text-[9px] whitespace-nowrap"><thead class="bg-primary text-white uppercase tracking-wider sticky top-0"><tr><th class="py-1.5 px-2">Info</th><th class="py-1.5 px-2">SKU</th><th class="py-1.5 px-2">Producto</th><th class="py-1.5 px-2 text-center">Stock</th><th class="py-1.5 px-2 text-right">Precio ($)</th><th class="py-1.5 px-2 text-center">Acción</th></tr></thead><tbody class="divide-y divide-gray-100">`;
+                html = `<div class="bg-white rounded shadow-sm border border-gray-200 overflow-hidden overflow-x-auto custom-scroll pb-2"><table class="w-full text-left text-[9px] whitespace-nowrap min-w-[500px]"><thead class="bg-primary text-white uppercase tracking-wider sticky top-0"><tr><th class="py-1.5 px-2">Info</th><th class="py-1.5 px-2">SKU</th><th class="py-1.5 px-2">Producto</th><th class="py-1.5 px-2 text-center">Stock</th><th class="py-1.5 px-2 text-right">Precio ($)</th><th class="py-1.5 px-2 text-center">Acción</th></tr></thead><tbody class="divide-y divide-gray-100">`;
                 data.slice(0, 50).forEach(p => {
                     const pUsd = p.pre && p.pre.es_precio_fijo_bs ? (p.pre.precio_fijo_bs / tasaBCV) : (p.pre ? p.pre.precio_general_usd : 0);
                     const prodStr = encodeURIComponent(JSON.stringify({ ...p, pUsd }));
