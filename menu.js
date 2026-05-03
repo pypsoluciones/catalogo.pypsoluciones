@@ -103,7 +103,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 </button>
                 <div id="submenu-tal" class="pl-6 space-y-1 mt-1 ${currentPage.includes('admin_taller') || currentPage.includes('admin_rma') ? '' : 'hidden'}">
                     <a href="admin_taller.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_taller.html' ? estiloActivoSub : estiloInactivoSub}">Servicio Técnico</a>
-                    <a href="admin_rma.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_rma.html' ? estiloActivoSub : estiloInactivoSub}">Garantías</a>
+                    <a href="admin_rma.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_rma.html' ? estiloActivoSub : estiloInactivoSub}">RMA</a>
                 </div>
             </div>
 
