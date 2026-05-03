@@ -454,14 +454,36 @@
         // --- MOTOR DE COTIZACIÓN INTERNA DE TALLER ---
         async function cargarInventarioParaTaller() {
             try {
+                // NOTA: Estas consultas usan nombres estándar. Las ajustaremos apenas me confirmes tu BD.
                 const res = await fetch(`${SUPABASE_URL}/rest/v1/productos?select=id_producto_sku,nombre&estado_producto=eq.ACTIVO`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
                 const resPre = await fetch(`${SUPABASE_URL}/rest/v1/precios?select=id_producto_sku,precio_general_usd`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
-                if(res.ok && resPre.ok) {
-                    const prods = await res.json(); const pres = await resPre.json();
-                    inventarioTaller = prods.map(p => { const pre = pres.find(pr => pr.id_producto_sku === p.id_producto_sku); return { ...p, precio_usd: pre ? pre.precio_general_usd : 0 }; });
-                    fuseInventarioTaller = new Fuse(inventarioTaller, { keys: ['id_producto_sku', 'nombre'], threshold: 0.3, ignoreLocation: true });
-                }
-            } catch(e) { console.warn("Error cargando inventario taller."); }
+                
+                if (!res.ok) throw new Error("Fallo en tabla de productos: " + await res.text());
+                if (!resPre.ok) throw new Error("Fallo en tabla de precios: " + await resPre.text());
+
+                const prods = await res.json(); 
+                const pres = await resPre.json();
+                
+                inventarioTaller = prods.map(p => { 
+                    const pre = pres.find(pr => pr.id_producto_sku === p.id_producto_sku); 
+                    return { ...p, precio_usd: pre ? pre.precio_general_usd : 0 }; 
+                });
+
+                // Motor de Búsqueda Avanzado con Normalización (Ignora mayúsculas y tildes)
+                fuseInventarioTaller = new Fuse(inventarioTaller, { 
+                    keys: ['id_producto_sku', 'nombre'], 
+                    threshold: 0.3, 
+                    ignoreLocation: true,
+                    getFn: (obj, path) => {
+                        let val = obj;
+                        for (let i = 0; i < path.length; i++) val = val ? val[path[i]] : null;
+                        return typeof val === 'string' ? val.normalize("NFD").replace(/[\u0300-\u036f]/g, "") : val;
+                    }
+                });
+                console.log("Inventario Taller cargado con éxito. Ítems:", inventarioTaller.length);
+            } catch(e) { 
+                console.error("Fallo CRÍTICO cargando inventario del taller:", e); 
+            }
         }
 
         async function abrirPanelOrden(id_orden) {
@@ -480,14 +502,34 @@
 
         function cerrarPanelOrden() { document.getElementById('modal-panel-orden').classList.add('hidden'); document.getElementById('modal-panel-orden').classList.remove('flex'); ordenAbiertaActual = null; }
 
-        function buscarRepuestoTaller() {
+       function buscarRepuestoTaller() {
             let query = document.getElementById('panel-buscador-inv').value.trim();
             const drop = document.getElementById('dropdown-repuestos');
-            if (query === '' || !fuseInventarioTaller) { drop.classList.add('hidden'); return; }
-            const resultados = fuseInventarioTaller.search(query).slice(0, 6).map(r => r.item);
+            
+            if (query === '' || !fuseInventarioTaller) { 
+                drop.classList.add('hidden'); 
+                return; 
+            }
+            
+            // Normalizar la búsqueda del usuario
+            const txtNormalizado = query.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            const resultados = fuseInventarioTaller.search(txtNormalizado).slice(0, 6).map(r => r.item);
+            
             drop.innerHTML = '';
-            if (resultados.length === 0) { drop.innerHTML = `<div class="p-2 text-[9px] text-gray-500 text-center">Sin resultados.</div>`; }
-            else { resultados.forEach((p) => { drop.innerHTML += `<div class="p-2 border-b border-gray-100 hover:bg-blue-50 cursor-pointer transition flex justify-between items-center" onclick="agregarAlCarritoTaller('${p.id_producto_sku}', \`${p.nombre.replace(/"/g, '&quot;')}\`, ${p.precio_usd})"><div class="truncate pr-2"><div class="font-bold text-primary text-[10px] uppercase truncate">${p.nombre}</div><div class="text-[8px] text-gray-500 font-mono">${p.id_producto_sku}</div></div><div class="font-black text-secondary text-[11px]">$${parseFloat(p.precio_usd).toFixed(2)}</div></div>`; }); }
+            if (resultados.length === 0) { 
+                drop.innerHTML = `<div class="p-2 text-[9px] text-gray-500 text-center font-bold uppercase tracking-widest">Sin resultados.</div>`; 
+            } else { 
+                resultados.forEach((p) => { 
+                    drop.innerHTML += `
+                    <div class="p-2 border-b border-gray-100 hover:bg-blue-50 cursor-pointer transition flex justify-between items-center" onclick="agregarAlCarritoTaller('${p.id_producto_sku}', \`${p.nombre.replace(/"/g, '&quot;')}\`, ${p.precio_usd})">
+                        <div class="truncate pr-2">
+                            <div class="font-bold text-primary text-[10px] uppercase truncate">${p.nombre}</div>
+                            <div class="text-[8px] text-gray-500 font-mono">${p.id_producto_sku}</div>
+                        </div>
+                        <div class="font-black text-secondary text-[11px]">$${parseFloat(p.precio_usd).toFixed(2)}</div>
+                    </div>`; 
+                }); 
+            }
             drop.classList.remove('hidden');
         }
 
