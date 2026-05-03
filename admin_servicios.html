@@ -113,6 +113,467 @@
             </div>
         </div>
     </main>
+<div id="modal-orden" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4 fade-in">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg flex flex-col max-h-[90vh] overflow-hidden border border-gray-200">
+            <div class="bg-primary text-white p-4 flex justify-between items-center shrink-0">
+                <h3 class="font-black text-[12px] uppercase tracking-wider"><i class="fa-solid fa-screwdriver-wrench mr-2 text-tertiary"></i> Recibir Equipo en Taller</h3>
+                <button onclick="cerrarModalOrden()" class="text-gray-300 hover:text-white text-xl transition"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <div class="p-6 overflow-y-auto custom-scroll flex-1 space-y-4 bg-gray-50">
+                <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm space-y-3">
+                    <div class="flex justify-between items-center border-b border-gray-100 pb-2">
+                        <label class="block text-[10px] font-black text-primary uppercase tracking-wider">Datos del Cliente</label>
+                        <button onclick="abrirModalDirectorio('taller')" class="bg-blue-50 text-blue-600 border border-blue-200 px-3 py-1 rounded text-[10px] font-bold shadow-sm hover:bg-blue-600 hover:text-white transition flex items-center gap-1 btn-press">
+                            <i class="fa-solid fa-address-book"></i> Buscar
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-3 gap-3">
+                        <div class="col-span-2">
+                            <label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Nombre / Razón Social *</label>
+                            <input type="text" id="os-nombre" placeholder="Nombre..." class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-bold text-gray-800 outline-none focus:border-tertiary transition">
+                        </div>
+                        <div>
+                            <label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Cédula / RIF</label>
+                            <input type="text" id="os-doc" placeholder="Documento..." class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-bold text-gray-800 outline-none focus:border-tertiary transition bg-gray-50">
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm space-y-3">
+                    <label class="block text-[10px] font-black text-primary uppercase tracking-wider border-b border-gray-100 pb-2">Información del Equipo</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Equipo / Modelo *</label>
+                            <input type="text" id="os-equipo" placeholder="Ej: Laptop HP Core i5" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none focus:border-tertiary transition">
+                        </div>
+                        <div>
+                            <label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Serial (S/N)</label>
+                            <input type="text" id="os-serial" placeholder="Serial..." class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-mono outline-none focus:border-tertiary transition uppercase">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Falla Reportada *</label>
+                        <textarea id="os-falla" rows="3" placeholder="Describe detalladamente el problema..." class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none focus:border-tertiary transition custom-scroll"></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="p-4 border-t border-gray-200 bg-white flex gap-3 shrink-0">
+                <button onclick="cerrarModalOrden()" class="flex-1 py-2 bg-gray-100 text-gray-600 font-bold rounded text-xs uppercase btn-press hover:bg-gray-200 transition">Cancelar</button>
+                <button onclick="guardarOrdenTaller()" id="btn-guardar-os" class="flex-[2] py-2 bg-secondary text-white font-black rounded text-xs uppercase tracking-wider shadow-md btn-press hover:opacity-90 transition flex justify-center items-center gap-2">
+                    <i class="fa-solid fa-save"></i> Registrar Ingreso
+                </button>
+            </div>
+        </div>
+    </div>
 
+    <div id="modal-rma" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4 fade-in">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg flex flex-col max-h-[90vh] overflow-hidden border border-gray-200">
+            <div class="bg-primary text-white p-4 flex justify-between items-center shrink-0">
+                <h3 class="font-black text-[12px] uppercase tracking-wider"><i class="fa-solid fa-rotate-left mr-2 text-tertiary"></i> Ingresar Garantía (RMA)</h3>
+                <button onclick="cerrarModalRMA()" class="text-gray-300 hover:text-white text-xl transition"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <form id="form-rma" onsubmit="guardarRMA(event)" class="p-6 bg-gray-50 space-y-4 overflow-y-auto custom-scroll flex-1">
+                <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm space-y-3">
+                    <div class="flex justify-between items-center border-b border-gray-100 pb-2">
+                        <label class="block text-[10px] font-black text-primary uppercase tracking-wider">Cliente y Factura</label>
+                        <button type="button" onclick="abrirModalDirectorio('rma')" class="bg-blue-50 text-blue-600 border border-blue-200 px-3 py-1 rounded text-[10px] font-bold shadow-sm hover:bg-blue-600 hover:text-white transition flex items-center gap-1 btn-press">
+                            <i class="fa-solid fa-address-book"></i> Buscar
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-3 gap-3">
+                        <div class="col-span-2">
+                            <label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Cliente *</label>
+                            <input type="text" id="rma-cliente" required placeholder="Nombre..." class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-bold text-gray-800 outline-none focus:border-tertiary transition">
+                        </div>
+                        <div>
+                            <label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Factura Ref.</label>
+                            <input type="text" id="rma-factura" placeholder="000000" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-bold text-gray-800 outline-none focus:border-tertiary transition">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm space-y-3">
+                    <label class="block text-[10px] font-black text-primary uppercase tracking-wider border-b border-gray-100 pb-2">Producto Dañado</label>
+                    <div class="grid grid-cols-4 gap-3">
+                        <div class="col-span-3">
+                            <label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Nombre del Producto *</label>
+                            <input type="text" id="rma-prod-nombre" required placeholder="Ej: Monitor 24..." class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none focus:border-tertiary transition">
+                        </div>
+                        <div>
+                            <label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Cant.</label>
+                            <input type="number" id="rma-cantidad" min="1" value="1" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-black text-center outline-none focus:border-tertiary transition">
+                        </div>
+                        <div class="col-span-4">
+                            <label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">SKU / Código Barra</label>
+                            <input type="text" id="rma-prod-sku" placeholder="SKU..." class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-mono outline-none focus:border-tertiary transition">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Motivo del Reclamo *</label>
+                        <textarea id="rma-motivo" required rows="2" placeholder="Falla presentada..." class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none focus:border-tertiary transition custom-scroll"></textarea>
+                    </div>
+                </div>
+                
+                <div class="pt-2 flex gap-3">
+                    <button type="button" onclick="cerrarModalRMA()" class="flex-1 py-2 bg-gray-100 text-gray-600 font-bold rounded text-xs uppercase btn-press hover:bg-gray-200 transition">Cancelar</button>
+                    <button type="submit" id="btn-guardar-rma" class="flex-[2] py-2 bg-secondary text-white font-black rounded text-xs uppercase tracking-wider shadow-md btn-press hover:opacity-90 transition flex justify-center items-center gap-2">
+                        <i class="fa-solid fa-save"></i> Cargar Garantía
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-gestionar-rma" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4 fade-in">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm flex flex-col border border-gray-200">
+            <div class="bg-primary text-white p-4 flex justify-between items-center shrink-0">
+                <h3 class="font-black text-[12px] uppercase tracking-wider"><i class="fa-solid fa-gavel mr-2 text-tertiary"></i> Dictamen de Garantía</h3>
+                <button onclick="cerrarGestionarRMA()" class="text-gray-300 hover:text-white text-xl transition"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <div class="p-6 bg-gray-50 space-y-3">
+                <input type="hidden" id="gest-rma-id">
+                <p class="text-[11px] text-gray-600 font-bold text-center mb-4 uppercase tracking-wide">Selecciona la resolución final:</p>
+                
+                <button onclick="actualizarEstatusRMA('Aprobado - Cambio')" class="w-full bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-700 font-black py-3 rounded-lg border border-emerald-200 transition text-xs uppercase tracking-wider shadow-sm flex items-center justify-center gap-2 btn-press">
+                    <i class="fa-solid fa-box"></i> Aprobar: Cambio Físico
+                </button>
+                <button onclick="actualizarEstatusRMA('Aprobado - Nota Crédito')" class="w-full bg-blue-50 hover:bg-blue-600 hover:text-white text-blue-700 font-black py-3 rounded-lg border border-blue-200 transition text-xs uppercase tracking-wider shadow-sm flex items-center justify-center gap-2 btn-press">
+                    <i class="fa-solid fa-file-invoice-dollar"></i> Aprobar: Nota Crédito
+                </button>
+                <button onclick="actualizarEstatusRMA('Rechazado')" class="w-full bg-red-50 hover:bg-red-600 hover:text-white text-red-700 font-black py-3 rounded-lg border border-red-200 transition text-xs uppercase tracking-wider shadow-sm flex items-center justify-center gap-2 btn-press mt-4">
+                    <i class="fa-solid fa-ban"></i> Rechazar Reclamo
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-directorio" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[110] hidden flex items-center justify-center p-4 fade-in">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[85vh] overflow-hidden border border-gray-200">
+            <div class="bg-primary text-white p-4 flex justify-between items-center shrink-0">
+                <h3 class="font-black text-[12px] uppercase tracking-wider"><i class="fa-solid fa-users mr-2 text-tertiary"></i> Directorio de Clientes</h3>
+                <button onclick="cerrarModalDirectorio()" class="text-gray-300 hover:text-white text-xl transition"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <div class="p-3 bg-gray-50 border-b border-gray-200 shrink-0">
+                <div class="relative">
+                    <i class="fa-solid fa-search absolute left-3 top-2.5 text-gray-400 text-xs"></i>
+                    <input type="text" id="buscador-modal" oninput="filtrarModalDirectorio()" placeholder="Buscar por nombre, RIF o cédula..." class="w-full bg-white border border-gray-300 rounded px-2 pl-8 py-1.5 text-xs font-bold focus:outline-none focus:border-primary shadow-inner transition uppercase">
+                </div>
+            </div>
+            <div class="p-0 overflow-y-auto custom-scroll flex-1 bg-white">
+                <table class="w-full text-left text-xs border-collapse whitespace-nowrap">
+                    <thead class="bg-gray-100 text-gray-500 text-[9px] uppercase font-black sticky top-0 shadow-sm z-10">
+                        <tr><th class="p-2.5 pl-4">Documento</th><th class="p-2.5">Razón Social</th><th class="p-2.5 text-center">Acción</th></tr>
+                    </thead>
+                    <tbody id="tabla-modal-dir" class="divide-y divide-gray-100"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const TOKEN_JWT = localStorage.getItem('pyp_token_seguro');
+        let tabActual = 'taller'; // Controla la pestaña visible
+        let destinoDirectorio = 'taller'; // Sabe si el modal de directorio devuelve datos al Taller o al RMA
+        let clientesUnicos = [];
+        let fuseCli;
+
+        window.onload = async () => {
+            // Cargar datos en paralelo para velocidad
+            await Promise.all([
+                cargarTableroTaller(),
+                cargarListaRMA(),
+                cargarDirectorio()
+            ]);
+        };
+
+        // --- MOTOR DE PESTAÑAS (TABS) ---
+        function cambiarTab(tab) {
+            tabActual = tab;
+            
+            // UI de Pestañas
+            document.getElementById('tab-taller-btn').classList.toggle('active', tab === 'taller');
+            document.getElementById('tab-rma-btn').classList.toggle('active', tab === 'rma');
+            
+            // Contenedores
+            document.getElementById('tab-taller-content').classList.toggle('active', tab === 'taller');
+            document.getElementById('tab-rma-content').classList.toggle('active', tab === 'rma');
+            
+            // UI Botón Maestro
+            const btnMaestroText = document.getElementById('txt-btn-maestro');
+            const btnMaestroIcon = document.querySelector('#btn-accion-maestro i');
+            
+            if (tab === 'taller') {
+                btnMaestroText.innerText = 'Recibir Equipo';
+                btnMaestroIcon.className = 'fa-solid fa-plus';
+                document.getElementById('btn-accion-maestro').className = 'bg-secondary hover:opacity-90 text-white px-4 py-2 rounded-lg font-black text-[11px] uppercase tracking-wider shadow-sm transition btn-press flex items-center gap-2';
+            } else {
+                btnMaestroText.innerText = 'Nuevo Reclamo';
+                btnMaestroIcon.className = 'fa-solid fa-triangle-exclamation';
+                document.getElementById('btn-accion-maestro').className = 'bg-[#25D366] hover:bg-[#1ebd5c] text-white px-4 py-2 rounded-lg font-black text-[11px] uppercase tracking-wider shadow-sm transition btn-press flex items-center gap-2';
+            }
+        }
+
+        function ejecutarAccionMaestra() {
+            if (tabActual === 'taller') abrirModalOrden();
+            else abrirModalRMA();
+        }
+
+        // --- DIRECTORIO MAESTRO COMPARTIDO ---
+        async function cargarDirectorio() {
+            try {
+                const resCli = await fetch(`${SUPABASE_URL}/rest/v1/directorio_maestro?select=documento_identidad,nombre_razon_social&tipo_directorio=eq.CLIENTE`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                clientesUnicos = resCli.ok ? await resCli.json() : [];
+                fuseCli = new Fuse(clientesUnicos, { keys: ['nombre_razon_social', 'documento_identidad'], threshold: 0.3 });
+            } catch(e) { console.warn("Error cargando directorio: ", e); }
+        }
+
+        function abrirModalDirectorio(destino) { 
+            destinoDirectorio = destino;
+            dibujarTablaModal(clientesUnicos); 
+            document.getElementById('buscador-modal').value = ''; 
+            document.getElementById('modal-directorio').classList.remove('hidden'); 
+            document.getElementById('modal-directorio').classList.add('flex');
+            setTimeout(() => document.getElementById('buscador-modal').focus(), 100);
+        }
+        
+        function cerrarModalDirectorio() { 
+            document.getElementById('modal-directorio').classList.add('hidden'); 
+            document.getElementById('modal-directorio').classList.remove('flex');
+        }
+        
+        function dibujarTablaModal(arr) { 
+            const tbody = document.getElementById('tabla-modal-dir'); 
+            if(arr.length === 0) { tbody.innerHTML = `<tr><td colspan="3" class="p-6 text-center text-gray-400 font-bold uppercase text-[10px]">No se encontraron clientes.</td></tr>`; return; } 
+            tbody.innerHTML = arr.map(c => `<tr class="hover:bg-blue-50 transition cursor-pointer" onclick="seleccionarCli('${c.documento_identidad}', \`${c.nombre_razon_social.replace(/"/g, '&quot;')}\`)"><td class="p-2.5 pl-4 font-mono font-bold text-gray-500">${c.documento_identidad}</td><td class="p-2.5 font-bold text-primary truncate max-w-[200px] uppercase">${c.nombre_razon_social}</td><td class="p-2.5 text-center"><button class="bg-gray-200 text-gray-700 px-3 py-1 rounded transition text-[9px] font-black uppercase tracking-wider hover:bg-primary hover:text-white">Seleccionar</button></td></tr>`).join(''); 
+        }
+        
+        function filtrarModalDirectorio() { 
+            const txt = document.getElementById('buscador-modal').value; 
+            if(txt.trim() === '') return dibujarTablaModal(clientesUnicos); 
+            dibujarTablaModal(fuseCli.search(txt).map(r => r.item)); 
+        }
+        
+        function seleccionarCli(doc, nom) { 
+            if (destinoDirectorio === 'taller') {
+                document.getElementById('os-doc').value = doc; 
+                document.getElementById('os-nombre').value = nom; 
+            } else {
+                // Si el RMA tuviera input de doc, iría aquí. Por ahora llenamos nombre.
+                document.getElementById('rma-cliente').value = nom; 
+            }
+            cerrarModalDirectorio(); 
+        }
+
+        // ==========================================
+        // MÓDULO 1: TALLER TÉCNICO (KANBAN)
+        // ==========================================
+        async function cargarTableroTaller() {
+            try {
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/ordenes_servicio?select=*&order=fecha_ingreso.desc`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                if(!res.ok) throw new Error("Fallo API");
+                const ordenes = await res.json();
+                
+                ['Recibido', 'Revision', 'Repuesto', 'Listo'].forEach(c => {
+                    document.getElementById(`col-${c}`).innerHTML = '';
+                    document.getElementById(`count-${c.toLowerCase()}`).innerText = '0';
+                });
+                
+                let counts = { recibido: 0, revision: 0, repuesto: 0, listo: 0 };
+
+                ordenes.forEach(o => {
+                    let colId = o.estatus; let objKey = '';
+                    if(colId === 'Recibido') { objKey = 'recibido'; }
+                    else if(colId === 'En Revisión') { colId = 'Revision'; objKey = 'revision'; }
+                    else if(colId === 'Esperando Repuesto') { colId = 'Repuesto'; objKey = 'repuesto'; }
+                    else { colId = 'Listo'; objKey = 'listo'; }
+
+                    counts[objKey]++;
+                    const el = document.getElementById(`col-${colId}`); 
+                    if(el) el.innerHTML += generarCardOS(o);
+                });
+
+                Object.keys(counts).forEach(k => document.getElementById(`count-${k}`).innerText = counts[k]);
+            } catch(e) { console.error("Error Kanban:", e); }
+        }
+
+        function generarCardOS(o) {
+            return `
+                <div class="bg-white p-3 rounded-lg border border-gray-100 shadow-sm card-anim hover:shadow-md hover:border-gray-300 transition relative group">
+                    <div class="flex justify-between items-start mb-1.5">
+                        <span class="text-[9px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded font-bold font-mono">#OS-${o.correlativo}</span>
+                        <button onclick="cambiarEstatusTaller('${o.id_orden}', 'adelante')" title="Avanzar de etapa" class="text-gray-300 hover:text-primary transition hover:scale-110"><i class="fa-solid fa-circle-arrow-right text-sm"></i></button>
+                    </div>
+                    <h4 class="font-black text-primary leading-tight mb-0.5 uppercase text-[11px] truncate" title="${o.equipo}">${o.equipo}</h4>
+                    <p class="text-[10px] text-gray-600 font-bold mb-2 truncate" title="${o.cliente_nombre}">${o.cliente_nombre}</p>
+                    <div class="bg-amber-50/50 border border-amber-100/50 p-1.5 rounded text-[9px] text-gray-500 italic mb-2 line-clamp-2 leading-tight">"${o.falla_reportada || 'Sin detalle'}"</div>
+                    <div class="flex justify-between items-center text-[8px] font-bold text-gray-400 uppercase">
+                        <span><i class="fa-solid fa-calendar mr-1"></i> ${new Date(o.fecha_ingreso).toLocaleDateString('es-VE')}</span>
+                    </div>
+                </div>`;
+        }
+
+        function abrirModalOrden() { 
+            document.getElementById('os-nombre').value = ''; document.getElementById('os-doc').value = ''; document.getElementById('os-equipo').value = ''; document.getElementById('os-serial').value = ''; document.getElementById('os-falla').value = '';
+            document.getElementById('modal-orden').classList.remove('hidden'); document.getElementById('modal-orden').classList.add('flex');
+        }
+        function cerrarModalOrden() { document.getElementById('modal-orden').classList.add('hidden'); document.getElementById('modal-orden').classList.remove('flex'); }
+
+        async function guardarOrdenTaller() {
+            const btn = document.getElementById('btn-guardar-os'); btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Guardando...';
+            
+            const data = { 
+                cliente_nombre: document.getElementById('os-nombre').value.trim().toUpperCase(), 
+                cliente_documento: document.getElementById('os-doc').value.trim(), 
+                equipo: document.getElementById('os-equipo').value.trim().toUpperCase(), 
+                serial_equipo: document.getElementById('os-serial').value.trim().toUpperCase(), 
+                falla_reportada: document.getElementById('os-falla').value.trim(), 
+                estatus: 'Recibido' 
+            };
+            
+            if(!data.equipo || !data.cliente_nombre) { 
+                alert("Nombre del cliente y Equipo son obligatorios."); 
+                btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-save"></i> Registrar Ingreso'; 
+                return; 
+            }
+            
+            try {
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/ordenes_servicio`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+                if (!res.ok) throw new Error("Fallo al guardar");
+                cerrarModalOrden(); 
+                cargarTableroTaller();
+            } catch(e) { 
+                alert("Error al registrar la orden."); 
+            } finally {
+                btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-save"></i> Registrar Ingreso';
+            }
+        }
+
+        async function cambiarEstatusTaller(id) {
+            try {
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/ordenes_servicio?id_orden=eq.${id}`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }); 
+                const data = await res.json();
+                const actual = data[0].estatus; let nuevo = actual;
+                
+                if(actual === 'Recibido') nuevo = 'En Revisión'; 
+                else if(actual === 'En Revisión') nuevo = 'Esperando Repuesto'; 
+                else if(actual === 'Esperando Repuesto') nuevo = 'Listo';
+                else return; // Si ya está listo, no avanza más (Fase 2: aquí llamaremos al POS)
+
+                await fetch(`${SUPABASE_URL}/rest/v1/ordenes_servicio?id_orden=eq.${id}`, { method: 'PATCH', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ estatus: nuevo }) });
+                cargarTableroTaller();
+            } catch(e) { console.warn(e); }
+        }
+
+        // ==========================================
+        // MÓDULO 2: GARANTÍAS Y DEVOLUCIONES (RMA)
+        // ==========================================
+        async function cargarListaRMA() {
+            try {
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/rma_garantias?order=fecha_ingreso.desc`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                const data = await res.json();
+                
+                const tbody = document.getElementById('tabla-rma');
+                if(!data.length) { tbody.innerHTML = `<tr><td colspan="6" class="p-10 text-center text-gray-400 font-bold uppercase tracking-widest text-[10px]"><i class="fa-solid fa-box-open text-4xl mb-3 block opacity-30"></i> Sin reclamos activos</td></tr>`; return; }
+
+                tbody.innerHTML = data.map(c => {
+                    let badgeColor = 'bg-orange-50 text-orange-600 border-orange-200 animate-pulse';
+                    if(c.estatus.includes('Aprobado')) badgeColor = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+                    if(c.estatus === 'Rechazado') badgeColor = 'bg-red-50 text-red-700 border-red-200 opacity-70';
+                    
+                    let badge = `<span class="px-2 py-0.5 rounded text-[8px] font-black border ${badgeColor} uppercase tracking-wider">${c.estatus}</span>`;
+                    
+                    let btn = `<button onclick="abrirGestionarRMA('${c.id_rma}')" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded shadow-sm text-[9px] font-black uppercase tracking-wider transition flex justify-center items-center gap-1 mx-auto border border-gray-200 btn-press"><i class="fa-solid fa-gavel"></i> Dictaminar</button>`;
+                    if(c.estatus !== 'En Revisión') btn = `<span class="text-gray-300 font-bold text-[9px] uppercase"><i class="fa-solid fa-lock mr-1"></i> Cerrado</span>`;
+                    
+                    return `
+                    <tr class="hover:bg-blue-50 transition border-b border-gray-100">
+                        <td class="py-2 px-4 font-mono font-bold text-gray-500">RMA-00${c.correlativo}</td>
+                        <td class="py-2 px-4"><p class="font-bold text-primary uppercase text-[10px]">${c.cliente_nombre}</p><p class="text-[8px] text-gray-400 font-bold">Fac: ${c.factura_referencia || 'N/A'}</p></td>
+                        <td class="py-2 px-4"><p class="font-bold text-gray-700 uppercase text-[10px]">${c.producto_nombre}</p><p class="text-[8px] text-gray-400 font-mono">SKU: ${c.producto_sku || 'N/A'} | Cant: ${c.cantidad}</p></td>
+                        <td class="py-2 px-4 text-[9px] text-gray-500 italic max-w-[200px] truncate" title="${c.motivo_reclamo}">"${c.motivo_reclamo}"</td>
+                        <td class="py-2 px-4 text-center">${badge}</td>
+                        <td class="py-2 px-4 text-center">${btn}</td>
+                    </tr>`;
+                }).join('');
+            } catch(e) { console.warn("Error cargando RMAs."); }
+        }
+
+        function abrirModalRMA() {
+            document.getElementById('form-rma').reset();
+            document.getElementById('modal-rma').classList.remove('hidden');
+            document.getElementById('modal-rma').classList.add('flex');
+        }
+
+        function cerrarModalRMA() {
+            document.getElementById('modal-rma').classList.add('hidden');
+            document.getElementById('modal-rma').classList.remove('flex');
+        }
+
+        async function guardarRMA(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btn-guardar-rma');
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Cargando...`; btn.disabled = true;
+
+            try {
+                const data = {
+                    factura_referencia: document.getElementById('rma-factura').value.trim().toUpperCase(),
+                    cliente_nombre: document.getElementById('rma-cliente').value.trim().toUpperCase(),
+                    producto_nombre: document.getElementById('rma-prod-nombre').value.trim().toUpperCase(),
+                    producto_sku: document.getElementById('rma-prod-sku').value.trim().toUpperCase(),
+                    cantidad: parseFloat(document.getElementById('rma-cantidad').value) || 1,
+                    motivo_reclamo: document.getElementById('rma-motivo').value.trim(),
+                    estatus: 'En Revisión'
+                };
+
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/rma_garantias`, {
+                    method: 'POST',
+                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if(!res.ok) throw new Error("Error registrando RMA");
+
+                cerrarModalRMA();
+                cargarListaRMA();
+            } catch(error) {
+                alert("Error al registrar la garantía.");
+            } finally {
+                btn.innerHTML = `<i class="fa-solid fa-save"></i> Cargar Garantía`; btn.disabled = false;
+            }
+        }
+
+        function abrirGestionarRMA(id) {
+            document.getElementById('gest-rma-id').value = id;
+            document.getElementById('modal-gestionar-rma').classList.remove('hidden');
+            document.getElementById('modal-gestionar-rma').classList.add('flex');
+        }
+
+        function cerrarGestionarRMA() {
+            document.getElementById('modal-gestionar-rma').classList.add('hidden');
+            document.getElementById('modal-gestionar-rma').classList.remove('flex');
+        }
+
+        async function actualizarEstatusRMA(nuevoEstatus) {
+            if(!confirm(`Atención: Estás a punto de dictaminar este reclamo como:\n\n👉 "${nuevoEstatus}"\n\n¿Confirmar acción?`)) return;
+            const id = document.getElementById('gest-rma-id').value;
+
+            try {
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/rma_garantias?id_rma=eq.${id}`, {
+                    method: 'PATCH',
+                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ estatus: nuevoEstatus })
+                });
+
+                if(!res.ok) throw new Error("Error actualizando");
+                cerrarGestionarRMA();
+                cargarListaRMA();
+                
+                // Alert temporal (Fase 3: esto será automático)
+                if(nuevoEstatus.includes('Aprobado')) {
+                    alert("⚠️ DICTAMEN APROBADO ⚠️\n\nPor ahora (Fase 1), debes ir al módulo de Inventario/Ventas a realizar el descargo manual del nuevo producto o generar el saldo a favor del cliente.");
+                }
+
+            } catch(e) { alert("Error al resolver el reclamo."); }
+        }
+    </script>
     </body>
 </html>
