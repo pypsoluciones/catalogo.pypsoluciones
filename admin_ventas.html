@@ -57,29 +57,40 @@
         input[type=date]::-webkit-calendar-picker-indicator { cursor: pointer; opacity: 0.6; transition: 0.2s; }
         input[type=date]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
 
-       /* GRID DINÁMICO DE PRODUCTOS (Max 3 Columnas) */
+      /* GRID DINÁMICO DE PRODUCTOS (4 Cols en Normal, 3 en Supermercado) */
         .dynamic-grid-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.375rem; }
-        @media (min-width: 768px) { .dynamic-grid-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+        @media (min-width: 640px) { .dynamic-grid-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+        @media (min-width: 1024px) { .dynamic-grid-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
         .dynamic-grid-table { display: flex; flex-direction: column; gap: 0.25rem; }
 
         /* --- MODO SUPERMERCADO (CAJA RÁPIDA PROFESIONAL) --- */
-        .layout-supermercado #panel-izquierdo { width: 40% !important; background: #f8fafc; padding: 1rem; border-right: 2px dashed #cbd5e1; transition: all 0.3s; }
-        .layout-supermercado #panel-izquierdo > div:first-child { flex-direction: column; background: transparent; border: none; padding: 0; width: 100%; margin-bottom: 0.5rem; }
+        .layout-supermercado #panel-izquierdo { width: 40% !important; background: #f8fafc; padding: 0.75rem; border-right: 2px dashed #cbd5e1; transition: all 0.3s; }
         
-        /* Ocultamos SOLO los filtros. Dejamos los botones de vista libres */
+        /* Ajuste de columnas para modo supermercado (Forzar max 3) */
+        @media (min-width: 1024px) { .layout-supermercado .dynamic-grid-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+        /* Reorganización de la cabecera usando Flexbox Ordering */
+        .layout-supermercado #panel-izquierdo > div:first-child { display: flex; flex-direction: column; background: transparent; border: none; padding: 0; width: 100%; margin-bottom: 0.5rem; }
+        
+        /* Ocultar filtros innecesarios */
         .layout-supermercado #filtro-cat-pos, 
         .layout-supermercado #filtro-stock-pos { display: none !important; }
         
-        /* Alineación del contenedor de botones de vista en modo supermercado */
-        .layout-supermercado #panel-izquierdo > div:first-child > div.flex.bg-gray-100 { align-self: flex-end; margin-top: 0.5rem; }
+        /* 1. Título sutil e integrado arriba */
+        .layout-supermercado #panel-izquierdo > div:first-child::before { content: 'MODO ESCÁNER'; order: 1; font-size: 0.75rem; font-weight: 900; color: var(--color-primary); margin-bottom: 0.25rem; letter-spacing: 0.05em; align-self: flex-start; line-height: 1.5rem; }
         
-        /* Buscador proporcionado y profesional */
-        .layout-supermercado #buscador-pos { font-size: 1rem !important; padding: 0.6rem 1rem 0.6rem 2.2rem !important; border: 2px solid var(--color-primary) !important; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); height: auto; }
-        .layout-supermercado #panel-izquierdo .fa-barcode { font-size: 1rem !important; top: 0.8rem !important; left: 0.8rem !important; color: var(--color-primary) !important; }
-        .layout-supermercado #panel-izquierdo::before { content: 'ESCÁNER ACTIVO'; display: block; text-align: center; font-weight: 900; color: var(--color-primary); margin-bottom: 0.5rem; font-size: 1rem; letter-spacing: 0.05em; }
+        /* 2. Subir los botones de vista a la línea del título (Alineados a la derecha) */
+        .layout-supermercado #panel-izquierdo > div:first-child > .flex.bg-gray-100 { order: 2; align-self: flex-end; margin-top: -1.75rem; margin-bottom: 0.5rem; z-index: 10; }
+        
+        /* 3. Buscador estilizado y profesional abajo (Menos alto) */
+        .layout-supermercado #panel-izquierdo > div:first-child > .relative.flex-1 { order: 3; width: 100%; }
+        .layout-supermercado #buscador-pos { font-size: 0.85rem !important; padding: 0.35rem 1rem 0.35rem 2rem !important; border: 1.5px solid var(--color-primary) !important; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); height: 32px; }
+        .layout-supermercado #panel-izquierdo .fa-barcode { font-size: 0.85rem !important; top: 0.55rem !important; left: 0.6rem !important; color: var(--color-primary) !important; }
+        .layout-supermercado #btn-abrir-escaner { padding: 0.15rem 0.4rem; top: 0.1rem; right: 0.15rem; }
+
         .layout-supermercado #panel-derecho { width: 60% !important; max-width: 100% !important; transition: all 0.3s; }
-        .layout-supermercado #lista-carrito .bg-white { transform: scale(1.01); margin-bottom: 0.5rem; border: 1px solid #e2e8f0; border-left: 4px solid var(--color-secondary); padding: 10px; }
-        .layout-supermercado #lista-carrito h4 { font-size: 13px !important; }
+        .layout-supermercado #lista-carrito .bg-white { transform: scale(1.01); margin-bottom: 0.5rem; border: 1px solid #e2e8f0; border-left: 3px solid var(--color-secondary); padding: 8px; }
+        .layout-supermercado #lista-carrito h4 { font-size: 11px !important; }
 
         /* Clase dinámica inyectada por JS */
         .grid-escondido { display: none !important; }
