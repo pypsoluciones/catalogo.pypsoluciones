@@ -490,7 +490,10 @@
                 <div onclick="abrirPanelOrden('${o.id_orden}')" class="bg-white p-3 rounded-lg border border-gray-100 shadow-sm card-anim hover:shadow-md hover:border-gray-300 transition relative group cursor-pointer">
                     <div class="flex justify-between items-start mb-1.5">
                         <span class="text-[9px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded font-bold font-mono">#OS-${o.correlativo}</span>
-                        <button onclick="event.stopPropagation(); cambiarEstatusTaller('${o.id_orden}')" title="Avanzar de etapa" class="text-gray-300 hover:text-primary transition hover:scale-110"><i class="fa-solid fa-circle-arrow-right text-sm"></i></button>
+                        <div class="flex gap-1">
+                            ${o.estatus !== 'Recibido' ? `<button onclick="event.stopPropagation(); retrocederEstatusTaller('${o.id_orden}', '${o.estatus}')" title="Devolver etapa" class="text-gray-300 hover:text-red-500 transition hover:scale-110"><i class="fa-solid fa-circle-arrow-left text-sm"></i></button>` : ''}
+                            <button onclick="event.stopPropagation(); cambiarEstatusTaller('${o.id_orden}')" title="Avanzar de etapa" class="text-gray-300 hover:text-primary transition hover:scale-110"><i class="fa-solid fa-circle-arrow-right text-sm"></i></button>
+                        </div>
                     </div>
                     <h4 class="font-black text-primary leading-tight mb-0.5 uppercase text-[11px] truncate" title="${o.equipo}">${o.equipo}</h4>
                     <p class="text-[10px] text-gray-600 font-bold mb-2 truncate" title="${o.cliente_nombre}">${o.cliente_nombre}</p>
@@ -554,7 +557,21 @@
                 cargarTableroTaller();
             } catch(e) { console.warn(e); }
         }
-           
+           async function retrocederEstatusTaller(id, actual) {
+            try {
+                let nuevo = actual;
+                if(actual === 'Listo') nuevo = 'Esperando Repuesto'; 
+                else if(actual === 'Esperando Repuesto') nuevo = 'En Revisión'; 
+                else if(actual === 'En Revisión') nuevo = 'Recibido';
+                
+                await fetch(`${SUPABASE_URL}/rest/v1/servicio_ordenes?id_orden=eq.${id}`, { 
+                    method: 'PATCH', 
+                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ estatus: nuevo }) 
+                });
+                cargarTableroTaller();
+            } catch(e) { console.warn("Error al retroceder:", e); }
+        }
         // ==========================================
         // MÓDULO 2: GARANTÍAS Y DEVOLUCIONES (RMA)
         // ==========================================
