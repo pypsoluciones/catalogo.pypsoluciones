@@ -10,25 +10,20 @@
         const cPri = localStorage.getItem('pyp_color_primario') || '#143B62';
         const cSec = localStorage.getItem('pyp_color_secundario') || '#E67E22';
         const cTer = localStorage.getItem('pyp_color_terciario') || '#64748b';
-        const fontFam = localStorage.getItem('pyp_fuente') || "'Inter', sans-serif";
-        const fontSiz = localStorage.getItem('pyp_tamano') || "14px";
-        
         document.documentElement.style.setProperty('--color-primary', cPri);
         document.documentElement.style.setProperty('--color-secondary', cSec);
         document.documentElement.style.setProperty('--color-tertiary', cTer);
-        document.documentElement.style.setProperty('--font-global', fontFam);
-        document.documentElement.style.setProperty('--size-global', fontSiz);
+        document.documentElement.style.setProperty('--font-global', localStorage.getItem('pyp_fuente') || "'Inter', sans-serif");
+        document.documentElement.style.setProperty('--size-global', localStorage.getItem('pyp_tamano') || "14px");
     </script>
 
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.js"></script>
-    
+
     <script>
-        if (!localStorage.getItem('pyp_token_seguro')) {
-            window.location.href = 'login.html';
-        }
+        if (!localStorage.getItem('pyp_token_seguro')) { window.location.href = 'login.html'; }
     </script>
 
     <style>
@@ -41,22 +36,14 @@
 
         .custom-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
         .custom-scroll::-webkit-scrollbar-thumb { background-color: var(--color-primary); border-radius: 4px; }
+        .fade-in { animation: fadeIn 0.2s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .btn-press:active { transform: scale(0.96); }
         
-        .fade-in { animation: fadeIn 0.2s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* Estilos Kanban */
-        .kanban-column { min-height: 65vh; transition: background-color 0.3s; }
-        .card-anim { animation: slideIn 0.3s ease-out; }
-        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* Estilos Pestañas */
-        .tab-btn { position: relative; transition: all 0.2s; }
-        .tab-btn.active { color: var(--color-primary); font-weight: 900; }
-        .tab-btn.active::after { content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 3px; background-color: var(--color-primary); border-radius: 3px 3px 0 0; }
-        .tab-content { display: none; }
-        .tab-content.active { display: flex; animation: fadeIn 0.2s; }
+        .kanban-col { min-height: calc(100vh - 200px); }
+        .card-anim { transition: all 0.2s ease; }
+        .card-anim:hover { transform: translateY(-2px); }
+        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
     </style>
 </head>
 <body class="bg-[#f4f6f8] font-sans flex h-screen overflow-hidden text-gray-800">
@@ -64,69 +51,103 @@
     <script src="menu.js"></script>
 
     <main class="flex-1 flex flex-col h-screen overflow-hidden bg-gray-50 w-full z-10 relative">
-        <header class="bg-white shadow-sm px-6 pt-4 flex flex-col z-10 shrink-0 border-b border-gray-200">
-            <div class="flex justify-between items-start mb-2">
-                <div class="flex items-center gap-3">
-                    <button onclick="toggleMobileMenu()" class="md:hidden text-gray-600 hover:text-primary text-xl px-2 transition"><i class="fa-solid fa-bars"></i></button>
-                    <div>
-                        <h1 class="text-lg font-black text-primary uppercase flex items-center gap-2 tracking-wide"><i class="fa-solid fa-microchip text-tertiary"></i> Centro de Servicios</h1>
-                        <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-0.5">Gestión de Taller y Devoluciones</p>
-                    </div>
+        
+        <!-- HEADER -->
+        <header class="bg-white shadow-sm px-6 py-4 flex justify-between items-center z-10 shrink-0 border-b border-gray-200">
+            <div class="flex items-center gap-3">
+                <button onclick="toggleMobileMenu()" class="md:hidden text-gray-600 hover:text-primary text-xl px-2 transition"><i class="fa-solid fa-bars"></i></button>
+                <div>
+                    <h1 class="text-lg font-black text-primary uppercase flex items-center gap-2 tracking-wide"><i class="fa-solid fa-microchip text-tertiary"></i> Centro de Servicios</h1>
+                    <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-0.5">Gestión de Taller y Devoluciones</p>
                 </div>
-                <button id="btn-accion-maestro" onclick="ejecutarAccionMaestra()" class="bg-secondary hover:opacity-90 text-white px-4 py-2 rounded-lg font-black text-[11px] uppercase tracking-wider shadow-sm transition btn-press flex items-center gap-2">
-                    <i class="fa-solid fa-plus"></i> <span id="txt-btn-maestro">Recibir Equipo</span>
-                </button>
             </div>
-
-            <div class="flex gap-6 mt-2 border-b border-gray-200">
-                <button onclick="cambiarTab('taller')" id="tab-taller-btn" class="tab-btn active pb-2 text-xs font-bold text-gray-500 hover:text-primary uppercase tracking-wider flex items-center gap-1"><i class="fa-solid fa-screwdriver-wrench"></i> Taller Técnico</button>
-                <button onclick="cambiarTab('rma')" id="tab-rma-btn" class="tab-btn pb-2 text-xs font-bold text-gray-500 hover:text-primary uppercase tracking-wider flex items-center gap-1"><i class="fa-solid fa-rotate-left"></i> Garantías (RMA)</button>
+            <div class="flex gap-2">
+                <button onclick="abrirModalOrden()" class="bg-secondary hover:opacity-90 text-white px-4 py-2 rounded-lg font-black text-[11px] uppercase tracking-wider shadow-sm transition btn-press flex items-center gap-2">
+                    <i class="fa-solid fa-plus"></i> Recibir Equipo
+                </button>
             </div>
         </header>
 
-        <div id="tab-taller-content" class="tab-content active flex-1 overflow-x-auto p-6 gap-6 bg-[#f8f9fa] custom-scroll">
-            <div class="w-80 shrink-0 flex flex-col"><div class="bg-blue-50 text-blue-700 px-4 py-2 rounded-t-lg font-black text-[10px] uppercase tracking-widest border border-blue-200 border-b-0 flex justify-between">Recibido <span id="count-recibido" class="bg-blue-200 text-blue-800 px-1.5 rounded">0</span></div><div id="col-Recibido" class="kanban-column bg-white border border-gray-200 border-t-blue-500 border-t-2 p-2 rounded-b-lg space-y-2 overflow-y-auto custom-scroll shadow-inner"></div></div>
-            <div class="w-80 shrink-0 flex flex-col"><div class="bg-orange-50 text-orange-700 px-4 py-2 rounded-t-lg font-black text-[10px] uppercase tracking-widest border border-orange-200 border-b-0 flex justify-between">En Revisión <span id="count-revision" class="bg-orange-200 text-orange-800 px-1.5 rounded">0</span></div><div id="col-Revision" class="kanban-column bg-white border border-gray-200 border-t-orange-500 border-t-2 p-2 rounded-b-lg space-y-2 overflow-y-auto custom-scroll shadow-inner"></div></div>
-            <div class="w-80 shrink-0 flex flex-col"><div class="bg-purple-50 text-purple-700 px-4 py-2 rounded-t-lg font-black text-[10px] uppercase tracking-widest border border-purple-200 border-b-0 flex justify-between">Espera de Repuesto <span id="count-repuesto" class="bg-purple-200 text-purple-800 px-1.5 rounded">0</span></div><div id="col-Repuesto" class="kanban-column bg-white border border-gray-200 border-t-purple-500 border-t-2 p-2 rounded-b-lg space-y-2 overflow-y-auto custom-scroll shadow-inner"></div></div>
-            <div class="w-80 shrink-0 flex flex-col"><div class="bg-green-50 text-green-700 px-4 py-2 rounded-t-lg font-black text-[10px] uppercase tracking-widest border border-green-200 border-b-0 flex justify-between">Listo (Por Entregar) <span id="count-listo" class="bg-green-200 text-green-800 px-1.5 rounded">0</span></div><div id="col-Listo" class="kanban-column bg-white border border-gray-200 border-t-green-500 border-t-2 p-2 rounded-b-lg space-y-2 overflow-y-auto custom-scroll shadow-inner"></div></div>
+        <!-- SUB-NAVEGADOR DE TABS -->
+        <div class="bg-white border-b border-gray-200 px-6 flex gap-6 shrink-0 z-10">
+            <button onclick="cambiarTab('taller')" id="tab-btn-taller" class="py-3 text-xs font-black uppercase tracking-wider border-b-2 border-primary text-primary transition flex items-center gap-2"><i class="fa-solid fa-screwdriver-wrench"></i> Taller Técnico</button>
+            <button onclick="cambiarTab('rma')" id="tab-btn-rma" class="py-3 text-xs font-bold uppercase tracking-wider border-b-2 border-transparent text-gray-400 hover:text-gray-600 transition flex items-center gap-2"><i class="fa-solid fa-rotate-left"></i> Garantías (RMA)</button>
         </div>
 
-        <div id="tab-rma-content" class="tab-content flex-1 flex-col overflow-auto p-4 custom-scroll">
-            <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex-1 flex flex-col">
+        <div class="flex-1 overflow-x-auto overflow-y-hidden p-6 custom-scroll">
+            
+            <!-- MÓDULO: KANBAN TALLER -->
+            <div id="vista-taller" class="flex gap-4 h-full min-w-max pb-4">
+                
+                <!-- Columna: Recibido -->
+                <div class="w-80 flex flex-col bg-blue-50/50 rounded-xl border border-blue-100 overflow-hidden shrink-0">
+                    <div class="bg-blue-100/50 p-3 border-b border-blue-200 flex justify-between items-center shrink-0">
+                        <h3 class="text-[10px] font-black text-blue-800 uppercase tracking-widest">Recibido</h3>
+                        <span id="count-recibido" class="bg-blue-200 text-blue-800 text-[9px] font-bold px-2 py-0.5 rounded-full">0</span>
+                    </div>
+                    <div id="col-Recibido" class="flex-1 overflow-y-auto custom-scroll p-3 space-y-3 kanban-col"></div>
+                </div>
+
+                <!-- Columna: En Revisión -->
+                <div class="w-80 flex flex-col bg-amber-50/50 rounded-xl border border-amber-100 overflow-hidden shrink-0">
+                    <div class="bg-amber-100/50 p-3 border-b border-amber-200 flex justify-between items-center shrink-0">
+                        <h3 class="text-[10px] font-black text-amber-800 uppercase tracking-widest">En Revisión</h3>
+                        <span id="count-revision" class="bg-amber-200 text-amber-800 text-[9px] font-bold px-2 py-0.5 rounded-full">0</span>
+                    </div>
+                    <div id="col-Revision" class="flex-1 overflow-y-auto custom-scroll p-3 space-y-3 kanban-col"></div>
+                </div>
+
+                <!-- Columna: Espera de Repuesto / Aprobación -->
+                <div class="w-80 flex flex-col bg-purple-50/50 rounded-xl border border-purple-100 overflow-hidden shrink-0">
+                    <div class="bg-purple-100/50 p-3 border-b border-purple-200 flex justify-between items-center shrink-0">
+                        <h3 class="text-[10px] font-black text-purple-800 uppercase tracking-widest">Espera de Repuesto / Aprob.</h3>
+                        <span id="count-repuesto" class="bg-purple-200 text-purple-800 text-[9px] font-bold px-2 py-0.5 rounded-full">0</span>
+                    </div>
+                    <div id="col-Repuesto" class="flex-1 overflow-y-auto custom-scroll p-3 space-y-3 kanban-col"></div>
+                </div>
+
+                <!-- Columna: Listo -->
+                <div class="w-80 flex flex-col bg-emerald-50/50 rounded-xl border border-emerald-100 overflow-hidden shrink-0">
+                    <div class="bg-emerald-100/50 p-3 border-b border-emerald-200 flex justify-between items-center shrink-0">
+                        <h3 class="text-[10px] font-black text-emerald-800 uppercase tracking-widest">Listo (Por Entregar)</h3>
+                        <span id="count-listo" class="bg-emerald-200 text-emerald-800 text-[9px] font-bold px-2 py-0.5 rounded-full">0</span>
+                    </div>
+                    <div id="col-Listo" class="flex-1 overflow-y-auto custom-scroll p-3 space-y-3 kanban-col"></div>
+                </div>
+
+            </div>
+
+            <!-- MÓDULO: LISTA RMA (OCULTO POR DEFECTO) -->
+            <div id="vista-rma" class="hidden flex-col h-full bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
                 <div class="overflow-x-auto custom-scroll flex-1">
-                    <table class="w-full text-left text-xs whitespace-nowrap">
+                    <table class="w-full text-left text-xs whitespace-nowrap min-w-[800px]">
                         <thead class="bg-primary text-white text-[9px] uppercase font-black tracking-wider sticky top-0 z-10">
-                            <tr>
-                                <th class="py-2.5 px-4">RMA #</th>
-                                <th class="py-2.5 px-4">Cliente / Factura</th>
-                                <th class="py-2.5 px-4">Producto Devuelto</th>
-                                <th class="py-2.5 px-4">Motivo</th>
-                                <th class="py-2.5 px-4 text-center">Estatus</th>
-                                <th class="py-2.5 px-4 text-center">Acción</th>
-                            </tr>
+                            <tr><th class="py-3 px-4">Ticket</th><th class="py-3 px-4">Fecha</th><th class="py-3 px-4">Cliente</th><th class="py-3 px-4">Factura Orig.</th><th class="py-3 px-4">Producto</th><th class="py-3 px-4 text-center">Estatus</th><th class="py-3 px-4 text-center">Acción</th></tr>
                         </thead>
                         <tbody id="tabla-rma" class="divide-y divide-gray-100">
-                            <tr><td colspan="6" class="p-10 text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin text-xl mb-2 block"></i> Cargando...</td></tr>
+                            <tr><td colspan="7" class="p-10 text-center text-gray-400">Cargando...</td></tr>
                         </tbody>
                     </table>
                 </div>
             </div>
+
         </div>
     </main>
-<div id="modal-orden" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4 fade-in">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg flex flex-col max-h-[90vh] overflow-hidden border border-gray-200">
-            <div class="bg-primary text-white p-4 flex justify-between items-center shrink-0">
-                <h3 class="font-black text-[12px] uppercase tracking-wider"><i class="fa-solid fa-screwdriver-wrench mr-2 text-tertiary"></i> Recibir Equipo en Taller</h3>
+
+    <!-- MODAL: RECIBIR ORDEN DE TALLER -->
+    <div id="modal-orden" class="fixed inset-0 bg-slate-900/85 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4 fade-in">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-200">
+            <div class="bg-primary text-white px-5 py-4 flex justify-between items-center">
+                <h3 class="font-black text-sm uppercase tracking-wider flex items-center"><i class="fa-solid fa-tools mr-2 text-tertiary"></i> Recibir Equipo en Taller</h3>
                 <button onclick="cerrarModalOrden()" class="text-gray-300 hover:text-white text-xl transition"><i class="fa-solid fa-times"></i></button>
             </div>
-            <div class="p-6 overflow-y-auto custom-scroll flex-1 space-y-4 bg-gray-50">
-                <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm space-y-3">
-                    <div class="flex justify-between items-center border-b border-gray-100 pb-2">
-                        <label class="block text-[10px] font-black text-primary uppercase tracking-wider">Datos del Cliente</label>
-                        <button onclick="abrirModalDirectorio('taller')" class="bg-blue-50 text-blue-600 border border-blue-200 px-3 py-1 rounded text-[10px] font-bold shadow-sm hover:bg-blue-600 hover:text-white transition flex items-center gap-1 btn-press">
-                            <i class="fa-solid fa-address-book"></i> Buscar
-                        </button>
-                    </div>
+            <div class="p-5 max-h-[80vh] overflow-y-auto custom-scroll">
+                
+                <div class="border border-gray-200 rounded-lg p-4 mb-4 relative bg-gray-50/50">
+                    <h4 class="text-[10px] font-black text-primary uppercase tracking-widest mb-3 flex justify-between items-center">
+                        Datos del Cliente
+                        <button type="button" onclick="abrirModalDirectorio('taller')" class="bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100 px-3 py-1 rounded text-[9px] font-black transition flex items-center gap-1"><i class="fa-solid fa-address-book"></i> Buscar</button>
+                    </h4>
                     <div class="grid grid-cols-3 gap-3">
                         <!-- INICIO BUSCADOR PREDICTIVO TALLER -->
                         <div class="col-span-2 relative">
@@ -135,22 +156,23 @@
                             <div id="dropdown-clientes-taller" class="absolute w-full bg-white border border-gray-200 shadow-xl rounded-b mt-0.5 hidden z-50 max-h-48 overflow-y-auto custom-scroll"></div>
                         </div>
                         <!-- FIN BUSCADOR PREDICTIVO TALLER -->
-                        <div>
+                        <div class="col-span-1">
                             <label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Cédula / RIF</label>
-                            <input type="text" id="os-doc" placeholder="Documento..." class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-bold text-gray-800 outline-none focus:border-tertiary transition bg-gray-50">
+                            <input type="text" id="os-doc" placeholder="Documento..." class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-mono text-gray-600 bg-gray-100 outline-none cursor-not-allowed" readonly>
                         </div>
                     </div>
                 </div>
-                <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm space-y-3">
-                    <label class="block text-[10px] font-black text-primary uppercase tracking-wider border-b border-gray-100 pb-2">Información del Equipo</label>
-                    <div class="grid grid-cols-2 gap-3">
+
+                <div class="border border-gray-200 rounded-lg p-4 bg-white shadow-sm">
+                    <h4 class="text-[10px] font-black text-primary uppercase tracking-widest mb-3">Información del Equipo</h4>
+                    <div class="grid grid-cols-2 gap-3 mb-3">
                         <div>
                             <label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Equipo / Modelo *</label>
-                            <input type="text" id="os-equipo" placeholder="Ej: Laptop HP Core i5" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none focus:border-tertiary transition">
+                            <input type="text" id="os-equipo" placeholder="Ej: Laptop HP Core i5" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-bold uppercase text-gray-800 outline-none focus:border-tertiary transition">
                         </div>
                         <div>
                             <label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Serial (S/N)</label>
-                            <input type="text" id="os-serial" placeholder="Serial..." class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-mono outline-none focus:border-tertiary transition uppercase">
+                            <input type="text" id="os-serial" placeholder="SERIAL..." class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-mono uppercase text-gray-800 outline-none focus:border-tertiary transition">
                         </div>
                     </div>
                     <div>
@@ -158,187 +180,126 @@
                         <textarea id="os-falla" rows="3" placeholder="Describe detalladamente el problema..." class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none focus:border-tertiary transition custom-scroll"></textarea>
                     </div>
                 </div>
+
             </div>
-            <div class="p-4 border-t border-gray-200 bg-white flex gap-3 shrink-0">
-                <button onclick="cerrarModalOrden()" class="flex-1 py-2 bg-gray-100 text-gray-600 font-bold rounded text-xs uppercase btn-press hover:bg-gray-200 transition">Cancelar</button>
-                <button onclick="guardarOrdenTaller()" id="btn-guardar-os" class="flex-[2] py-2 bg-secondary text-white font-black rounded text-xs uppercase tracking-wider shadow-md btn-press hover:opacity-90 transition flex justify-center items-center gap-2">
-                    <i class="fa-solid fa-save"></i> Registrar Ingreso
-                </button>
+            <div class="bg-gray-50 px-5 py-4 border-t border-gray-200 flex justify-end gap-2 shrink-0">
+                <button onclick="cerrarModalOrden()" class="px-6 py-2 rounded-lg text-xs font-black text-gray-600 bg-gray-200 hover:bg-gray-300 uppercase tracking-wider transition btn-press">Cancelar</button>
+                <button onclick="guardarOrdenTaller()" id="btn-guardar-os" class="px-6 py-2 rounded-lg text-xs font-black text-white bg-secondary hover:opacity-90 uppercase tracking-wider shadow-sm transition btn-press flex items-center gap-2"><i class="fa-solid fa-save"></i> Registrar Ingreso</button>
             </div>
         </div>
     </div>
 
-    <div id="modal-rma" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4 fade-in">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg flex flex-col max-h-[90vh] overflow-hidden border border-gray-200">
-            <div class="bg-primary text-white p-4 flex justify-between items-center shrink-0">
-                <h3 class="font-black text-[12px] uppercase tracking-wider"><i class="fa-solid fa-rotate-left mr-2 text-tertiary"></i> Ingresar Garantía (RMA)</h3>
-                <button onclick="cerrarModalRMA()" class="text-gray-300 hover:text-white text-xl transition"><i class="fa-solid fa-times"></i></button>
+    <!-- MODAL: PANEL DE CONTROL DE ORDEN (COTIZADOR DE TALLER) -->
+    <div id="modal-panel-orden" class="fixed inset-0 bg-slate-900/85 backdrop-blur-sm z-[105] hidden flex items-center justify-center p-4 fade-in">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl flex flex-col max-h-[95vh] overflow-hidden border border-gray-200">
+            <div class="bg-primary text-white px-5 py-3 flex justify-between items-center shrink-0">
+                <div>
+                    <h3 class="font-black text-sm uppercase tracking-wider flex items-center"><i class="fa-solid fa-laptop-medical mr-2 text-tertiary"></i> Diagnóstico y Presupuesto</h3>
+                    <p id="panel-orden-titulo" class="text-[10px] text-gray-300 font-bold mt-0.5">Cargando...</p>
+                </div>
+                <button onclick="cerrarPanelOrden()" class="text-gray-300 hover:text-white text-xl transition ml-2"><i class="fa-solid fa-times"></i></button>
             </div>
-            <form id="form-rma" onsubmit="guardarRMA(event)" class="p-6 bg-gray-50 space-y-4 overflow-y-auto custom-scroll flex-1">
-                <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm space-y-3">
-                    <div class="flex justify-between items-center border-b border-gray-100 pb-2">
-                        <label class="block text-[10px] font-black text-primary uppercase tracking-wider">Cliente y Factura</label>
-                        <button type="button" onclick="abrirModalDirectorio('rma')" class="bg-blue-50 text-blue-600 border border-blue-200 px-3 py-1 rounded text-[10px] font-bold shadow-sm hover:bg-blue-600 hover:text-white transition flex items-center gap-1 btn-press">
-                            <i class="fa-solid fa-address-book"></i> Buscar
+            <div class="flex-1 flex flex-col md:flex-row overflow-hidden bg-gray-50">
+                <div class="w-full md:w-1/2 flex flex-col border-r border-gray-200 bg-white p-4 space-y-4 overflow-y-auto custom-scroll">
+                    <div>
+                        <h4 class="text-[10px] font-black text-primary uppercase tracking-wider mb-2">Dictamen Técnico (Opcional)</h4>
+                        <textarea id="panel-orden-diagnostico" rows="2" placeholder="Describe el trabajo a realizar..." class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none focus:border-tertiary transition custom-scroll"></textarea>
+                    </div>
+                    <div class="bg-blue-50 p-3 rounded-lg border border-blue-100 relative">
+                        <h4 class="text-[10px] font-black text-blue-800 uppercase tracking-wider mb-2"><i class="fa-solid fa-magnifying-glass mr-1"></i> Buscar Inventario</h4>
+                        <input type="text" id="panel-buscador-inv" oninput="buscarRepuestoTaller()" placeholder="Buscar repuesto..." class="w-full border border-blue-200 rounded px-2 py-1.5 text-xs font-bold outline-none focus:border-blue-500 shadow-inner transition uppercase">
+                        <div id="dropdown-repuestos" class="absolute w-full bg-white border border-gray-200 shadow-xl rounded-b mt-0.5 hidden z-50 max-h-48 overflow-y-auto custom-scroll left-0"></div>
+                        <div class="mt-3 pt-3 border-t border-blue-100 flex gap-2">
+                            <input type="text" id="cargo-manual-desc" placeholder="Cargo Libre (Ej: Mano de Obra)" class="flex-1 border border-gray-300 rounded px-2 py-1.5 text-xs outline-none uppercase">
+                            <input type="number" id="cargo-manual-precio" placeholder="US$" class="w-20 border border-gray-300 rounded px-2 py-1.5 text-xs font-black text-center outline-none">
+                            <button onclick="agregarCargoManual()" class="bg-primary hover:bg-blue-800 text-white font-bold px-3 py-1.5 rounded text-xs transition"><i class="fa-solid fa-plus"></i></button>
+                        </div>
+                    </div>
+                </div>
+                <div class="w-full md:w-1/2 flex flex-col bg-gray-50">
+                    <div class="p-3 bg-gray-200 border-b border-gray-300 shrink-0">
+                        <h4 class="text-[10px] font-black text-gray-700 uppercase tracking-wider"><i class="fa-solid fa-file-invoice-dollar mr-1"></i> Pre-Cotización</h4>
+                    </div>
+                    <div class="flex-1 overflow-y-auto custom-scroll p-2 space-y-1" id="lista-detalles-orden"></div>
+                    <div class="bg-white border-t border-gray-200 p-4 shrink-0">
+                        <div class="flex justify-between items-end mb-3">
+                            <span class="text-xs font-black text-gray-500 uppercase tracking-widest">Total Presupuesto</span>
+                            <span class="text-2xl font-black text-secondary leading-none tracking-tighter" id="panel-orden-total">US$ 0.00</span>
+                        </div>
+                        <button onclick="generarPresupuestoDesdeTaller()" id="btn-emitir-presupuesto" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black py-3 rounded text-xs uppercase tracking-wider shadow-sm transition btn-press flex justify-center items-center gap-2">
+                            <i class="fa-solid fa-paper-plane"></i> Emitir Presupuesto a Cliente
                         </button>
                     </div>
-                    <div class="grid grid-cols-3 gap-3">
-                        <div class="col-span-2">
-                            <label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Cliente *</label>
-                            <input type="text" id="rma-cliente" required placeholder="Nombre..." class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-bold text-gray-800 outline-none focus:border-tertiary transition">
-                        </div>
-                        <div>
-                            <label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Factura Ref.</label>
-                            <input type="text" id="rma-factura" placeholder="000000" class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-bold text-gray-800 outline-none focus:border-tertiary transition">
-                        </div>
-                    </div>
                 </div>
-
-                <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm space-y-3">
-                    <label class="block text-[10px] font-black text-primary uppercase tracking-wider border-b border-gray-100 pb-2">Producto Dañado</label>
-                    <div class="grid grid-cols-4 gap-3">
-                        <div class="col-span-3">
-                            <label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Nombre del Producto *</label>
-                            <input type="text" id="rma-prod-nombre" required placeholder="Ej: Monitor 24..." class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none focus:border-tertiary transition">
-                        </div>
-                        <div>
-                            <label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Cant.</label>
-                            <input type="number" id="rma-cantidad" min="1" value="1" required class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-black text-center outline-none focus:border-tertiary transition">
-                        </div>
-                        <div class="col-span-4">
-                            <label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">SKU / Código Barra</label>
-                            <input type="text" id="rma-prod-sku" placeholder="SKU..." class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-mono outline-none focus:border-tertiary transition">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Motivo del Reclamo *</label>
-                        <textarea id="rma-motivo" required rows="2" placeholder="Falla presentada..." class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none focus:border-tertiary transition custom-scroll"></textarea>
-                    </div>
-                </div>
-                
-                <div class="pt-2 flex gap-3">
-                    <button type="button" onclick="cerrarModalRMA()" class="flex-1 py-2 bg-gray-100 text-gray-600 font-bold rounded text-xs uppercase btn-press hover:bg-gray-200 transition">Cancelar</button>
-                    <button type="submit" id="btn-guardar-rma" class="flex-[2] py-2 bg-secondary text-white font-black rounded text-xs uppercase tracking-wider shadow-md btn-press hover:opacity-90 transition flex justify-center items-center gap-2">
-                        <i class="fa-solid fa-save"></i> Cargar Garantía
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <div id="modal-gestionar-rma" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4 fade-in">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm flex flex-col border border-gray-200">
-            <div class="bg-primary text-white p-4 flex justify-between items-center shrink-0">
-                <h3 class="font-black text-[12px] uppercase tracking-wider"><i class="fa-solid fa-gavel mr-2 text-tertiary"></i> Dictamen de Garantía</h3>
-                <button onclick="cerrarGestionarRMA()" class="text-gray-300 hover:text-white text-xl transition"><i class="fa-solid fa-times"></i></button>
-            </div>
-            <div class="p-6 bg-gray-50 space-y-3">
-                <input type="hidden" id="gest-rma-id">
-                <p class="text-[11px] text-gray-600 font-bold text-center mb-4 uppercase tracking-wide">Selecciona la resolución final:</p>
-                
-                <button onclick="actualizarEstatusRMA('Aprobado - Cambio')" class="w-full bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-700 font-black py-3 rounded-lg border border-emerald-200 transition text-xs uppercase tracking-wider shadow-sm flex items-center justify-center gap-2 btn-press">
-                    <i class="fa-solid fa-box"></i> Aprobar: Cambio Físico
-                </button>
-                <button onclick="actualizarEstatusRMA('Aprobado - Nota Crédito')" class="w-full bg-blue-50 hover:bg-blue-600 hover:text-white text-blue-700 font-black py-3 rounded-lg border border-blue-200 transition text-xs uppercase tracking-wider shadow-sm flex items-center justify-center gap-2 btn-press">
-                    <i class="fa-solid fa-file-invoice-dollar"></i> Aprobar: Nota Crédito
-                </button>
-                <button onclick="actualizarEstatusRMA('Rechazado')" class="w-full bg-red-50 hover:bg-red-600 hover:text-white text-red-700 font-black py-3 rounded-lg border border-red-200 transition text-xs uppercase tracking-wider shadow-sm flex items-center justify-center gap-2 btn-press mt-4">
-                    <i class="fa-solid fa-ban"></i> Rechazar Reclamo
-                </button>
             </div>
         </div>
     </div>
 
-    <div id="modal-directorio" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[110] hidden flex items-center justify-center p-4 fade-in">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[85vh] overflow-hidden border border-gray-200">
-            <div class="bg-primary text-white p-4 flex justify-between items-center shrink-0">
-                <h3 class="font-black text-[12px] uppercase tracking-wider"><i class="fa-solid fa-users mr-2 text-tertiary"></i> Directorio de Clientes</h3>
+    <!-- MODAL DIRECTORIO COMPARTIDO -->
+    <div id="modal-directorio" class="fixed inset-0 bg-slate-900/85 backdrop-blur-sm z-[110] hidden flex items-center justify-center p-4 fade-in">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl flex flex-col h-[80vh] overflow-hidden border border-gray-200">
+            <div class="bg-primary text-white px-5 py-4 flex justify-between items-center shrink-0">
+                <h3 class="font-black text-sm uppercase tracking-wider flex items-center"><i class="fa-solid fa-users-viewfinder mr-2 text-tertiary"></i> Directorio de Clientes</h3>
                 <button onclick="cerrarModalDirectorio()" class="text-gray-300 hover:text-white text-xl transition"><i class="fa-solid fa-times"></i></button>
             </div>
-            <div class="p-3 bg-gray-50 border-b border-gray-200 shrink-0">
-                <div class="relative">
-                    <i class="fa-solid fa-search absolute left-3 top-2.5 text-gray-400 text-xs"></i>
-                    <input type="text" id="buscador-modal" oninput="filtrarModalDirectorio()" placeholder="Buscar por nombre, RIF o cédula..." class="w-full bg-white border border-gray-300 rounded px-2 pl-8 py-1.5 text-xs font-bold focus:outline-none focus:border-primary shadow-inner transition uppercase">
-                </div>
+            <div class="p-4 bg-gray-50 border-b border-gray-200 shrink-0 relative">
+                <i class="fa-solid fa-search absolute left-7 top-6 text-gray-400 text-sm"></i>
+                <input type="text" id="buscador-modal" oninput="filtrarModalDirectorio()" placeholder="Buscar por Nombre o Documento..." class="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2 text-xs font-bold uppercase focus:outline-none focus:border-primary shadow-inner transition bg-white">
             </div>
-            <div class="p-0 overflow-y-auto custom-scroll flex-1 bg-white">
-                <table class="w-full text-left text-xs border-collapse whitespace-nowrap">
-                    <thead class="bg-gray-100 text-gray-500 text-[9px] uppercase font-black sticky top-0 shadow-sm z-10">
-                        <tr><th class="p-2.5 pl-4">Documento</th><th class="p-2.5">Razón Social</th><th class="p-2.5 text-center">Acción</th></tr>
+            <div class="flex-1 overflow-auto custom-scroll">
+                <table class="w-full text-left text-xs whitespace-nowrap">
+                    <thead class="bg-gray-100 text-gray-500 text-[9px] uppercase font-black tracking-wider sticky top-0 z-10">
+                        <tr><th class="py-2.5 px-4">Documento</th><th class="py-2.5 px-4">Razón Social</th><th class="py-2.5 px-4 text-center">Acción</th></tr>
                     </thead>
                     <tbody id="tabla-modal-dir" class="divide-y divide-gray-100"></tbody>
                 </table>
             </div>
         </div>
     </div>
-
+    <!-- ==========================================
+         JAVASCRIPT Y MOTOR TRANSACCIONAL
+    =========================================== -->
     <script>
         const TOKEN_JWT = localStorage.getItem('pyp_token_seguro');
-        let tabActual = 'taller'; // Controla la pestaña visible
-        let destinoDirectorio = 'taller'; // Sabe si el modal de directorio devuelve datos al Taller o al RMA
+        let tabActual = 'taller'; 
+        let destinoDirectorio = 'taller'; 
         let clientesUnicos = [];
         let fuseCli;
+        let inventarioTaller = [];
+        let fuseInventarioTaller = null;
+        let ordenAbiertaActual = null;
+        let carritoCotizacionTaller = [];
 
         window.onload = async () => {
-            // Cargar datos en paralelo para velocidad
             await Promise.all([
                 cargarTableroTaller(),
-                cargarListaRMA(),
-                cargarDirectorio()
+                cargarDirectorio(),
+                cargarInventarioParaTaller()
             ]);
         };
 
-        // --- MOTOR DE PESTAÑAS (TABS) ---
         function cambiarTab(tab) {
             tabActual = tab;
+            document.getElementById('vista-taller').classList.toggle('hidden', tab !== 'taller');
+            document.getElementById('vista-taller').classList.toggle('flex', tab === 'taller');
+            document.getElementById('vista-rma').classList.toggle('hidden', tab !== 'rma');
+            document.getElementById('vista-rma').classList.toggle('flex', tab === 'rma');
             
-            // UI de Pestañas
-            document.getElementById('tab-taller-btn').classList.toggle('active', tab === 'taller');
-            document.getElementById('tab-rma-btn').classList.toggle('active', tab === 'rma');
-            
-            // Contenedores
-            document.getElementById('tab-taller-content').classList.toggle('active', tab === 'taller');
-            document.getElementById('tab-rma-content').classList.toggle('active', tab === 'rma');
-            
-            // UI Botón Maestro
-            const btnMaestroText = document.getElementById('txt-btn-maestro');
-            const btnMaestroIcon = document.querySelector('#btn-accion-maestro i');
-            
-            if (tab === 'taller') {
-                btnMaestroText.innerText = 'Recibir Equipo';
-                btnMaestroIcon.className = 'fa-solid fa-plus';
-                document.getElementById('btn-accion-maestro').className = 'bg-secondary hover:opacity-90 text-white px-4 py-2 rounded-lg font-black text-[11px] uppercase tracking-wider shadow-sm transition btn-press flex items-center gap-2';
-            } else {
-                btnMaestroText.innerText = 'Nuevo Reclamo';
-                btnMaestroIcon.className = 'fa-solid fa-triangle-exclamation';
-                document.getElementById('btn-accion-maestro').className = 'bg-[#25D366] hover:bg-[#1ebd5c] text-white px-4 py-2 rounded-lg font-black text-[11px] uppercase tracking-wider shadow-sm transition btn-press flex items-center gap-2';
-            }
+            document.getElementById('tab-btn-taller').className = tab === 'taller' ? "py-3 text-xs font-black uppercase tracking-wider border-b-2 border-primary text-primary transition flex items-center gap-2" : "py-3 text-xs font-bold uppercase tracking-wider border-b-2 border-transparent text-gray-400 hover:text-gray-600 transition flex items-center gap-2";
+            document.getElementById('tab-btn-rma').className = tab === 'rma' ? "py-3 text-xs font-black uppercase tracking-wider border-b-2 border-primary text-primary transition flex items-center gap-2" : "py-3 text-xs font-bold uppercase tracking-wider border-b-2 border-transparent text-gray-400 hover:text-gray-600 transition flex items-center gap-2";
         }
 
-        function ejecutarAccionMaestra() {
-            if (tabActual === 'taller') abrirModalOrden();
-            else abrirModalRMA();
-        }
-
-       // --- DIRECTORIO MAESTRO COMPARTIDO ---
+        // --- DIRECTORIO Y BUSCADOR PREDICTIVO ---
         async function cargarDirectorio() {
             try {
-                const resCli = await fetch(`${SUPABASE_URL}/rest/v1/directorio_maestro?select=documento_identidad,nombre_razon_social&tipo_persona=eq.CLIENTE&estatus=eq.ACTIVO`, { 
-                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } 
-                });
+                const resCli = await fetch(`${SUPABASE_URL}/rest/v1/directorio_maestro?select=documento_identidad,nombre_razon_social&tipo_persona=eq.CLIENTE&estatus=eq.ACTIVO`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
                 clientesUnicos = resCli.ok ? await resCli.json() : [];
-                
                 fuseCli = new Fuse(clientesUnicos, { 
                     keys: ['nombre_razon_social', 'documento_identidad'], 
-                    threshold: 0.3,
-                    ignoreLocation: true,
-                    getFn: (obj, path) => {
-                        let val = obj;
-                        for (let i = 0; i < path.length; i++) val = val ? val[path[i]] : null;
-                        return typeof val === 'string' ? val.normalize("NFD").replace(/[\u0300-\u036f]/g, "") : val;
-                    }
+                    threshold: 0.3, ignoreLocation: true,
+                    getFn: (obj, path) => { let val = obj; for (let i = 0; i < path.length; i++) val = val ? val[path[i]] : null; return typeof val === 'string' ? val.normalize("NFD").replace(/[\u0300-\u036f]/g, "") : val; }
                 });
-            } catch(e) { console.warn("Error cargando directorio: ", e); }
+            } catch(e) { console.warn("Error cargando directorio."); }
         }
 
         function abrirModalDirectorio(destino) { 
@@ -349,65 +310,43 @@
             document.getElementById('modal-directorio').classList.add('flex');
             setTimeout(() => document.getElementById('buscador-modal').focus(), 100);
         }
-        
-        function cerrarModalDirectorio() { 
-            document.getElementById('modal-directorio').classList.add('hidden'); 
-            document.getElementById('modal-directorio').classList.remove('flex');
-        }
+        function cerrarModalDirectorio() { document.getElementById('modal-directorio').classList.add('hidden'); document.getElementById('modal-directorio').classList.remove('flex'); }
         
         function dibujarTablaModal(arr) { 
             const tbody = document.getElementById('tabla-modal-dir'); 
             if(arr.length === 0) { tbody.innerHTML = `<tr><td colspan="3" class="p-6 text-center text-gray-400 font-bold uppercase text-[10px]">No se encontraron clientes.</td></tr>`; return; } 
             tbody.innerHTML = arr.map(c => `<tr class="hover:bg-blue-50 transition cursor-pointer" onclick="seleccionarCli('${c.documento_identidad}', \`${c.nombre_razon_social.replace(/"/g, '&quot;')}\`)"><td class="p-2.5 pl-4 font-mono font-bold text-gray-500">${c.documento_identidad}</td><td class="p-2.5 font-bold text-primary truncate max-w-[200px] uppercase">${c.nombre_razon_social}</td><td class="p-2.5 text-center"><button class="bg-gray-200 text-gray-700 px-3 py-1 rounded transition text-[9px] font-black uppercase tracking-wider hover:bg-primary hover:text-white">Seleccionar</button></td></tr>`).join(''); 
         }
-        
         function filtrarModalDirectorio() { 
             const txt = document.getElementById('buscador-modal').value.trim(); 
             if(txt === '') return dibujarTablaModal(clientesUnicos); 
             const txtNormalizado = txt.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
             dibujarTablaModal(fuseCli.search(txtNormalizado).map(r => r.item)); 
         }
-        
+
         function seleccionarCli(doc, nom) { 
-            if (destinoDirectorio === 'taller') {
-                document.getElementById('os-doc').value = doc; 
-                document.getElementById('os-nombre').value = nom; 
-            } else {
-                document.getElementById('rma-cliente').value = nom; 
-            }
+            if (destinoDirectorio === 'taller') { document.getElementById('os-doc').value = doc; document.getElementById('os-nombre').value = nom; } 
             cerrarModalDirectorio(); 
         }
-        // --- BUSCADOR PREDICTIVO DIRECTO EN EL INPUT DEL TALLER ---
+
         function buscarPredictivoClienteTaller() {
             let query = document.getElementById('os-nombre').value.trim();
             const drop = document.getElementById('dropdown-clientes-taller');
-            
-            if (query === '' || !fuseCli) { 
-                drop.classList.add('hidden'); 
-                return; 
-            }
+            if (query === '' || !fuseCli) { drop.classList.add('hidden'); return; }
             
             const txtNormalizado = query.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
             const resultados = fuseCli.search(txtNormalizado).slice(0, 5).map(r => r.item);
             
             drop.innerHTML = '';
-            if (resultados.length === 0) { 
-                drop.innerHTML = `<div class="p-2 text-[9px] text-gray-500 text-center uppercase font-bold">Sin resultados.</div>`; 
-            } else { 
-                resultados.forEach((c) => { 
-                    drop.innerHTML += `
-                    <div class="p-2 border-b border-gray-100 hover:bg-blue-50 cursor-pointer transition flex flex-col" onclick="seleccionarCliDropdown('${c.documento_identidad}', \`${c.nombre_razon_social.replace(/"/g, '&quot;')}\`)">
-                        <div class="font-bold text-primary text-[10px] uppercase truncate">${c.nombre_razon_social}</div>
-                        <div class="text-[8px] text-gray-500 font-mono">${c.documento_identidad}</div>
-                    </div>`; 
-                }); 
+            if (resultados.length === 0) { drop.innerHTML = `<div class="p-2 text-[9px] text-gray-500 text-center uppercase font-bold">Sin resultados.</div>`; } 
+            else { 
+                resultados.forEach((c) => { drop.innerHTML += `<div class="p-2 border-b border-gray-100 hover:bg-blue-50 cursor-pointer transition flex flex-col" onclick="seleccionarCliDropdown('${c.documento_identidad}', \`${c.nombre_razon_social.replace(/"/g, '&quot;')}\`)"><div class="font-bold text-primary text-[10px] uppercase truncate">${c.nombre_razon_social}</div><div class="text-[8px] text-gray-500 font-mono">${c.documento_identidad}</div></div>`; }); 
             }
             drop.classList.remove('hidden');
         }
 
         function seleccionarCliDropdown(doc, nom) {
-            document.getElementById('os-doc').value = doc;
-            document.getElementById('os-nombre').value = nom;
+            document.getElementById('os-doc').value = doc; document.getElementById('os-nombre').value = nom;
             document.getElementById('dropdown-clientes-taller').classList.add('hidden');
         }
 
@@ -415,50 +354,12 @@
             const drop = document.getElementById('dropdown-clientes-taller');
             if(drop && !e.target.closest('.col-span-2.relative')) drop.classList.add('hidden');
         });
-        function filtrarModalDirectorio() { 
-            const txt = document.getElementById('buscador-modal').value.trim(); 
-            if(txt === '') return dibujarTablaModal(clientesUnicos); 
-            
-            // Normalizar el texto escrito por el usuario
-            const txtNormalizado = txt.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-            dibujarTablaModal(fuseCli.search(txtNormalizado).map(r => r.item)); 
-        }
-        
-        function cerrarModalDirectorio() { 
-            document.getElementById('modal-directorio').classList.add('hidden'); 
-            document.getElementById('modal-directorio').classList.remove('flex');
-        }
-        
-        function dibujarTablaModal(arr) { 
-            const tbody = document.getElementById('tabla-modal-dir'); 
-            if(arr.length === 0) { tbody.innerHTML = `<tr><td colspan="3" class="p-6 text-center text-gray-400 font-bold uppercase text-[10px]">No se encontraron clientes.</td></tr>`; return; } 
-            tbody.innerHTML = arr.map(c => `<tr class="hover:bg-blue-50 transition cursor-pointer" onclick="seleccionarCli('${c.documento_identidad}', \`${c.nombre_razon_social.replace(/"/g, '&quot;')}\`)"><td class="p-2.5 pl-4 font-mono font-bold text-gray-500">${c.documento_identidad}</td><td class="p-2.5 font-bold text-primary truncate max-w-[200px] uppercase">${c.nombre_razon_social}</td><td class="p-2.5 text-center"><button class="bg-gray-200 text-gray-700 px-3 py-1 rounded transition text-[9px] font-black uppercase tracking-wider hover:bg-primary hover:text-white">Seleccionar</button></td></tr>`).join(''); 
-        }
-        
-        function filtrarModalDirectorio() { 
-            const txt = document.getElementById('buscador-modal').value; 
-            if(txt.trim() === '') return dibujarTablaModal(clientesUnicos); 
-            dibujarTablaModal(fuseCli.search(txt).map(r => r.item)); 
-        }
-        
-        function seleccionarCli(doc, nom) { 
-            if (destinoDirectorio === 'taller') {
-                document.getElementById('os-doc').value = doc; 
-                document.getElementById('os-nombre').value = nom; 
-            } else {
-                // Si el RMA tuviera input de doc, iría aquí. Por ahora llenamos nombre.
-                document.getElementById('rma-cliente').value = nom; 
-            }
-            cerrarModalDirectorio(); 
-        }
-// ==========================================
-        // MÓDULO 1: TALLER TÉCNICO (KANBAN)
-        // ==========================================
+
+        // --- KANBAN Y GESTIÓN DE TALLER ---
         async function cargarTableroTaller() {
             try {
-                // FIX 404: Apuntamos a la tabla correcta 'servicio_ordenes'
                 const res = await fetch(`${SUPABASE_URL}/rest/v1/servicio_ordenes?select=*&order=fecha_ingreso.desc`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
-                if(!res.ok) throw new Error("Fallo API");
+                if(!res.ok) throw new Error("Fallo API Kanban");
                 const ordenes = await res.json();
                 
                 ['Recibido', 'Revision', 'Repuesto', 'Listo'].forEach(c => {
@@ -473,7 +374,7 @@
                     if(colId === 'Recibido') { objKey = 'recibido'; }
                     else if(colId === 'En Revisión') { colId = 'Revision'; objKey = 'revision'; }
                     else if(colId === 'Esperando Repuesto') { colId = 'Repuesto'; objKey = 'repuesto'; }
-                    else if(colId === 'Facturación Pendiente') { return; } // Si ya se envió a caja, no la mostramos aquí
+                    else if(colId === 'Facturación Pendiente') { return; } 
                     else { colId = 'Listo'; objKey = 'listo'; }
 
                     counts[objKey]++;
@@ -512,38 +413,18 @@
 
         async function guardarOrdenTaller() {
             const btn = document.getElementById('btn-guardar-os'); btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Guardando...';
-            
-            const data = { 
-                cliente_nombre: document.getElementById('os-nombre').value.trim().toUpperCase(), 
-                cliente_documento: document.getElementById('os-doc').value.trim(), 
-                equipo: document.getElementById('os-equipo').value.trim().toUpperCase(), 
-                serial_equipo: document.getElementById('os-serial').value.trim().toUpperCase(), 
-                falla_reportada: document.getElementById('os-falla').value.trim(), 
-                estatus: 'Recibido' 
-            };
-            
-            if(!data.equipo || !data.cliente_nombre) { 
-                alert("Nombre del cliente y Equipo son obligatorios."); 
-                btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-save"></i> Registrar Ingreso'; 
-                return; 
-            }
+            const data = { cliente_nombre: document.getElementById('os-nombre').value.trim().toUpperCase(), cliente_documento: document.getElementById('os-doc').value.trim(), equipo: document.getElementById('os-equipo').value.trim().toUpperCase(), serial_equipo: document.getElementById('os-serial').value.trim().toUpperCase(), falla_reportada: document.getElementById('os-falla').value.trim(), estatus: 'Recibido' };
+            if(!data.equipo || !data.cliente_nombre) { alert("Nombre y Equipo son obligatorios."); btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-save"></i> Registrar Ingreso'; return; }
             
             try {
-                // FIX 404: Apuntamos a 'servicio_ordenes'
                 const res = await fetch(`${SUPABASE_URL}/rest/v1/servicio_ordenes`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
                 if (!res.ok) throw new Error("Fallo al guardar");
-                cerrarModalOrden(); 
-                cargarTableroTaller();
-            } catch(e) { 
-                alert("Error al registrar la orden."); 
-            } finally {
-                btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-save"></i> Registrar Ingreso';
-            }
+                cerrarModalOrden(); cargarTableroTaller();
+            } catch(e) { alert("Error registrando la orden."); } finally { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-save"></i> Registrar Ingreso'; }
         }
 
         async function cambiarEstatusTaller(id) {
             try {
-                // FIX 404: Apuntamos a 'servicio_ordenes'
                 const res = await fetch(`${SUPABASE_URL}/rest/v1/servicio_ordenes?id_orden=eq.${id}`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }); 
                 const data = await res.json();
                 const actual = data[0].estatus; let nuevo = actual;
@@ -551,213 +432,117 @@
                 if(actual === 'Recibido') nuevo = 'En Revisión'; 
                 else if(actual === 'En Revisión') nuevo = 'Esperando Repuesto'; 
                 else if(actual === 'Esperando Repuesto') nuevo = 'Listo';
-                else return; // Si ya está listo, no avanza más (se enviará a caja)
+                else return;
 
                 await fetch(`${SUPABASE_URL}/rest/v1/servicio_ordenes?id_orden=eq.${id}`, { method: 'PATCH', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ estatus: nuevo }) });
                 cargarTableroTaller();
             } catch(e) { console.warn(e); }
         }
-           async function retrocederEstatusTaller(id, actual) {
+
+        async function retrocederEstatusTaller(id, actual) {
             try {
                 let nuevo = actual;
                 if(actual === 'Listo') nuevo = 'Esperando Repuesto'; 
                 else if(actual === 'Esperando Repuesto') nuevo = 'En Revisión'; 
                 else if(actual === 'En Revisión') nuevo = 'Recibido';
                 
-                await fetch(`${SUPABASE_URL}/rest/v1/servicio_ordenes?id_orden=eq.${id}`, { 
-                    method: 'PATCH', 
-                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, 
-                    body: JSON.stringify({ estatus: nuevo }) 
-                });
+                await fetch(`${SUPABASE_URL}/rest/v1/servicio_ordenes?id_orden=eq.${id}`, { method: 'PATCH', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ estatus: nuevo }) });
                 cargarTableroTaller();
             } catch(e) { console.warn("Error al retroceder:", e); }
         }
-        // ==========================================
-        // MÓDULO 2: GARANTÍAS Y DEVOLUCIONES (RMA)
-        // ==========================================
-        async function cargarListaRMA() {
+
+        // --- MOTOR DE COTIZACIÓN INTERNA DE TALLER ---
+        async function cargarInventarioParaTaller() {
             try {
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/rma_garantias?order=fecha_ingreso.desc`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
-                const data = await res.json();
-                
-                const tbody = document.getElementById('tabla-rma');
-                if(!data.length) { tbody.innerHTML = `<tr><td colspan="6" class="p-10 text-center text-gray-400 font-bold uppercase tracking-widest text-[10px]"><i class="fa-solid fa-box-open text-4xl mb-3 block opacity-30"></i> Sin reclamos activos</td></tr>`; return; }
-
-                tbody.innerHTML = data.map(c => {
-                    let badgeColor = 'bg-orange-50 text-orange-600 border-orange-200 animate-pulse';
-                    if(c.estatus.includes('Aprobado')) badgeColor = 'bg-emerald-50 text-emerald-700 border-emerald-200';
-                    if(c.estatus === 'Rechazado') badgeColor = 'bg-red-50 text-red-700 border-red-200 opacity-70';
-                    
-                    let badge = `<span class="px-2 py-0.5 rounded text-[8px] font-black border ${badgeColor} uppercase tracking-wider">${c.estatus}</span>`;
-                    
-                    let btn = `<button onclick="abrirGestionarRMA('${c.id_rma}')" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded shadow-sm text-[9px] font-black uppercase tracking-wider transition flex justify-center items-center gap-1 mx-auto border border-gray-200 btn-press"><i class="fa-solid fa-gavel"></i> Dictaminar</button>`;
-                    if(c.estatus !== 'En Revisión') btn = `<span class="text-gray-300 font-bold text-[9px] uppercase"><i class="fa-solid fa-lock mr-1"></i> Cerrado</span>`;
-                    
-                    return `
-                    <tr class="hover:bg-blue-50 transition border-b border-gray-100">
-                        <td class="py-2 px-4 font-mono font-bold text-gray-500">RMA-00${c.correlativo}</td>
-                        <td class="py-2 px-4"><p class="font-bold text-primary uppercase text-[10px]">${c.cliente_nombre}</p><p class="text-[8px] text-gray-400 font-bold">Fac: ${c.factura_referencia || 'N/A'}</p></td>
-                        <td class="py-2 px-4"><p class="font-bold text-gray-700 uppercase text-[10px]">${c.producto_nombre}</p><p class="text-[8px] text-gray-400 font-mono">SKU: ${c.producto_sku || 'N/A'} | Cant: ${c.cantidad}</p></td>
-                        <td class="py-2 px-4 text-[9px] text-gray-500 italic max-w-[200px] truncate" title="${c.motivo_reclamo}">"${c.motivo_reclamo}"</td>
-                        <td class="py-2 px-4 text-center">${badge}</td>
-                        <td class="py-2 px-4 text-center">${btn}</td>
-                    </tr>`;
-                }).join('');
-            } catch(e) { console.warn("Error cargando RMAs."); }
-        }
-
-        function abrirModalRMA() {
-            document.getElementById('form-rma').reset();
-            document.getElementById('modal-rma').classList.remove('hidden');
-            document.getElementById('modal-rma').classList.add('flex');
-        }
-
-        function cerrarModalRMA() {
-            document.getElementById('modal-rma').classList.add('hidden');
-            document.getElementById('modal-rma').classList.remove('flex');
-        }
-
-        async function guardarRMA(e) {
-            e.preventDefault();
-            const btn = document.getElementById('btn-guardar-rma');
-            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Cargando...`; btn.disabled = true;
-
-            try {
-                const data = {
-                    factura_referencia: document.getElementById('rma-factura').value.trim().toUpperCase(),
-                    cliente_nombre: document.getElementById('rma-cliente').value.trim().toUpperCase(),
-                    producto_nombre: document.getElementById('rma-prod-nombre').value.trim().toUpperCase(),
-                    producto_sku: document.getElementById('rma-prod-sku').value.trim().toUpperCase(),
-                    cantidad: parseFloat(document.getElementById('rma-cantidad').value) || 1,
-                    motivo_reclamo: document.getElementById('rma-motivo').value.trim(),
-                    estatus: 'En Revisión'
-                };
-
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/rma_garantias`, {
-                    method: 'POST',
-                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-
-                if(!res.ok) throw new Error("Error registrando RMA");
-
-                cerrarModalRMA();
-                cargarListaRMA();
-            } catch(error) {
-                alert("Error al registrar la garantía.");
-            } finally {
-                btn.innerHTML = `<i class="fa-solid fa-save"></i> Cargar Garantía`; btn.disabled = false;
-            }
-        }
-
-        function abrirGestionarRMA(id) {
-            document.getElementById('gest-rma-id').value = id;
-            document.getElementById('modal-gestionar-rma').classList.remove('hidden');
-            document.getElementById('modal-gestionar-rma').classList.add('flex');
-        }
-
-        function cerrarGestionarRMA() {
-            document.getElementById('modal-gestionar-rma').classList.add('hidden');
-            document.getElementById('modal-gestionar-rma').classList.remove('flex');
-        }
-
-        async function actualizarEstatusRMA(nuevoEstatus) {
-            if(!confirm(`Atención: Estás a punto de dictaminar este reclamo como:\n\n👉 "${nuevoEstatus}"\n\n¿Confirmar acción?`)) return;
-            const id = document.getElementById('gest-rma-id').value;
-
-            try {
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/rma_garantias?id_rma=eq.${id}`, {
-                    method: 'PATCH',
-                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ estatus: nuevoEstatus })
-                });
-
-                if(!res.ok) throw new Error("Error actualizando");
-                cerrarGestionarRMA();
-                cargarListaRMA();
-                
-                // Alert temporal (Fase 3: esto será automático)
-                if(nuevoEstatus.includes('Aprobado')) {
-                    alert("⚠️ DICTAMEN APROBADO ⚠️\n\nPor ahora (Fase 1), debes ir al módulo de Inventario/Ventas a realizar el descargo manual del nuevo producto o generar el saldo a favor del cliente.");
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/productos?select=id_producto_sku,nombre&estado_producto=eq.ACTIVO`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                const resPre = await fetch(`${SUPABASE_URL}/rest/v1/precios?select=id_producto_sku,precio_general_usd`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                if(res.ok && resPre.ok) {
+                    const prods = await res.json(); const pres = await resPre.json();
+                    inventarioTaller = prods.map(p => { const pre = pres.find(pr => pr.id_producto_sku === p.id_producto_sku); return { ...p, precio_usd: pre ? pre.precio_general_usd : 0 }; });
+                    fuseInventarioTaller = new Fuse(inventarioTaller, { keys: ['id_producto_sku', 'nombre'], threshold: 0.3, ignoreLocation: true });
                 }
-
-            } catch(e) { alert("Error al resolver el reclamo."); }
+            } catch(e) { console.warn("Error cargando inventario taller."); }
         }
-        // ==========================================
-        // LA MAGIA: EMISIÓN DE COTIZACIÓN REAL A POS
-        // ==========================================
-        async function enviarOrdenAPOS() {
-            if(detallesOrdenActual.length === 0 || ordenAbiertaActual.total_presupuesto <= 0) { 
-                alert("La orden no tiene cargos para facturar."); 
-                return; 
-            }
-            if(!confirm("Se emitirá una Cotización formal en el sistema para que la Caja la facture.\n\nEl equipo desaparecerá del panel de 'Listo' y pasará a control de facturación.\n\n¿Proceder?")) return;
 
-            const btn = document.getElementById('btn-enviar-pos');
-            btn.disabled = true; 
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Emitiendo...';
-
+        async function abrirPanelOrden(id_orden) {
+            document.getElementById('modal-panel-orden').classList.remove('hidden');
+            document.getElementById('modal-panel-orden').classList.add('flex');
+            document.getElementById('lista-detalles-orden').innerHTML = '<div class="text-center py-10"><i class="fa-solid fa-spinner fa-spin text-primary"></i></div>';
+            carritoCotizacionTaller = [];
             try {
-                // 1. Crear Cabecera en la nueva tabla ventas_documentos
-                const payloadCabecera = {
-                    id_cliente: null, // Asumimos cliente genérico temporal hasta que pase por caja
-                    cliente_documento: ordenAbiertaActual.cliente_documento || 'V-00000000',
-                    cliente_nombre: ordenAbiertaActual.cliente_nombre,
-                    tipo_documento: 'COTIZACION',
-                    subtotal_usd: ordenAbiertaActual.total_presupuesto,
-                    total_usd: ordenAbiertaActual.total_presupuesto,
-                    estatus: 'PENDIENTE',
-                    nombre_cajero: localStorage.getItem('pyp_usuario_nombre') || 'TALLER',
-                    id_origen_taller: ordenAbiertaActual.id_orden,
-                    notas_internas: 'Generado automáticamente desde Taller - Orden OS-' + ordenAbiertaActual.correlativo
-                };
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/servicio_ordenes?id_orden=eq.${id_orden}`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                ordenAbiertaActual = (await res.json())[0];
+                document.getElementById('panel-orden-titulo').innerText = `ORDEN #OS-${ordenAbiertaActual.correlativo} | CLIENTE: ${ordenAbiertaActual.cliente_nombre}`;
+                document.getElementById('panel-orden-diagnostico').value = ordenAbiertaActual.diagnostico_tecnico || '';
+                renderizarCarritoTaller();
+            } catch(e) { alert("Error al leer la orden."); cerrarPanelOrden(); }
+        }
 
-                const resDoc = await fetch(`${SUPABASE_URL}/rest/v1/ventas_documentos`, {
-                    method: 'POST',
-                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
-                    body: JSON.stringify(payloadCabecera)
+        function cerrarPanelOrden() { document.getElementById('modal-panel-orden').classList.add('hidden'); document.getElementById('modal-panel-orden').classList.remove('flex'); ordenAbiertaActual = null; }
+
+        function buscarRepuestoTaller() {
+            let query = document.getElementById('panel-buscador-inv').value.trim();
+            const drop = document.getElementById('dropdown-repuestos');
+            if (query === '' || !fuseInventarioTaller) { drop.classList.add('hidden'); return; }
+            const resultados = fuseInventarioTaller.search(query).slice(0, 6).map(r => r.item);
+            drop.innerHTML = '';
+            if (resultados.length === 0) { drop.innerHTML = `<div class="p-2 text-[9px] text-gray-500 text-center">Sin resultados.</div>`; }
+            else { resultados.forEach((p) => { drop.innerHTML += `<div class="p-2 border-b border-gray-100 hover:bg-blue-50 cursor-pointer transition flex justify-between items-center" onclick="agregarAlCarritoTaller('${p.id_producto_sku}', \`${p.nombre.replace(/"/g, '&quot;')}\`, ${p.precio_usd})"><div class="truncate pr-2"><div class="font-bold text-primary text-[10px] uppercase truncate">${p.nombre}</div><div class="text-[8px] text-gray-500 font-mono">${p.id_producto_sku}</div></div><div class="font-black text-secondary text-[11px]">$${parseFloat(p.precio_usd).toFixed(2)}</div></div>`; }); }
+            drop.classList.remove('hidden');
+        }
+
+        function agregarAlCarritoTaller(sku, nombre, precio) {
+            carritoCotizacionTaller.push({ id_temp: Date.now(), sku: sku, descripcion: nombre, cantidad: 1, precio: precio });
+            document.getElementById('dropdown-repuestos').classList.add('hidden'); document.getElementById('panel-buscador-inv').value = '';
+            renderizarCarritoTaller();
+        }
+
+        function agregarCargoManual() {
+            const desc = document.getElementById('cargo-manual-desc').value.trim().toUpperCase(); const precio = parseFloat(document.getElementById('cargo-manual-precio').value);
+            if(!desc || isNaN(precio) || precio <= 0) { alert("Ingresa una descripción y un precio válido."); return; }
+            agregarAlCarritoTaller('MANO_OBRA_SRV', desc, precio);
+            document.getElementById('cargo-manual-desc').value = ''; document.getElementById('cargo-manual-precio').value = '';
+        }
+
+        function eliminarDelCarritoTaller(id_temp) { carritoCotizacionTaller = carritoCotizacionTaller.filter(i => i.id_temp !== id_temp); renderizarCarritoTaller(); }
+
+        function renderizarCarritoTaller() {
+            const contenedor = document.getElementById('lista-detalles-orden'); let totalUsd = 0;
+            if(carritoCotizacionTaller.length === 0) { contenedor.innerHTML = '<div class="h-full flex flex-col items-center justify-center text-gray-400 opacity-50"><i class="fa-solid fa-box-open text-3xl mb-2"></i><p class="font-bold text-[10px] uppercase tracking-widest">Añade repuestos o cargos</p></div>'; } 
+            else {
+                let html = '';
+                carritoCotizacionTaller.forEach(d => {
+                    const subLinea = d.cantidad * d.precio; totalUsd += subLinea;
+                    html += `<div class="bg-white border border-gray-200 rounded p-2 flex justify-between items-center shadow-sm"><div class="flex-1 truncate pr-2"><div class="font-bold text-primary text-[10px] uppercase truncate">${d.descripcion}</div><div class="text-[8px] text-gray-500 font-mono">${d.sku}</div></div><div class="flex gap-2 items-center"><div class="text-right"><div class="text-[11px] font-black text-secondary">$${subLinea.toFixed(2)}</div></div><button onclick="eliminarDelCarritoTaller(${d.id_temp})" class="text-red-400 hover:text-red-600 p-1"><i class="fa-solid fa-trash-can text-sm"></i></button></div></div>`;
                 });
-
-                if(!resDoc.ok) throw new Error("Fallo al crear la cabecera del documento.");
-                const docGenerado = await resDoc.json();
-                const idDoc = docGenerado[0].id_documento;
-
-                // 2. Inyectar Detalles en ventas_documentos_detalles
-                const payloadDetalles = detallesOrdenActual.map(d => ({
-                    id_documento: idDoc,
-                    producto_sku: d.producto_sku === 'SERVICIO_MANUAL' ? 'SRV-01' : d.producto_sku,
-                    producto_nombre: `[OS-${ordenAbiertaActual.correlativo}] ` + d.descripcion,
-                    cantidad: parseFloat(d.cantidad),
-                    precio_unitario_usd: parseFloat(d.precio_unitario),
-                    subtotal_linea_usd: parseFloat(d.cantidad) * parseFloat(d.precio_unitario)
-                }));
-
-                const resDet = await fetch(`${SUPABASE_URL}/rest/v1/ventas_documentos_detalles`, {
-                    method: 'POST',
-                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payloadDetalles)
-                });
-                
-                if(!resDet.ok) throw new Error("Fallo al guardar los detalles de la cotización.");
-
-                // 3. Cambiar estatus de la orden para sacarla del Kanban (Flujo de valor completado)
-                await fetch(`${SUPABASE_URL}/rest/v1/servicio_ordenes?id_orden=eq.${ordenAbiertaActual.id_orden}`, {
-                    method: 'PATCH',
-                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ estatus: 'Facturación Pendiente' })
-                });
-
-                alert("✅ ¡Cotización emitida y enviada a Caja con éxito!");
-                cerrarPanelOrden();
-                cargarTableroTaller(); // La tarjeta desaparecerá visualmente porque ya no está "Lista".
-                
-            } catch(e) {
-                alert("Error crítico al emitir cotización: " + e.message);
-            } finally {
-                btn.disabled = false; 
-                btn.innerHTML = '<i class="fa-solid fa-cash-register"></i> Enviar a Caja';
+                contenedor.innerHTML = html;
             }
+            document.getElementById('panel-orden-total').innerText = `US$ ${totalUsd.toFixed(2)}`;
+            ordenAbiertaActual.total_cotizacion = totalUsd; 
+        }
+
+        async function generarPresupuestoDesdeTaller() {
+            if(carritoCotizacionTaller.length === 0 || ordenAbiertaActual.total_cotizacion <= 0) { alert("Agrega cargos antes de emitir el presupuesto."); return; }
+            if(!confirm("Se generará un Presupuesto formal. La orden pasará a estado 'Esperando Repuesto' (como ancla hasta aprobación) y se enviará a Presupuestos.\n\n¿Proceder?")) return;
+
+            const btn = document.getElementById('btn-emitir-presupuesto'); btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Emitiendo...';
+            try {
+                const diag = document.getElementById('panel-orden-diagnostico').value.trim();
+                const payloadCabecera = { cliente_documento: ordenAbiertaActual.cliente_documento || 'V-00000000', cliente_nombre: ordenAbiertaActual.cliente_nombre, tipo_documento: 'COTIZACION', subtotal_usd: ordenAbiertaActual.total_cotizacion, total_usd: ordenAbiertaActual.total_cotizacion, estatus: 'PENDIENTE', nombre_cajero: localStorage.getItem('pyp_usuario_nombre') || 'TALLER', id_origen_taller: ordenAbiertaActual.id_orden, notas_internas: `[OS-${ordenAbiertaActual.correlativo}] Diagnóstico: ${diag}` };
+
+                const resDoc = await fetch(`${SUPABASE_URL}/rest/v1/ventas_documentos`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, body: JSON.stringify(payloadCabecera) });
+                if(!resDoc.ok) throw new Error("Fallo Cabecera");
+                const idDoc = (await resDoc.json())[0].id_documento;
+
+                const payloadDetalles = carritoCotizacionTaller.map(d => ({ id_documento: idDoc, producto_sku: d.sku, producto_nombre: `[OS-${ordenAbiertaActual.correlativo}] ` + d.descripcion, cantidad: d.cantidad, precio_unitario_usd: d.precio, subtotal_linea_usd: d.cantidad * d.precio }));
+                await fetch(`${SUPABASE_URL}/rest/v1/ventas_documentos_detalles`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify(payloadDetalles) });
+
+                await fetch(`${SUPABASE_URL}/rest/v1/servicio_ordenes?id_orden=eq.${ordenAbiertaActual.id_orden}`, { method: 'PATCH', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ estatus: 'Esperando Repuesto', diagnostico_tecnico: diag }) });
+                
+                alert("✅ Presupuesto emitido a Caja con éxito.");
+                cerrarPanelOrden(); cargarTableroTaller();
+            } catch(e) { alert("Error al emitir."); } finally { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Emitir Presupuesto a Cliente'; }
         }
     </script>
-    </body>
+</body>
 </html>
