@@ -27,6 +27,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 
     <script>
         // Guardián de Seguridad: Bloqueo de terminal sin sesión
@@ -56,12 +57,25 @@
         input[type=date]::-webkit-calendar-picker-indicator { cursor: pointer; opacity: 0.6; transition: 0.2s; }
         input[type=date]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
 
-        /* GRID DINÁMICO DE PRODUCTOS */
+        /* GRID DINÁMICO DE PRODUCTOS (Max 4 Columnas) */
         .dynamic-grid-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.375rem; }
         @media (min-width: 640px) { .dynamic-grid-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
         @media (min-width: 1024px) { .dynamic-grid-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
-        @media (min-width: 1280px) { .dynamic-grid-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
         .dynamic-grid-table { display: flex; flex-direction: column; gap: 0.25rem; }
+
+        /* --- MODO SUPERMERCADO (CAJA RÁPIDA PROFESIONAL) --- */
+        .layout-supermercado #panel-izquierdo { width: 40% !important; background: #f8fafc; justify-content: center; padding: 2rem; border-right: 2px dashed #cbd5e1; transition: all 0.3s; }
+        .layout-supermercado #panel-izquierdo > div:first-child { flex-direction: column; background: transparent; border: none; padding: 0; width: 100%; }
+        .layout-supermercado #grid-productos, 
+        .layout-supermercado #filtro-cat-pos, 
+        .layout-supermercado #filtro-stock-pos, 
+        .layout-supermercado .btn-vista-tabla-pos { display: none !important; }
+        .layout-supermercado #buscador-pos { font-size: 1.25rem !important; padding: 1.5rem 1.5rem 1.5rem 3rem !important; border: 2px solid var(--color-primary) !important; border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); height: auto; }
+        .layout-supermercado #panel-izquierdo .fa-barcode { font-size: 1.5rem !important; top: 1.5rem !important; left: 1rem !important; color: var(--color-primary) !important; }
+        .layout-supermercado #panel-izquierdo::before { content: 'MODO ESCÁNER ACTIVO'; display: block; text-align: center; font-weight: 900; color: var(--color-primary); margin-bottom: 1rem; font-size: 1.2rem; letter-spacing: 0.05em; }
+        .layout-supermercado #panel-derecho { width: 60% !important; max-width: 100% !important; transition: all 0.3s; }
+        .layout-supermercado #lista-carrito .bg-white { transform: scale(1.01); margin-bottom: 0.5rem; border: 1px solid #e2e8f0; border-left: 4px solid var(--color-secondary); padding: 10px; }
+        .layout-supermercado #lista-carrito h4 { font-size: 13px !important; }
 
         /* FEEDBACK VISUAL */
         @keyframes cartFlash { 0%{background:rgba(230,126,34,0.35);} 100%{background:transparent;} }
@@ -386,13 +400,20 @@
 
         <div class="flex-1 flex flex-col md:flex-row overflow-hidden">
             <!-- PANEL IZQUIERDO: Catálogo -->
-            <div id="panel-izquierdo" class="w-full md:w-3/5 lg:w-2/3 h-full flex flex-col border-r border-gray-200 bg-white relative z-0 transition-all duration-300">
+          <div id="panel-izquierdo" class="w-full md:w-[55%] lg:w-[60%] h-full flex flex-col border-r border-gray-200 bg-white relative z-0 transition-all duration-300">
                 <div class="p-1.5 px-3 border-b border-gray-200 bg-gray-50 flex gap-2 shrink-0 overflow-x-auto no-scrollbar">
-                    <div class="relative flex-1 min-w-[150px]">
-                        <i class="fa-solid fa-search absolute left-2.5 top-1.5 text-gray-400 text-[10px]"></i>
-                        <!-- MEJORADO: keydown Enter para lector de código de barras -->
-                        <input type="text" id="buscador-pos" oninput="buscarProductos()" onkeydown="manejarEnterBuscador(event)"
-                            placeholder="Buscar SKU, Nombre o Escanear Código..." class="w-full border border-gray-300 rounded px-2 pl-7 py-1 text-[10px] focus:outline-none focus:border-tertiary transition uppercase shadow-inner font-bold">
+                  <div class="relative flex-1 min-w-[150px]">
+                        <div class="relative flex items-center w-full">
+                            <i class="fa-solid fa-barcode absolute left-2.5 text-gray-400 text-[10px]"></i>
+                            <input type="text" id="buscador-pos" oninput="buscarProductos()" onkeydown="manejarEnterBuscador(event)"
+                                placeholder="Escanear Código o Buscar Producto..." 
+                                class="w-full border border-gray-300 rounded px-2 pl-7 pr-8 py-1.5 text-[11px] focus:outline-none focus:border-primary transition uppercase shadow-inner font-bold bg-white">
+                            <button type="button" onclick="abrirEscanerPos()" 
+                                title="Escanear con cámara"
+                                class="absolute right-1 text-gray-400 hover:text-green-600 transition p-1 rounded hover:bg-green-50 btn-press flex items-center justify-center">
+                                <i class="fa-solid fa-camera text-sm"></i>
+                            </button>
+                        </div>
                     </div>
                     <select id="filtro-cat-pos" onchange="buscarProductos()" class="w-auto max-w-[130px] border border-gray-300 rounded px-2 py-1 text-[9px] font-bold text-primary outline-none shadow-sm hidden sm:block bg-gray-100 uppercase focus:border-tertiary transition">
                         <option value="TODAS">TODAS LAS CATEGORÍAS</option>
@@ -414,7 +435,7 @@
             </div>
 
             <!-- PANEL DERECHO: Facturación -->
-            <div id="panel-derecho" class="w-full md:w-2/5 lg:w-1/3 h-full flex flex-col bg-white shadow-[-5px_0_15px_rgba(0,0,0,0.03)] z-10 transition-all duration-300">
+          <div id="panel-derecho" class="w-full md:w-[45%] lg:w-[40%] h-full flex flex-col bg-white shadow-[-5px_0_15px_rgba(0,0,0,0.03)] z-10 transition-all duration-300">
                 <div class="bg-gray-50 p-2 border-b border-gray-200 shrink-0 flex flex-col gap-1.5 shadow-inner">
                     <h3 class="text-[11px] font-black text-primary uppercase tracking-wider border-b border-gray-200 pb-1"><i class="fa-solid fa-file-invoice mr-1 text-tertiary"></i> Facturación</h3>
                     <div class="grid grid-cols-3 gap-2">
@@ -663,20 +684,94 @@
 
         function toggleSupermercado() {
             modoSupermercado = !modoSupermercado;
-            const panelIzq = document.getElementById('panel-izquierdo');
-            const panelDer = document.getElementById('panel-derecho');
+            const main = document.querySelector('main');
             const btn = document.getElementById('btn-supermercado');
             if (modoSupermercado) {
-                panelIzq.classList.add('hidden');
-                panelDer.classList.remove('md:w-2/5', 'lg:w-1/3');
-                btn.innerHTML = `<i class="fa-solid fa-compress mr-1 text-tertiary"></i> Contraer`;
+                main.classList.add('layout-supermercado');
+                btn.innerHTML = `<i class="fa-solid fa-compress mr-1 text-tertiary"></i> MODO NORMAL`;
+                btn.classList.replace('bg-slate-800', 'bg-tertiary');
+                setTimeout(() => document.getElementById('buscador-pos').focus(), 300);
             } else {
-                panelIzq.classList.remove('hidden');
-                panelDer.classList.add('md:w-2/5', 'lg:w-1/3');
-                btn.innerHTML = `<i class="fa-solid fa-expand mr-1 text-tertiary"></i> Expandir`;
+                main.classList.remove('layout-supermercado');
+                btn.innerHTML = `<i class="fa-solid fa-barcode mr-1 text-tertiary"></i> MODO LECTOR`;
+                btn.classList.replace('bg-tertiary', 'bg-slate-800');
+            }
+        }
+// ================================================================
+        // MOTOR DE ESCÁNER DE CÁMARA (POS)
+        // ================================================================
+        let _escanerStream = null; let _escanerInterval = null; let _escanerActivo = false;
+
+        async function abrirEscanerPos() {
+            // Reutilizamos el modal de Inventario dinámicamente si no existe, lo creamos
+            if (!document.getElementById('modal-escaner-pos')) {
+                document.body.insertAdjacentHTML('beforeend', `
+                <div id="modal-escaner-pos" class="fixed inset-0 bg-slate-900/85 backdrop-blur-sm z-[9999] hidden flex items-center justify-center p-4 fade-in">
+                    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden border border-gray-200">
+                        <div class="bg-gray-900 text-white px-5 py-3 flex justify-between items-center">
+                            <h3 class="font-black text-sm uppercase"><i class="fa-solid fa-barcode text-green-400 mr-2"></i>Escáner POS</h3>
+                            <button onclick="cerrarEscanerPos()" class="text-gray-400 hover:text-white transition text-xl"><i class="fa-solid fa-times"></i></button>
+                        </div>
+                        <div class="relative bg-black" style="height: 240px;">
+                            <video id="escaner-video-pos" class="w-full h-full object-cover" playsinline autoplay muted></video>
+                            <canvas id="escaner-canvas-pos" class="hidden absolute inset-0"></canvas>
+                            <div class="absolute bottom-2 left-0 right-0 text-center"><span id="pos-scan-status" class="bg-black/60 text-green-400 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider">Apunta al código</span></div>
+                        </div>
+                    </div>
+                </div>`);
+            }
+            
+            document.getElementById('modal-escaner-pos').classList.remove('hidden');
+            document.getElementById('modal-escaner-pos').classList.add('flex');
+            _escanerActivo = true;
+
+            try {
+                const dispositivos = await navigator.mediaDevices.enumerateDevices();
+                const camaras = dispositivos.filter(d => d.kind === 'videoinput');
+                const trasera = camaras.find(c => /back|rear|environment/i.test(c.label));
+                const deviceId = trasera ? trasera.deviceId : camaras[0]?.deviceId;
+
+                _escanerStream = await navigator.mediaDevices.getUserMedia({ video: deviceId ? { deviceId: { exact: deviceId }, facingMode: 'environment' } : { facingMode: 'environment' } });
+                document.getElementById('escaner-video-pos').srcObject = _escanerStream;
+
+                const video = document.getElementById('escaner-video-pos');
+                const canvas = document.getElementById('escaner-canvas-pos');
+                const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+                _escanerInterval = setInterval(() => {
+                    if (!_escanerActivo || video.readyState < 2) return;
+                    canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    try {
+                        if (typeof jsQR !== 'undefined') {
+                            const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                            const code = jsQR(imgData.data, imgData.width, imgData.height, { inversionAttempts: "dontInvert" });
+                            if (code) {
+                                clearInterval(_escanerInterval); _escanerActivo = false;
+                                document.getElementById('pos-scan-status').innerHTML = `<i class="fa-solid fa-check"></i> ${code.data}`;
+                                setTimeout(() => {
+                                    cerrarEscanerPos();
+                                    const inp = document.getElementById('buscador-pos');
+                                    inp.value = code.data;
+                                    // Forzar el enter para que se agregue al carrito automáticamente
+                                    manejarEnterBuscador({ key: 'Enter', preventDefault: ()=>{} }); 
+                                }, 400);
+                            }
+                        }
+                    } catch (e) {}
+                }, 300);
+            } catch (err) {
+                document.getElementById('pos-scan-status').innerHTML = `<span class="text-red-400">Sin acceso a cámara</span>`;
             }
         }
 
+        function cerrarEscanerPos() {
+            _escanerActivo = false; clearInterval(_escanerInterval);
+            if (_escanerStream) { _escanerStream.getTracks().forEach(t => t.stop()); _escanerStream = null; }
+            document.getElementById('modal-escaner-pos').classList.add('hidden');
+            document.getElementById('modal-escaner-pos').classList.remove('flex');
+            document.getElementById('pos-scan-status').innerText = 'Apunta al código';
+        }
         function toggleAcordeon() {
             const caja = document.getElementById('caja-acordeon-totales');
             const icon = document.getElementById('icon-toggle-acordeon');
