@@ -432,7 +432,7 @@
             }
         }
 
-        // ✅ CORREGIDO: sincronizarTasaBCV ahora obtiene USD y EUR del BCV en un solo click
+        // ✅ CORREGIDO: sincronizarTasaBCV con múltiples proxies y fallback automático
         async function sincronizarTasaBCV() {
             const overlay = document.getElementById('loading-overlay-config');
             const loadingText = document.getElementById('loading-text-config');
@@ -440,64 +440,91 @@
             overlay.classList.add('flex');
             loadingText.textContent = 'Consultando BCV...';
 
-            try {
-                const r = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent('https://www.bcv.org.ve/')}`);
-                const d = await r.json();
-                const html = d.contents;
+            // Lista de proxies CORS en orden de prioridad
+            const BCV_URL = 'https://www.bcv.org.ve/';
+            const proxies = [
+                url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+                url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+                url => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
+                url => `https://thingproxy.freeboard.io/fetch/${encodeURIComponent(url)}`,
+            ];
 
-                // ✅ Regex mejorado para ser más tolerante a cambios menores en el HTML del BCV
-                const mUSD = html.match(/<div[^>]*id=["']dolar["'][^>]*>[\s\S]*?<strong>\s*([\d.,]+)\s*<\/strong>/i);
-                const mEUR = html.match(/<div[^>]*id=["']euro["'][^>]*>[\s\S]*?<strong>\s*([\d.,]+)\s*<\/strong>/i);
-
-                const parseTasa = (match) => match
-                    ? parseFloat(match[1].trim().replace(/\./g, '').replace(',', '.')).toFixed(4)
-                    : null;
-
-                const tasaUSD = parseTasa(mUSD);
-                const tasaEUR = parseTasa(mEUR);
-
-                let msg = 'Resultado de sincronización BCV:\n\n';
-                const ahora = new Date();
-                const fechaStr = `${ahora.toLocaleDateString('es-VE')} ${ahora.toLocaleTimeString('es-VE', {hour:'2-digit', minute:'2-digit'})}`;
-
-                // Guardar USD si se obtuvo
-                if (tasaUSD) {
-                    loadingText.textContent = 'Guardando USD...';
-                    document.getElementById('conf-tasa').value = tasaUSD;
-                    await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?moneda=eq.USD`, { method: 'DELETE', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
-                    await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv`, {
-                        method: 'POST',
-                        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ moneda: 'USD', tasa: parseFloat(tasaUSD) })
-                    });
-                    document.getElementById('fecha-usd').textContent = `Última actualización: ${fechaStr}`;
-                    msg += `✅ USD: Bs. ${tasaUSD}\n`;
-                } else {
-                    msg += `⚠️ USD: No se pudo leer del BCV. Verifica manualmente.\n`;
+            // Función helper: intenta obtener el HTML del BCV probando cada proxy
+            async function fetchBCVHtml() {
+                for (let i = 0; i < proxies.length; i++) {
+                    try {
+                        loadingText.textContent = `Probando servidor ${i + 1} de ${proxies.length}...`;
+                        const proxyUrl = proxies[i](BCV_URL);
+                        const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(8000) });
+                        if (!res.ok) continue;
+                        const data = await res.json().catch(() => null);
+                        // allorigins devuelve { contents: "..." }, los demás devuelven texto plano
+                        const html = data?.contents || (typeof data === 'string' ? data : null);
+                        if (html && html.includes('bcv')) return html;
+                        // Si no era JSON, intentar como texto
+                        const txt = await res.text().catch(() => null);
+                        if (txt && txt.includes('bcv')) return txt;
+                    } catch(e) { /* continúa con el siguiente proxy */ }
                 }
-
-                // ✅ NUEVO: Guardar EUR si se obtuvo
-                if (tasaEUR) {
-                    loadingText.textContent = 'Guardando EUR...';
-                    document.getElementById('conf-tasa-eur').value = tasaEUR;
-                    await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?moneda=eq.EUR`, { method: 'DELETE', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
-                    await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv`, {
-                        method: 'POST',
-                        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ moneda: 'EUR', tasa: parseFloat(tasaEUR) })
-                    });
-                    document.getElementById('fecha-eur').textContent = `Última actualización: ${fechaStr}`;
-                    msg += `✅ EUR: Bs. ${tasaEUR}`;
-                } else {
-                    msg += `⚠️ EUR: No se pudo leer del BCV. Verifica manualmente.`;
-                }
-
-                alert(msg);
-
-            } catch(e) {
-                alert('❌ Error al conectar con el BCV.\nVerifica tu conexión a internet o ingresa las tasas manualmente.');
+                return null;
             }
 
+            const html = await fetchBCVHtml();
+
+            if (!html) {
+                overlay.classList.add('hidden');
+                overlay.classList.remove('flex');
+                alert('❌ Todos los servidores intermediarios fallaron.\n\nEl BCV puede estar caído o bloqueando el acceso automático.\n\nIngresa las tasas manualmente por ahora.');
+                return;
+            }
+
+            const parseTasa = (match) => match
+                ? parseFloat(match[1].trim().replace(/\./g, '').replace(',', '.')).toFixed(4)
+                : null;
+
+            const mUSD = html.match(/<div[^>]*id=["']dolar["'][^>]*>[\s\S]*?<strong>\s*([\d.,]+)\s*<\/strong>/i);
+            const mEUR = html.match(/<div[^>]*id=["']euro["'][^>]*>[\s\S]*?<strong>\s*([\d.,]+)\s*<\/strong>/i);
+
+            const tasaUSD = parseTasa(mUSD);
+            const tasaEUR = parseTasa(mEUR);
+
+            let msg = 'Resultado de sincronización BCV:\n\n';
+            const ahora = new Date();
+            const fechaStr = `${ahora.toLocaleDateString('es-VE')} ${ahora.toLocaleTimeString('es-VE', {hour:'2-digit', minute:'2-digit'})}`;
+
+            // Guardar USD si se obtuvo
+            if (tasaUSD) {
+                loadingText.textContent = 'Guardando USD...';
+                document.getElementById('conf-tasa').value = tasaUSD;
+                await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?moneda=eq.USD`, { method: 'DELETE', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv`, {
+                    method: 'POST',
+                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ moneda: 'USD', tasa: parseFloat(tasaUSD) })
+                });
+                document.getElementById('fecha-usd').textContent = `Última actualización: ${fechaStr}`;
+                msg += `✅ USD: Bs. ${tasaUSD}\n`;
+            } else {
+                msg += `⚠️ USD: No se pudo leer del BCV. Verifica manualmente.\n`;
+            }
+
+            // Guardar EUR si se obtuvo
+            if (tasaEUR) {
+                loadingText.textContent = 'Guardando EUR...';
+                document.getElementById('conf-tasa-eur').value = tasaEUR;
+                await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?moneda=eq.EUR`, { method: 'DELETE', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv`, {
+                    method: 'POST',
+                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ moneda: 'EUR', tasa: parseFloat(tasaEUR) })
+                });
+                document.getElementById('fecha-eur').textContent = `Última actualización: ${fechaStr}`;
+                msg += `✅ EUR: Bs. ${tasaEUR}`;
+            } else {
+                msg += `⚠️ EUR: No se pudo leer del BCV. Verifica manualmente.`;
+            }
+
+            alert(msg);
             overlay.classList.add('hidden');
             overlay.classList.remove('flex');
             loadingText.textContent = 'Sincronizando...';
