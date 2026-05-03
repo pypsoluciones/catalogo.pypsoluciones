@@ -47,17 +47,6 @@
         .dato-sensible { transition: filter 0.3s ease; }
         .modo-privado .dato-sensible { filter: blur(6px); user-select: none; pointer-events: none; }
 
-        /* Ventas: blur por defecto */
-        .ventas-blur { filter: blur(6px); user-select: none; transition: filter 0.3s ease; }
-        .ventas-blur.visible { filter: none; user-select: auto; }
-        .ventas-row { display: flex; align-items: center; gap: 6px; }
-        .btn-revelar-ventas {
-            background: none; border: none; cursor: pointer;
-            color: rgba(255,255,255,0.45); font-size: 14px; padding: 0;
-            transition: color 0.2s; line-height: 1; flex-shrink: 0;
-        }
-        .btn-revelar-ventas:hover, .btn-revelar-ventas.activo { color: var(--color-secondary); }
-
         /* Header */
         .dash-header {
             background-color: var(--color-primary);
@@ -204,7 +193,7 @@
                 <span class="ticker-flag">🇺🇸</span>
                 <div>
                     <div class="ticker-label">USD · BCV Oficial</div>
-                    <div class="ticker-val dato-sensible" id="dash-tasa-usd">Bs. —</div>
+                    <div class="ticker-val" id="dash-tasa-usd">Bs. —</div>
                 </div>
                 <span class="ticker-chip">BCV</span>
             </div>
@@ -212,7 +201,7 @@
                 <span class="ticker-flag">🇪🇺</span>
                 <div>
                     <div class="ticker-label">EUR · BCV Oficial</div>
-                    <div class="ticker-val dato-sensible" id="dash-tasa-eur">Bs. —</div>
+                    <div class="ticker-val" id="dash-tasa-eur">Bs. —</div>
                 </div>
                 <span class="ticker-chip">BCV</span>
             </div>
@@ -236,12 +225,7 @@
                     <div class="kpi-icon ventas"><i class="fa-solid fa-cash-register"></i></div>
                     <div class="flex-1 min-w-0">
                         <span class="kpi-label">Ventas Hoy</span>
-                        <div class="ventas-row">
-                            <span class="kpi-value text-primary ventas-blur" id="dash-ventas-hoy">$0.00</span>
-                            <button class="btn-revelar-ventas" id="btn-revelar-ventas" onclick="toggleVentas()" title="Mostrar/Ocultar ventas">
-                                <i id="icono-ventas" class="fa-solid fa-eye-slash"></i>
-                            </button>
-                        </div>
+                        <span class="kpi-value text-primary dato-sensible" id="dash-ventas-hoy">$0.00</span>
                     </div>
                 </div>
 
@@ -344,16 +328,6 @@
                     }
                 }
             } catch(e) {}
-        }
-
-        function toggleVentas() {
-            const monto = document.getElementById('dash-ventas-hoy');
-            const btn   = document.getElementById('btn-revelar-ventas');
-            const icono = document.getElementById('icono-ventas');
-            const visible = monto.classList.toggle('visible');
-            btn.classList.toggle('activo', visible);
-            icono.classList.toggle('fa-eye-slash', !visible);
-            icono.classList.toggle('fa-eye', visible);
         }
 
         function togglePrivacidad() {
