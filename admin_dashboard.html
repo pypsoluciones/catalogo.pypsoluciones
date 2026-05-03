@@ -53,6 +53,27 @@
         /* MODO BANCARIO (Privacidad) */
         .dato-sensible { transition: filter 0.3s ease; }
         .modo-privado .dato-sensible { filter: blur(6px); user-select: none; pointer-events: none; }
+
+        /* Ventas SIEMPRE difuminadas — independiente del modo privado */
+        .ventas-siempre-blur { 
+            filter: blur(6px); 
+            user-select: none; 
+            transition: filter 0.3s ease;
+        }
+        .ventas-siempre-blur.revelado { 
+            filter: none; 
+            user-select: auto; 
+        }
+        /* Contenedor del KPI de ventas con botón de ojo */
+        .ventas-wrapper { position: relative; display: flex; align-items: center; gap: 8px; }
+        .btn-revelar-ventas {
+            background: none; border: none; cursor: pointer;
+            color: #cbd5e1; font-size: 13px; padding: 2px 4px;
+            transition: color 0.2s;
+            line-height: 1;
+        }
+        .btn-revelar-ventas:hover { color: var(--color-secondary); }
+        .btn-revelar-ventas.activo { color: var(--color-secondary); }
         
         #watermark-bg { background-size: 50%; background-position: center; background-repeat: no-repeat; opacity: 0.04; pointer-events: none; z-index: 0; }
         .semaforo-card { transition: transform 0.2s; border-left-width: 6px; }
@@ -82,26 +103,8 @@
         </header>
 
         <div class="flex-1 overflow-auto p-4 md:p-6 custom-scroll pb-20 fade-in">
-            
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                <div class="bg-white/80 backdrop-blur rounded-xl border border-gray-200 p-5 shadow-sm flex items-center gap-4 hover:shadow-md transition cursor-default">
-                    <div class="w-12 h-12 rounded-full bg-slate-100 text-tertiary flex items-center justify-center text-xl shrink-0"><i class="fa-solid fa-cash-register"></i></div>
-                    <div><p class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-0.5">Ventas Hoy</p><h3 class="text-2xl font-black text-primary dato-sensible" id="dash-ventas-hoy">$0.00</h3></div>
-                </div>
-                <div class="bg-white/80 backdrop-blur rounded-xl border border-gray-200 p-5 shadow-sm flex items-center gap-4 hover:shadow-md transition cursor-default">
-                    <div class="w-12 h-12 rounded-full bg-slate-100 text-tertiary flex items-center justify-center text-xl shrink-0"><i class="fa-solid fa-boxes-stacked"></i></div>
-                    <div><p class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-0.5">Prod. Activos</p><h3 class="text-2xl font-black text-primary dato-sensible" id="indicador-productos">0</h3></div>
-                </div>
-                <div class="bg-white/80 backdrop-blur rounded-xl border border-gray-200 p-5 shadow-sm flex items-center gap-4 hover:shadow-md transition cursor-default">
-                    <div class="w-12 h-12 rounded-full bg-slate-100 text-tertiary flex items-center justify-center text-xl shrink-0"><i class="fa-solid fa-screwdriver-wrench"></i></div>
-                    <div><p class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-0.5">Equipos Taller</p><h3 class="text-2xl font-black text-primary dato-sensible">0</h3></div>
-                </div>
-                <div class="bg-white/80 backdrop-blur rounded-xl border border-gray-200 p-5 shadow-sm flex items-center gap-4 hover:shadow-md transition cursor-default">
-                    <div class="w-12 h-12 rounded-full bg-slate-100 text-tertiary flex items-center justify-center text-xl shrink-0"><i class="fa-solid fa-users"></i></div>
-                    <div><p class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-0.5">Clientes</p><h3 class="text-2xl font-black text-primary dato-sensible" id="indicador-clientes">0</h3></div>
-                </div>
-            </div>
 
+            <!-- FILA 1: Tasas BCV + Turno de Caja -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                 <div class="md:col-span-2 bg-white/80 backdrop-blur rounded-xl shadow-sm border border-gray-200 p-5 flex flex-col justify-between overflow-hidden relative">
                     <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Mercado Cambiario Oficial (BCV)</h3>
@@ -129,6 +132,34 @@
                         </div>
                     </div>
                     <a href="admin_caja.html" class="text-[10px] font-bold bg-primary text-white text-center py-2 rounded-lg hover:opacity-90 transition uppercase shadow-sm">Gestionar Caja</a>
+                </div>
+            </div>
+
+            <!-- FILA 2: KPIs (Ventas siempre difuminadas con clase especial) -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div class="bg-white/80 backdrop-blur rounded-xl border border-gray-200 p-5 shadow-sm flex items-center gap-4 hover:shadow-md transition cursor-default">
+                    <div class="w-12 h-12 rounded-full bg-slate-100 text-tertiary flex items-center justify-center text-xl shrink-0"><i class="fa-solid fa-cash-register"></i></div>
+                    <div>
+                        <p class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-0.5">Ventas Hoy</p>
+                        <div class="ventas-wrapper">
+                            <h3 class="text-2xl font-black text-primary ventas-siempre-blur" id="dash-ventas-hoy">$0.00</h3>
+                            <button class="btn-revelar-ventas" id="btn-revelar-ventas" onclick="toggleVentas()" title="Mostrar / Ocultar ventas">
+                                <i id="icono-ventas" class="fa-solid fa-eye-slash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white/80 backdrop-blur rounded-xl border border-gray-200 p-5 shadow-sm flex items-center gap-4 hover:shadow-md transition cursor-default">
+                    <div class="w-12 h-12 rounded-full bg-slate-100 text-tertiary flex items-center justify-center text-xl shrink-0"><i class="fa-solid fa-boxes-stacked"></i></div>
+                    <div><p class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-0.5">Prod. Activos</p><h3 class="text-2xl font-black text-primary dato-sensible" id="indicador-productos">0</h3></div>
+                </div>
+                <div class="bg-white/80 backdrop-blur rounded-xl border border-gray-200 p-5 shadow-sm flex items-center gap-4 hover:shadow-md transition cursor-default">
+                    <div class="w-12 h-12 rounded-full bg-slate-100 text-tertiary flex items-center justify-center text-xl shrink-0"><i class="fa-solid fa-screwdriver-wrench"></i></div>
+                    <div><p class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-0.5">Equipos Taller</p><h3 class="text-2xl font-black text-primary dato-sensible">0</h3></div>
+                </div>
+                <div class="bg-white/80 backdrop-blur rounded-xl border border-gray-200 p-5 shadow-sm flex items-center gap-4 hover:shadow-md transition cursor-default">
+                    <div class="w-12 h-12 rounded-full bg-slate-100 text-tertiary flex items-center justify-center text-xl shrink-0"><i class="fa-solid fa-users"></i></div>
+                    <div><p class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-0.5">Clientes</p><h3 class="text-2xl font-black text-primary dato-sensible" id="indicador-clientes">0</h3></div>
                 </div>
             </div>
 
@@ -198,6 +229,16 @@
                     }
                 }
             } catch(e) {}
+        }
+
+        function toggleVentas() {
+            const monto = document.getElementById('dash-ventas-hoy');
+            const btn   = document.getElementById('btn-revelar-ventas');
+            const icono = document.getElementById('icono-ventas');
+            const revelado = monto.classList.toggle('revelado');
+            btn.classList.toggle('activo', revelado);
+            icono.classList.toggle('fa-eye-slash', !revelado);
+            icono.classList.toggle('fa-eye', revelado);
         }
 
         function togglePrivacidad() {
