@@ -731,10 +731,12 @@ async function cargarBaseDatos() {
             keys: ['id_producto_sku', 'codigo_barras', 'nombre'],
             threshold: 0.4,
             ignoreLocation: true,
-            getFn: (obj, path) => {
+           getFn: (obj, path) => {
                 let val = obj;
                 for (let i = 0; i < path.length; i++) val = val ? val[path[i]] : null;
-                return typeof val === 'string' ? val.normalize("NFD").replace(/[\u0300-\u036f]/g, "") : val;
+                if (val === null || val === undefined) return '';
+                // Convertimos forzosamente cualquier número (como el código de barras) a texto para el índice
+                return typeof val === 'string' ? val.normalize("NFD").replace(/[\u0300-\u036f]/g, "") : String(val);
             }
         });
 
@@ -808,9 +810,21 @@ function renderizarInventario() {
 
     let data = dbInventario;
 
-    if (query !== '') {
+   if (query !== '') {
         const qN = query.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-        data = fuseInventario.search(qN).map(r => r.item);
+        
+        // MOTOR 1: Búsqueda Exacta (Prioridad para Pistolas Lectoras). Velocidad pura.
+        const exactMatch = dbInventario.filter(p => 
+            (p.codigo_barras && String(p.codigo_barras) === query) || 
+            (p.id_producto_sku && p.id_producto_sku.toUpperCase() === query.toUpperCase())
+        );
+
+        if (exactMatch.length > 0) {
+            data = exactMatch; // Retorno instantáneo sin gastar CPU en cálculos difusos
+        } else {
+            // MOTOR 2: Búsqueda Difusa (Fallback). Solo se usa si es un nombre o texto aproximado.
+            data = fuseInventario.search(qN).map(r => r.item);
+        }
     }
     if (cat     !== 'TODAS') data = data.filter(p => p.categoria_del_producto === cat);
     if (marca   !== 'TODAS') data = data.filter(p => p.marca === marca);
