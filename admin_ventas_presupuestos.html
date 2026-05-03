@@ -245,56 +245,73 @@
         }
 
         // --- 3. PANEL LATERAL (DRAWER) ---
+       // --- 3. PANEL LATERAL (DRAWER) BLINDADO ---
         async function abrirDrawer(id_documento) {
-            presupuestoActivo = presupuestosGlobal.find(p => p.id_documento === id_documento);
-            if (!presupuestoActivo) return;
-
-            document.getElementById('drawer-nro-doc').innerText = `PRE-${String(presupuestoActivo.correlativo).padStart(6, '0')}`;
-            document.getElementById('drawer-cliente-nom').innerText = presupuestoActivo.cliente_nombre;
-            document.getElementById('drawer-cliente-doc').innerText = presupuestoActivo.cliente_documento || 'N/A';
-            document.getElementById('drawer-total-usd').innerText = `$${parseFloat(presupuestoActivo.total_usd).toFixed(2)}`;
-            
-            const badge = document.getElementById('drawer-estatus-badge');
-            badge.innerText = presupuestoActivo.estatus;
-            badge.className = `px-2 py-0.5 rounded text-[8px] font-black uppercase border ${presupuestoActivo.estatus === 'PENDIENTE' ? 'bg-amber-50 text-amber-700 border-amber-300' : presupuestoActivo.estatus === 'APROBADO' ? 'bg-emerald-50 text-emerald-700 border-emerald-300' : 'bg-gray-100 text-gray-500 border-gray-300'}`;
-
-            if (presupuestoActivo.notas_internas) {
-                document.getElementById('drawer-notas').innerText = presupuestoActivo.notas_internas;
-                document.getElementById('drawer-notas').classList.remove('hidden');
-            } else {
-                document.getElementById('drawer-notas').classList.add('hidden');
-            }
-
-            document.getElementById('drawer-lista-detalles').innerHTML = '<div class="text-center py-6"><i class="fa-solid fa-spinner fa-spin text-primary"></i></div>';
-            construirBotonera(presupuestoActivo.estatus);
-            
-            document.getElementById('drawer-container').classList.add('drawer-open');
-
-            // Descargar detalles dinámicamente
             try {
+                presupuestoActivo = presupuestosGlobal.find(p => p.id_documento === id_documento);
+                if (!presupuestoActivo) throw new Error("Documento no encontrado en memoria.");
+
+                // Manejo de nulos seguro
+                const correlativo = presupuestoActivo.correlativo ? String(presupuestoActivo.correlativo).padStart(6, '0') : '000000';
+                const totalUsd = parseFloat(presupuestoActivo.total_usd || 0).toFixed(2);
+                const nombreCliente = presupuestoActivo.cliente_nombre || 'CLIENTE GENÉRICO';
+                const docCliente = presupuestoActivo.cliente_documento || 'N/A';
+                const estatus = presupuestoActivo.estatus || 'PENDIENTE';
+
+                document.getElementById('drawer-nro-doc').innerText = `PRE-${correlativo}`;
+                document.getElementById('drawer-cliente-nom').innerText = nombreCliente;
+                document.getElementById('drawer-cliente-doc').innerText = docCliente;
+                document.getElementById('drawer-total-usd').innerText = `$${totalUsd}`;
+                
+                const badge = document.getElementById('drawer-estatus-badge');
+                badge.innerText = estatus;
+                badge.className = `px-2 py-0.5 rounded text-[8px] font-black uppercase border ${estatus === 'PENDIENTE' ? 'bg-amber-50 text-amber-700 border-amber-300' : estatus === 'APROBADO' ? 'bg-emerald-50 text-emerald-700 border-emerald-300' : 'bg-gray-100 text-gray-500 border-gray-300'}`;
+
+                if (presupuestoActivo.notas_internas) {
+                    document.getElementById('drawer-notas').innerText = presupuestoActivo.notas_internas;
+                    document.getElementById('drawer-notas').classList.remove('hidden');
+                } else {
+                    document.getElementById('drawer-notas').classList.add('hidden');
+                }
+
+                document.getElementById('drawer-lista-detalles').innerHTML = '<div class="text-center py-6"><i class="fa-solid fa-spinner fa-spin text-primary"></i></div>';
+                construirBotonera(estatus);
+                
+                // Abre el panel
+                document.getElementById('drawer-container').classList.add('drawer-open');
+
+                // Descarga de detalles
                 const res = await fetch(`${SUPABASE_URL}/rest/v1/ventas_documentos_detalles?id_documento=eq.${id_documento}`, {
                     headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` }
                 });
-                if (!res.ok) throw new Error("Fallo API");
+                
+                if (!res.ok) throw new Error("Fallo API de detalles");
                 const detalles = await res.json();
                 
                 let htmlDetalles = '';
-                detalles.forEach(d => {
-                    htmlDetalles += `
-                    <div class="bg-white border border-gray-200 rounded p-2 flex justify-between items-center shadow-sm">
-                        <div class="flex-1 truncate pr-2">
-                            <div class="font-bold text-primary text-[10px] uppercase truncate">${d.producto_nombre}</div>
-                            <div class="text-[8px] text-gray-500 font-mono">${d.producto_sku}</div>
-                        </div>
-                        <div class="text-right">
-                            <div class="text-[11px] font-black text-secondary">$${parseFloat(d.subtotal_linea_usd).toFixed(2)}</div>
-                            <div class="text-[8px] text-gray-400 font-bold">${d.cantidad} x $${parseFloat(d.precio_unitario_usd).toFixed(2)}</div>
-                        </div>
-                    </div>`;
-                });
+                if (detalles.length === 0) {
+                    htmlDetalles = '<div class="text-center text-gray-400 text-[10px] font-bold p-4">Sin cargos detallados.</div>';
+                } else {
+                    detalles.forEach(d => {
+                        htmlDetalles += `
+                        <div class="bg-white border border-gray-200 rounded p-2 flex justify-between items-center shadow-sm">
+                            <div class="flex-1 truncate pr-2">
+                                <div class="font-bold text-primary text-[10px] uppercase truncate">${d.producto_nombre || 'Artículo'}</div>
+                                <div class="text-[8px] text-gray-500 font-mono">${d.producto_sku || 'N/A'}</div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-[11px] font-black text-secondary">$${parseFloat(d.subtotal_linea_usd || 0).toFixed(2)}</div>
+                                <div class="text-[8px] text-gray-400 font-bold">${parseFloat(d.cantidad || 0)} x $${parseFloat(d.precio_unitario_usd || 0).toFixed(2)}</div>
+                            </div>
+                        </div>`;
+                    });
+                }
                 document.getElementById('drawer-lista-detalles').innerHTML = htmlDetalles;
+
             } catch (e) {
-                document.getElementById('drawer-lista-detalles').innerHTML = '<div class="text-center text-red-500 text-[10px] font-bold">Error cargando cargos.</div>';
+                console.error("Error abriendo Drawer:", e);
+                alert("Error al intentar abrir el presupuesto. Revisa la consola.");
+                cerrarDrawer();
             }
         }
 
