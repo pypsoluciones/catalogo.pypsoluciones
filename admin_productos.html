@@ -21,7 +21,8 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=Poppins:wght@300;400;500;700;900&family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
     <script src="config.js"></script>
 
     <!-- FIX: Guardian valida existencia de token antes de cargar el resto -->
@@ -1438,46 +1439,55 @@ function exportarCSV() {
     document.body.removeChild(a); URL.revokeObjectURL(url);
     toast("CSV exportado correctamente", "success");
 }
-
 // ================================================================
 // ESCÁNER DE CÓDIGO DE BARRAS
-// — Soporta: pistola lectora (teclado) + BarcodeDetector API (cámara)
-// — Fallback para navegadores sin BarcodeDetector: loop manual cada 300ms
+// — Soporta: pistola lectora (teclado global) + BarcodeDetector API (cámara)
+// — Fallback: jsQR para navegadores sin BarcodeDetector nativo (iOS/Antiguos)
 // ================================================================
-let _escanerStream      = null;
+let _escanerStream     = null;
 let _escanerInterval   = null;
 let _escanerDetector   = null;
 let _linterna          = false;
 let _escanerActivo     = false;
 
-// ── Pistola lectora: detecta secuencias rápidas de teclas en el buscador ──
+// ── Pistola lectora: detecta secuencias rápidas de teclas a nivel GLOBAL ──
 function _initPistolaLectora() {
-    const inp   = document.getElementById('buscador-inv');
     let buffer  = '';
     let lastKey = 0;
 
-    inp.addEventListener('keydown', e => {
+    document.addEventListener('keydown', e => {
         const ahora = Date.now();
-        if (e.key === 'Enter') {
-            if (buffer.length >= 6) {
-                // La pistola envía Enter al final: buscar directamente
+        
+        // Si pasan más de 50ms entre teclas, es un humano escribiendo. Limpiamos el buffer.
+        if (ahora - lastKey > 50) {
+            buffer = '';
+        }
+
+        // Las pistolas lectoras siempre envían un 'Enter' al final de la lectura
+        if (e.key === 'Enter' && buffer.length >= 4) {
+            const inp = document.getElementById('buscador-inv');
+            if (inp) {
                 inp.value = buffer;
                 filtrarInventario();
                 _flashBuscador();
-                e.preventDefault();
             }
             buffer = '';
+            e.preventDefault();
             return;
         }
-        // Si las teclas llegan en menos de 50ms entre sí → pistola lectora
-        if (ahora - lastKey < 50) buffer += e.key;
-        else buffer = e.key;
+
+        // Acumular caracteres válidos ignorando teclas de control
+        if (e.key.length === 1) {
+            buffer += e.key;
+        }
+        
         lastKey = ahora;
     });
 }
 
 function _flashBuscador() {
     const inp = document.getElementById('buscador-inv');
+    if (!inp) return;
     inp.classList.add('border-green-500', 'bg-green-50');
     setTimeout(() => inp.classList.remove('border-green-500', 'bg-green-50'), 800);
 }
@@ -1501,7 +1511,7 @@ async function abrirEscaner() {
         const deviceId = trasera ? trasera.deviceId : camaras[0]?.deviceId;
         await _iniciarStream(deviceId);
 
-        // Inicializar BarcodeDetector si está disponible
+        // Inicializar BarcodeDetector si está disponible nativamente
         if ('BarcodeDetector' in window) {
             const formatos = await BarcodeDetector.getSupportedFormats();
             _escanerDetector = new BarcodeDetector({ formats: formatos });
@@ -1544,13 +1554,25 @@ function _iniciarScanLoop() {
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
         try {
+            // Motor 1: API Nativa (Ultra rápida)
             if (_escanerDetector) {
                 const barcodes = await _escanerDetector.detect(canvas);
                 if (barcodes.length > 0) {
                     _onCodigoDetectado(barcodes[0].rawValue);
+                    return;
+                }
+            } 
+            // Motor 2: Fallback Universal jsQR (iOS y compatibilidad cruzada)
+            else if (typeof jsQR !== 'undefined') {
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                    inversionAttempts: "dontInvert",
+                });
+                if (code) {
+                    _onCodigoDetectado(code.data);
                 }
             }
-        } catch { /* frame descartado */ }
+        } catch { /* Frame descartado, se ignora para no bloquear el hilo */ }
     }, 300);
 }
 
@@ -1568,9 +1590,11 @@ function _onCodigoDetectado(codigo) {
         cerrarEscaner();
         // Cargar el código en el buscador y filtrar
         const inp = document.getElementById('buscador-inv');
-        inp.value = codigo;
-        filtrarInventario();
-        _flashBuscador();
+        if (inp) {
+            inp.value = codigo;
+            filtrarInventario();
+            _flashBuscador();
+        }
         toast(`Código detectado: ${codigo}`, "success");
     }, 600);
 }
@@ -1600,12 +1624,12 @@ function cerrarEscaner() {
     document.getElementById('modal-escaner').classList.add('hidden');
     document.getElementById('modal-escaner').classList.remove('flex');
     document.getElementById('btn-abrir-escaner').classList.remove('scan-active');
+    
     // Resetear estado visual
     document.getElementById('escaner-status').innerHTML =
         `<span class="bg-black/60 text-green-400 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider">Apunta al código de barras</span>`;
     document.getElementById('escaner-cam-select').innerHTML = '<option value="">Cargando cámaras...</option>';
 }
-
 </script>
 </body>
 </html>
