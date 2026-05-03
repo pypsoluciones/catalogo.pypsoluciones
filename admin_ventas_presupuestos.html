@@ -358,10 +358,95 @@
         }
 
         function imprimirPresupuesto() {
-            // Imprime la pantalla utilizando las reglas CSS print. 
-            // Para un ERP B2B esto se maquilla vía CSS @media print o se envía a una API generadora de PDF.
-            alert("Preparando documento para impresión...");
-            window.print();
+            if (!presupuestoActivo) return;
+            
+            // Reconstruimos los items leyendo el HTML del panel lateral (cero peticiones extra a la BD)
+            const detallesNodos = document.getElementById('drawer-lista-detalles').children;
+            let filasTabla = '';
+            
+            for (let i = 0; i < detallesNodos.length; i++) {
+                const nombre = detallesNodos[i].querySelector('.text-primary').innerText;
+                const sku = detallesNodos[i].querySelector('.font-mono').innerText;
+                const montoTotal = detallesNodos[i].querySelector('.text-secondary').innerText;
+                const cantidadPrecio = detallesNodos[i].querySelector('.text-gray-400').innerText; // Ej: "2 x $15.00"
+                
+                filasTabla += `
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 8px; font-size: 12px; color: #333;"><b>${nombre}</b><br><span style="font-size: 10px; color: #777;">SKU: ${sku}</span></td>
+                        <td style="padding: 8px; font-size: 12px; color: #333; text-align: center;">${cantidadPrecio}</td>
+                        <td style="padding: 8px; font-size: 12px; color: #333; text-align: right;"><b>${montoTotal}</b></td>
+                    </tr>
+                `;
+            }
+
+            const fechaFormat = new Date(presupuestoActivo.fecha_emision).toLocaleDateString('es-VE', { year: 'numeric', month: 'long', day: 'numeric' });
+            const nroDoc = `PRE-${String(presupuestoActivo.correlativo).padStart(6, '0')}`;
+
+            // Plantilla Corporativa A4 (Aislada del CSS general)
+            const htmlImpresion = `
+                <html>
+                <head>
+                    <title>Cotización ${nroDoc}</title>
+                    <style>
+                        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 40px; color: #333; }
+                        .header { display: flex; justify-content: space-between; border-bottom: 2px solid #143B62; padding-bottom: 20px; margin-bottom: 20px; }
+                        .title { color: #143B62; font-size: 24px; font-weight: 900; margin: 0; text-transform: uppercase; }
+                        .info-box { background: #f9fafb; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #eee; }
+                        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+                        th { background: #143B62; color: white; padding: 10px; font-size: 11px; text-transform: uppercase; text-align: left; }
+                        .totales { width: 300px; float: right; background: #fff; border: 1px solid #ddd; border-radius: 8px; overflow: hidden; }
+                        .totales-row { display: flex; justify-content: space-between; padding: 10px 15px; border-bottom: 1px solid #eee; font-size: 13px; }
+                        .totales-row.gran-total { background: #E67E22; color: white; font-size: 16px; font-weight: 900; border: none; }
+                        @media print { body { padding: 0; } }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <div>
+                            <h1 class="title">P&P SOLUCIONES</h1>
+                            <p style="font-size: 12px; color: #666; margin: 5px 0;">RIF: J-00000000-0<br>Caracas, Venezuela</p>
+                        </div>
+                        <div style="text-align: right;">
+                            <h2 style="margin:0; color: #E67E22; font-size: 20px;">PRESUPUESTO</h2>
+                            <p style="font-size: 14px; font-weight: bold; margin: 5px 0;">Nro: ${nroDoc}</p>
+                            <p style="font-size: 12px; color: #666; margin: 0;">Fecha: ${fechaFormat}</p>
+                        </div>
+                    </div>
+
+                    <div class="info-box">
+                        <h3 style="font-size: 11px; text-transform: uppercase; color: #143B62; margin-top: 0;">Datos del Cliente</h3>
+                        <p style="margin: 5px 0; font-size: 14px;"><b>Razón Social:</b> ${presupuestoActivo.cliente_nombre.toUpperCase()}</p>
+                        <p style="margin: 5px 0; font-size: 13px; color: #555;"><b>Documento:</b> ${presupuestoActivo.cliente_documento || 'N/A'}</p>
+                    </div>
+
+                    <table>
+                        <thead>
+                            <tr><th>Descripción del Cargo</th><th style="text-align: center;">Cant. x Precio Unitario</th><th style="text-align: right;">Subtotal</th></tr>
+                        </thead>
+                        <tbody>
+                            ${filasTabla}
+                        </tbody>
+                    </table>
+
+                    <div class="totales">
+                        <div class="totales-row"><span>Subtotal:</span> <span>$${parseFloat(presupuestoActivo.subtotal_usd).toFixed(2)}</span></div>
+                        <div class="totales-row gran-total"><span>TOTAL USD:</span> <span>$${parseFloat(presupuestoActivo.total_usd).toFixed(2)}</span></div>
+                    </div>
+                    
+                    <div style="clear: both; margin-top: 80px; text-align: center; font-size: 11px; color: #777; border-top: 1px dashed #ccc; padding-top: 20px;">
+                        Este documento es un presupuesto válido por 15 días. No representa una factura fiscal.<br>
+                        Emitido por: ${presupuestoActivo.nombre_cajero || 'SISTEMA'}
+                    </div>
+                </body>
+                </html>
+            `;
+
+            // Abrimos ventana oculta, escribimos el HTML y disparamos la impresión.
+            const ventanaImp = window.open('', '_blank');
+            ventanaImp.document.write(htmlImpresion);
+            ventanaImp.document.close();
+            ventanaImp.focus();
+            setTimeout(() => { ventanaImp.print(); }, 500);
         }
     </script>
 </body>
