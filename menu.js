@@ -51,7 +51,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     <a href="admin_ventas.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_ventas.html' ? estiloActivoSub : estiloInactivoSub}">POS</a>
                     <span class="block py-1.5 px-3 text-xs rounded-md ${estiloDeshabilitado}" title="Próximo sprint">Facturación <i class="fa-solid fa-clock text-[8px] ml-1"></i></span>
                     <a href="admin_ventas_presupuestos.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_ventas_presupuestos.html' ? estiloActivoSub : estiloInactivoSub}">Presupuestos</a>
-                    <a href="admin_notas.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_notas.html' ? estiloActivoSub : estiloInactivoSub}">Notas de Entrega</a>
+                    <a href="admin_ventas_notas.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_ventas_notas.html' ? estiloActivoSub : estiloInactivoSub}">Notas de Entrega</a>
                     <a href="admin_ventas_historial.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_ventas_historial.html' ? estiloActivoSub : estiloInactivoSub}">Historial de Ventas</a>
                     <a href="admin_ventas_parametros.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_ventas_parametros.html' ? estiloActivoSub : estiloInactivoSub}">Parámetros POS</a>
                 </div>
