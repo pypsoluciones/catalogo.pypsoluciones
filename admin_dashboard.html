@@ -54,27 +54,57 @@
         .dato-sensible { transition: filter 0.3s ease; }
         .modo-privado .dato-sensible { filter: blur(6px); user-select: none; pointer-events: none; }
 
-        /* Ventas SIEMPRE difuminadas — independiente del modo privado */
-        .ventas-siempre-blur { 
-            filter: blur(6px); 
-            user-select: none; 
-            transition: filter 0.3s ease;
+        /* ── Ventas: difuminado SOLO por defecto, botón propio lo revela ── */
+        .ventas-blur {
+            filter: blur(6px);
+            user-select: none;
+            transition: filter 0.35s ease;
         }
-        .ventas-siempre-blur.revelado { 
-            filter: none; 
-            user-select: auto; 
+        .ventas-blur.visible {
+            filter: none;
+            user-select: auto;
         }
-        /* Contenedor del KPI de ventas con botón de ojo */
-        .ventas-wrapper { position: relative; display: flex; align-items: center; gap: 8px; }
+        .ventas-wrapper { display: flex; align-items: center; gap: 8px; }
         .btn-revelar-ventas {
             background: none; border: none; cursor: pointer;
-            color: #cbd5e1; font-size: 13px; padding: 2px 4px;
-            transition: color 0.2s;
-            line-height: 1;
+            color: #94a3b8; font-size: 15px; padding: 2px 4px;
+            transition: color 0.2s; line-height: 1; flex-shrink: 0;
         }
         .btn-revelar-ventas:hover { color: var(--color-secondary); }
-        .btn-revelar-ventas.activo { color: var(--color-secondary); }
-        
+        .btn-revelar-ventas.activo  { color: var(--color-secondary); }
+
+        /* ── Tipografía unificada para etiquetas ── */
+        .kpi-label {
+            font-family: var(--font-global);
+            font-size: 12px;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 4px;
+            display: block;
+        }
+        .kpi-value {
+            font-family: var(--font-global);
+            font-size: 1.75rem;
+            font-weight: 900;
+            line-height: 1.1;
+        }
+        .kpi-value-lg {
+            font-family: var(--font-global);
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.1;
+        }
+        .section-label {
+            font-family: var(--font-global);
+            font-size: 11px;
+            font-weight: 700;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
         #watermark-bg { background-size: 50%; background-position: center; background-repeat: no-repeat; opacity: 0.04; pointer-events: none; z-index: 0; }
         .semaforo-card { transition: transform 0.2s; border-left-width: 6px; }
         .semaforo-card:hover { transform: translateY(-2px); }
@@ -107,90 +137,104 @@
             <!-- FILA 1: Tasas BCV + Turno de Caja -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                 <div class="md:col-span-2 bg-white/80 backdrop-blur rounded-xl shadow-sm border border-gray-200 p-5 flex flex-col justify-between overflow-hidden relative">
-                    <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Mercado Cambiario Oficial (BCV)</h3>
+                    <span class="section-label mb-4 block">Mercado Cambiario Oficial (BCV)</span>
                     <div class="grid grid-cols-2 gap-4 z-10">
-                        <div class="border-r border-gray-100">
-                            <span class="text-[10px] font-bold text-gray-500 mb-1 block"><i class="fa-solid fa-flag-usa text-blue-500"></i> Dólar (USD)</span>
-                            <span class="text-3xl font-black text-primary dato-sensible tracking-tighter" id="dash-tasa-usd">Bs. 0.00</span>
+                        <div class="border-r border-gray-100 pr-4">
+                            <span class="kpi-label"><i class="fa-solid fa-flag-usa text-blue-500 mr-1"></i> Dólar (USD)</span>
+                            <span class="kpi-value-lg text-primary dato-sensible tracking-tighter" id="dash-tasa-usd">Bs. 0.00</span>
                         </div>
-                        <div>
-                            <span class="text-[10px] font-bold text-gray-500 mb-1 block"><i class="fa-solid fa-earth-europe text-blue-800"></i> Euro (EUR)</span>
-                            <span class="text-3xl font-black text-primary dato-sensible tracking-tighter" id="dash-tasa-eur">Bs. 0.00</span>
+                        <div class="pl-2">
+                            <span class="kpi-label"><i class="fa-solid fa-earth-europe text-blue-800 mr-1"></i> Euro (EUR)</span>
+                            <span class="kpi-value-lg text-primary dato-sensible tracking-tighter" id="dash-tasa-eur">Bs. 0.00</span>
                         </div>
                     </div>
                     <i class="fa-solid fa-money-bill-transfer absolute -right-6 -bottom-6 text-gray-100 text-8xl z-0"></i>
                 </div>
 
                 <div class="bg-white/80 backdrop-blur rounded-xl shadow-sm border border-gray-200 p-5 flex flex-col justify-between">
-                    <div class="flex justify-between items-start mb-2">
+                    <div class="flex justify-between items-start mb-3">
                         <div>
-                            <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Tu Turno de Caja</h3>
-                            <h2 class="text-xl font-black text-gray-800" id="dash-caja-status">Verificando...</h2>
+                            <span class="section-label mb-1 block">Tu Turno de Caja</span>
+                            <h2 class="kpi-value text-gray-800" id="dash-caja-status">Verificando...</h2>
                         </div>
-                        <div id="dash-caja-icon" class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-lg text-gray-400 shrink-0">
+                        <div id="dash-caja-icon" class="w-11 h-11 rounded-full bg-gray-100 flex items-center justify-center text-lg text-gray-400 shrink-0">
                             <i class="fa-solid fa-vault"></i>
                         </div>
                     </div>
-                    <a href="admin_caja.html" class="text-[10px] font-bold bg-primary text-white text-center py-2 rounded-lg hover:opacity-90 transition uppercase shadow-sm">Gestionar Caja</a>
+                    <a href="admin_caja.html" class="kpi-label bg-primary text-white text-center py-2.5 rounded-lg hover:opacity-90 transition shadow-sm block" style="letter-spacing:0.08em;">Gestionar Caja</a>
                 </div>
             </div>
 
-            <!-- FILA 2: KPIs (Ventas siempre difuminadas con clase especial) -->
+            <!-- FILA 2: KPIs -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+
+                <!-- Ventas Hoy: difuminado por defecto, botón propio lo revela -->
                 <div class="bg-white/80 backdrop-blur rounded-xl border border-gray-200 p-5 shadow-sm flex items-center gap-4 hover:shadow-md transition cursor-default">
                     <div class="w-12 h-12 rounded-full bg-slate-100 text-tertiary flex items-center justify-center text-xl shrink-0"><i class="fa-solid fa-cash-register"></i></div>
-                    <div>
-                        <p class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-0.5">Ventas Hoy</p>
+                    <div class="flex-1 min-w-0">
+                        <span class="kpi-label">Ventas Hoy</span>
                         <div class="ventas-wrapper">
-                            <h3 class="text-2xl font-black text-primary ventas-siempre-blur" id="dash-ventas-hoy">$0.00</h3>
+                            <span class="kpi-value text-primary ventas-blur" id="dash-ventas-hoy">$0.00</span>
                             <button class="btn-revelar-ventas" id="btn-revelar-ventas" onclick="toggleVentas()" title="Mostrar / Ocultar ventas">
                                 <i id="icono-ventas" class="fa-solid fa-eye-slash"></i>
                             </button>
                         </div>
                     </div>
                 </div>
+
                 <div class="bg-white/80 backdrop-blur rounded-xl border border-gray-200 p-5 shadow-sm flex items-center gap-4 hover:shadow-md transition cursor-default">
                     <div class="w-12 h-12 rounded-full bg-slate-100 text-tertiary flex items-center justify-center text-xl shrink-0"><i class="fa-solid fa-boxes-stacked"></i></div>
-                    <div><p class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-0.5">Prod. Activos</p><h3 class="text-2xl font-black text-primary dato-sensible" id="indicador-productos">0</h3></div>
+                    <div>
+                        <span class="kpi-label">Prod. Activos</span>
+                        <span class="kpi-value text-primary dato-sensible block" id="indicador-productos">0</span>
+                    </div>
                 </div>
+
                 <div class="bg-white/80 backdrop-blur rounded-xl border border-gray-200 p-5 shadow-sm flex items-center gap-4 hover:shadow-md transition cursor-default">
                     <div class="w-12 h-12 rounded-full bg-slate-100 text-tertiary flex items-center justify-center text-xl shrink-0"><i class="fa-solid fa-screwdriver-wrench"></i></div>
-                    <div><p class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-0.5">Equipos Taller</p><h3 class="text-2xl font-black text-primary dato-sensible">0</h3></div>
+                    <div>
+                        <span class="kpi-label">Equipos Taller</span>
+                        <span class="kpi-value text-primary dato-sensible block">0</span>
+                    </div>
                 </div>
+
                 <div class="bg-white/80 backdrop-blur rounded-xl border border-gray-200 p-5 shadow-sm flex items-center gap-4 hover:shadow-md transition cursor-default">
                     <div class="w-12 h-12 rounded-full bg-slate-100 text-tertiary flex items-center justify-center text-xl shrink-0"><i class="fa-solid fa-users"></i></div>
-                    <div><p class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-0.5">Clientes</p><h3 class="text-2xl font-black text-primary dato-sensible" id="indicador-clientes">0</h3></div>
+                    <div>
+                        <span class="kpi-label">Clientes</span>
+                        <span class="kpi-value text-primary dato-sensible block" id="indicador-clientes">0</span>
+                    </div>
                 </div>
             </div>
 
             <div class="bg-white/80 backdrop-blur rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6">
                 <div class="bg-primary/5 border-b border-gray-200 px-5 py-3 flex justify-between items-center">
-                    <h2 class="text-[11px] font-black text-primary uppercase tracking-widest flex items-center gap-2">
+                    <h2 class="section-label text-primary flex items-center gap-2">
                         <i class="fa-solid fa-traffic-light text-tertiary"></i> Semáforo Cuentas por Cobrar (CxC)
                     </h2>
-                    <a href="admin_cxc.html" class="text-[9px] font-bold bg-white border border-gray-300 px-2 py-1 rounded text-primary hover:bg-gray-100 transition shadow-sm uppercase">Ver Todo</a>
+                    <a href="admin_cxc.html" class="kpi-label bg-white border border-gray-300 px-3 py-1.5 rounded text-primary hover:bg-gray-100 transition shadow-sm" style="font-size:10px;">Ver Todo</a>
                 </div>
                 
                 <div class="p-5 grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div class="semaforo-card bg-red-50 border-red-500 rounded-xl p-4 shadow-sm relative overflow-hidden">
                         <i class="fa-solid fa-triangle-exclamation absolute -right-2 -bottom-2 text-red-200 text-5xl opacity-50"></i>
-                        <h3 class="text-[9px] font-black text-red-700 uppercase tracking-widest mb-1">Vencidas (Crítico)</h3>
-                        <div class="text-xl font-black text-red-600 mb-1 dato-sensible" id="sem-rojo-monto">$0.00</div>
-                        <p class="text-[9px] font-bold text-red-500"><span id="sem-rojo-cant">0</span> facturas fuera de plazo.</p>
+                        <span class="kpi-label text-red-700 mb-2 block">Vencidas (Crítico)</span>
+                        <div class="kpi-value text-red-600 mb-1 dato-sensible" id="sem-rojo-monto">$0.00</div>
+                        <p class="kpi-label text-red-400" style="font-size:11px; text-transform:none; letter-spacing:0;"><span id="sem-rojo-cant">0</span> facturas fuera de plazo.</p>
                     </div>
 
                     <div class="semaforo-card bg-yellow-50 border-yellow-400 rounded-xl p-4 shadow-sm relative overflow-hidden">
                         <i class="fa-regular fa-clock absolute -right-2 -bottom-2 text-yellow-200 text-5xl opacity-50"></i>
-                        <h3 class="text-[9px] font-black text-yellow-700 uppercase tracking-widest mb-1">Por Vencer (3 Días)</h3>
-                        <div class="text-xl font-black text-yellow-600 mb-1 dato-sensible" id="sem-amarillo-monto">$0.00</div>
-                        <p class="text-[9px] font-bold text-yellow-600"><span id="sem-amarillo-cant">0</span> facturas por vencerse.</p>
+                        <span class="kpi-label text-yellow-700 mb-2 block">Por Vencer (3 Días)</span>
+                        <div class="kpi-value text-yellow-600 mb-1 dato-sensible" id="sem-amarillo-monto">$0.00</div>
+                        <p class="kpi-label text-yellow-500" style="font-size:11px; text-transform:none; letter-spacing:0;"><span id="sem-amarillo-cant">0</span> facturas por vencerse.</p>
                     </div>
 
                     <div class="semaforo-card bg-green-50 border-green-500 rounded-xl p-4 shadow-sm relative overflow-hidden">
                         <i class="fa-solid fa-shield-halved absolute -right-2 -bottom-2 text-green-200 text-5xl opacity-50"></i>
-                        <h3 class="text-[9px] font-black text-green-700 uppercase tracking-widest mb-1">Deuda Sana</h3>
-                        <div class="text-xl font-black text-green-600 mb-1 dato-sensible" id="sem-verde-monto">$0.00</div>
-                        <p class="text-[9px] font-bold text-green-600"><span id="sem-verde-cant">0</span> facturas a tiempo.</p>
+                        <span class="kpi-label text-green-700 mb-2 block">Deuda Sana</span>
+                        <div class="kpi-value text-green-600 mb-1 dato-sensible" id="sem-verde-monto">$0.00</div>
+                        <p class="kpi-label text-green-500" style="font-size:11px; text-transform:none; letter-spacing:0;"><span id="sem-verde-cant">0</span> facturas a tiempo.</p>
                     </div>
                 </div>
             </div>
@@ -235,10 +279,10 @@
             const monto = document.getElementById('dash-ventas-hoy');
             const btn   = document.getElementById('btn-revelar-ventas');
             const icono = document.getElementById('icono-ventas');
-            const revelado = monto.classList.toggle('revelado');
-            btn.classList.toggle('activo', revelado);
-            icono.classList.toggle('fa-eye-slash', !revelado);
-            icono.classList.toggle('fa-eye', revelado);
+            const visible = monto.classList.toggle('visible');
+            btn.classList.toggle('activo', visible);
+            icono.classList.toggle('fa-eye-slash', !visible);
+            icono.classList.toggle('fa-eye', visible);
         }
 
         function togglePrivacidad() {
