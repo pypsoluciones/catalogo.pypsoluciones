@@ -49,12 +49,8 @@
                     <i class="fa-solid fa-money-bill-1"></i> TASA BCV: <span id="tasa-usd-val">0.00</span>
                 </div>
                 <div class="bg-blue-50 text-blue-700 px-4 py-1.5 rounded-xl border border-blue-200 text-xs font-black shadow-sm flex items-center gap-2">
-                    <i class="fa-solid fa-euro-sign"></i> TASA EUR: 
-                    <!-- FIX #2: se agrega onchange además de oninput para capturar pegado y tabulación -->
-                    <input type="number" id="input-tasa-eur" step="any" value="" placeholder="0.00"
-                        class="bg-transparent w-20 outline-none border-b border-blue-300 text-center font-black"
-                        oninput="actualizarTasaEUR(this.value)"
-                        onchange="actualizarTasaEUR(this.value)">
+                    <i class="fa-solid fa-euro-sign"></i> TASA EUR: <span id="tasa-eur-val">0.00</span>
+                    <input type="hidden" id="input-tasa-eur" value="0">
                 </div>
             </div>
         </header>
@@ -228,19 +224,19 @@
 
     <!-- Modal Escáner -->
     <div id="modal-scan" class="fixed inset-0 modal-scan hidden z-[100] flex flex-col items-center justify-center p-4">
-        <div class="bg-white rounded-3xl overflow-hidden w-full max-w-lg shadow-2xl">
-            <div class="p-5 bg-primary text-white flex justify-between items-center">
-                <span class="font-black text-xs uppercase"><i class="fa-solid fa-camera mr-2"></i> Escáner de Inventario</span>
-                <button onclick="cerrarEscaneo()"><i class="fa-solid fa-times text-2xl"></i></button>
+        <div class="bg-white rounded-2xl overflow-hidden w-full max-w-lg shadow-2xl">
+            <div class="p-4 flex justify-between items-center" style="background:var(--color-primary)">
+                <span class="font-black text-xs text-white uppercase"><i class="fa-solid fa-camera mr-2"></i> Escáner de Inventario</span>
+                <button onclick="cerrarEscaneo()" class="text-white opacity-70 hover:opacity-100"><i class="fa-solid fa-times text-xl"></i></button>
             </div>
-            <div class="relative bg-black aspect-video">
-                <video id="video-scan" class="w-full h-full object-cover"></video>
-                <div class="absolute inset-0 border-[60px] border-black/50 pointer-events-none">
-                    <div class="w-full h-full border-2 border-primary border-dashed rounded-2xl animate-pulse"></div>
+            <!-- Quagga monta su propio <video> y <canvas> dentro de este div -->
+            <div id="quagga-viewport" class="relative bg-black w-full" style="height:260px; overflow:hidden;">
+                <!-- Mira central -->
+                <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                    <div class="border-2 border-dashed rounded-xl animate-pulse" style="width:75%;height:60%;border-color:var(--color-secondary)"></div>
                 </div>
             </div>
-            <!-- FIX #3: Estado del escáner visible al usuario -->
-            <div id="scan-status" class="p-3 text-center text-xs font-black text-gray-400 uppercase"></div>
+            <div id="scan-status" class="p-3 text-center text-xs font-black text-gray-400 uppercase tracking-widest"></div>
         </div>
     </div>
 
@@ -391,7 +387,8 @@
                 if (dUSD[0]) { tasaBCV = dUSD[0].tasa; document.getElementById('tasa-usd-val').innerText = tasaBCV.toFixed(2); }
                 if (dEUR[0]) {
                     tasaEUR = dEUR[0].tasa;
-                    document.getElementById('input-tasa-eur').value = tasaEUR.toFixed(2);
+                    document.getElementById('tasa-eur-val').innerText = tasaEUR.toFixed(2);
+                    document.getElementById('input-tasa-eur').value = tasaEUR;
                 }
 
                 const rawProd   = await pRes.json();
@@ -557,8 +554,6 @@
         // ESCÁNER: QuaggaJS (robusto para códigos en papel/tickets)
         // + fallback a BarcodeDetector nativo si Quagga falla
         // =============================================
-        let scanStream = null;
-        let scanLoop = null;
         let quaggaActivo = false;
 
         async function verificarCapacidadEscaneo() {
@@ -588,24 +583,26 @@
 
         function _iniciarQuagga() {
             if (typeof Quagga === 'undefined') {
-                document.getElementById('scan-status').innerText = 'Error: librería de escáner no cargó';
+                document.getElementById('scan-status').innerText = 'Error: librería no cargó';
                 return;
             }
+            const viewport = document.getElementById('quagga-viewport');
+
             Quagga.init({
                 inputStream: {
                     name: 'Live',
                     type: 'LiveStream',
-                    target: document.getElementById('video-scan'),
+                    target: viewport,   // ← div contenedor, no <video>
                     constraints: {
                         facingMode: { ideal: 'environment' },
-                        width: { ideal: 1280 },
+                        width:  { ideal: 1280 },
                         height: { ideal: 720 }
                     },
-                    area: { top: '20%', right: '10%', left: '10%', bottom: '20%' }
+                    area: { top: '15%', right: '5%', left: '5%', bottom: '15%' }
                 },
-                locator: { patchSize: 'medium', halfSample: true },
+                locator:    { patchSize: 'medium', halfSample: true },
                 numOfWorkers: navigator.hardwareConcurrency > 2 ? 2 : 1,
-                frequency: 10,
+                frequency:  10,
                 decoder: {
                     readers: ['ean_reader','ean_8_reader','code_128_reader','code_39_reader','upc_reader','upc_e_reader','i2of5_reader']
                 },
@@ -613,41 +610,46 @@
             }, (err) => {
                 if (err) {
                     console.error('Quagga init error:', err);
-                    document.getElementById('scan-status').innerText = 'Error de cámara. Use el buscador de texto.';
+                    document.getElementById('scan-status').innerText = 'Sin acceso a cámara.';
                     return;
                 }
+                // Hacer que el video ocupe todo el contenedor
+                const vid = viewport.querySelector('video');
+                if (vid) {
+                    vid.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;';
+                }
+                const cvs = viewport.querySelector('canvas.drawingBuffer');
+                if (cvs) cvs.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;';
+
                 Quagga.start();
                 quaggaActivo = true;
                 document.getElementById('scan-status').innerText = 'Apunte al código de barras...';
             });
 
-            // Listener de resultado — usar promedio de detecciones para reducir falsos
             Quagga.onProcessed((result) => {
-                const canvas = Quagga.canvas.dom.overlay;
+                const canvas = Quagga.canvas?.dom?.overlay;
                 if (!canvas) return;
                 const ctx = canvas.getContext('2d');
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
-                if (result && result.boxes) {
+                if (result?.boxes) {
                     result.boxes.filter(b => b !== result.box).forEach(b => {
                         Quagga.ImageDebug.drawPath(b, {x:0,y:1}, ctx, {color:'rgba(0,255,0,0.3)', lineWidth:1});
                     });
                 }
-                if (result && result.box) {
-                    Quagga.ImageDebug.drawPath(result.box, {x:0,y:1}, ctx, {color:'#00FFFF', lineWidth:2});
+                if (result?.box) {
+                    Quagga.ImageDebug.drawPath(result.box, {x:0,y:1}, ctx, {color:'#00FFCC', lineWidth:2});
                 }
             });
 
             let detecciones = {};
             Quagga.onDetected((result) => {
                 const code = result.codeResult.code;
-                const err  = result.codeResult.decodedCodes
-                    .filter(c => c.error !== undefined)
-                    .reduce((acc, c) => acc + c.error, 0) / (result.codeResult.decodedCodes.length || 1);
-
-                if (err > 0.25) return; // Ignorar lecturas con mucho error
+                const errs = result.codeResult.decodedCodes.filter(c => c.error !== undefined);
+                const errAvg = errs.length ? errs.reduce((a,c) => a + c.error, 0) / errs.length : 0;
+                if (errAvg > 0.25) return;
 
                 detecciones[code] = (detecciones[code] || 0) + 1;
-                if (detecciones[code] >= 2) { // Confirmar con 2 lecturas consistentes
+                if (detecciones[code] >= 2) {
                     detecciones = {};
                     cerrarEscaneo();
                     _procesarCodigoEscaneado(code);
@@ -676,7 +678,9 @@
                 try { Quagga.stop(); } catch(e) {}
                 quaggaActivo = false;
             }
-            if (scanStream) { scanStream.getTracks().forEach(t => t.stop()); scanStream = null; }
+            // Limpiar el viewport para la próxima apertura
+            const vp = document.getElementById('quagga-viewport');
+            if (vp) { Array.from(vp.querySelectorAll('video, canvas')).forEach(el => el.remove()); }
             document.getElementById('modal-scan').classList.add('hidden');
             document.getElementById('scan-status').innerText = '';
         }
@@ -873,11 +877,10 @@
             if (!pId) return alert("Debe seleccionar un Proveedor.");
             if (!document.getElementById('fac-nro').value.trim()) return alert("Debe ingresar el N° de Factura.");
             // N° Control es opcional — se omite si está vacío
-            
-            // FIX #2: Leer la tasa EUR directamente del input en el momento de procesar
-            const tasaEURActual = parseFloat(document.getElementById('input-tasa-eur').value) || 0;
-            if (tasaEURActual <= 0) return alert("Por favor ingrese la Tasa EUR oficial en la cabecera (debe ser mayor a 0).");
-            tasaEUR = tasaEURActual; // Sincronizar variable global
+
+            // Tasa EUR viene automática desde BD
+            const tasaEURActual = parseFloat(document.getElementById('input-tasa-eur').value) || tasaEUR;
+            tasaEUR = tasaEURActual;
 
             if (!listaRecepcion.length) return alert("No hay productos en la lista.");
 
