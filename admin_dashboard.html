@@ -241,7 +241,7 @@
                     <div class="kpi-icon taller"><i class="fa-solid fa-screwdriver-wrench"></i></div>
                     <div>
                         <span class="kpi-label">Equipos Taller</span>
-                        <span class="kpi-value dato-sensible" style="color:#EF9F27;">0</span>
+                        <span class="kpi-value dato-sensible" style="color:#EF9F27;" id="indicador-taller">0</span>
                     </div>
                 </div>
 
@@ -346,8 +346,7 @@
                 localStorage.setItem('pyp_privacidad', 'true');
             }
         }
-
-        async function cargarIndicadoresGlobales(usuario) {
+async function cargarIndicadoresGlobales(usuario) {
             try {
                 const resUser = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?select=id_empresa&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
                 if (resUser.status === 401 || resUser.status === 403 || !TOKEN_JWT) { window.location.href = 'login.html'; return; }
@@ -357,17 +356,19 @@
                 const filtroEmpresa = empresaActual ? `id_empresa=eq.${empresaActual}&` : `id_empresa=is.null&`;
                 const hoyIso = new Date().toISOString().split('T')[0];
 
-                const [resProd, resCli, resTasa, resCaja, resVen, resCxC] = await Promise.all([
-                    fetch(`${SUPABASE_URL}/rest/v1/productos?select=id_producto_sku&estado_producto=eq.ACTIVO`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
-                    fetch(`${SUPABASE_URL}/rest/v1/directorio_maestro?select=id&tipo_persona=eq.CLIENTE`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
+                const [resProd, resCli, resTasa, resCaja, resVen, resCxC, resTaller] = await Promise.all([
+                    fetch(`${SUPABASE_URL}/rest/v1/productos?${filtroEmpresa}select=id_producto_sku&estado_producto=eq.ACTIVO`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
+                    fetch(`${SUPABASE_URL}/rest/v1/directorio_maestro?${filtroEmpresa}select=id&tipo_persona=eq.CLIENTE`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
                     fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
                     fetch(`${SUPABASE_URL}/rest/v1/cierres_caja?${filtroEmpresa}usuario_cajero=eq.${usuario}&estatus=eq.ABIERTA&select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
                     fetch(`${SUPABASE_URL}/rest/v1/facturas?${filtroEmpresa}fecha_emision=gte.${hoyIso}T00:00:00Z&estatus=neq.Anulada&select=total_usd,tipo_transaccion`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
-                    fetch(`${SUPABASE_URL}/rest/v1/facturas?${filtroEmpresa}estatus=eq.Por Pagar&saldo_pendiente_usd=gt.0&select=saldo_pendiente_usd,fecha_vencimiento`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } })
+                    fetch(`${SUPABASE_URL}/rest/v1/facturas?${filtroEmpresa}estatus=eq.Por Pagar&saldo_pendiente_usd=gt.0&select=saldo_pendiente_usd,fecha_vencimiento`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
+                    fetch(`${SUPABASE_URL}/rest/v1/servicio_ordenes?${filtroEmpresa}estatus=neq.Facturado&select=id_orden`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } })
                 ]);
 
                 if (resProd.ok) document.getElementById('indicador-productos').innerText = (await resProd.json()).length;
                 if (resCli.ok)  document.getElementById('indicador-clientes').innerText  = (await resCli.json()).length;
+                if (resTaller && resTaller.ok) document.getElementById('indicador-taller').innerText = (await resTaller.json()).length;
 
                 if (resTasa.ok) {
                     const dataTasa = await resTasa.json();
@@ -411,7 +412,7 @@
                         const saldo  = parseFloat(f.saldo_pendiente_usd);
                         if      (fechaV < hoy)                         { rM += saldo; rC++; }
                         else if (fechaV >= hoy && fechaV <= diaAlerta) { aM += saldo; aC++; }
-                        else                                            { vM += saldo; vC++; }
+                        else                                           { vM += saldo; vC++; }
                     });
 
                     const total = rM + aM + vM || 1;
@@ -422,7 +423,6 @@
                     document.getElementById('sem-verde-monto').innerText    = `$${fmt(vM)}`;
                     document.getElementById('sem-verde-cant').innerText     = vC;
 
-                    // Barras animadas (pequeño delay para que el CSS transition se vea)
                     setTimeout(() => {
                         document.getElementById('sem-rojo-bar').style.width    = `${Math.round(rM/total*100)}%`;
                         document.getElementById('sem-amarillo-bar').style.width = `${Math.round(aM/total*100)}%`;
@@ -430,8 +430,9 @@
                     }, 200);
                 }
 
-            } catch(e) {}
+            } catch(e) { console.warn("Error cargando dashboard:", e); }
         }
+        
     </script>
 </body>
 </html>
