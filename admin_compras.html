@@ -21,6 +21,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.js"></script>
+    <!-- QuaggaJS: mejor reconocimiento de códigos en papel/impresiones -->
+    <script src="https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js"></script>
     
     <script>
         if (!localStorage.getItem('pyp_token_seguro')) { window.location.href = 'login.html'; }
@@ -171,16 +173,17 @@
                         <table class="w-full text-left border-collapse">
                             <thead class="bg-white sticky top-0 border-b-2 z-10 shadow-sm">
                                 <tr class="text-[10px] text-gray-400 uppercase font-black">
-                                    <th class="p-4">Producto / SKU</th>
-                                    <th class="p-4 text-center w-24">IVA</th>
-                                    <th class="p-4 text-center w-28">Cantidad</th>
-                                    <th class="p-4 text-right w-32">Costo Neto ($)</th>
-                                    <th class="p-4 text-right w-32">Subtotal</th>
-                                    <th class="p-4 w-12"></th>
+                                    <th class="p-3">Producto / SKU</th>
+                                    <th class="p-3 text-center w-20">IVA</th>
+                                    <th class="p-3 text-center w-20">Cant.</th>
+                                    <th class="p-3 text-right w-28">Costo ($)</th>
+                                    <th class="p-3 text-center w-20">Desc%</th>
+                                    <th class="p-3 text-right w-28">Subtotal</th>
+                                    <th class="p-3 w-10"></th>
                                 </tr>
                             </thead>
                             <tbody id="tabla-recepcion" class="divide-y divide-gray-100">
-                                <tr><td colspan="6" class="p-16 text-center text-gray-300 font-black uppercase text-xs">
+                                <tr><td colspan="7" class="p-16 text-center text-gray-300 font-black uppercase text-xs">
                                     <i class="fa-solid fa-boxes-packing text-5xl mb-4 opacity-20 block"></i>
                                     Esperando lectura de productos...
                                 </td></tr>
@@ -191,17 +194,20 @@
 
                 <!-- Barra de totales rediseñada: compacta, horizontal, profesional -->
                 <div class="bg-white border border-gray-200 rounded-xl shadow-sm flex items-stretch overflow-hidden" style="min-height:56px">
-                    <!-- Métricas -->
                     <div class="flex flex-1 divide-x divide-gray-100">
-                        <div class="flex flex-col justify-center px-5 py-2">
+                        <div class="flex flex-col justify-center px-4 py-2">
                             <span class="text-[8px] font-black text-gray-400 uppercase tracking-widest leading-none mb-0.5">Base Imponible</span>
                             <span class="text-sm font-black text-gray-700" id="tot-base">US$ 0.00</span>
                         </div>
-                        <div class="flex flex-col justify-center px-5 py-2">
+                        <div class="flex flex-col justify-center px-4 py-2">
+                            <span class="text-[8px] font-black text-orange-400 uppercase tracking-widest leading-none mb-0.5">Descuento</span>
+                            <span class="text-sm font-black text-orange-500" id="tot-desc"></span>
+                        </div>
+                        <div class="flex flex-col justify-center px-4 py-2">
                             <span class="text-[8px] font-black text-red-400 uppercase tracking-widest leading-none mb-0.5">IVA</span>
                             <span class="text-sm font-black text-red-500" id="tot-iva">US$ 0.00</span>
                         </div>
-                        <div class="flex flex-col justify-center px-5 py-2 bg-gray-50">
+                        <div class="flex flex-col justify-center px-4 py-2 bg-gray-50">
                             <span class="text-[8px] font-black text-gray-400 uppercase tracking-widest leading-none mb-0.5">Total Factura</span>
                             <div class="flex items-baseline gap-2">
                                 <span class="text-lg font-black text-primary" id="tot-final">US$ 0.00</span>
@@ -209,7 +215,6 @@
                             </div>
                         </div>
                     </div>
-                    <!-- Botón registrar -->
                     <button onclick="procesarFacturaERP()"
                         class="flex items-center gap-2 px-8 font-black text-white text-xs uppercase tracking-wide transition-all hover:brightness-110 active:scale-95 shrink-0"
                         style="background: var(--color-primary);">
@@ -368,29 +373,31 @@
         const normalize = (t) => t ? t.toString().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim() : '';
 
         window.onload = async () => {
-            // FIX #3: Verificar capacidad de cámara al inicio
             verificarCapacidadEscaneo();
 
             try {
-                const resTasa = await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?select=tasa&order=fecha_actualizacion.desc&limit=1`, {
-                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` }
-                });
-                const dT = await resTasa.json();
-                if(dT[0]) { tasaBCV = dT[0].tasa; document.getElementById('tasa-usd-val').innerText = tasaBCV.toFixed(2); }
-
-                const [pRes, precRes, dRes] = await Promise.all([
-                    // Tabla real "productos" con todos los campos necesarios para búsqueda
-                    fetch(`${SUPABASE_URL}/rest/v1/productos?select=id_producto_sku,nombre,codigo_barras,tipo_impuesto,categoria_del_producto,marca,unidad_medida,estado_producto,id_empresa&estado_producto=eq.ACTIVO&limit=3000`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
-                    // Tabla precios para obtener costo actual
+                // Cargar AMBAS tasas desde tasas_bcv filtrando por moneda
+                const [rUSD, rEUR, pRes, precRes, dRes] = await Promise.all([
+                    fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?select=tasa&moneda=eq.USD&order=fecha_actualizacion.desc&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
+                    fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?select=tasa&moneda=eq.EUR&order=fecha_actualizacion.desc&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
+                    fetch(`${SUPABASE_URL}/rest/v1/productos?select=id_producto_sku,nombre,codigo_barras,tipo_impuesto,categoria_del_producto,marca,unidad_medida,estado_producto,id_empresa,imagen_url&estado_producto=eq.ACTIVO&limit=3000`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
                     fetch(`${SUPABASE_URL}/rest/v1/precios?select=id_producto_sku,costo_actual,costo_promedio_ponderado&limit=3000`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
                     fetch(`${SUPABASE_URL}/rest/v1/directorio_maestro?select=*&limit=2000`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } })
                 ]);
-                
-                const rawProd = await pRes.json();
+
+                const dUSD = await rUSD.json();
+                const dEUR = await rEUR.json();
+
+                if (dUSD[0]) { tasaBCV = dUSD[0].tasa; document.getElementById('tasa-usd-val').innerText = tasaBCV.toFixed(2); }
+                if (dEUR[0]) {
+                    tasaEUR = dEUR[0].tasa;
+                    document.getElementById('input-tasa-eur').value = tasaEUR.toFixed(2);
+                }
+
+                const rawProd   = await pRes.json();
                 const rawPrecios = await precRes.json();
                 directorio = await dRes.json();
 
-                // Fusionar productos con sus precios/costos
                 if (Array.isArray(rawProd) && Array.isArray(rawPrecios)) {
                     const precMap = {};
                     rawPrecios.forEach(p => { precMap[p.id_producto_sku] = p; });
@@ -399,12 +406,9 @@
                         costo_actual: precMap[p.id_producto_sku]?.costo_actual || 0,
                         costo_promedio_ponderado: precMap[p.id_producto_sku]?.costo_promedio_ponderado || 0
                     }));
-                } else {
-                    console.warn("Error al cargar productos:", rawProd);
-                    inventario = [];
-                }
+                } else { inventario = []; }
 
-                if (!Array.isArray(directorio)) { console.warn("directorio no es array:", directorio); directorio = []; }
+                if (!Array.isArray(directorio)) directorio = [];
                 if (inventario[0]) idEmpresaGlobal = inventario[0].id_empresa;
 
                 indexarBuscadores();
@@ -519,10 +523,9 @@
             if (!fuseProd) { res.innerHTML = '<p class="p-4 text-yellow-600 font-black text-[10px] text-center uppercase">Cargando catálogo...</p>'; res.classList.remove('hidden'); return; }
 
             try {
-                // FIX #1: Si parece un código de barras (solo números), buscar exacto primero
                 if (/^\d{6,}$/.test(t.trim())) {
                     const exacto = inventario.find(p => normalize(p.codigo_barras) === clean || normalize(p.id_producto_sku) === clean);
-                    if (exacto) { agregarRenglon(exacto.id_producto_sku, exacto.nombre); return; }
+                    if (exacto) { agregarRenglon(exacto.id_producto_sku, exacto.nombre, exacto.imagen_url, exacto.tipo_impuesto); return; }
                 }
 
                 const r = fuseProd.search(clean).slice(0, 10);
@@ -531,10 +534,18 @@
                         const sku = (i.item.id_producto_sku || '').replace(/'/g, "\\'");
                         const nombre = (i.item.nombre || '').replace(/</g, '&lt;');
                         const nombreEsc = (i.item.nombre || '').replace(/'/g, "\\'").replace(/"/g, '\\"');
+                        const imgUrl = (i.item.imagen_url || '').replace(/'/g, "\\'");
+                        const tipoImp = (i.item.tipo_impuesto || 'GENERAL').replace(/'/g, "\\'");
                         const cb = i.item.codigo_barras ? '| CB: ' + i.item.codigo_barras : '';
-                        return `<div onclick="event.stopPropagation(); agregarRenglon('${sku}', '${nombreEsc}')" class="p-4 border-b hover:bg-blue-50 cursor-pointer flex flex-col gap-1 transition-all">
-                            <span class="text-[11px] font-black text-primary">${nombre}</span>
-                            <span class="text-[9px] font-bold text-gray-400">SKU: ${i.item.id_producto_sku || ''} ${cb}</span>
+                        const imgTag = i.item.imagen_url
+                            ? `<img src="${i.item.imagen_url}" class="w-10 h-10 rounded-lg object-cover shrink-0 border border-gray-100" onerror="this.style.display='none'">`
+                            : `<div class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center shrink-0"><i class="fa-solid fa-box text-gray-300 text-sm"></i></div>`;
+                        return `<div onclick="event.stopPropagation(); agregarRenglon('${sku}', '${nombreEsc}', '${imgUrl}', '${tipoImp}')" class="p-3 border-b hover:bg-blue-50 cursor-pointer flex items-center gap-3 transition-all">
+                            ${imgTag}
+                            <div class="flex-1 min-w-0">
+                                <p class="text-[11px] font-black text-primary truncate">${nombre}</p>
+                                <p class="text-[9px] font-bold text-gray-400">SKU: ${i.item.id_producto_sku || ''} ${cb}</p>
+                            </div>
                         </div>`;
                     }).join('')
                     : '<p class="p-4 text-red-500 font-black text-[10px] text-center uppercase tracking-widest">Producto no existe</p>';
@@ -543,24 +554,21 @@
         }
 
         // =============================================
-        // ESCÁNER: BarcodeDetector (nativo, Chrome/Android) 
-        // + fallback a getUserMedia+canvas para otros navegadores
+        // ESCÁNER: QuaggaJS (robusto para códigos en papel/tickets)
+        // + fallback a BarcodeDetector nativo si Quagga falla
         // =============================================
         let scanStream = null;
         let scanLoop = null;
+        let quaggaActivo = false;
 
         async function verificarCapacidadEscaneo() {
             const btn = document.getElementById('btn-scan');
             try {
                 const devices = await navigator.mediaDevices.enumerateDevices();
-                const tieneCamara = devices.some(d => d.kind === 'videoinput');
-                if (!tieneCamara) {
-                    camaraDisponible = false;
+                camaraDisponible = devices.some(d => d.kind === 'videoinput');
+                if (!camaraDisponible) {
                     btn.innerHTML = `<i class="fa-solid fa-barcode text-xl"></i><span class="text-[8px] font-black uppercase">Escáner</span>`;
                     btn.title = "Sin cámara — use escáner USB/BT";
-                } else {
-                    camaraDisponible = true;
-                    btn.title = "Abrir cámara para escanear";
                 }
             } catch(e) { camaraDisponible = false; }
         }
@@ -575,67 +583,86 @@
             }
             document.getElementById('modal-scan').classList.remove('hidden');
             document.getElementById('scan-status').innerText = 'Iniciando cámara...';
-            _abrirCamara();
+            _iniciarQuagga();
         }
 
-        async function _abrirCamara() {
-            try {
-                // Preferir cámara trasera en móviles
-                scanStream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }
-                });
-                const video = document.getElementById('video-scan');
-                video.srcObject = scanStream;
-                await video.play();
+        function _iniciarQuagga() {
+            if (typeof Quagga === 'undefined') {
+                document.getElementById('scan-status').innerText = 'Error: librería de escáner no cargó';
+                return;
+            }
+            Quagga.init({
+                inputStream: {
+                    name: 'Live',
+                    type: 'LiveStream',
+                    target: document.getElementById('video-scan'),
+                    constraints: {
+                        facingMode: { ideal: 'environment' },
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    },
+                    area: { top: '20%', right: '10%', left: '10%', bottom: '20%' }
+                },
+                locator: { patchSize: 'medium', halfSample: true },
+                numOfWorkers: navigator.hardwareConcurrency > 2 ? 2 : 1,
+                frequency: 10,
+                decoder: {
+                    readers: ['ean_reader','ean_8_reader','code_128_reader','code_39_reader','upc_reader','upc_e_reader','i2of5_reader']
+                },
+                locate: true
+            }, (err) => {
+                if (err) {
+                    console.error('Quagga init error:', err);
+                    document.getElementById('scan-status').innerText = 'Error de cámara. Use el buscador de texto.';
+                    return;
+                }
+                Quagga.start();
+                quaggaActivo = true;
                 document.getElementById('scan-status').innerText = 'Apunte al código de barras...';
+            });
 
-                // Usar BarcodeDetector si está disponible (Chrome 83+, Android)
-                if ('BarcodeDetector' in window) {
-                    const detector = new BarcodeDetector({ formats: ['ean_13','ean_8','code_128','code_39','qr_code','upc_a','upc_e','itf','data_matrix'] });
-                    const _scan = async () => {
-                        if (!scanStream) return;
-                        try {
-                            const codes = await detector.detect(video);
-                            if (codes.length > 0) {
-                                _procesarCodigoEscaneado(codes[0].rawValue);
-                                return; // Detener loop al encontrar
-                            }
-                        } catch(e) {}
-                        scanLoop = requestAnimationFrame(_scan);
-                    };
-                    scanLoop = requestAnimationFrame(_scan);
-                } else {
-                    // Fallback: canvas + análisis cada 400ms (navegadores sin BarcodeDetector)
-                    document.getElementById('scan-status').innerText = 'Modo manual — ingrese código y presione Enter';
-                    const inp = document.createElement('input');
-                    inp.type = 'text'; inp.placeholder = 'CÓDIGO DE BARRAS';
-                    inp.className = 'w-full p-3 border-2 border-primary rounded-xl text-center font-black text-sm outline-none mt-2';
-                    inp.style.textTransform = 'uppercase';
-                    const statusEl = document.getElementById('scan-status');
-                    statusEl.innerHTML = '';
-                    statusEl.appendChild(inp);
-                    inp.focus();
-                    inp.addEventListener('keydown', (e) => {
-                        if (e.key === 'Enter' && inp.value.trim()) {
-                            _procesarCodigoEscaneado(inp.value.trim());
-                        }
+            // Listener de resultado — usar promedio de detecciones para reducir falsos
+            Quagga.onProcessed((result) => {
+                const canvas = Quagga.canvas.dom.overlay;
+                if (!canvas) return;
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                if (result && result.boxes) {
+                    result.boxes.filter(b => b !== result.box).forEach(b => {
+                        Quagga.ImageDebug.drawPath(b, {x:0,y:1}, ctx, {color:'rgba(0,255,0,0.3)', lineWidth:1});
                     });
                 }
-            } catch(e) {
-                document.getElementById('scan-status').innerText = 'Sin permiso de cámara. Use el buscador de texto.';
-                console.error('Camera error:', e);
-            }
+                if (result && result.box) {
+                    Quagga.ImageDebug.drawPath(result.box, {x:0,y:1}, ctx, {color:'#00FFFF', lineWidth:2});
+                }
+            });
+
+            let detecciones = {};
+            Quagga.onDetected((result) => {
+                const code = result.codeResult.code;
+                const err  = result.codeResult.decodedCodes
+                    .filter(c => c.error !== undefined)
+                    .reduce((acc, c) => acc + c.error, 0) / (result.codeResult.decodedCodes.length || 1);
+
+                if (err > 0.25) return; // Ignorar lecturas con mucho error
+
+                detecciones[code] = (detecciones[code] || 0) + 1;
+                if (detecciones[code] >= 2) { // Confirmar con 2 lecturas consistentes
+                    detecciones = {};
+                    cerrarEscaneo();
+                    _procesarCodigoEscaneado(code);
+                }
+            });
         }
 
         function _procesarCodigoEscaneado(rawCode) {
-            cerrarEscaneo();
             const codigo = normalize(rawCode);
             const prod = inventario.find(p =>
-                normalize(String(p.codigo_barras)) === codigo ||
+                normalize(String(p.codigo_barras || '')) === codigo ||
                 normalize(p.id_producto_sku) === codigo
             );
             if (prod) {
-                agregarRenglon(prod.id_producto_sku, prod.nombre);
+                agregarRenglon(prod.id_producto_sku, prod.nombre, prod.imagen_url || '', prod.tipo_impuesto || 'GENERAL');
             } else {
                 const inp = document.getElementById('bus-prod');
                 inp.value = rawCode;
@@ -645,10 +672,11 @@
         }
 
         function cerrarEscaneo() {
-            if (scanLoop) { cancelAnimationFrame(scanLoop); scanLoop = null; }
+            if (quaggaActivo) {
+                try { Quagga.stop(); } catch(e) {}
+                quaggaActivo = false;
+            }
             if (scanStream) { scanStream.getTracks().forEach(t => t.stop()); scanStream = null; }
-            const video = document.getElementById('video-scan');
-            if (video) { video.srcObject = null; }
             document.getElementById('modal-scan').classList.add('hidden');
             document.getElementById('scan-status').innerText = '';
         }
@@ -656,12 +684,32 @@
         // =============================================
         // TABLA Y CÁLCULOS (sin cambios de lógica)
         // =============================================
-        function agregarRenglon(sku, nombre) {
+        function agregarRenglon(sku, nombre, imgUrl = '', tipoImpuesto = 'GENERAL') {
             if (listaRecepcion.some(i => i.id_producto_sku === sku)) {
-                alert("El producto ya se encuentra en la lista.");
+                // Si ya existe, solo incrementar cantidad
+                const idx = listaRecepcion.findIndex(i => i.id_producto_sku === sku);
+                listaRecepcion[idx].cantidad_recibida += 1;
+                document.getElementById('bus-prod').value = '';
+                cerrarDropdowns();
+                renderizarTabla();
                 return;
             }
-            listaRecepcion.unshift({ id_producto_sku: sku, nombre: nombre, cantidad_recibida: 1, costo_unitario_usd: 0, impuesto_porcentaje: 16, tipo_impuesto: 'GENERAL' });
+            // Detectar tipo de impuesto desde la BD
+            const impPct = tipoImpuesto === 'REDUCIDO' ? 8 : (tipoImpuesto === 'EXENTO' ? 0 : 16);
+            // Prellenar costo desde precios
+            const precioRef = inventario.find(p => p.id_producto_sku === sku);
+            const costoRef = precioRef?.costo_actual || 0;
+
+            listaRecepcion.unshift({
+                id_producto_sku: sku,
+                nombre: nombre,
+                imagen_url: imgUrl || '',
+                cantidad_recibida: 1,
+                costo_unitario_usd: costoRef,
+                descuento_porcentaje: 0,
+                impuesto_porcentaje: impPct,
+                tipo_impuesto: tipoImpuesto || 'GENERAL'
+            });
             document.getElementById('bus-prod').value = '';
             cerrarDropdowns();
             renderizarTabla();
@@ -675,37 +723,74 @@
 
         function renderizarTabla() {
             const tb = document.getElementById('tabla-recepcion');
-            let b = 0; let iv = 0;
+            let b = 0; let iv = 0; let totalDesc = 0;
             if (!listaRecepcion.length) {
-                tb.innerHTML = '<tr><td colspan="6" class="p-16 text-center text-gray-300 font-black uppercase text-xs"><i class="fa-solid fa-boxes-packing text-5xl mb-4 opacity-20 block"></i>Esperando lectura de productos...</td></tr>';
-                actualizarTotales(0, 0); return;
+                tb.innerHTML = '<tr><td colspan="7" class="p-16 text-center text-gray-300 font-black uppercase text-xs"><i class="fa-solid fa-boxes-packing text-5xl mb-4 opacity-20 block"></i>Esperando lectura de productos...</td></tr>';
+                actualizarTotales(0, 0, 0); return;
             }
             tb.innerHTML = listaRecepcion.map((item, idx) => {
-                const sub = item.cantidad_recibida * item.costo_unitario_usd;
-                const mIva = sub * (item.impuesto_porcentaje / 100);
-                b += sub; iv += mIva;
+                const bruto      = item.cantidad_recibida * item.costo_unitario_usd;
+                const descMonto  = bruto * ((item.descuento_porcentaje || 0) / 100);
+                const neto       = bruto - descMonto;
+                const mIva       = neto * (item.impuesto_porcentaje / 100);
+                b += neto; iv += mIva; totalDesc += descMonto;
+
+                const imgTag = item.imagen_url
+                    ? `<img src="${item.imagen_url}" class="w-9 h-9 rounded-lg object-cover border border-gray-100 shrink-0" onerror="this.style.display='none'">`
+                    : `<div class="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center shrink-0"><i class="fa-solid fa-box text-gray-200 text-xs"></i></div>`;
+
                 return `<tr class="border-b border-gray-100 hover:bg-gray-50 transition-all">
-                    <td class="p-4"><p class="text-[11px] font-black text-primary line-clamp-1">${item.nombre}</p><p class="text-[9px] font-bold text-gray-400">${item.id_producto_sku}</p></td>
-                    <td class="p-4 text-center"><select onchange="editarRenglon(${idx}, 'tipo_impuesto', this.value)" class="border rounded-lg p-1.5 text-[10px] font-black outline-none bg-white">
-                        <option value="GENERAL" ${item.tipo_impuesto==='GENERAL'?'selected':''}>16%</option>
-                        <option value="REDUCIDO" ${item.tipo_impuesto==='REDUCIDO'?'selected':''}>8%</option>
-                        <option value="EXENTO" ${item.tipo_impuesto==='EXENTO'?'selected':''}>EXN</option>
-                    </select></td>
-                    <td class="p-4 text-center"><input type="number" value="${item.cantidad_recibida}" onchange="editarRenglon(${idx}, 'cantidad_recibida', this.value)" class="w-20 border rounded-lg p-2 text-center font-bold text-xs outline-none focus:border-primary"></td>
-                    <td class="p-4 text-right"><input type="number" step="0.01" value="${item.costo_unitario_usd}" onchange="editarRenglon(${idx}, 'costo_unitario_usd', this.value)" class="w-24 border rounded-lg p-2 text-right font-black text-xs outline-none focus:border-primary"></td>
-                    <td class="p-4 text-right font-black text-gray-800 text-xs">$ ${sub.toFixed(2)}</td>
-                    <td class="p-4 text-center"><button onclick="listaRecepcion.splice(${idx},1); renderizarTabla();" class="text-red-300 hover:text-red-600 transition-all"><i class="fa-solid fa-circle-xmark text-xl"></i></button></td>
+                    <td class="p-3">
+                        <div class="flex items-center gap-2">
+                            ${imgTag}
+                            <div>
+                                <p class="text-[11px] font-black text-primary line-clamp-1">${item.nombre}</p>
+                                <p class="text-[9px] font-bold text-gray-400">${item.id_producto_sku}</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="p-3 text-center">
+                        <select onchange="editarRenglon(${idx}, 'tipo_impuesto', this.value)" class="border rounded-lg p-1.5 text-[10px] font-black outline-none bg-white">
+                            <option value="GENERAL" ${item.tipo_impuesto==='GENERAL'?'selected':''}>16%</option>
+                            <option value="REDUCIDO" ${item.tipo_impuesto==='REDUCIDO'?'selected':''}>8%</option>
+                            <option value="EXENTO" ${item.tipo_impuesto==='EXENTO'?'selected':''}>EXN</option>
+                        </select>
+                    </td>
+                    <td class="p-3 text-center">
+                        <input type="number" min="1" value="${item.cantidad_recibida}" onchange="editarRenglon(${idx}, 'cantidad_recibida', this.value)" class="w-16 border rounded-lg p-1.5 text-center font-bold text-xs outline-none focus:border-primary">
+                    </td>
+                    <td class="p-3 text-right">
+                        <input type="number" step="0.0001" value="${item.costo_unitario_usd}" onchange="editarRenglon(${idx}, 'costo_unitario_usd', this.value)" class="w-24 border rounded-lg p-1.5 text-right font-black text-xs outline-none focus:border-primary">
+                    </td>
+                    <td class="p-3 text-center">
+                        <div class="flex items-center gap-1">
+                            <input type="number" min="0" max="100" step="0.01" value="${item.descuento_porcentaje || 0}" onchange="editarRenglon(${idx}, 'descuento_porcentaje', this.value)" class="w-14 border rounded-lg p-1.5 text-center font-bold text-xs outline-none focus:border-red-400 ${item.descuento_porcentaje > 0 ? 'text-red-600 border-red-200 bg-red-50' : ''}">
+                            <span class="text-[9px] text-gray-400 font-bold">%</span>
+                        </div>
+                    </td>
+                    <td class="p-3 text-right font-black text-gray-800 text-xs">
+                        $ ${neto.toFixed(2)}
+                        ${descMonto > 0 ? `<br><span class="text-[9px] text-red-400 font-bold">-$${descMonto.toFixed(2)}</span>` : ''}
+                    </td>
+                    <td class="p-3 text-center">
+                        <button onclick="listaRecepcion.splice(${idx},1); renderizarTabla();" class="text-red-300 hover:text-red-600 transition-all">
+                            <i class="fa-solid fa-circle-xmark text-lg"></i>
+                        </button>
+                    </td>
                 </tr>`;
             }).join('');
-            actualizarTotales(b, iv);
+            actualizarTotales(b, iv, totalDesc);
         }
 
-        function actualizarTotales(b, iv) {
+        function actualizarTotales(b, iv, desc = 0) {
             document.getElementById('tot-base').innerText = `US$ ${b.toFixed(2)}`;
             document.getElementById('tot-iva').innerText = `US$ ${iv.toFixed(2)}`;
             const totalUSD = b + iv;
             document.getElementById('tot-final').innerText = `US$ ${totalUSD.toFixed(2)}`;
             document.getElementById('tot-bs').innerText = `Bs. ${(totalUSD * tasaBCV).toFixed(2)}`;
+            // Mostrar descuento total si aplica
+            const elDesc = document.getElementById('tot-desc');
+            if (elDesc) elDesc.innerText = desc > 0 ? `-US$ ${desc.toFixed(2)}` : '';
         }
 
         // =============================================
@@ -810,7 +895,7 @@
                 const payload = {
                     p_id_proveedor: pId,
                     p_numero_factura: document.getElementById('fac-nro').value.toUpperCase(),
-                    p_numero_control: document.getElementById('fac-control').value.toUpperCase(),
+                    p_numero_control: document.getElementById('fac-control').value.toUpperCase() || null,
                     p_vendedor_proveedor: vendFin,
                     p_condicion_pago: document.getElementById('fac-condicion').value,
                     p_dias_credito: parseInt(document.getElementById('fac-dias').value) || 0,
@@ -820,7 +905,16 @@
                     p_total_bs: (b + iv) * tasaBCV,
                     p_tasa_bcv: tasaBCV,
                     p_tasa_eur: tasaEUR,
-                    p_detalles: listaRecepcion
+                    // Pasar descuento_porcentaje en cada ítem del detalle
+                    p_detalles: listaRecepcion.map(i => ({
+                        id_producto_sku: i.id_producto_sku,
+                        nombre: i.nombre,
+                        cantidad_recibida: i.cantidad_recibida,
+                        costo_unitario_usd: i.costo_unitario_usd,
+                        descuento_porcentaje: i.descuento_porcentaje || 0,
+                        impuesto_porcentaje: i.impuesto_porcentaje,
+                        tipo_impuesto: i.tipo_impuesto
+                    }))
                 };
 
                 const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/registrar_compra_erp_v2`, {
