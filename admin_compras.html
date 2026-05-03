@@ -105,7 +105,7 @@
 
                         <div>
                             <label class="text-[9px] font-black text-gray-400 uppercase">Dirección Fiscal Completa *</label>
-                            <textarea id="prov-direccion" readonly rows="2" class="w-full p-1.5 bg-gray-50 border border-gray-200 rounded-lg text-[9px] font-bold text-gray-600 leading-snug cursor-not-allowed resize-none"></textarea>
+                            <textarea id="prov-direccion" readonly rows="3" class="w-full p-1.5 bg-gray-50 border border-gray-200 rounded-lg text-[9px] font-bold text-gray-600 leading-tight cursor-not-allowed resize-none"></textarea>
                         </div>
 
                         <div>
@@ -241,44 +241,120 @@
         </div>
     </div>
 
-    <!-- Modal Nuevo Proveedor -->
-    <div id="modal-prov" class="fixed inset-0 modal-scan hidden z-[100] flex items-center justify-center p-4 overflow-y-auto">
-        <div class="bg-white rounded-3xl w-full max-w-4xl shadow-2xl overflow-hidden">
-            <div class="p-5 bg-primary text-white flex justify-between items-center">
-                <span class="font-black text-xs uppercase"><i class="fa-solid fa-address-card mr-2"></i> Nuevo Proveedor Maestro</span>
-                <button onclick="cerrarModalProveedor()"><i class="fa-solid fa-times text-2xl"></i></button>
+    <!-- Modal Nuevo Proveedor — todos los campos de directorio_maestro -->
+    <div id="modal-prov" class="fixed inset-0 modal-scan hidden z-[100] flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl w-full max-w-5xl shadow-2xl overflow-hidden flex flex-col" style="max-height:92vh">
+            <div class="p-4 flex justify-between items-center shrink-0" style="background:var(--color-primary)">
+                <span class="font-black text-xs text-white uppercase tracking-widest"><i class="fa-solid fa-address-card mr-2"></i> Nuevo Proveedor Maestro</span>
+                <button onclick="cerrarModalProveedor()" class="text-white opacity-70 hover:opacity-100 transition"><i class="fa-solid fa-times text-lg"></i></button>
             </div>
-            <div class="p-8 grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[80vh] overflow-y-auto custom-scroll">
-                <div class="space-y-4">
-                    <h4 class="text-[10px] font-black text-gray-400 uppercase border-b pb-2">Datos Fiscales</h4>
-                    <div class="flex gap-2">
-                        <select id="np-tipo" class="p-3 border rounded-xl font-black text-xs w-20">
-                            <option value="J">J</option><option value="G">G</option><option value="V">V</option><option value="E">E</option>
+
+            <div class="overflow-y-auto custom-scroll p-6 flex flex-col gap-5">
+
+                <!-- SECCIÓN 1: Datos Fiscales -->
+                <div>
+                    <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest border-b pb-1 mb-3">① Identificación Fiscal</p>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div class="flex gap-2 md:col-span-1">
+                            <select id="np-tipo" class="p-2.5 border border-gray-300 rounded-lg font-black text-xs w-16 outline-none focus:border-primary bg-yellow-50">
+                                <option value="J">J</option><option value="G">G</option><option value="V">V</option><option value="E">E</option><option value="P">P</option>
+                            </select>
+                            <input type="text" id="np-rif" placeholder="RIF SIN GUIONES *" class="flex-1 p-2.5 border border-gray-300 rounded-lg font-black text-xs bg-yellow-50 outline-none focus:border-primary">
+                        </div>
+                        <input type="text" id="np-nombre" placeholder="RAZÓN SOCIAL / NOMBRE COMPLETO *" class="p-2.5 border border-gray-300 rounded-lg font-black text-xs bg-yellow-50 outline-none focus:border-primary md:col-span-2">
+                        <select id="np-contrib" class="p-2.5 border border-gray-300 rounded-lg font-black text-xs outline-none focus:border-primary">
+                            <option value="">TIPO CONTRIBUYENTE</option>
+                            <option value="ORDINARIO">ORDINARIO</option><option value="ESPECIAL">ESPECIAL SENIAT</option><option value="EXENTO">EXENTO</option>
                         </select>
-                        <input type="text" id="np-rif" placeholder="RIF SIN GUIONES *" class="flex-1 p-3 border rounded-xl font-black text-xs bg-yellow-50 outline-none focus:border-primary">
-                    </div>
-                    <input type="text" id="np-nombre" placeholder="RAZÓN SOCIAL *" class="w-full p-3 border rounded-xl font-black text-xs bg-yellow-50">
-                    <textarea id="np-dir" placeholder="DIRECCIÓN FISCAL COMPLETA *" rows="4" class="w-full p-3 border rounded-xl font-black text-xs bg-yellow-50 resize-none"></textarea>
-                </div>
-                <div class="space-y-4">
-                    <h4 class="text-[10px] font-black text-gray-400 uppercase border-b pb-2">Contacto Directo</h4>
-                    <input type="text" id="np-tel" placeholder="TELÉFONO PRINCIPAL" oninput="formatearTelFront(this)" class="w-full p-3 border rounded-xl font-black text-xs">
-                    <input type="email" id="np-email" placeholder="CORREO ELECTRÓNICO" class="w-full p-3 border rounded-xl font-black text-xs lowercase" style="text-transform:none">
-                    <div class="grid grid-cols-2 gap-4">
-                        <input type="text" id="np-vend" placeholder="NOMBRE VENDEDOR" class="p-3 border rounded-xl font-black text-xs">
-                        <input type="text" id="np-vend-tel" placeholder="TELÉFONO VENDEDOR" oninput="formatearTelFront(this)" class="p-3 border rounded-xl font-black text-xs">
-                    </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <input type="number" id="np-dias" placeholder="DÍAS CRÉDITO" value="0" class="p-3 border rounded-xl font-black text-xs">
-                        <select id="np-contrib" class="p-3 border rounded-xl font-black text-xs">
-                            <option value="ORDINARIO">ORDINARIO</option><option value="ESPECIAL">ESPECIAL</option>
+                        <select id="np-estatus" class="p-2.5 border border-gray-300 rounded-lg font-black text-xs outline-none focus:border-primary">
+                            <option value="ACTIVO">ACTIVO</option><option value="INACTIVO">INACTIVO</option><option value="BLOQUEADO">BLOQUEADO</option>
+                        </select>
+                        <select id="np-categoria" class="p-2.5 border border-gray-300 rounded-lg font-black text-xs outline-none focus:border-primary">
+                            <option value="">CATEGORÍA PROVEEDOR</option>
+                            <option value="MERCANCÍA">MERCANCÍA</option><option value="SERVICIO">SERVICIO</option><option value="MIXTO">MIXTO</option><option value="TRANSPORTE">TRANSPORTE</option>
                         </select>
                     </div>
+                    <textarea id="np-dir" placeholder="DIRECCIÓN FISCAL COMPLETA (Estado, Ciudad, Sector, Urbanización, Calle, Local) *" rows="2"
+                        class="w-full mt-3 p-2.5 border border-gray-300 rounded-lg font-black text-xs bg-yellow-50 resize-none outline-none focus:border-primary"></textarea>
                 </div>
-                <div class="md:col-span-2 pt-6 flex justify-end gap-4 border-t">
-                    <button onclick="cerrarModalProveedor()" class="text-xs font-black text-gray-400 uppercase hover:text-gray-600">Cancelar</button>
-                    <button onclick="guardarNuevoProveedor()" class="bg-green-600 text-white font-black px-12 py-4 rounded-2xl uppercase text-xs shadow-xl hover:scale-105 transition-all">Guardar en Directorio</button>
+
+                <!-- SECCIÓN 2: Contacto -->
+                <div>
+                    <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest border-b pb-1 mb-3">② Contacto Principal</p>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <input type="text" id="np-tel" placeholder="TELÉFONO PRINCIPAL" oninput="formatearTelFront(this)" class="p-2.5 border border-gray-300 rounded-lg font-black text-xs outline-none focus:border-primary">
+                        <input type="text" id="np-tel2" placeholder="TELÉFONO SECUNDARIO" oninput="formatearTelFront(this)" class="p-2.5 border border-gray-300 rounded-lg font-black text-xs outline-none focus:border-primary">
+                        <input type="email" id="np-email" placeholder="CORREO ELECTRÓNICO" class="p-2.5 border border-gray-300 rounded-lg font-black text-xs outline-none focus:border-primary lowercase" style="text-transform:none">
+                        <input type="text" id="np-web" placeholder="PÁGINA WEB / INSTAGRAM" class="p-2.5 border border-gray-300 rounded-lg font-black text-xs outline-none focus:border-primary" style="text-transform:none">
+                        <input type="text" id="np-contacto" placeholder="NOMBRE CONTACTO PRINCIPAL" class="p-2.5 border border-gray-300 rounded-lg font-black text-xs outline-none focus:border-primary md:col-span-2">
+                        <input type="text" id="np-cargo" placeholder="CARGO / DEPARTAMENTO" class="p-2.5 border border-gray-300 rounded-lg font-black text-xs outline-none focus:border-primary md:col-span-2">
+                    </div>
                 </div>
+
+                <!-- SECCIÓN 3: Vendedor Asignado -->
+                <div>
+                    <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest border-b pb-1 mb-3">③ Vendedor / Representante</p>
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        <input type="text" id="np-vend" placeholder="NOMBRE DEL VENDEDOR" class="p-2.5 border border-gray-300 rounded-lg font-black text-xs outline-none focus:border-primary">
+                        <input type="text" id="np-vend-tel" placeholder="CELULAR VENDEDOR" oninput="formatearTelFront(this)" class="p-2.5 border border-gray-300 rounded-lg font-black text-xs outline-none focus:border-primary">
+                        <input type="email" id="np-vend-email" placeholder="CORREO VENDEDOR" class="p-2.5 border border-gray-300 rounded-lg font-black text-xs outline-none focus:border-primary lowercase" style="text-transform:none">
+                    </div>
+                </div>
+
+                <!-- SECCIÓN 4: Condiciones Comerciales -->
+                <div>
+                    <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest border-b pb-1 mb-3">④ Condiciones Comerciales</p>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div>
+                            <label class="text-[8px] font-black text-gray-400 uppercase block mb-1">Días de Crédito</label>
+                            <input type="number" id="np-dias" value="0" min="0" class="w-full p-2.5 border border-gray-300 rounded-lg font-black text-xs text-center outline-none focus:border-primary">
+                        </div>
+                        <div>
+                            <label class="text-[8px] font-black text-gray-400 uppercase block mb-1">Descuento (%)</label>
+                            <input type="number" id="np-descuento" value="0" min="0" max="100" step="0.01" class="w-full p-2.5 border border-gray-300 rounded-lg font-black text-xs text-center outline-none focus:border-primary">
+                        </div>
+                        <div>
+                            <label class="text-[8px] font-black text-gray-400 uppercase block mb-1">Moneda Preferida</label>
+                            <select id="np-moneda" class="w-full p-2.5 border border-gray-300 rounded-lg font-black text-xs outline-none focus:border-primary">
+                                <option value="USD">USD (Dólares)</option><option value="BS">BS (Bolívares)</option><option value="EUR">EUR (Euros)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-[8px] font-black text-gray-400 uppercase block mb-1">Condición Pago</label>
+                            <select id="np-condicion" class="w-full p-2.5 border border-gray-300 rounded-lg font-black text-xs outline-none focus:border-primary">
+                                <option value="Contado">CONTADO</option><option value="Crédito">CRÉDITO</option><option value="Consignación">CONSIGNACIÓN</option>
+                            </select>
+                        </div>
+                    </div>
+                    <textarea id="np-observaciones" placeholder="OBSERVACIONES / NOTAS COMERCIALES (opcional)" rows="2"
+                        class="w-full mt-3 p-2.5 border border-gray-300 rounded-lg font-bold text-xs resize-none outline-none focus:border-primary"></textarea>
+                </div>
+
+                <!-- SECCIÓN 5: Datos Bancarios -->
+                <div>
+                    <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest border-b pb-1 mb-3">⑤ Datos Bancarios</p>
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        <input type="text" id="np-banco" placeholder="NOMBRE DEL BANCO" class="p-2.5 border border-gray-300 rounded-lg font-black text-xs outline-none focus:border-primary">
+                        <input type="text" id="np-cuenta" placeholder="NÚMERO DE CUENTA" class="p-2.5 border border-gray-300 rounded-lg font-black text-xs outline-none focus:border-primary">
+                        <select id="np-tipo-cuenta" class="p-2.5 border border-gray-300 rounded-lg font-black text-xs outline-none focus:border-primary">
+                            <option value="">TIPO DE CUENTA</option>
+                            <option value="CORRIENTE">CORRIENTE</option><option value="AHORRO">AHORRO</option>
+                        </select>
+                        <input type="text" id="np-titular-cuenta" placeholder="TITULAR DE LA CUENTA" class="p-2.5 border border-gray-300 rounded-lg font-black text-xs outline-none focus:border-primary md:col-span-2">
+                        <input type="text" id="np-rif-banco" placeholder="RIF TITULAR (si difiere)" class="p-2.5 border border-gray-300 rounded-lg font-black text-xs outline-none focus:border-primary">
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Footer acciones -->
+            <div class="p-4 border-t flex justify-end gap-3 shrink-0 bg-gray-50">
+                <button onclick="cerrarModalProveedor()" class="text-xs font-black text-gray-400 uppercase px-6 py-2.5 rounded-lg hover:bg-gray-200 transition">Cancelar</button>
+                <button onclick="guardarNuevoProveedor()"
+                    class="text-xs font-black text-white uppercase px-8 py-2.5 rounded-lg transition hover:brightness-110 flex items-center gap-2"
+                    style="background:var(--color-primary)">
+                    <i class="fa-solid fa-floppy-disk"></i> Guardar en Directorio
+                </button>
             </div>
         </div>
     </div>
@@ -304,19 +380,34 @@
                 const dT = await resTasa.json();
                 if(dT[0]) { tasaBCV = dT[0].tasa; document.getElementById('tasa-usd-val').innerText = tasaBCV.toFixed(2); }
 
-                const [pRes, dRes] = await Promise.all([
-                    fetch(`${SUPABASE_URL}/rest/v1/vista_catalogo_web?select=*&limit=3000`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
+                const [pRes, precRes, dRes] = await Promise.all([
+                    // Tabla real "productos" con todos los campos necesarios para búsqueda
+                    fetch(`${SUPABASE_URL}/rest/v1/productos?select=id_producto_sku,nombre,codigo_barras,tipo_impuesto,categoria_del_producto,marca,unidad_medida,estado_producto,id_empresa&estado_producto=eq.ACTIVO&limit=3000`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
+                    // Tabla precios para obtener costo actual
+                    fetch(`${SUPABASE_URL}/rest/v1/precios?select=id_producto_sku,costo_actual,costo_promedio_ponderado&limit=3000`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
                     fetch(`${SUPABASE_URL}/rest/v1/directorio_maestro?select=*&limit=2000`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } })
                 ]);
                 
-                inventario = await pRes.json();
+                const rawProd = await pRes.json();
+                const rawPrecios = await precRes.json();
                 directorio = await dRes.json();
 
-                // FIX #1: Validar que los arrays son correctos antes de indexar
-                if (!Array.isArray(inventario)) { console.warn("inventario no es array:", inventario); inventario = []; }
-                if (!Array.isArray(directorio)) { console.warn("directorio no es array:", directorio); directorio = []; }
+                // Fusionar productos con sus precios/costos
+                if (Array.isArray(rawProd) && Array.isArray(rawPrecios)) {
+                    const precMap = {};
+                    rawPrecios.forEach(p => { precMap[p.id_producto_sku] = p; });
+                    inventario = rawProd.map(p => ({
+                        ...p,
+                        costo_actual: precMap[p.id_producto_sku]?.costo_actual || 0,
+                        costo_promedio_ponderado: precMap[p.id_producto_sku]?.costo_promedio_ponderado || 0
+                    }));
+                } else {
+                    console.warn("Error al cargar productos:", rawProd);
+                    inventario = [];
+                }
 
-                if(inventario[0]) idEmpresaGlobal = inventario[0].id_empresa;
+                if (!Array.isArray(directorio)) { console.warn("directorio no es array:", directorio); directorio = []; }
+                if (inventario[0]) idEmpresaGlobal = inventario[0].id_empresa;
 
                 indexarBuscadores();
                 console.log(`✅ Cargado: ${inventario.length} productos, ${directorio.length} proveedores`);
@@ -607,35 +698,68 @@
         function cerrarModalProveedor() { document.getElementById('modal-prov').classList.add('hidden'); }
 
         async function guardarNuevoProveedor() {
-            const r = document.getElementById('np-tipo').value + document.getElementById('np-rif').value.trim().toUpperCase();
-            const n = document.getElementById('np-nombre').value.trim().toUpperCase();
-            const d = document.getElementById('np-dir').value.trim().toUpperCase();
-            if (!r || !n || !d) return alert("Faltan campos obligatorios en amarillo.");
+            const tipoRif = document.getElementById('np-tipo').value;
+            const numRif  = document.getElementById('np-rif').value.trim().toUpperCase();
+            const nombre  = document.getElementById('np-nombre').value.trim().toUpperCase();
+            const dir     = document.getElementById('np-dir').value.trim().toUpperCase();
+            if (!numRif || !nombre || !dir) return alert("Los campos obligatorios (*) son: RIF, Razón Social y Dirección.");
+
+            const rif = tipoRif + numRif;
+            const btnG = document.querySelector('button[onclick="guardarNuevoProveedor()"]');
+            btnG.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Guardando...`;
+            btnG.disabled = true;
+
             try {
                 const body = {
-                    id_empresa: idEmpresaGlobal,
-                    documento_identidad: r,
-                    nombre_razon_social: n,
-                    direccion_principal: d,
-                    telefono_principal: limpiarTel(document.getElementById('np-tel').value),
-                    correo_electronico: document.getElementById('np-email').value,
-                    vendedor_asignado: document.getElementById('np-vend').value.toUpperCase(),
-                    celular_vendedor: limpiarTel(document.getElementById('np-vend-tel').value),
-                    dias_credito: parseInt(document.getElementById('np-dias').value) || 0,
-                    tipo_contribuyente: document.getElementById('np-contrib').value,
-                    estatus: 'ACTIVO'
+                    id_empresa:            idEmpresaGlobal,
+                    documento_identidad:   rif,
+                    nombre_razon_social:   nombre,
+                    direccion_principal:   dir,
+                    tipo_contribuyente:    document.getElementById('np-contrib').value || 'ORDINARIO',
+                    estatus:               document.getElementById('np-estatus').value || 'ACTIVO',
+                    categoria_proveedor:   document.getElementById('np-categoria').value || null,
+                    telefono_principal:    limpiarTel(document.getElementById('np-tel').value) || null,
+                    telefono_secundario:   limpiarTel(document.getElementById('np-tel2').value) || null,
+                    correo_electronico:    document.getElementById('np-email').value.toLowerCase().trim() || null,
+                    pagina_web:            document.getElementById('np-web').value.trim() || null,
+                    nombre_contacto:       document.getElementById('np-contacto').value.toUpperCase().trim() || null,
+                    cargo_contacto:        document.getElementById('np-cargo').value.toUpperCase().trim() || null,
+                    vendedor_asignado:     document.getElementById('np-vend').value.toUpperCase().trim() || null,
+                    celular_vendedor:      limpiarTel(document.getElementById('np-vend-tel').value) || null,
+                    correo_vendedor:       document.getElementById('np-vend-email').value.toLowerCase().trim() || null,
+                    dias_credito:          parseInt(document.getElementById('np-dias').value) || 0,
+                    descuento_porcentaje:  parseFloat(document.getElementById('np-descuento').value) || 0,
+                    moneda_preferida:      document.getElementById('np-moneda').value || 'USD',
+                    condicion_pago:        document.getElementById('np-condicion').value || 'Contado',
+                    observaciones:         document.getElementById('np-observaciones').value.trim() || null,
+                    banco_nombre:          document.getElementById('np-banco').value.toUpperCase().trim() || null,
+                    cuenta_bancaria:       document.getElementById('np-cuenta').value.trim() || null,
+                    tipo_cuenta:           document.getElementById('np-tipo-cuenta').value || null,
+                    titular_cuenta:        document.getElementById('np-titular-cuenta').value.toUpperCase().trim() || null,
+                    rif_titular_cuenta:    document.getElementById('np-rif-banco').value.toUpperCase().trim() || null,
                 };
+                // Eliminar nulls para no sobrescribir defaults de BD
+                Object.keys(body).forEach(k => { if (body[k] === null || body[k] === '') delete body[k]; });
+
                 const res = await fetch(`${SUPABASE_URL}/rest/v1/directorio_maestro`, {
                     method: 'POST',
                     headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
                     body: JSON.stringify(body)
                 });
+                if (!res.ok) { const err = await res.json(); throw new Error(err.message || err.details || JSON.stringify(err)); }
                 const dat = await res.json();
                 directorio.push(dat[0]);
                 indexarBuscadores();
                 cerrarModalProveedor();
-                seleccionarProv(dat[0].id);
-            } catch(e) { alert("Error: " + e.message); }
+                seleccionarProv(String(dat[0].id));
+                // Limpiar modal
+                document.querySelectorAll('#modal-prov input, #modal-prov textarea').forEach(el => { el.value = ''; });
+                document.querySelectorAll('#modal-prov select').forEach(el => { el.selectedIndex = 0; });
+            } catch(e) {
+                alert("Error al guardar proveedor:\n" + e.message);
+                btnG.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> Guardar en Directorio`;
+                btnG.disabled = false;
+            }
         }
 
         // =============================================
