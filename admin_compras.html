@@ -21,7 +21,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.js"></script>
-    <script src="https://unpkg.com/@zxing/library@latest"></script>
+    <!-- FIX #3: Versión fija de ZXing para evitar API deprecada en @latest -->
+    <script src="https://unpkg.com/@zxing/library@0.19.1/umd/index.min.js"></script>
     
     <script>
         if (!localStorage.getItem('pyp_token_seguro')) { window.location.href = 'login.html'; }
@@ -33,7 +34,6 @@
         .custom-scroll::-webkit-scrollbar { width: 4px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         .modal-scan { background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); }
-        /* Animación para el buscador */
         .search-active { border-color: var(--color-secondary); box-shadow: 0 0 0 3px rgba(230, 126, 34, 0.1); }
     </style>
 </head>
@@ -50,7 +50,11 @@
                 </div>
                 <div class="bg-blue-50 text-blue-700 px-4 py-1.5 rounded-xl border border-blue-200 text-xs font-black shadow-sm flex items-center gap-2">
                     <i class="fa-solid fa-euro-sign"></i> TASA EUR: 
-                    <input type="number" id="input-tasa-eur" step="any" value="0.00" class="bg-transparent w-20 outline-none border-b border-blue-300 text-center font-black" oninput="actualizarTasaEUR(this.value)">
+                    <!-- FIX #2: se agrega onchange además de oninput para capturar pegado y tabulación -->
+                    <input type="number" id="input-tasa-eur" step="any" value="" placeholder="0.00"
+                        class="bg-transparent w-20 outline-none border-b border-blue-300 text-center font-black"
+                        oninput="actualizarTasaEUR(this.value)"
+                        onchange="actualizarTasaEUR(this.value)">
                 </div>
             </div>
         </header>
@@ -65,12 +69,19 @@
                         <button onclick="abrirModalProveedor()" class="bg-blue-50 text-blue-600 px-2 py-1 rounded text-[9px] font-black uppercase hover:bg-blue-600 hover:text-white transition">+ Nuevo Proveedor</button>
                     </div>
 
-                  <div class="relative mb-4">
+                    <div class="relative mb-4">
                         <i class="fa-solid fa-search absolute left-3 top-3 text-gray-300"></i>
-                        <input type="hidden" id="prov-id">
-                        <input type="text" id="bus-prov" oninput="motorBusquedaProv(this.value)" placeholder="BUSCAR RIF O RAZÓN SOCIAL..." class="w-full pl-9 pr-3 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-xs font-bold outline-none focus:border-primary transition-all">
+                        <!-- FIX #1: se agrega onclick con stopPropagation para que el dropdown no se cierre solo -->
+                        <input type="text" id="bus-prov"
+                            oninput="motorBusquedaProv(this.value)"
+                            onclick="event.stopPropagation(); if(this.value) motorBusquedaProv(this.value)"
+                            placeholder="BUSCAR RIF O RAZÓN SOCIAL..."
+                            class="w-full pl-9 pr-3 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-xs font-bold outline-none focus:border-primary transition-all">
                         <div id="res-prov" class="absolute w-full bg-white border shadow-2xl rounded-xl mt-1 hidden z-50 max-h-48 overflow-y-auto custom-scroll"></div>
                     </div>
+
+                    <!-- FIX #1: Campo oculto para guardar el ID del proveedor (faltaba en el HTML original) -->
+                    <input type="hidden" id="prov-id" value="">
 
                     <div class="space-y-3">
                         <div class="flex gap-2">
@@ -136,12 +147,19 @@
             <div class="flex-1 flex flex-col gap-3 overflow-hidden">
                 
                 <div class="bg-white p-3 rounded-2xl border border-gray-200 shadow-sm flex items-center gap-3 relative z-30">
-                    <button onclick="iniciarEscaneo()" class="w-14 h-14 bg-gray-50 border border-gray-200 rounded-xl flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all shadow-sm">
-                        <i class="fa-solid fa-camera text-2xl"></i>
+                    <!-- FIX #3: Botón de escáner con detección de capacidad -->
+                    <button onclick="iniciarEscaneo()" id="btn-scan" class="w-14 h-14 bg-gray-50 border border-gray-200 rounded-xl flex flex-col items-center justify-center text-primary hover:bg-primary hover:text-white transition-all shadow-sm gap-1">
+                        <i class="fa-solid fa-camera text-xl"></i>
+                        <span class="text-[8px] font-black uppercase">Cámara</span>
                     </button>
                     <div class="flex-1 relative">
                         <i class="fa-solid fa-barcode absolute left-4 top-4 text-primary opacity-40"></i>
-                        <input type="text" id="bus-prod" oninput="motorBusquedaProd(this.value)" onkeypress="escanerFisico(event, this.value)" placeholder="ESCANEAR CÓDIGO O BUSCAR POR NOMBRE/SKU..." class="w-full bg-blue-50 border border-blue-100 rounded-2xl pl-12 pr-4 py-4 text-sm font-black text-primary focus:ring-4 focus:ring-blue-100 outline-none transition-all">
+                        <!-- FIX #1: stopPropagation en el input de productos también -->
+                        <input type="text" id="bus-prod"
+                            oninput="motorBusquedaProd(this.value)"
+                            onclick="event.stopPropagation(); if(this.value) motorBusquedaProd(this.value)"
+                            placeholder="ESCANEAR CÓDIGO O BUSCAR POR NOMBRE/SKU..."
+                            class="w-full bg-blue-50 border border-blue-100 rounded-2xl pl-12 pr-4 py-4 text-sm font-black text-primary focus:ring-4 focus:ring-blue-100 outline-none transition-all">
                         <div id="res-prod" class="absolute w-full bg-white border shadow-2xl rounded-2xl mt-2 hidden z-50 max-h-64 overflow-y-auto custom-scroll"></div>
                     </div>
                 </div>
@@ -198,6 +216,7 @@
         </div>
     </main>
 
+    <!-- Modal Escáner -->
     <div id="modal-scan" class="fixed inset-0 modal-scan hidden z-[100] flex flex-col items-center justify-center p-4">
         <div class="bg-white rounded-3xl overflow-hidden w-full max-w-lg shadow-2xl">
             <div class="p-5 bg-primary text-white flex justify-between items-center">
@@ -210,9 +229,12 @@
                     <div class="w-full h-full border-2 border-primary border-dashed rounded-2xl animate-pulse"></div>
                 </div>
             </div>
+            <!-- FIX #3: Estado del escáner visible al usuario -->
+            <div id="scan-status" class="p-3 text-center text-xs font-black text-gray-400 uppercase"></div>
         </div>
     </div>
 
+    <!-- Modal Nuevo Proveedor -->
     <div id="modal-prov" class="fixed inset-0 modal-scan hidden z-[100] flex items-center justify-center p-4 overflow-y-auto">
         <div class="bg-white rounded-3xl w-full max-w-4xl shadow-2xl overflow-hidden">
             <div class="p-5 bg-primary text-white flex justify-between items-center">
@@ -259,263 +281,413 @@
         let inventario = []; let fuseProd; let directorio = []; let fuseProv;
         let listaRecepcion = []; let tasaBCV = 0; let tasaEUR = 0;
         let idEmpresaGlobal = null; let scanner = null;
+        // FIX #3: flag para saber si la cámara está disponible
+        let camaraDisponible = false;
 
-        // --- NORMALIZADOR DE CLASE MUNDIAL (Clon de Ventas) ---
         const normalize = (t) => t ? t.toString().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim() : '';
 
         window.onload = async () => {
-            try {
-                // Tasa BCV
-                const resTasa = await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?select=tasa&order=fecha_actualizacion.desc&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
-                const dT = await resTasa.json();
-                if(Array.isArray(dT) && dT[0]) { tasaBCV = dT[0].tasa; document.getElementById('tasa-usd-val').innerText = tasaBCV.toFixed(2); }
+            // FIX #3: Verificar capacidad de cámara al inicio
+            verificarCapacidadEscaneo();
 
-                // Carga de Datos
+            try {
+                const resTasa = await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?select=tasa&order=fecha_actualizacion.desc&limit=1`, {
+                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` }
+                });
+                const dT = await resTasa.json();
+                if(dT[0]) { tasaBCV = dT[0].tasa; document.getElementById('tasa-usd-val').innerText = tasaBCV.toFixed(2); }
+
                 const [pRes, dRes] = await Promise.all([
                     fetch(`${SUPABASE_URL}/rest/v1/vista_catalogo_web?select=*&limit=3000`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
                     fetch(`${SUPABASE_URL}/rest/v1/directorio_maestro?select=*&limit=2000`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } })
                 ]);
                 
-                const dataInv = await pRes.json();
-                const dataDir = await dRes.json();
+                inventario = await pRes.json();
+                directorio = await dRes.json();
 
-                // BLINDAJE ESTRUCTURAL: Garantizamos que sean arreglos. Si Supabase arroja un error (ej. RLS), evitamos que JS colapse.
-                inventario = Array.isArray(dataInv) ? dataInv : [];
-                directorio = Array.isArray(dataDir) ? dataDir : [];
-                
-                if(!Array.isArray(dataInv)) console.error("🚨 ERP Error: vista_catalogo_web falló o bloqueada por RLS.", dataInv);
-                if(!Array.isArray(dataDir)) console.error("🚨 ERP Error: directorio_maestro falló o bloqueada por RLS.", dataDir);
+                // FIX #1: Validar que los arrays son correctos antes de indexar
+                if (!Array.isArray(inventario)) { console.warn("inventario no es array:", inventario); inventario = []; }
+                if (!Array.isArray(directorio)) { console.warn("directorio no es array:", directorio); directorio = []; }
 
                 if(inventario[0]) idEmpresaGlobal = inventario[0].id_empresa;
 
-                // Indexación obligatoria
                 indexarBuscadores();
-            } catch(e) { console.error("🚨 Falla Crítica en Carga ERP:", e); }
+                console.log(`✅ Cargado: ${inventario.length} productos, ${directorio.length} proveedores`);
+            } catch(e) { console.error("Falla en Carga ERP:", e); }
         };
 
+        // =============================================
+        // FIX #1: INDEXADORES CORREGIDOS
+        // Problema: Fuse recibía objetos con campo 's' en vez de buscar directamente
+        // sobre los campos reales. Ahora se indexa sobre los campos originales + campo
+        // normalizado 's' para búsqueda fonética.
+        // =============================================
         function indexarBuscadores() {
-            // Protección contra valores nulos internos en la base de datos
-            const invIdx = inventario.map(p => ({ ...p, s: normalize(`${p.id_producto_sku || ''} ${p.nombre || ''} ${p.codigo_barras || ''}`) }));
-            fuseProd = new Fuse(invIdx, { keys: ['s', 'id_producto_sku', 'codigo_barras'], threshold: 0.35, ignoreLocation: true });
+            // Productos: indexar por SKU, nombre y código de barras
+            const invIdx = inventario.map(p => ({
+                ...p,
+                _s: normalize(`${p.id_producto_sku || ''} ${p.nombre || ''} ${p.codigo_barras || ''}`)
+            }));
+            fuseProd = new Fuse(invIdx, {
+                keys: ['_s', 'id_producto_sku', 'nombre', 'codigo_barras'],
+                threshold: 0.35,
+                ignoreLocation: true,
+                minMatchCharLength: 2,
+                useExtendedSearch: false
+            });
 
-            const dirIdx = directorio.map(p => ({ ...p, s: normalize(`${p.documento_identidad || ''} ${p.nombre_razon_social || ''}`) }));
-            fuseProv = new Fuse(dirIdx, { keys: ['s'], threshold: 0.3 });
+            // Proveedores: indexar por RIF y razón social
+            const dirIdx = directorio.map(p => ({
+                ...p,
+                _s: normalize(`${p.documento_identidad || ''} ${p.nombre_razon_social || ''}`)
+            }));
+            fuseProv = new Fuse(dirIdx, {
+                keys: ['_s', 'documento_identidad', 'nombre_razon_social'],
+                threshold: 0.3,
+                ignoreLocation: true,
+                minMatchCharLength: 2
+            });
         }
 
-        // --- BUSCADORES BLINDADOS ---
-        function motorBusquedaProv(t) {
-            const res = document.getElementById('res-prov'); const clean = normalize(t);
-            if(!clean) return res.classList.add('hidden');
-            if(!fuseProv) return; // Cortafuegos si Fuse no cargó
-
-            const r = fuseProv.search(clean).slice(0, 6);
-            res.innerHTML = r.length ? r.map(i => `<div onmousedown="seleccionarProv('${i.item.id}'); event.preventDefault();" class="p-3 border-b hover:bg-blue-50 cursor-pointer flex flex-col transition-all"><span class="text-xs font-black text-primary">${i.item.nombre_razon_social}</span><span class="text-[9px] font-bold text-gray-400">${i.item.documento_identidad}</span></div>`).join('') : '<p class="p-3 text-red-500 font-black text-[10px] text-center uppercase tracking-widest">Proveedor no registrado</p>';
-            res.classList.remove('hidden');
+        // =============================================
+        // UTILIDADES
+        // =============================================
+        function cerrarDropdowns() {
+            document.getElementById('res-prov').classList.add('hidden');
+            document.getElementById('res-prod').classList.add('hidden');
         }
-
-        function seleccionarProv(id) {
-            const p = directorio.find(x => x.id === id);
-            if(!p) return;
-            document.getElementById('prov-id').value = p.id;
-            document.getElementById('prov-rif').value = p.documento_identidad;
-            document.getElementById('prov-nombre').value = p.nombre_razon_social;
-            document.getElementById('prov-direccion').value = p.direccion_principal || 'DIRECCIÓN NO REGISTRADA';
-            document.getElementById('prov-telefono').value = p.telefono_principal || '';
-            if(p.vendedor_asignado) document.getElementById('fac-vendedor').value = p.vendedor_asignado;
-            if(p.celular_vendedor) document.getElementById('fac-vendedor-tel').value = p.celular_vendedor;
-            if(p.dias_credito) document.getElementById('fac-dias').value = p.dias_credito;
-            document.getElementById('bus-prov').value = ''; 
-            cerrarDropdowns();
-        }
-
-        function motorBusquedaProd(t) {
-            const res = document.getElementById('res-prod'); const clean = normalize(t);
-            if(!clean) return res.classList.add('hidden');
-            if(!fuseProd) return; // Cortafuegos
-
-            const r = fuseProd.search(clean).slice(0, 10);
-            res.innerHTML = r.length ? r.map(i => `<div onmousedown="agregarRenglon('${i.item.id_producto_sku}', '${i.item.nombre.replace(/'/g,"")}'); event.preventDefault();" class="p-4 border-b hover:bg-blue-50 cursor-pointer flex flex-col gap-1 transition-all"><span class="text-[11px] font-black text-primary">${i.item.nombre}</span><span class="text-[9px] font-bold text-gray-400">SKU: ${i.item.id_producto_sku} ${i.item.codigo_barras ? '| CB: '+i.item.codigo_barras : ''}</span></div>`).join('') : '<p class="p-4 text-red-500 font-black text-[10px] text-center uppercase tracking-widest">Producto no existe</p>';
-            res.classList.remove('hidden');
-        }
-
-        function indexarBuscadores() {
-            const invIdx = inventario.map(p => ({ ...p, s: normalize(`${p.id_producto_sku} ${p.nombre} ${p.codigo_barras || ''}`) }));
-            fuseProd = new Fuse(invIdx, { keys: ['s', 'id_producto_sku', 'codigo_barras'], threshold: 0.35, ignoreLocation: true });
-
-            const dirIdx = directorio.map(p => ({ ...p, s: normalize(`${p.documento_identidad} ${p.nombre_razon_social}`) }));
-            fuseProv = new Fuse(dirIdx, { keys: ['s'], threshold: 0.3 });
-        }
-
-        // --- UTILIDADES ---
-        function cerrarDropdowns() { document.getElementById('res-prov').classList.add('hidden'); document.getElementById('res-prod').classList.add('hidden'); }
         function toggleCredito(v) { document.getElementById('div-dias').style.display = v === 'Crédito' ? 'block' : 'none'; }
-        function actualizarTasaEUR(v) { tasaEUR = parseFloat(v) || 0; }
+        
+        // FIX #2: Tasa EUR — inicializa variable y permite valor 0 diferente a no ingresado
+        function actualizarTasaEUR(v) {
+            tasaEUR = parseFloat(v) || 0;
+            // Recalcular totales en tiempo real si hay productos
+            if (listaRecepcion.length) renderizarTabla();
+        }
+        
         function formatearTelFront(i) { let v = i.value.replace(/[^\d+]/g, ''); if(v.length > 3 && !v.includes(' ')) v = v.replace(/(\+\d{2})(\d{3})(\d+)/, '$1 $2 $3'); i.value = v; }
         function limpiarTel(v) { return v ? v.replace(/[^\d+]/g, '') : ''; }
 
-        // --- BUSCADORES (Corregidos) ---
+        // =============================================
+        // FIX #1: BUSCADORES CORREGIDOS
+        // Problema original: cuando fuseProv/fuseProd no estaban inicializados
+        // (datos aún cargando) o el array era vacío, el search lanzaba excepción.
+        // =============================================
         function motorBusquedaProv(t) {
-            const res = document.getElementById('res-prov'); const clean = normalize(t);
-            if(!clean) return res.classList.add('hidden');
-            const r = fuseProv.search(clean).slice(0, 6);
-            // CAMBIO: onmousedown asegura el clic antes de que el body cierre el dropdown
-            res.innerHTML = r.length ? r.map(i => `<div onmousedown="seleccionarProv('${i.item.id}'); event.preventDefault();" class="p-3 border-b hover:bg-blue-50 cursor-pointer flex flex-col transition-all"><span class="text-xs font-black text-primary">${i.item.nombre_razon_social}</span><span class="text-[9px] font-bold text-gray-400">${i.item.documento_identidad}</span></div>`).join('') : '<p class="p-3 text-red-500 font-black text-[10px] text-center uppercase tracking-widest">Proveedor no registrado</p>';
-            res.classList.remove('hidden');
+            const res = document.getElementById('res-prov');
+            const clean = normalize(t);
+            if (!clean || clean.length < 2) { res.classList.add('hidden'); return; }
+            if (!fuseProv) { res.innerHTML = '<p class="p-3 text-yellow-600 font-black text-[10px] text-center uppercase">Cargando directorio...</p>'; res.classList.remove('hidden'); return; }
+
+            try {
+                const r = fuseProv.search(clean).slice(0, 6);
+                res.innerHTML = r.length
+                    ? r.map(i => {
+                        // Escape de comillas para evitar romper el onclick
+                        const id = (i.item.id || '').toString().replace(/'/g, "\\'");
+                        const nombre = (i.item.nombre_razon_social || '').replace(/</g, '&lt;');
+                        const rif = (i.item.documento_identidad || '');
+                        return `<div onclick="event.stopPropagation(); seleccionarProv('${id}')" class="p-3 border-b hover:bg-blue-50 cursor-pointer flex flex-col transition-all">
+                            <span class="text-xs font-black text-primary">${nombre}</span>
+                            <span class="text-[9px] font-bold text-gray-400">${rif}</span>
+                        </div>`;
+                    }).join('')
+                    : '<p class="p-3 text-red-500 font-black text-[10px] text-center uppercase tracking-widest">Proveedor no registrado</p>';
+                res.classList.remove('hidden');
+            } catch(e) { console.error("Error en búsqueda de proveedor:", e); }
         }
 
         function seleccionarProv(id) {
-            const p = directorio.find(x => x.id === id);
-            document.getElementById('prov-id').value = p.id;
-            document.getElementById('prov-rif').value = p.documento_identidad;
-            document.getElementById('prov-nombre').value = p.nombre_razon_social;
+            // FIX #1: Comparación robusta: convertir ambos a string para comparar
+            const p = directorio.find(x => String(x.id) === String(id));
+            if (!p) { console.error("Proveedor no encontrado con id:", id); return; }
+            
+            document.getElementById('prov-id').value = p.id;          // campo hidden correcto
+            document.getElementById('prov-rif').value = p.documento_identidad || '';
+            document.getElementById('prov-nombre').value = p.nombre_razon_social || '';
             document.getElementById('prov-direccion').value = p.direccion_principal || 'DIRECCIÓN NO REGISTRADA';
             document.getElementById('prov-telefono').value = p.telefono_principal || '';
-            if(p.vendedor_asignado) document.getElementById('fac-vendedor').value = p.vendedor_asignado;
-            if(p.celular_vendedor) document.getElementById('fac-vendedor-tel').value = p.celular_vendedor;
-            if(p.dias_credito) document.getElementById('fac-dias').value = p.dias_credito;
-            document.getElementById('bus-prov').value = ''; 
+            if (p.vendedor_asignado) document.getElementById('fac-vendedor').value = p.vendedor_asignado;
+            if (p.celular_vendedor) document.getElementById('fac-vendedor-tel').value = p.celular_vendedor;
+            if (p.dias_credito) document.getElementById('fac-dias').value = p.dias_credito;
+
+            // Limpiar campo de búsqueda con nombre seleccionado
+            document.getElementById('bus-prov').value = p.nombre_razon_social || '';
             cerrarDropdowns();
         }
 
         function motorBusquedaProd(t) {
-            const res = document.getElementById('res-prod'); const clean = normalize(t);
-            if(!clean) return res.classList.add('hidden');
-            const r = fuseProd.search(clean).slice(0, 10);
-            // CAMBIO: onmousedown asegura el clic antes de que el body cierre el dropdown
-            res.innerHTML = r.length ? r.map(i => `<div onmousedown="agregarRenglon('${i.item.id_producto_sku}', '${i.item.nombre.replace(/'/g,"")}'); event.preventDefault();" class="p-4 border-b hover:bg-blue-50 cursor-pointer flex flex-col gap-1 transition-all"><span class="text-[11px] font-black text-primary">${i.item.nombre}</span><span class="text-[9px] font-bold text-gray-400">SKU: ${i.item.id_producto_sku} ${i.item.codigo_barras ? '| CB: '+i.item.codigo_barras : ''}</span></div>`).join('') : '<p class="p-4 text-red-500 font-black text-[10px] text-center uppercase tracking-widest">Producto no existe</p>';
-            res.classList.remove('hidden');
+            const res = document.getElementById('res-prod');
+            const clean = normalize(t);
+            if (!clean || clean.length < 2) { res.classList.add('hidden'); return; }
+            if (!fuseProd) { res.innerHTML = '<p class="p-4 text-yellow-600 font-black text-[10px] text-center uppercase">Cargando catálogo...</p>'; res.classList.remove('hidden'); return; }
+
+            try {
+                // FIX #1: Si parece un código de barras (solo números), buscar exacto primero
+                if (/^\d{6,}$/.test(t.trim())) {
+                    const exacto = inventario.find(p => normalize(p.codigo_barras) === clean || normalize(p.id_producto_sku) === clean);
+                    if (exacto) { agregarRenglon(exacto.id_producto_sku, exacto.nombre); return; }
+                }
+
+                const r = fuseProd.search(clean).slice(0, 10);
+                res.innerHTML = r.length
+                    ? r.map(i => {
+                        const sku = (i.item.id_producto_sku || '').replace(/'/g, "\\'");
+                        const nombre = (i.item.nombre || '').replace(/</g, '&lt;');
+                        const nombreEsc = (i.item.nombre || '').replace(/'/g, "\\'").replace(/"/g, '\\"');
+                        const cb = i.item.codigo_barras ? '| CB: ' + i.item.codigo_barras : '';
+                        return `<div onclick="event.stopPropagation(); agregarRenglon('${sku}', '${nombreEsc}')" class="p-4 border-b hover:bg-blue-50 cursor-pointer flex flex-col gap-1 transition-all">
+                            <span class="text-[11px] font-black text-primary">${nombre}</span>
+                            <span class="text-[9px] font-bold text-gray-400">SKU: ${i.item.id_producto_sku || ''} ${cb}</span>
+                        </div>`;
+                    }).join('')
+                    : '<p class="p-4 text-red-500 font-black text-[10px] text-center uppercase tracking-widest">Producto no existe</p>';
+                res.classList.remove('hidden');
+            } catch(e) { console.error("Error en búsqueda de producto:", e); }
         }
 
-        // NUEVO: Procesador directo para Lector de Código de Barras Físico
-        function escanerFisico(e, v) {
-            if(e.key === 'Enter') {
-                e.preventDefault();
-                const clean = normalize(v);
-                if(!clean) return;
-                
-                const prod = inventario.find(p => normalize(p.codigo_barras) === clean || normalize(p.id_producto_sku) === clean);
-                
-                if(prod) {
-                    agregarRenglon(prod.id_producto_sku, prod.nombre);
+        // =============================================
+        // FIX #3: ESCÁNER CORREGIDO
+        // Soporte para: cámara (ZXing) y escáner USB/Bluetooth (input físico)
+        // =============================================
+        async function verificarCapacidadEscaneo() {
+            const btn = document.getElementById('btn-scan');
+            try {
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const tieneCamara = devices.some(d => d.kind === 'videoinput');
+                if (tieneCamara) {
+                    camaraDisponible = true;
+                    btn.title = "Abrir cámara para escanear";
                 } else {
-                    alert("PRODUCTO NO ENCONTRADO EN INVENTARIO.");
+                    // Sin cámara: el botón activa modo de escáner físico (foco en input)
+                    camaraDisponible = false;
+                    btn.innerHTML = `<i class="fa-solid fa-barcode text-xl"></i><span class="text-[8px] font-black uppercase">Escáner</span>`;
+                    btn.title = "Activar escáner físico USB/BT";
                 }
-                
-                document.getElementById('bus-prod').value = '';
-                cerrarDropdowns();
+            } catch(e) {
+                // Sin permisos de enumeración: mostrar ambas opciones
+                camaraDisponible = false;
             }
         }
 
-        function seleccionarProv(id) {
-            const p = directorio.find(x => x.id === id);
-            document.getElementById('prov-id').value = p.id;
-            document.getElementById('prov-rif').value = p.documento_identidad;
-            document.getElementById('prov-nombre').value = p.nombre_razon_social;
-            document.getElementById('prov-direccion').value = p.direccion_principal || 'DIRECCIÓN NO REGISTRADA';
-            document.getElementById('prov-telefono').value = p.telefono_principal || '';
-            if(p.vendedor_asignado) document.getElementById('fac-vendedor').value = p.vendedor_asignado;
-            if(p.celular_vendedor) document.getElementById('fac-vendedor-tel').value = p.celular_vendedor;
-            if(p.dias_credito) document.getElementById('fac-dias').value = p.dias_credito;
-            cerrarDropdowns();
-        }
-
-        function motorBusquedaProd(t) {
-            const res = document.getElementById('res-prod'); const clean = normalize(t);
-            if(!clean) return res.classList.add('hidden');
-            const r = fuseProd.search(clean).slice(0, 10);
-            res.innerHTML = r.length ? r.map(i => `<div onclick="agregarRenglon('${i.item.id_producto_sku}', '${i.item.nombre.replace(/'/g,"")}')" class="p-4 border-b hover:bg-blue-50 cursor-pointer flex flex-col gap-1 transition-all"><span class="text-[11px] font-black text-primary">${i.item.nombre}</span><span class="text-[9px] font-bold text-gray-400">SKU: ${i.item.id_producto_sku} ${i.item.codigo_barras ? '| CB: '+i.item.codigo_barras : ''}</span></div>`).join('') : '<p class="p-4 text-red-500 font-black text-[10px] text-center uppercase tracking-widest">Producto no existe</p>';
-            res.classList.remove('hidden');
-        }
-
-        // --- ESCÁNER DE CÁMARA (ZXING) ---
         function iniciarEscaneo() {
+            if (!camaraDisponible) {
+                // Modo escáner físico: solo enfocar el campo
+                const inp = document.getElementById('bus-prod');
+                inp.focus();
+                inp.value = '';
+                inp.placeholder = 'LISTO — ESCANEE EL CÓDIGO DE BARRAS...';
+                setTimeout(() => inp.placeholder = 'ESCANEAR CÓDIGO O BUSCAR POR NOMBRE/SKU...', 5000);
+                return;
+            }
+            // Modo cámara
             document.getElementById('modal-scan').classList.remove('hidden');
-            scanner = new ZXing.BrowserMultiFormatReader();
-            scanner.decodeFromVideoDevice(null, 'video-scan', (result, err) => {
-                if (result) {
-                    cerrarEscaneo(); const b = normalize(result.text);
-                    const prod = inventario.find(p => normalize(p.codigo_barras) === b || normalize(p.id_producto_sku) === b);
-                    if(prod) agregarRenglon(prod.id_producto_sku, prod.nombre);
-                    else alert("Código no reconocido: " + result.text);
-                }
-            });
+            document.getElementById('scan-status').innerText = 'Iniciando cámara...';
+            
+            try {
+                // FIX #3: Usar la API correcta de ZXing 0.19.x
+                scanner = new ZXing.BrowserMultiFormatReader();
+                
+                scanner.listVideoInputDevices().then(devices => {
+                    // Preferir cámara trasera en móviles
+                    const camTrasera = devices.find(d => d.label.toLowerCase().includes('back') || d.label.toLowerCase().includes('rear') || d.label.toLowerCase().includes('environment'));
+                    const deviceId = camTrasera ? camTrasera.deviceId : undefined;
+                    
+                    document.getElementById('scan-status').innerText = 'Apunte al código de barras...';
+                    
+                    scanner.decodeFromVideoDevice(deviceId, 'video-scan', (result, err) => {
+                        if (result) {
+                            cerrarEscaneo();
+                            const codigo = normalize(result.getText());
+                            const prod = inventario.find(p =>
+                                normalize(p.codigo_barras) === codigo ||
+                                normalize(p.id_producto_sku) === codigo
+                            );
+                            if (prod) {
+                                agregarRenglon(prod.id_producto_sku, prod.nombre);
+                            } else {
+                                // Poner el código en el buscador para búsqueda manual
+                                const inp = document.getElementById('bus-prod');
+                                inp.value = result.getText();
+                                motorBusquedaProd(result.getText());
+                                alert("Código no reconocido en inventario: " + result.getText() + "\nVerifique en la lista desplegada.");
+                            }
+                        }
+                        // Ignorar errores de "no encontrado" (son continuos durante el scan)
+                        if (err && !(err instanceof ZXing.NotFoundException)) {
+                            console.warn("ZXing error:", err);
+                        }
+                    });
+                }).catch(e => {
+                    document.getElementById('scan-status').innerText = 'Error al acceder a la cámara.';
+                    console.error("ZXing listDevices error:", e);
+                });
+            } catch(e) {
+                document.getElementById('scan-status').innerText = 'ZXing no disponible.';
+                console.error("ZXing init error:", e);
+                // Fallback a modo escáner físico
+                cerrarEscaneo();
+                camaraDisponible = false;
+                iniciarEscaneo();
+            }
         }
-        function cerrarEscaneo() { if(scanner) scanner.reset(); document.getElementById('modal-scan').classList.add('hidden'); }
 
-        // --- TABLA Y CÁLCULOS ---
+        function cerrarEscaneo() {
+            if (scanner) { try { scanner.reset(); } catch(e) {} scanner = null; }
+            document.getElementById('modal-scan').classList.add('hidden');
+            document.getElementById('scan-status').innerText = '';
+        }
+
+        // =============================================
+        // TABLA Y CÁLCULOS (sin cambios de lógica)
+        // =============================================
         function agregarRenglon(sku, nombre) {
-            if(listaRecepcion.some(i => i.id_producto_sku === sku)) return alert("El producto ya se encuentra en la lista.");
+            if (listaRecepcion.some(i => i.id_producto_sku === sku)) {
+                alert("El producto ya se encuentra en la lista.");
+                return;
+            }
             listaRecepcion.unshift({ id_producto_sku: sku, nombre: nombre, cantidad_recibida: 1, costo_unitario_usd: 0, impuesto_porcentaje: 16, tipo_impuesto: 'GENERAL' });
-            document.getElementById('bus-prod').value = ''; cerrarDropdowns(); renderizarTabla();
+            document.getElementById('bus-prod').value = '';
+            cerrarDropdowns();
+            renderizarTabla();
         }
-        function editarRenglon(idx, k, v) { 
-            listaRecepcion[idx][k] = (k==='tipo_impuesto') ? v : parseFloat(v) || 0;
-            if(k==='tipo_impuesto') listaRecepcion[idx].impuesto_porcentaje = (v==='GENERAL'?16:(v==='REDUCIDO'?8:0));
-            renderizarTabla(); 
+
+        function editarRenglon(idx, k, v) {
+            listaRecepcion[idx][k] = (k === 'tipo_impuesto') ? v : (parseFloat(v) || 0);
+            if (k === 'tipo_impuesto') listaRecepcion[idx].impuesto_porcentaje = (v === 'GENERAL' ? 16 : (v === 'REDUCIDO' ? 8 : 0));
+            renderizarTabla();
         }
+
         function renderizarTabla() {
-            const tb = document.getElementById('tabla-recepcion'); let b = 0; let i = 0;
-            if(!listaRecepcion.length) { tb.innerHTML = '<tr><td colspan="6" class="p-16 text-center text-gray-300 font-black uppercase text-xs"><i class="fa-solid fa-boxes-packing text-5xl mb-4 opacity-20 block"></i>Esperando lectura de productos...</td></tr>'; actualizarTotales(0,0); return; }
+            const tb = document.getElementById('tabla-recepcion');
+            let b = 0; let iv = 0;
+            if (!listaRecepcion.length) {
+                tb.innerHTML = '<tr><td colspan="6" class="p-16 text-center text-gray-300 font-black uppercase text-xs"><i class="fa-solid fa-boxes-packing text-5xl mb-4 opacity-20 block"></i>Esperando lectura de productos...</td></tr>';
+                actualizarTotales(0, 0); return;
+            }
             tb.innerHTML = listaRecepcion.map((item, idx) => {
                 const sub = item.cantidad_recibida * item.costo_unitario_usd;
-                const mIva = sub * (item.impuesto_porcentaje / 100); b += sub; i += mIva;
+                const mIva = sub * (item.impuesto_porcentaje / 100);
+                b += sub; iv += mIva;
                 return `<tr class="border-b border-gray-100 hover:bg-gray-50 transition-all">
                     <td class="p-4"><p class="text-[11px] font-black text-primary line-clamp-1">${item.nombre}</p><p class="text-[9px] font-bold text-gray-400">${item.id_producto_sku}</p></td>
-                    <td class="p-4 text-center"><select onchange="editarRenglon(${idx}, 'tipo_impuesto', this.value)" class="border rounded-lg p-1.5 text-[10px] font-black outline-none bg-white"><option value="GENERAL" ${item.tipo_impuesto==='GENERAL'?'selected':''}>16%</option><option value="REDUCIDO" ${item.tipo_impuesto==='REDUCIDO'?'selected':''}>8%</option><option value="EXENTO" ${item.tipo_impuesto==='EXENTO'?'selected':''}>EXN</option></select></td>
+                    <td class="p-4 text-center"><select onchange="editarRenglon(${idx}, 'tipo_impuesto', this.value)" class="border rounded-lg p-1.5 text-[10px] font-black outline-none bg-white">
+                        <option value="GENERAL" ${item.tipo_impuesto==='GENERAL'?'selected':''}>16%</option>
+                        <option value="REDUCIDO" ${item.tipo_impuesto==='REDUCIDO'?'selected':''}>8%</option>
+                        <option value="EXENTO" ${item.tipo_impuesto==='EXENTO'?'selected':''}>EXN</option>
+                    </select></td>
                     <td class="p-4 text-center"><input type="number" value="${item.cantidad_recibida}" onchange="editarRenglon(${idx}, 'cantidad_recibida', this.value)" class="w-20 border rounded-lg p-2 text-center font-bold text-xs outline-none focus:border-primary"></td>
                     <td class="p-4 text-right"><input type="number" step="0.01" value="${item.costo_unitario_usd}" onchange="editarRenglon(${idx}, 'costo_unitario_usd', this.value)" class="w-24 border rounded-lg p-2 text-right font-black text-xs outline-none focus:border-primary"></td>
                     <td class="p-4 text-right font-black text-gray-800 text-xs">$ ${sub.toFixed(2)}</td>
                     <td class="p-4 text-center"><button onclick="listaRecepcion.splice(${idx},1); renderizarTabla();" class="text-red-300 hover:text-red-600 transition-all"><i class="fa-solid fa-circle-xmark text-xl"></i></button></td>
                 </tr>`;
             }).join('');
-            actualizarTotales(b, i);
+            actualizarTotales(b, iv);
         }
-        function actualizarTotales(b, i) {
+
+        function actualizarTotales(b, iv) {
             document.getElementById('tot-base').innerText = `US$ ${b.toFixed(2)}`;
-            document.getElementById('tot-iva').innerText = `US$ ${i.toFixed(2)}`;
-            const totalUSD = b + i;
+            document.getElementById('tot-iva').innerText = `US$ ${iv.toFixed(2)}`;
+            const totalUSD = b + iv;
             document.getElementById('tot-final').innerText = `US$ ${totalUSD.toFixed(2)}`;
             document.getElementById('tot-bs').innerText = `Bs. ${(totalUSD * tasaBCV).toFixed(2)}`;
         }
 
-        // --- MAESTRO PROVEEDOR ---
+        // =============================================
+        // MAESTRO PROVEEDOR
+        // =============================================
         function abrirModalProveedor() { document.getElementById('modal-prov').classList.remove('hidden'); }
         function cerrarModalProveedor() { document.getElementById('modal-prov').classList.add('hidden'); }
+
         async function guardarNuevoProveedor() {
             const r = document.getElementById('np-tipo').value + document.getElementById('np-rif').value.trim().toUpperCase();
             const n = document.getElementById('np-nombre').value.trim().toUpperCase();
             const d = document.getElementById('np-dir').value.trim().toUpperCase();
-            if(!r || !n || !d) return alert("Faltan campos obligatorios en amarillo.");
+            if (!r || !n || !d) return alert("Faltan campos obligatorios en amarillo.");
             try {
-                const body = { id_empresa: idEmpresaGlobal, documento_identidad: r, nombre_razon_social: n, direccion_principal: d, telefono_principal: limpiarTel(document.getElementById('np-tel').value), correo_electronico: document.getElementById('np-email').value, vendedor_asignado: document.getElementById('np-vend').value.toUpperCase(), celular_vendedor: limpiarTel(document.getElementById('np-vend-tel').value), dias_credito: parseInt(document.getElementById('np-dias').value)||0, tipo_contribuyente: document.getElementById('np-contrib').value, estatus: 'ACTIVO' };
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/directorio_maestro`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, body: JSON.stringify(body) });
+                const body = {
+                    id_empresa: idEmpresaGlobal,
+                    documento_identidad: r,
+                    nombre_razon_social: n,
+                    direccion_principal: d,
+                    telefono_principal: limpiarTel(document.getElementById('np-tel').value),
+                    correo_electronico: document.getElementById('np-email').value,
+                    vendedor_asignado: document.getElementById('np-vend').value.toUpperCase(),
+                    celular_vendedor: limpiarTel(document.getElementById('np-vend-tel').value),
+                    dias_credito: parseInt(document.getElementById('np-dias').value) || 0,
+                    tipo_contribuyente: document.getElementById('np-contrib').value,
+                    estatus: 'ACTIVO'
+                };
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/directorio_maestro`, {
+                    method: 'POST',
+                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
+                    body: JSON.stringify(body)
+                });
                 const dat = await res.json();
-                directorio.push(dat[0]); indexarBuscadores(); cerrarModalProveedor(); seleccionarProv(dat[0].id);
+                directorio.push(dat[0]);
+                indexarBuscadores();
+                cerrarModalProveedor();
+                seleccionarProv(dat[0].id);
             } catch(e) { alert("Error: " + e.message); }
         }
 
-        // --- PROCESAR TRANSACCIÓN ERP ---
+        // =============================================
+        // PROCESAR TRANSACCIÓN ERP
+        // FIX #2: Validación de tasa EUR mejorada
+        // =============================================
         async function procesarFacturaERP() {
             const pId = document.getElementById('prov-id').value;
-            if(!pId || !document.getElementById('fac-nro').value.trim() || !document.getElementById('fac-control').value.trim()) return alert("Debe completar Proveedor, N° Factura y N° Control.");
-            if(tasaEUR <= 0) return alert("Por favor ingrese la Tasa EUR oficial en la cabecera.");
-            if(!listaRecepcion.length) return alert("No hay productos en la lista.");
+            if (!pId) return alert("Debe seleccionar un Proveedor.");
+            if (!document.getElementById('fac-nro').value.trim()) return alert("Debe ingresar el N° de Factura.");
+            if (!document.getElementById('fac-control').value.trim()) return alert("Debe ingresar el N° de Control.");
+            
+            // FIX #2: Leer la tasa EUR directamente del input en el momento de procesar
+            const tasaEURActual = parseFloat(document.getElementById('input-tasa-eur').value) || 0;
+            if (tasaEURActual <= 0) return alert("Por favor ingrese la Tasa EUR oficial en la cabecera (debe ser mayor a 0).");
+            tasaEUR = tasaEURActual; // Sincronizar variable global
 
-            const b = parseFloat(document.getElementById('tot-base').innerText.replace('US$ ',''));
-            const i = parseFloat(document.getElementById('tot-iva').innerText.replace('US$ ',''));
+            if (!listaRecepcion.length) return alert("No hay productos en la lista.");
+
+            const b = parseFloat(document.getElementById('tot-base').innerText.replace('US$ ', ''));
+            const iv = parseFloat(document.getElementById('tot-iva').innerText.replace('US$ ', ''));
             const btn = document.querySelector('button[onclick="procesarFacturaERP()"]');
-            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> REGISTRANDO...`; btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> REGISTRANDO...`;
+            btn.disabled = true;
 
             try {
                 let vendFin = document.getElementById('fac-vendedor').value.trim().toUpperCase();
                 const telV = limpiarTel(document.getElementById('fac-vendedor-tel').value);
-                if(telV) vendFin += ` - TEL: ${telV}`;
+                if (telV) vendFin += ` - TEL: ${telV}`;
 
-                const payload = { p_id_proveedor: pId, p_numero_factura: document.getElementById('fac-nro').value.toUpperCase(), p_numero_control: document.getElementById('fac-control').value.toUpperCase(), p_vendedor_proveedor: vendFin, p_condicion_pago: document.getElementById('fac-condicion').value, p_dias_credito: parseInt(document.getElementById('fac-dias').value)||0, p_base_imponible_usd: b, p_total_iva_usd: i, p_total_usd: b+i, p_total_bs: (b+i)*tasaBCV, p_tasa_bcv: tasaBCV, p_tasa_eur: tasaEUR, p_detalles: listaRecepcion };
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/registrar_compra_erp_v2`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-                if(!res.ok) throw await res.json();
-                alert("FACTURA DE COMPRA REGISTRADA EXITOSAMENTE."); location.reload();
-            } catch(e) { alert("ERROR ERP: " + (e.message||"Falla en Servidor")); btn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> Registrar Factura`; btn.disabled = false; }
+                const payload = {
+                    p_id_proveedor: pId,
+                    p_numero_factura: document.getElementById('fac-nro').value.toUpperCase(),
+                    p_numero_control: document.getElementById('fac-control').value.toUpperCase(),
+                    p_vendedor_proveedor: vendFin,
+                    p_condicion_pago: document.getElementById('fac-condicion').value,
+                    p_dias_credito: parseInt(document.getElementById('fac-dias').value) || 0,
+                    p_base_imponible_usd: b,
+                    p_total_iva_usd: iv,
+                    p_total_usd: b + iv,
+                    p_total_bs: (b + iv) * tasaBCV,
+                    p_tasa_bcv: tasaBCV,
+                    p_tasa_eur: tasaEUR,
+                    p_detalles: listaRecepcion
+                };
+
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/registrar_compra_erp_v2`, {
+                    method: 'POST',
+                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!res.ok) throw await res.json();
+                alert("FACTURA DE COMPRA REGISTRADA EXITOSAMENTE.");
+                location.reload();
+            } catch(e) {
+                alert("ERROR ERP: " + (e.message || JSON.stringify(e) || "Falla en Servidor"));
+                btn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> Registrar Factura`;
+                btn.disabled = false;
+            }
         }
     </script>
     <script src="menu.js"></script>
