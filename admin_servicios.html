@@ -128,10 +128,13 @@
                         </button>
                     </div>
                     <div class="grid grid-cols-3 gap-3">
-                        <div class="col-span-2">
+                        <!-- INICIO BUSCADOR PREDICTIVO TALLER -->
+                        <div class="col-span-2 relative">
                             <label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Nombre / Razón Social *</label>
-                            <input type="text" id="os-nombre" placeholder="Nombre..." class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-bold text-gray-800 outline-none focus:border-tertiary transition">
+                            <input type="text" id="os-nombre" oninput="buscarPredictivoClienteTaller()" autocomplete="off" placeholder="Escribe para buscar..." class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-bold text-gray-800 outline-none focus:border-tertiary transition shadow-inner">
+                            <div id="dropdown-clientes-taller" class="absolute w-full bg-white border border-gray-200 shadow-xl rounded-b mt-0.5 hidden z-50 max-h-48 overflow-y-auto custom-scroll"></div>
                         </div>
+                        <!-- FIN BUSCADOR PREDICTIVO TALLER -->
                         <div>
                             <label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Cédula / RIF</label>
                             <input type="text" id="os-doc" placeholder="Documento..." class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-bold text-gray-800 outline-none focus:border-tertiary transition bg-gray-50">
@@ -374,6 +377,44 @@
             }
             cerrarModalDirectorio(); 
         }
+        // --- BUSCADOR PREDICTIVO DIRECTO EN EL INPUT DEL TALLER ---
+        function buscarPredictivoClienteTaller() {
+            let query = document.getElementById('os-nombre').value.trim();
+            const drop = document.getElementById('dropdown-clientes-taller');
+            
+            if (query === '' || !fuseCli) { 
+                drop.classList.add('hidden'); 
+                return; 
+            }
+            
+            const txtNormalizado = query.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            const resultados = fuseCli.search(txtNormalizado).slice(0, 5).map(r => r.item);
+            
+            drop.innerHTML = '';
+            if (resultados.length === 0) { 
+                drop.innerHTML = `<div class="p-2 text-[9px] text-gray-500 text-center uppercase font-bold">Sin resultados.</div>`; 
+            } else { 
+                resultados.forEach((c) => { 
+                    drop.innerHTML += `
+                    <div class="p-2 border-b border-gray-100 hover:bg-blue-50 cursor-pointer transition flex flex-col" onclick="seleccionarCliDropdown('${c.documento_identidad}', \`${c.nombre_razon_social.replace(/"/g, '&quot;')}\`)">
+                        <div class="font-bold text-primary text-[10px] uppercase truncate">${c.nombre_razon_social}</div>
+                        <div class="text-[8px] text-gray-500 font-mono">${c.documento_identidad}</div>
+                    </div>`; 
+                }); 
+            }
+            drop.classList.remove('hidden');
+        }
+
+        function seleccionarCliDropdown(doc, nom) {
+            document.getElementById('os-doc').value = doc;
+            document.getElementById('os-nombre').value = nom;
+            document.getElementById('dropdown-clientes-taller').classList.add('hidden');
+        }
+
+        document.addEventListener('click', (e) => {
+            const drop = document.getElementById('dropdown-clientes-taller');
+            if(drop && !e.target.closest('.col-span-2.relative')) drop.classList.add('hidden');
+        });
         function filtrarModalDirectorio() { 
             const txt = document.getElementById('buscador-modal').value.trim(); 
             if(txt === '') return dibujarTablaModal(clientesUnicos); 
