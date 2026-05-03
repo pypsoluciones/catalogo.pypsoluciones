@@ -1,145 +1,343 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <!-- Configuración central P&P (cargada antes de cualquier otro script) -->
     <script src="config.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>P&P Admin | CxC Notas de Entrega</title>
 
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin | Notas de Entrega (Cuentas por Cobrar)</title>
-
-    <script>
-        const cPri = localStorage.getItem('pyp_color_primario') || '#143B62';
-        const cSec = localStorage.getItem('pyp_color_secundario') || '#E67E22';
-        const cTer = localStorage.getItem('pyp_color_terciario') || '#64748b';
-        const fontFam = localStorage.getItem('pyp_fuente') || "'Inter', sans-serif";
-        const fontSiz = localStorage.getItem('pyp_tamano') || "14px";
-        
-        // Inyectamos variables CSS (Motor Marca Blanca)
-        document.documentElement.style.setProperty('--color-primary', cPri);
-        document.documentElement.style.setProperty('--color-secondary', cSec);
-        document.documentElement.style.setProperty('--color-tertiary', cTer);
-        document.documentElement.style.setProperty('--font-global', fontFam);
-        document.documentElement.style.setProperty('--size-global', fontSiz);
-    </script>
-
-    <link rel="stylesheet" href="styles.css">
-
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
     <script>
-        // Guardián de Seguridad: Exige el Token Real
-        if (!localStorage.getItem('pyp_token_seguro')) {
-            window.location.href = 'login.html';
-        }
+        const cPri = localStorage.getItem('pyp_color_primario') || '#143B62';
+        const cSec = localStorage.getItem('pyp_color_secundario') || '#E67E22';
+        const fontFam = localStorage.getItem('pyp_fuente') || "'Inter', sans-serif";
+        const fontSiz = localStorage.getItem('pyp_tamano') || "14px";
+        document.documentElement.style.setProperty('--color-primary', cPri);
+        document.documentElement.style.setProperty('--color-secondary', cSec);
+        document.documentElement.style.setProperty('--font-global', fontFam);
+        document.documentElement.style.setProperty('--size-global', fontSiz);
     </script>
 
-    <style>
-        body { font-family: var(--font-global); font-size: var(--size-global); }
-        .bg-primary { background-color: var(--color-primary) !important; }
-        .text-primary { color: var(--color-primary) !important; }
-        .bg-secondary { background-color: var(--color-secondary) !important; }
-        .text-secondary { color: var(--color-secondary) !important; }
-        .text-tertiary { color: var(--color-tertiary) !important; }
-        .border-primary { border-color: var(--color-primary) !important; }
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script>
+        if (!localStorage.getItem('pyp_token_seguro')) { window.location.href = 'login.html'; }
+    </script>
 
-        .custom-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background-color: var(--color-primary); border-radius: 4px; }
-        .btn-press:active { transform: scale(0.96); }
-        .fade-in { animation: fadeIn 0.2s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-    </style>
+    <style>
+        body { font-family: var(--font-global); font-size: var(--size-global); overflow: hidden; }
+        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .modal-overlay { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(4px); }
+    </style>
 </head>
-<body class="bg-[#f0f2f5] font-sans flex h-screen overflow-hidden text-gray-800">
-    <main class="flex-1 flex flex-col h-screen overflow-hidden bg-gray-50">
-        <header class="bg-white shadow-sm px-6 py-4 flex justify-between items-center z-10 shrink-0">
+
+<body class="bg-gray-100 flex h-screen" onclick="cerrarModalCobro(event)">
+
+    <!-- MAIN (Sin márgenes laterales para que menu.js encaje perfecto) -->
+    <main class="flex-1 flex flex-col h-screen overflow-hidden bg-gray-50 relative z-10 w-full">
+        
+        <!-- HEADER -->
+        <header class="bg-white shadow-sm px-6 py-4 flex justify-between items-center z-10 shrink-0 border-b border-gray-200">
             <div>
-                <h1 class="text-xl font-bold text-[#143B62] flex items-center gap-2"><i class="fa-solid fa-truck-fast"></i> Notas de Entrega (Despachos)</h1>
-                <p class="text-xs text-gray-500 font-bold mt-1">Control de mercancía entregada pendiente por facturar/cobrar.</p>
+                <h1 class="text-lg font-black text-primary uppercase flex items-center gap-2 tracking-tighter">
+                    <i class="fa-solid fa-truck-fast text-secondary"></i> Notas de Entrega (Cuentas por Cobrar)
+                </h1>
+                <p class="text-[10px] text-gray-500 font-bold mt-0.5 uppercase tracking-widest">Liquidación y facturación de despachos en tránsito</p>
             </div>
-            <button onclick="cargarDespachos()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-bold text-sm shadow-sm transition flex items-center gap-2">
-                <i class="fa-solid fa-rotate-right"></i> Refrescar
-            </button>
+            <div class="flex items-center gap-3">
+                <div class="bg-green-50 text-green-700 px-3 py-1.5 rounded-lg border border-green-200 text-xs font-black shadow-sm flex items-center gap-2 hidden md:flex">
+                    <i class="fa-solid fa-money-bill-1"></i> TASA BCV: <span id="tasa-usd-val">0.00</span>
+                </div>
+                <button onclick="cargarDespachos()" class="bg-gray-100 hover:bg-gray-200 text-gray-600 px-4 py-2.5 rounded-xl font-black text-xs shadow-sm transition-all flex items-center gap-2 uppercase tracking-widest hover:text-primary">
+                    <i class="fa-solid fa-rotate-right"></i> Refrescar
+                </button>
+            </div>
         </header>
 
-        <div class="flex-1 overflow-auto p-4 md:p-6 custom-scroll">
-            <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                <table class="w-full text-left text-sm border-collapse">
-                    <thead class="bg-[#143B62] text-white text-[10px] uppercase font-black">
-                        <tr>
-                            <th class="p-4 rounded-tl-xl"># Nota</th>
-                            <th class="p-4">Fecha de Entrega</th>
-                            <th class="p-4">Cliente</th>
-                            <th class="p-4 text-right">Deuda Pendiente</th>
-                            <th class="p-4 text-center">Estatus</th>
-                            <th class="p-4 text-center rounded-tr-xl">Acción</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabla-despachos" class="divide-y divide-gray-100">
-                        <tr><td colspan="6" class="p-10 text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin text-xl"></i> Buscando despachos...</td></tr>
-                    </tbody>
-                </table>
+        <!-- ÁREA DE TRABAJO (Tabla) -->
+        <div class="flex-1 overflow-auto p-4 custom-scroll">
+            <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden flex flex-col h-full">
+                
+                <div class="flex-1 overflow-auto custom-scroll">
+                    <table class="w-full text-left border-collapse whitespace-nowrap">
+                        <thead class="bg-primary text-white sticky top-0 z-10 shadow-sm">
+                            <tr class="text-[10px] uppercase font-black tracking-widest">
+                                <th class="p-4">Documento</th>
+                                <th class="p-4">Fecha Emisión</th>
+                                <th class="p-4">Datos del Cliente</th>
+                                <th class="p-4 text-right">Deuda Total</th>
+                                <th class="p-4 text-center">Estatus Contable</th>
+                                <th class="p-4 text-center">Acción Financiera</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-despachos" class="divide-y divide-gray-100">
+                            <tr><td colspan="6" class="p-16 text-center text-gray-300 font-black uppercase text-xs">
+                                <i class="fa-solid fa-spinner fa-spin text-4xl mb-4 block"></i>
+                                Buscando Cuentas por Cobrar...
+                            </td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </main>
 
+    <!-- MODAL FINANCIERO DE LIQUIDACIÓN (Clase Mundial) -->
+    <div id="modal-cobro" class="fixed inset-0 modal-overlay hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden flex flex-col border border-gray-200 relative transform transition-all scale-100" onclick="event.stopPropagation()">
+            
+            <div class="bg-primary px-5 py-4 flex justify-between items-center shrink-0">
+                <h3 class="font-black text-white text-xs tracking-widest uppercase"><i class="fa-solid fa-cash-register text-secondary mr-2"></i> Liquidación de Deuda</h3>
+                <button onclick="document.getElementById('modal-cobro').classList.add('hidden')" class="text-gray-300 hover:text-white text-xl transition"><i class="fa-solid fa-times"></i></button>
+            </div>
+            
+            <div class="p-6 bg-gray-50 space-y-4">
+                
+                <!-- Info Deuda -->
+                <div class="bg-slate-100 border border-slate-200 rounded-2xl p-4 text-center shadow-inner relative overflow-hidden">
+                    <p class="text-gray-500 text-[9px] font-black uppercase tracking-widest mb-1 z-10 relative">Monto a Liquidar (CxC)</p>
+                    <h2 class="text-4xl font-black text-primary leading-none mb-1 z-10 relative" id="modal-total-bs-final">Bs. 0.00</h2>
+                    <p class="text-secondary font-black text-xs z-10 relative" id="modal-total-usd-final">US$ 0.00</p>
+                </div>
+
+                <input type="hidden" id="liquidar-id-factura">
+                <input type="hidden" id="liquidar-nro-doc">
+                <input type="hidden" id="liquidar-cliente">
+
+                <!-- Método principal -->
+                <div>
+                    <label class="block text-[10px] font-black text-gray-500 uppercase mb-2">Seleccione Método de Pago Recibido</label>
+                    <select id="cobro-metodo" class="w-full border border-gray-300 rounded-xl px-4 py-3 text-xs font-black text-primary outline-none shadow-sm bg-white focus:border-secondary transition-all" onchange="verificarIGTF()">
+                        <option value="EFECTIVO_BS">🇻🇪 Efectivo Bolívares</option>
+                        <option value="PAGO_MOVIL">📱 Pago Móvil</option>
+                        <option value="PUNTO_VENTA">💳 Punto de Venta</option>
+                        <option value="TRANSFERENCIA_BS">🏦 Transferencia Bolívares</option>
+                        <option value="EFECTIVO_USD">💵 Divisas / Efectivo (Aplica IGTF)</option>
+                        <option value="ZELLE">🟣 Zelle (Aplica IGTF)</option>
+                    </select>
+                </div>
+
+                <!-- Alerta IGTF -->
+                <div id="caja-igtf" class="hidden bg-yellow-50 border border-yellow-200 p-3 rounded-xl shadow-sm">
+                    <p class="text-[10px] text-yellow-700 font-black uppercase"><i class="fa-solid fa-triangle-exclamation mr-1"></i> El sistema sumará 3% de IGTF automático</p>
+                </div>
+
+                <!-- Alerta de Turno -->
+                <div class="bg-blue-50 border border-blue-200 p-3 rounded-xl">
+                    <p class="text-[9px] text-blue-800 font-bold uppercase leading-tight"><i class="fa-solid fa-info-circle mr-1"></i> Este cobro se inyectará directamente al cuadre de caja de tu turno actual.</p>
+                </div>
+
+                <button onclick="procesarLiquidacion()" id="btn-confirmar" class="w-full bg-secondary hover:scale-105 text-white font-black py-4 rounded-xl shadow-lg transition-all text-xs uppercase tracking-widest mt-2 flex justify-center items-center gap-2">
+                    <i class="fa-solid fa-lock text-white"></i> Cerrar CxC y Facturar
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        window.onload = cargarDespachos;
+        const TOKEN_JWT = localStorage.getItem('pyp_token_seguro');
+        let tasaBCV = 1;
+        let pypIgtf = 0.03; // IGTF por defecto (3%)
+        let idEmpresaGlobal = null;
+        let idCierreActivo = null;
+        let usuarioActual = localStorage.getItem('pyp_usuario_nombre') || 'SISTEMA';
+
+        // Variable global para mantener los datos de la factura que se va a liquidar
+        let facturaActiva = null;
+
+        window.onload = async () => {
+            try {
+                // 1. Obtener Empresa del usuario logueado
+                const resUser = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?select=id_empresa&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                const dUser = await resUser.json();
+                if(dUser[0] && dUser[0].id_empresa) idEmpresaGlobal = dUser[0].id_empresa;
+
+                // 2. Obtener Tasa BCV
+                const resTasa = await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?select=tasa&moneda=eq.USD&order=fecha_actualizacion.desc&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                const dTasa = await resTasa.json();
+                if(dTasa[0]) { tasaBCV = dTasa[0].tasa; document.getElementById('tasa-usd-val').innerText = tasaBCV.toFixed(2); }
+
+                // 3. Obtener Configuración IGTF (Si existe)
+                const resConf = await fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?parametro=eq.IGTF&select=valor`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                if(resConf.ok) {
+                    const dConf = await resConf.json();
+                    if(dConf.length > 0) pypIgtf = parseFloat(dConf[0].valor) / 100;
+                }
+
+                // 4. Cargar Despachos Pendientes
+                cargarDespachos();
+
+            } catch(e) { console.error("Error en arranque:", e); }
+        };
+
+        async function verificarTurno() {
+            try {
+                const filtroEmpresa = idEmpresaGlobal ? `id_empresa=eq.${idEmpresaGlobal}&` : `id_empresa=is.null&`;
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/cierres_caja?${filtroEmpresa}usuario_cajero=eq.${usuarioActual}&estatus=eq.ABIERTA&select=id_cierre`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                const data = await res.json();
+                if(data.length > 0) return data[0].id_cierre;
+                return null;
+            } catch(e) { return null; }
+        }
 
         async function cargarDespachos() {
+            const tbody = document.getElementById('tabla-despachos');
+            tbody.innerHTML = `<tr><td colspan="6" class="p-16 text-center text-gray-300 font-black uppercase text-xs"><i class="fa-solid fa-spinner fa-spin text-4xl mb-4 block"></i>Buscando Cuentas por Cobrar...</td></tr>`;
+
             try {
-                // Buscamos transacciones tipo 'Nota de Entrega'
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/facturas?tipo_transaccion=eq.Nota%20de%20Entrega&order=fecha_emision.desc`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${localStorage.getItem('pyp_token_seguro')}` } });
+                const filtroEmpresa = idEmpresaGlobal ? `id_empresa=eq.${idEmpresaGlobal}&` : '';
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/facturas?${filtroEmpresa}tipo_transaccion=eq.Nota%20de%20Entrega&order=fecha_emision.desc`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
                 const data = await res.json();
                 
-                const tbody = document.getElementById('tabla-despachos');
-                if(!data.length) { tbody.innerHTML = `<tr><td colspan="6" class="p-10 text-center text-gray-400 font-bold"><i class="fa-solid fa-box-open text-4xl mb-3 block opacity-50"></i> No hay notas de entrega registradas.</td></tr>`; return; }
+                if(!data.length) { 
+                    tbody.innerHTML = `<tr><td colspan="6" class="p-16 text-center text-gray-300 font-black uppercase text-xs"><i class="fa-solid fa-box-open text-5xl mb-4 block opacity-30"></i> No hay despachos pendientes de liquidación.</td></tr>`; 
+                    return; 
+                }
 
                 tbody.innerHTML = data.map(c => {
-                    // Si está 'Por Facturar' (rojo), si está 'Completada' (verde)
-                    let badge = '<span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-[9px] font-black border border-green-200">FACTURADO Y COBRADO</span>';
-                    let btn = `<span class="text-gray-300 font-bold text-xs"><i class="fa-solid fa-lock"></i> Cerrado</span>`;
+                    // Reasignar la data al objeto global si se hace clic
+                    const jsonStr = encodeURIComponent(JSON.stringify(c));
                     
-                    if(c.estatus === 'Por Facturar') {
-                        badge = '<span class="bg-red-50 text-red-600 px-3 py-1 rounded-full text-[9px] font-black border border-red-200 animate-pulse">POR FACTURAR</span>';
-                        btn = `<button onclick="facturarDespacho('${c.id_factura}')" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded shadow text-xs font-bold transition flex justify-center items-center gap-1 mx-auto w-full max-w-[120px]"><i class="fa-solid fa-file-invoice-dollar"></i> Facturar Ahora</button>`;
+                    let badge = '<span class="bg-green-100 text-green-700 px-3 py-1 rounded-xl text-[9px] font-black border border-green-200">PAGADO (LIQUIDADO)</span>';
+                    let btn = `<span class="text-gray-300 font-black text-[10px] uppercase"><i class="fa-solid fa-lock"></i> Contabilidad Cerrada</span>`;
+                    
+                    if(c.estatus === 'Por Facturar' || c.estatus === 'Por Pagar') {
+                        badge = '<span class="bg-red-50 text-red-600 px-3 py-1 rounded-xl text-[9px] font-black border border-red-200 animate-pulse tracking-widest shadow-sm">POR COBRAR</span>';
+                        btn = `<button onclick="prepararLiquidacion('${jsonStr}')" class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-xl shadow-md text-[10px] font-black transition-all flex justify-center items-center gap-2 mx-auto w-full max-w-[140px] uppercase tracking-widest hover:scale-105"><i class="fa-solid fa-hand-holding-dollar"></i> Cobrar</button>`;
                     }
                     
+                    const fE = new Date(c.fecha_emision);
+                    
                     return `
-                    <tr class="hover:bg-gray-50 transition">
-                        <td class="p-4 font-mono font-bold text-blue-600">NE-00${c.correlativo}</td>
-                        <td class="p-4 text-gray-500 font-semibold text-xs">${new Date(c.fecha_emision).toLocaleDateString()}</td>
-                        <td class="p-4"><p class="font-bold text-[#143B62]">${c.cliente_nombre}</p><p class="text-[9px] text-gray-400">${c.cliente_documento}</p></td>
+                    <tr class="hover:bg-blue-50 transition-all border-b border-gray-100">
+                        <td class="p-4 font-mono font-black text-primary text-sm">${c.nro_factura_manual ? c.nro_factura_manual : `NE-${String(c.correlativo).padStart(6, '0')}`}</td>
+                        <td class="p-4 text-gray-500 font-bold text-[11px] uppercase">${fE.toLocaleDateString('es-VE')}</td>
+                        <td class="p-4"><p class="font-black text-primary text-xs uppercase">${c.cliente_nombre}</p><p class="text-[9px] font-bold text-gray-400 mt-0.5">${c.cliente_documento}</p></td>
                         <td class="p-4 text-right font-black text-gray-800 text-lg">$${Number(c.total_usd).toFixed(2)}</td>
                         <td class="p-4 text-center">${badge}</td>
                         <td class="p-4 text-center">${btn}</td>
                     </tr>`;
                 }).join('');
-            } catch(e) { alert("Error cargando los despachos."); }
+            } catch(e) { 
+                alert("Error de conexión con el ERP."); 
+                tbody.innerHTML = `<tr><td colspan="6" class="p-10 text-center text-red-400 font-bold">Error de conexión. Reintente.</td></tr>`;
+            }
         }
 
-        async function facturarDespacho(id) {
-            if(!confirm("¿El cliente ya pagó y deseas convertir esta Nota de Entrega en una FACTURA DEFINITIVA?")) return;
+        // --- FLUJO DE COBRO FINANCIERO ---
+
+        async function prepararLiquidacion(jsonStr) {
+            idCierreActivo = await verificarTurno();
+            if(!idCierreActivo) {
+                alert("CAJA CERRADA: Debes ir a 'Finanzas > Control de Caja' y abrir tu turno antes de liquidar una deuda.");
+                return;
+            }
+
+            facturaActiva = JSON.parse(decodeURIComponent(jsonStr));
+            
+            document.getElementById('liquidar-id-factura').value = facturaActiva.id_factura;
+            document.getElementById('liquidar-nro-doc').value = facturaActiva.nro_factura_manual ? facturaActiva.nro_factura_manual : `NE-${facturaActiva.correlativo}`;
+            document.getElementById('liquidar-cliente').value = facturaActiva.cliente_nombre;
+
+            // Reiniciamos Modal
+            document.getElementById('cobro-metodo').selectedIndex = 0;
+            verificarIGTF();
+
+            document.getElementById('modal-cobro').classList.remove('hidden');
+        }
+
+        function verificarIGTF() {
+            if(!facturaActiva) return;
+            const mtd = document.getElementById('cobro-metodo').value;
+            const aplica = (mtd === 'EFECTIVO_USD' || mtd === 'ZELLE');
+            
+            document.getElementById('caja-igtf').classList.toggle('hidden', !aplica);
+            
+            const totalUSD = Number(facturaActiva.total_usd);
+            const igtfUSD = aplica ? (totalUSD * pypIgtf) : 0;
+            const granTotalUSD = totalUSD + igtfUSD;
+            const granTotalBS = granTotalUSD * tasaBCV;
+
+            document.getElementById('modal-total-bs-final').innerText = `Bs. ${granTotalBS.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits:2})}`;
+            document.getElementById('modal-total-usd-final').innerText = `US$ ${granTotalUSD.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits:2})}`;
+        }
+
+        function cerrarModalCobro(e) {
+            if(e && e.target.id !== 'modal-cobro') return;
+            document.getElementById('modal-cobro').classList.add('hidden');
+        }
+
+        async function procesarLiquidacion() {
+            const btn = document.getElementById('btn-confirmar');
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-white"></i> VALIDANDO...`;
+            btn.disabled = true;
 
             try {
-                // Actualizamos el estatus a 'Completada' para que la contabilidad la cierre.
-                // Mantenemos el tipo "Nota de Entrega" por temas de auditoría, o podríamos cambiarlo a 'Venta'.
-                // Dejémoslo en Nota de Entrega pero con estatus Completada.
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/facturas?id_factura=eq.${id}`, {
-                    method: 'PATCH',
-                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${localStorage.getItem('pyp_token_seguro')}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        estatus: 'Completada',
-                        fecha_emision: new Date().toISOString() // Actualizamos la fecha a la del pago real
-                    })
-                });
+                const idF = document.getElementById('liquidar-id-factura').value;
+                const mtd = document.getElementById('cobro-metodo').value;
+                const nroDoc = document.getElementById('liquidar-nro-doc').value;
+                const cliNom = document.getElementById('liquidar-cliente').value;
 
-                if(res.ok) {
-                    alert("¡Éxito! El despacho ha sido facturado y cerrado en la contabilidad.");
-                    cargarDespachos();
-                }
-            } catch(e) { alert("Error al procesar el pago del despacho."); }
+                // Cálculos finales (Si hay IGTF debemos actualizar la factura)
+                const aplica = (mtd === 'EFECTIVO_USD' || mtd === 'ZELLE');
+                const tUSD = Number(facturaActiva.total_usd);
+                const igtfUSD = aplica ? (tUSD * pypIgtf) : 0;
+                const granT_USD = tUSD + igtfUSD;
+                const granT_BS = granT_USD * tasaBCV;
+
+                // 1. INYECCIÓN A LA CAJA (El dinero entra al sistema)
+                const payloadCaja = {
+                    id_empresa: idEmpresaGlobal,
+                    id_factura: idF,
+                    id_cierre: idCierreActivo,
+                    fecha: new Date().toISOString(),
+                    tipo: 'INGRESO',
+                    concepto: `LIQUIDACIÓN CXC / DOC: ${nroDoc} / CLI: ${cliNom}`,
+                    monto_usd: granT_USD,
+                    monto_bs: granT_BS,
+                    metodo_pago: mtd,
+                    usuario: usuarioActual
+                };
+
+                const resCaja = await fetch(`${SUPABASE_URL}/rest/v1/caja_movimientos`, {
+                    method: 'POST',
+                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payloadCaja)
+                });
+                if(!resCaja.ok) throw new Error("Fallo al inyectar dinero a la caja.");
+
+                // 2. ACTUALIZACIÓN DE FACTURA (Liquidada)
+                // Usamos PATCH para no romper los renglones existentes.
+                const payloadFac = {
+                    estatus: 'Completada',
+                    saldo_pendiente_usd: 0,
+                    metodos_pago: mtd,
+                    igtf_porcentaje: aplica ? (pypIgtf * 100) : 0,
+                    total_usd: granT_USD,
+                    total_bs: granT_BS,
+                    tasa_bcv_aplicada: tasaBCV,
+                    // Dejamos la fecha_emision original intacta por auditoría.
+                };
+
+                const resFac = await fetch(`${SUPABASE_URL}/rest/v1/facturas?id_factura=eq.${idF}`, {
+                    method: 'PATCH',
+                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payloadFac)
+                });
+                if(!resFac.ok) throw new Error("Fallo al cambiar estatus de factura.");
+
+                alert("¡LIQUIDACIÓN EXITOSA!\nEl dinero ha ingresado al cuadre de tu turno y la Cuenta por Cobrar ha sido cerrada.");
+                cerrarModalCobro();
+                cargarDespachos();
+
+            } catch(e) {
+                alert("ERROR ERP: " + e.message);
+            } finally {
+                btn.innerHTML = `<i class="fa-solid fa-lock text-white"></i> Cerrar CxC y Facturar`;
+                btn.disabled = false;
+            }
         }
       
     </script>
