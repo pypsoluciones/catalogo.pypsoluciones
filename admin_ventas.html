@@ -849,11 +849,13 @@
                 const usuario = localStorage.getItem('pyp_usuario_nombre') || 'SISTEMA';
                 const filtroEmpresa = empresaActual ? `id_empresa=eq.${empresaActual}` : `id_empresa=is.null`;
                 const hoy = getFechaHoy();
+                
+                // FIX: Apuntamos a la nueva tabla para leer las métricas del cajero (ventas_facturas)
                 const res = await fetch(
-                   const res = await fetch(
                     `${SUPABASE_URL}/rest/v1/ventas_facturas?${filtroEmpresa}&nombre_cajero=eq.${encodeURIComponent(usuario)}&fecha_emision=gte.${hoy}T00:00:00Z&select=*`,
                     { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }
                 );
+                
                 if (!res.ok) throw new Error("No se pudo cargar el turno.");
                 const facturas = await res.json();
 
@@ -862,7 +864,6 @@
                 const completadas = facturas.filter(f => f.estatus === 'Completada').length;
                 const porPagar = facturas.filter(f => f.estatus === 'Por Pagar').length;
 
-                // contar métodos de pago
                 const metodos = {};
                 facturas.forEach(f => {
                     const m = f.metodos_pago || 'DESCONOCIDO';
@@ -909,7 +910,6 @@
                 contenedor.innerHTML = `<div class="text-center py-6 text-red-500 font-bold text-xs">${e.message}</div>`;
             }
         }
-
         function cerrarDashboardTurno() {
             document.getElementById('modal-dashboard-turno').classList.add('hidden');
             document.getElementById('modal-dashboard-turno').classList.remove('flex');
@@ -1060,10 +1060,12 @@
                 if (resConf.ok) { const dConf = await resConf.json(); if (dConf.length > 0) corrInicial = parseInt(dConf[0].valor, 10) || 0; }
 
                 const filtroEmpresa = empresaActual ? `id_empresa=eq.${empresaActual}` : `id_empresa=is.null`;
-                // FIX FISCAL SENIAT: solo cuenta FACTURAS (no NC) para el próximo correlativo
+                
+                // FIX: Apuntamos estrictamente a la tabla renombrada (ventas_facturas)
                 const res = await fetch(`${SUPABASE_URL}/rest/v1/ventas_facturas?${filtroEmpresa}&tipo_transaccion=neq.Nota%20de%20Credito&select=correlativo&order=correlativo.desc&limit=1`, {
                     headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` }
                 });
+                
                 if (res.ok) {
                     const data = await res.json();
                     correlativoActual = data.length > 0 ? (parseInt(data[0].correlativo, 10) || corrInicial) + 1 : corrInicial + 1;
@@ -1075,7 +1077,6 @@
                 inputNroFactura.readOnly = false;
             }
         }
-
         // ================================================================
         // CATÁLOGO DE PRODUCTOS
         // ================================================================
@@ -1857,7 +1858,7 @@
         // ================================================================
         // VIEJA implementación (queda como respaldo). NO se llama si USAR_RPC_PROCESAR_VENTA = true
         // ================================================================
-        async function procesarVentaLegacy(modo = 'NORMAL') {
+       async function procesarVentaLegacy(modo = 'NORMAL') {
             const btnCobrar = document.getElementById('btn-cobrar');
             const btnGuardar = document.getElementById('btn-guardar');
             btnCobrar.disabled = true; btnGuardar.disabled = true;
@@ -1892,18 +1893,8 @@
                 const baseImpUsd = parseFloat(document.getElementById('contenedor-totales-fiscales').dataset.baseTotalUsd) || 0;
                 const exentoUsd = parseFloat(document.getElementById('contenedor-totales-fiscales').dataset.exentoTotalUsd) || 0;
 
-                // FIX: leer bases IVA dinámicas calculadas en actualizarUI_Carrito
-                const bG_Bs = parseFloat(document.getElementById('contenedor-totales-fiscales').dataset.bG_Bs) || 0;
-                const bR1_Bs = parseFloat(document.getElementById('contenedor-totales-fiscales').dataset.bR1_Bs) || 0;
-                const bR2_Bs = parseFloat(document.getElementById('contenedor-totales-fiscales').dataset.bR2_Bs) || 0;
-                const bE_Bs = parseFloat(document.getElementById('contenedor-totales-fiscales').dataset.bE_Bs) || 0;
-                const ivaG_Bs = parseFloat(document.getElementById('contenedor-totales-fiscales').dataset.ivaG_Bs) || 0;
-                const ivaR1_Bs = parseFloat(document.getElementById('contenedor-totales-fiscales').dataset.ivaR1_Bs) || 0;
-                const ivaR2_Bs = parseFloat(document.getElementById('contenedor-totales-fiscales').dataset.ivaR2_Bs) || 0;
-
                 const estadoFinal = (metodo === 'POR_PAGAR' || modoCotizacion) ? (modoCotizacion ? 'Cotización' : 'Por Pagar') : 'Completada';
 
-                // Armar descripción de pago (incluye mixto si hay líneas)
                 let metodoPagoFinal = metodo;
                 if (lineasPagoMixto.length > 0) {
                     metodoPagoFinal = lineasPagoMixto.map(l => `${l.metodo}(${fmt(l.monto)}Bs)`).join('+');
@@ -1935,11 +1926,13 @@
                     saldo_pendiente_usd: (estadoFinal === 'Por Pagar' || estadoFinal === 'Cotización') ? totalUsdFinal : 0
                 };
 
-                const resF = await fetch(`${SUPABASE_URL}/rest/v1/facturas`, {
+                // FIX: apuntamos a ventas_facturas
+                const resF = await fetch(`${SUPABASE_URL}/rest/v1/ventas_facturas`, {
                     method: 'POST',
                     headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
                     body: JSON.stringify(payloadFactura)
                 });
+                
                 if (!resF.ok) { const errObj = await resF.json(); throw new Error(errObj.message || "Fallo al guardar factura."); }
                 const fId = (await resF.json())[0].id_factura;
 
@@ -1951,10 +1944,20 @@
                 const promesas = [];
                 carrito.forEach(i => {
                     const prAplicado = calcularPrecioUnitario(i, i.cantidad);
-                    promesas.push(fetch(`${SUPABASE_URL}/rest/v1/detalles_factura`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ id_empresa: empresaActual || null, factura_id: fId, producto_sku: i.id_producto_sku, producto_nombre: i.nombre, cantidad: i.cantidad, precio_unitario_usd: prAplicado, subtotal_usd: prAplicado * i.cantidad }) }));
-                    // FIX modo cotización: NO descontar stock si es cotización
+                    
+                    // FIX: apuntamos a ventas_facturas_detalles
+                    promesas.push(fetch(`${SUPABASE_URL}/rest/v1/ventas_facturas_detalles`, { 
+                        method: 'POST', 
+                        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, 
+                        body: JSON.stringify({ id_empresa: empresaActual || null, factura_id: fId, producto_sku: i.id_producto_sku, producto_nombre: i.nombre, cantidad: i.cantidad, precio_unitario_usd: prAplicado, subtotal_usd: prAplicado * i.cantidad }) 
+                    }));
+                    
                     if (!i.permitir_negativo && !modoCotizacion) {
-                        promesas.push(fetch(`${SUPABASE_URL}/rest/v1/productos?id_producto_sku=eq.${i.id_producto_sku}`, { method: 'PATCH', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ stock_actual: i.stock_actual - i.cantidad }) }));
+                        promesas.push(fetch(`${SUPABASE_URL}/rest/v1/productos?id_producto_sku=eq.${i.id_producto_sku}`, { 
+                            method: 'PATCH', 
+                            headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, 
+                            body: JSON.stringify({ stock_actual: i.stock_actual - i.cantidad }) 
+                        }));
                     }
                 });
                 await Promise.all(promesas);
@@ -1962,11 +1965,8 @@
                 if (modo !== 'DIRECTO') {
                     let empresaPrint = { nombre_empresa: 'P&P SOLUCIONES', rif: 'J-00000000-0', direccion_fiscal: 'SIN DIRECCIÓN FISCAL' };
                     generarHTMLImpresion(formatoPrint, empresaPrint, payloadFactura, carrito);
-
-                    // NUEVO: guardar datos para re-impresión
                     ultimaVentaParaReimprimir = { formato: formatoPrint, empresa: empresaPrint, factura: payloadFactura, items: JSON.parse(JSON.stringify(carrito)) };
                     document.getElementById('btn-reimprimir').disabled = false;
-
                     window.print();
                 }
 
