@@ -2,7 +2,6 @@
 <html lang="es">
 <head>
     <script src="config.js"></script>
-
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>P&P Admin | Factura de Compra</title>
@@ -25,9 +24,7 @@
     <script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.js"></script>
     
     <script>
-        if (!localStorage.getItem('pyp_token_seguro')) {
-            window.location.href = 'login.html';
-        }
+        if (!localStorage.getItem('pyp_token_seguro')) { window.location.href = 'login.html'; }
     </script>
 
     <style>
@@ -38,7 +35,7 @@
         .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
         .custom-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
         
-        /* Forzar mayúsculas en todos los inputs */
+        /* Forzar mayúsculas en inputs */
         input[type="text"], textarea { text-transform: uppercase; }
         
         .modal-overlay { background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(4px); }
@@ -49,7 +46,7 @@
 
     <main class="flex-1 flex flex-col h-screen overflow-hidden bg-gray-50">
         
-        <header class="bg-white shadow-sm px-6 py-4 flex justify-between items-center z-10 shrink-0 border-b border-gray-200">
+        <header class="bg-white shadow-sm px-6 py-3 flex justify-between items-center z-10 shrink-0 border-b border-gray-200">
             <h1 class="text-xl font-black text-primary uppercase"><i class="fa-solid fa-file-invoice mr-2"></i> FACTURA DE COMPRA</h1>
             <div class="flex gap-4">
                 <div class="text-sm font-bold bg-green-50 text-green-700 px-3 py-1.5 rounded border border-green-200 flex items-center gap-2 shadow-sm">
@@ -57,146 +54,147 @@
                 </div>
                 <div class="text-sm font-bold bg-blue-50 text-blue-700 px-3 py-1.5 rounded border border-blue-200 flex items-center gap-2 shadow-sm">
                     <i class="fa-solid fa-euro-sign"></i> EUR: 
-                    <input type="number" id="tasa-eur-header" step="0.0001" class="bg-transparent w-20 outline-none font-black text-blue-800 border-b border-blue-300" placeholder="0.0000" oninput="sincronizarEUR(this.value)">
+                    <input type="number" id="tasa-eur-header" step="any" class="bg-transparent w-24 outline-none font-black text-blue-800 border-b border-blue-300 px-1" placeholder="0.00" oninput="sincronizarEUR(this.value)">
                 </div>
             </div>
         </header>
 
-        <div class="flex-1 overflow-y-auto p-4 custom-scroll flex flex-col xl:flex-row gap-4">
+        <div class="flex-1 overflow-y-auto p-3 custom-scroll flex flex-col xl:flex-row gap-3">
             
-            <div class="w-full xl:w-[350px] flex flex-col gap-4 shrink-0">
+            <div class="w-full xl:w-[320px] flex flex-col gap-3 shrink-0">
                 
-                <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm relative">
-                    <div class="flex justify-between items-center mb-4 border-b pb-2">
+                <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm relative">
+                    <div class="flex justify-between items-center mb-3 border-b pb-1">
                         <h3 class="text-xs font-black text-gray-500 uppercase tracking-wider"><i class="fa-solid fa-building"></i> 1. Proveedor</h3>
-                        <button onclick="abrirModalProveedor()" class="bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white border border-blue-200 px-2 py-1 rounded text-xs font-bold transition flex items-center gap-1 shadow-sm">
-                            <i class="fa-solid fa-plus"></i> Ingresar Nuevo
+                        <button onclick="abrirModalProveedor()" class="bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white border border-blue-200 px-2 py-0.5 rounded text-[10px] font-bold transition flex items-center gap-1 shadow-sm">
+                            <i class="fa-solid fa-plus"></i> Nuevo
                         </button>
                     </div>
                     
-                    <div class="mb-4 relative">
-                        <label class="block text-[10px] font-bold text-primary uppercase mb-1">Buscar en Directorio</label>
+                    <div class="mb-3 relative">
                         <div class="relative">
-                            <i class="fa-solid fa-search absolute left-3 top-2.5 text-gray-400"></i>
-                            <input type="text" id="buscador-prov" oninput="buscarProvPredictivo(this.value.toUpperCase())" onclick="event.stopPropagation()" placeholder="RIF O RAZÓN SOCIAL..." class="w-full bg-gray-50 border border-gray-300 rounded pl-9 pr-3 py-2 text-sm focus:outline-none focus:border-primary font-bold">
+                            <i class="fa-solid fa-search absolute left-3 top-2 text-gray-400 text-xs"></i>
+                            <input type="text" id="buscador-prov" oninput="buscarProvPredictivo(this.value)" onclick="event.stopPropagation()" placeholder="BUSCAR PROVEEDOR..." class="w-full bg-gray-50 border border-gray-300 rounded pl-8 pr-3 py-1.5 text-xs font-bold focus:outline-none focus:border-primary">
                         </div>
                         <div id="lista-prov" class="absolute w-full bg-white shadow-xl rounded-b-lg border border-gray-200 mt-1 hidden z-50 max-h-48 overflow-y-auto custom-scroll"></div>
                     </div>
 
-                    <div class="space-y-3 pt-3 border-t border-gray-100">
+                    <div class="space-y-2 pt-2 border-t border-gray-100">
                         <input type="hidden" id="prov-id">
-                        <div>
-                            <label class="block text-[10px] font-bold text-gray-400 uppercase">RIF / Documento *</label>
-                            <input type="text" id="prov-rif" readonly class="w-full bg-gray-50 border border-gray-200 rounded px-3 py-1.5 text-sm font-bold text-gray-600 cursor-not-allowed">
+                        <div class="flex gap-2">
+                            <div class="w-1/3">
+                                <label class="block text-[9px] font-bold text-gray-400 uppercase">RIF *</label>
+                                <input type="text" id="prov-rif" readonly class="w-full bg-gray-50 border border-gray-200 rounded px-2 py-1 text-xs font-bold text-gray-600 cursor-not-allowed">
+                            </div>
+                            <div class="flex-1">
+                                <label class="block text-[9px] font-bold text-gray-400 uppercase">Teléfono</label>
+                                <input type="text" id="prov-telefono" readonly class="w-full bg-gray-50 border border-gray-200 rounded px-2 py-1 text-xs font-bold text-blue-600 cursor-not-allowed">
+                            </div>
                         </div>
                         <div>
-                            <label class="block text-[10px] font-bold text-gray-400 uppercase">Razón Social *</label>
-                            <input type="text" id="prov-nombre" readonly class="w-full bg-gray-50 border border-gray-200 rounded px-3 py-1.5 text-sm font-bold text-gray-800 cursor-not-allowed">
+                            <label class="block text-[9px] font-bold text-gray-400 uppercase">Razón Social *</label>
+                            <input type="text" id="prov-nombre" readonly class="w-full bg-gray-50 border border-gray-200 rounded px-2 py-1 text-xs font-black text-gray-800 cursor-not-allowed">
                         </div>
                         <div>
-                            <label class="block text-[10px] font-bold text-gray-400 uppercase">Dirección Fiscal *</label>
-                            <textarea id="prov-direccion" readonly rows="2" class="w-full bg-gray-50 border border-gray-200 rounded px-3 py-1.5 text-xs text-gray-600 cursor-not-allowed resize-none"></textarea>
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-bold text-gray-400 uppercase">Teléfono Principal</label>
-                            <input type="text" id="prov-telefono" readonly class="w-full bg-gray-50 border border-gray-200 rounded px-3 py-1.5 text-sm font-bold text-gray-600 cursor-not-allowed">
+                            <label class="block text-[9px] font-bold text-gray-400 uppercase">Dirección Fiscal *</label>
+                            <textarea id="prov-direccion" readonly rows="3" class="w-full bg-gray-50 border border-gray-200 rounded px-2 py-1 text-sm font-bold text-gray-700 cursor-not-allowed resize-none"></textarea>
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm relative">
-                    <h3 class="text-xs font-black text-gray-500 uppercase tracking-wider mb-4 border-b pb-2"><i class="fa-solid fa-file-invoice"></i> 2. Documento</h3>
-                    <div class="space-y-3">
+                <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm relative">
+                    <h3 class="text-xs font-black text-gray-500 uppercase tracking-wider mb-3 border-b pb-1"><i class="fa-solid fa-file-invoice"></i> 2. Documento</h3>
+                    <div class="space-y-2">
                         <div class="flex gap-2">
                             <div class="flex-1">
-                                <label class="block text-[10px] font-bold text-gray-400 uppercase">N° Factura *</label>
-                                <input type="text" id="fac-num" oninput="this.value = this.value.toUpperCase()" class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:border-primary font-bold">
+                                <label class="block text-[9px] font-bold text-gray-400 uppercase">N° Factura *</label>
+                                <input type="text" id="fac-num" class="w-full border border-gray-300 rounded px-2 py-1 text-xs font-bold focus:border-primary">
                             </div>
                             <div class="flex-1">
-                                <label class="block text-[10px] font-bold text-gray-400 uppercase">N° Control *</label>
-                                <input type="text" id="fac-control" oninput="this.value = this.value.toUpperCase()" class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:border-primary font-bold">
+                                <label class="block text-[9px] font-bold text-gray-400 uppercase">N° Control *</label>
+                                <input type="text" id="fac-control" class="w-full border border-gray-300 rounded px-2 py-1 text-xs font-bold focus:border-primary">
                             </div>
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-bold text-gray-400 uppercase">Vendedor (Proveedor)</label>
-                            <input type="text" id="fac-vendedor" oninput="this.value = this.value.toUpperCase()" class="w-full border border-gray-300 rounded px-3 py-1.5 text-sm focus:border-primary">
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-bold text-gray-400 uppercase">Celular Vendedor</label>
-                            <input type="text" id="fac-vendedor-telefono" oninput="this.value = this.value.toUpperCase()" class="w-full border border-gray-300 rounded px-3 py-1.5 text-sm focus:border-primary">
                         </div>
                         <div class="flex gap-2">
                             <div class="flex-1">
-                                <label class="block text-[10px] font-bold text-gray-400 uppercase">Condición</label>
-                                <select id="fac-condicion" onchange="toggleCredito(this.value)" class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm font-bold focus:border-primary">
+                                <label class="block text-[9px] font-bold text-gray-400 uppercase">Vendedor</label>
+                                <input type="text" id="fac-vendedor" class="w-full border border-gray-300 rounded px-2 py-1 text-xs focus:border-primary">
+                            </div>
+                            <div class="w-1/3">
+                                <label class="block text-[9px] font-bold text-gray-400 uppercase">Celular</label>
+                                <input type="text" id="fac-vendedor-telefono" oninput="formatearTelFront(this)" class="w-full border border-gray-300 rounded px-2 py-1 text-xs focus:border-primary">
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <div class="flex-1">
+                                <label class="block text-[9px] font-bold text-gray-400 uppercase">Condición</label>
+                                <select id="fac-condicion" onchange="toggleCredito(this.value)" class="w-full border border-gray-300 rounded px-2 py-1 text-xs font-bold focus:border-primary">
                                     <option value="Contado">CONTADO</option>
                                     <option value="Crédito">CRÉDITO (CxP)</option>
                                 </select>
                             </div>
                             <div class="w-20" id="div-dias" style="display:none">
-                                <label class="block text-[10px] font-bold text-gray-400 uppercase">Días</label>
-                                <input type="number" id="fac-dias" value="15" class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm text-center">
+                                <label class="block text-[9px] font-bold text-gray-400 uppercase">Días</label>
+                                <input type="number" id="fac-dias" value="15" class="w-full border border-gray-300 rounded px-2 py-1 text-xs text-center font-bold">
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex-1 flex flex-col">
-                    <h3 class="text-xs font-black text-gray-500 uppercase tracking-wider mb-4 border-b pb-2"><i class="fa-solid fa-barcode"></i> Buscar Producto</h3>
-                    <div class="relative mb-3">
-                        <i class="fa-solid fa-search absolute left-3 top-2.5 text-gray-400"></i>
-                        <input type="text" id="buscador-prod" oninput="buscarProdPredictivo(this.value.toUpperCase())" placeholder="SKU O NOMBRE..." class="w-full bg-gray-50 border border-gray-300 rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:border-primary">
-                    </div>
-                    <div id="lista-busqueda-prod" class="flex-1 overflow-y-auto custom-scroll space-y-2 border border-gray-100 p-2 rounded bg-gray-50 min-h-[150px]">
-                        <p class="text-center text-xs text-gray-400 py-4 font-bold">ESCRIBE PARA BUSCAR</p>
+            </div>
+
+            <div class="flex-1 flex flex-col gap-3 overflow-hidden">
+                
+                <div class="bg-white p-3 rounded-xl border border-gray-200 shadow-sm shrink-0 flex items-center gap-3 relative">
+                    <i class="fa-solid fa-barcode text-primary text-xl ml-2"></i>
+                    <div class="flex-1 relative">
+                        <input type="text" id="buscador-prod" oninput="buscarProdPredictivo(this.value)" onclick="event.stopPropagation()" placeholder="ESCANEE CÓDIGO O BUSQUE POR NOMBRE/SKU..." class="w-full bg-blue-50 border border-blue-200 rounded-lg pl-4 pr-3 py-3 text-sm font-black text-primary focus:outline-none focus:border-primary focus:ring-2 focus:ring-blue-100 transition">
+                        <div id="lista-busqueda-prod" class="absolute w-full bg-white shadow-2xl rounded-b-lg border border-gray-200 mt-1 hidden z-50 max-h-60 overflow-y-auto custom-scroll"></div>
                     </div>
                 </div>
 
-            </div>
-
-            <div class="flex-1 flex flex-col gap-4 overflow-hidden">
                 <div class="flex-1 bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col overflow-hidden">
-                    <div class="p-4 bg-gray-50 border-b flex justify-between items-center">
-                        <h3 class="text-sm font-black text-primary uppercase tracking-wider"><i class="fa-solid fa-list-check"></i> Renglones de Factura</h3>
-                        <button onclick="limpiarTodo()" class="text-red-500 hover:text-red-700 text-xs font-bold transition"><i class="fa-solid fa-trash"></i> Limpiar Todo</button>
+                    <div class="p-3 bg-gray-50 border-b flex justify-between items-center shrink-0">
+                        <h3 class="text-xs font-black text-primary uppercase"><i class="fa-solid fa-list-check"></i> Renglones</h3>
+                        <button onclick="limpiarTodo()" class="text-red-500 hover:text-red-700 text-[10px] font-bold transition"><i class="fa-solid fa-trash"></i> Limpiar Todo</button>
                     </div>
                     <div class="flex-1 overflow-auto custom-scroll p-0">
                         <table class="w-full text-left border-collapse whitespace-nowrap">
                             <thead class="bg-white sticky top-0 z-10 shadow-sm">
                                 <tr class="text-[10px] text-gray-500 uppercase border-b-2 border-gray-200">
-                                    <th class="p-3">Producto / SKU</th>
-                                    <th class="p-3 text-center">Tipo IVA</th>
-                                    <th class="p-3 text-center w-24">Cantidad</th>
-                                    <th class="p-3 text-right w-32">Costo (USD)</th>
-                                    <th class="p-3 text-right">Subtotal</th>
-                                    <th class="p-3 text-center w-10"></th>
+                                    <th class="p-2 pl-4">Producto / SKU</th>
+                                    <th class="p-2 text-center w-24">Tipo IVA</th>
+                                    <th class="p-2 text-center w-20">Cantidad</th>
+                                    <th class="p-2 text-right w-28">Costo (USD)</th>
+                                    <th class="p-2 text-right w-28">Subtotal</th>
+                                    <th class="p-2 text-center w-10"></th>
                                 </tr>
                             </thead>
                             <tbody id="tabla-recepcion" class="divide-y divide-gray-100">
-                                <tr><td colspan="6" class="py-10 text-center text-gray-400 font-bold uppercase"><i class="fa-solid fa-boxes-packing text-4xl mb-2 opacity-30 block"></i> Agrega productos desde el panel izquierdo</td></tr>
+                                <tr><td colspan="6" class="py-12 text-center text-gray-400 font-bold uppercase"><i class="fa-solid fa-barcode text-4xl mb-2 opacity-30 block"></i> Usa el buscador superior para agregar productos</td></tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
 
-                <div class="bg-[#1e293b] rounded-xl shadow-lg p-5 shrink-0 text-white flex flex-col md:flex-row justify-between items-center gap-4">
-                    <div class="flex gap-8 w-full md:w-auto">
+                <div class="bg-[#1e293b] rounded-xl shadow-lg p-4 shrink-0 text-white flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div class="flex gap-6 w-full md:w-auto">
                         <div>
-                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Base Imponible</p>
-                            <p class="text-xl font-black text-white" id="tot-base">US$ 0.00</p>
+                            <p class="text-[9px] font-bold text-gray-400 uppercase">Base Imponible</p>
+                            <p class="text-lg font-black" id="tot-base">US$ 0.00</p>
                         </div>
                         <div>
-                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">IVA</p>
-                            <p class="text-xl font-black text-red-400" id="tot-iva">US$ 0.00</p>
+                            <p class="text-[9px] font-bold text-gray-400 uppercase">IVA</p>
+                            <p class="text-lg font-black text-red-400" id="tot-iva">US$ 0.00</p>
                         </div>
-                        <div class="border-l border-gray-600 pl-8">
-                            <p class="text-[10px] font-bold text-green-400 uppercase tracking-wider">TOTAL COMPRA</p>
-                            <p class="text-3xl font-black text-green-400" id="tot-final">US$ 0.00</p>
-                            <p class="text-xs text-gray-400 font-bold mt-1" id="tot-bs">Bs. 0.00</p>
+                        <div class="border-l border-gray-600 pl-6">
+                            <p class="text-[10px] font-bold text-green-400 uppercase">TOTAL COMPRA</p>
+                            <p class="text-2xl font-black text-green-400" id="tot-final">US$ 0.00</p>
+                            <p class="text-[10px] text-gray-400 font-bold mt-1" id="tot-bs">Bs. 0.00</p>
                         </div>
                     </div>
                     
-                    <button onclick="procesarCompraV2()" class="w-full md:w-auto bg-primary hover:brightness-110 text-white font-black py-4 px-8 rounded-lg shadow-md transition text-sm uppercase tracking-wider flex justify-center items-center gap-2">
+                    <button onclick="procesarCompraV2()" class="w-full md:w-auto bg-primary hover:brightness-110 text-white font-black py-3 px-6 rounded-lg shadow-md transition text-xs uppercase flex justify-center items-center gap-2">
                         <i class="fa-solid fa-lock"></i> PROCESAR FACTURA
                     </button>
                 </div>
@@ -205,87 +203,63 @@
         </div>
     </main>
 
-    <div id="modal-proveedor" class="fixed inset-0 modal-overlay hidden z-50 flex justify-center items-center overflow-y-auto py-10">
+    <div id="modal-proveedor" class="fixed inset-0 modal-overlay hidden z-50 flex justify-center items-center overflow-y-auto py-6">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl mx-4 transform transition-all">
-            <div class="bg-primary p-4 text-white flex justify-between items-center rounded-t-xl">
-                <h3 class="font-black uppercase text-sm"><i class="fa-solid fa-address-card"></i> Ficha Maestra de Proveedor</h3>
-                <button onclick="cerrarModalProveedor()" class="text-white hover:text-red-300"><i class="fa-solid fa-times text-xl"></i></button>
+            <div class="bg-primary p-3 text-white flex justify-between items-center rounded-t-xl">
+                <h3 class="font-black uppercase text-xs"><i class="fa-solid fa-address-card"></i> Ficha Maestra de Proveedor</h3>
+                <button onclick="cerrarModalProveedor()" class="text-white hover:text-red-300"><i class="fa-solid fa-times text-lg"></i></button>
             </div>
             
-            <div class="p-6 space-y-6">
+            <div class="p-5 space-y-4">
                 <div>
-                    <h4 class="text-xs font-black text-gray-400 uppercase border-b pb-1 mb-3">A. Identificación y Ubicación</h4>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <h4 class="text-[10px] font-black text-gray-400 uppercase border-b pb-1 mb-2">A. Identificación y Ubicación</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div class="flex gap-2">
-                            <select id="np-tipo" class="border border-gray-300 rounded px-2 py-2 text-sm font-bold focus:border-primary w-20">
+                            <select id="np-tipo" class="border border-gray-300 rounded px-2 py-1.5 text-xs font-bold focus:border-primary w-16">
                                 <option value="J">J</option><option value="G">G</option><option value="V">V</option><option value="E">E</option>
                             </select>
-                            <input type="text" id="np-rif" placeholder="NÚMERO DE RIF *" oninput="this.value = this.value.toUpperCase()" class="flex-1 border border-gray-300 rounded px-3 py-2 text-sm font-bold focus:border-primary bg-yellow-50">
+                            <input type="text" id="np-rif" placeholder="NÚMERO DE RIF *" class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-xs font-bold focus:border-primary bg-yellow-50">
                         </div>
                         <div>
-                            <input type="text" id="np-nombre" placeholder="RAZÓN SOCIAL COMPLETA *" oninput="this.value = this.value.toUpperCase()" class="w-full border border-gray-300 rounded px-3 py-2 text-sm font-bold focus:border-primary bg-yellow-50">
+                            <input type="text" id="np-nombre" placeholder="RAZÓN SOCIAL COMPLETA *" class="w-full border border-gray-300 rounded px-3 py-1.5 text-xs font-bold focus:border-primary bg-yellow-50">
                         </div>
                         <div class="md:col-span-2">
-                            <textarea id="np-direccion-prin" placeholder="DIRECCIÓN PRINCIPAL O FISCAL *" oninput="this.value = this.value.toUpperCase()" rows="2" class="w-full border border-gray-300 rounded px-3 py-2 text-sm font-bold focus:border-primary resize-none bg-yellow-50"></textarea>
-                        </div>
-                        <div class="md:col-span-2">
-                            <textarea id="np-direccion-sec" placeholder="DIRECCIÓN SECUNDARIA (OPCIONAL)" oninput="this.value = this.value.toUpperCase()" rows="1" class="w-full border border-gray-300 rounded px-3 py-2 text-sm font-bold focus:border-primary resize-none"></textarea>
+                            <textarea id="np-direccion-prin" placeholder="DIRECCIÓN PRINCIPAL O FISCAL *" rows="2" class="w-full border border-gray-300 rounded px-3 py-1.5 text-xs font-bold focus:border-primary resize-none bg-yellow-50"></textarea>
                         </div>
                     </div>
                 </div>
 
                 <div>
-                    <h4 class="text-xs font-black text-gray-400 uppercase border-b pb-1 mb-3">B. Datos de Contacto</h4>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <input type="text" id="np-tlf-prin" placeholder="TELÉFONO PRINCIPAL" class="w-full border border-gray-300 rounded px-3 py-2 text-sm font-bold focus:border-primary">
-                        <input type="text" id="np-tlf-sec" placeholder="TELÉFONO SECUNDARIO" class="w-full border border-gray-300 rounded px-3 py-2 text-sm font-bold focus:border-primary">
-                        <input type="email" id="np-email" placeholder="CORREO ELECTRÓNICO" class="w-full border border-gray-300 rounded px-3 py-2 text-sm font-bold focus:border-primary lowercase" style="text-transform: none;">
-                        <input type="text" id="np-vend-asig" placeholder="VENDEDOR ASIGNADO" oninput="this.value = this.value.toUpperCase()" class="w-full border border-gray-300 rounded px-3 py-2 text-sm font-bold focus:border-primary">
-                        <input type="text" id="np-cel-vend" placeholder="CELULAR VENDEDOR" class="w-full border border-gray-300 rounded px-3 py-2 text-sm font-bold focus:border-primary">
+                    <h4 class="text-[10px] font-black text-gray-400 uppercase border-b pb-1 mb-2">B. Datos de Contacto (Formato Libre en Pantalla)</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <input type="text" id="np-tlf-prin" placeholder="TLF PRINCIPAL (Ej: 0414 1234567)" oninput="formatearTelFront(this)" class="w-full border border-gray-300 rounded px-3 py-1.5 text-xs font-bold focus:border-primary">
+                        <input type="text" id="np-tlf-sec" placeholder="TLF SECUNDARIO" oninput="formatearTelFront(this)" class="w-full border border-gray-300 rounded px-3 py-1.5 text-xs font-bold focus:border-primary">
+                        <input type="email" id="np-email" placeholder="CORREO ELECTRÓNICO" class="w-full border border-gray-300 rounded px-3 py-1.5 text-xs font-bold focus:border-primary lowercase" style="text-transform: none;">
+                        <input type="text" id="np-vend-asig" placeholder="VENDEDOR ASIGNADO" class="w-full border border-gray-300 rounded px-3 py-1.5 text-xs font-bold focus:border-primary">
+                        <input type="text" id="np-cel-vend" placeholder="CELULAR VENDEDOR" oninput="formatearTelFront(this)" class="w-full border border-gray-300 rounded px-3 py-1.5 text-xs font-bold focus:border-primary">
                     </div>
                 </div>
 
                 <div>
-                    <h4 class="text-xs font-black text-gray-400 uppercase border-b pb-1 mb-3">C. Parámetros Fiscales y Comerciales</h4>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div class="flex flex-col">
-                            <label class="text-[10px] font-bold text-gray-500">Días de Crédito</label>
-                            <input type="number" id="np-dias" value="0" class="w-full border border-gray-300 rounded px-3 py-2 text-sm font-bold focus:border-primary">
-                        </div>
-                        <div class="flex flex-col">
-                            <label class="text-[10px] font-bold text-gray-500">Categoría</label>
-                            <select id="np-categoria" class="w-full border border-gray-300 rounded px-3 py-2 text-sm font-bold focus:border-primary uppercase">
-                                <option value="PROVEEDOR_NACIONAL">Proveedor Nacional</option>
-                                <option value="PROVEEDOR_INTERNACIONAL">Proveedor Internacional</option>
-                                <option value="SERVICIOS">Servicios</option>
-                            </select>
-                        </div>
-                        <div class="flex flex-col">
-                            <label class="text-[10px] font-bold text-gray-500">Tipo Contribuyente</label>
-                            <select id="np-tipo-contrib" class="w-full border border-gray-300 rounded px-3 py-2 text-sm font-bold focus:border-primary uppercase">
-                                <option value="ORDINARIO">Ordinario</option>
-                                <option value="ESPECIAL">Especial</option>
-                                <option value="FORMAL">Formal</option>
-                            </select>
-                        </div>
-                        <div class="flex flex-col">
-                            <label class="text-[10px] font-bold text-gray-500">Tipo Persona</label>
-                            <select id="np-tipo-per" class="w-full border border-gray-300 rounded px-3 py-2 text-sm font-bold focus:border-primary uppercase">
-                                <option value="JURIDICA">Jurídica</option>
-                                <option value="NATURAL">Natural</option>
-                            </select>
-                        </div>
-                        <div class="flex flex-col">
-                            <label class="text-[10px] font-bold text-gray-500">Clasificación Fiscal</label>
-                            <input type="text" id="np-clas-fisc" placeholder="EJ: CONTRIBUYENTE..." oninput="this.value = this.value.toUpperCase()" class="w-full border border-gray-300 rounded px-3 py-2 text-sm font-bold focus:border-primary">
-                        </div>
+                    <h4 class="text-[10px] font-black text-gray-400 uppercase border-b pb-1 mb-2">C. Parámetros</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                        <input type="number" id="np-dias" placeholder="DÍAS CRÉDITO" value="0" class="w-full border border-gray-300 rounded px-3 py-1.5 text-xs font-bold focus:border-primary">
+                        <select id="np-categoria" class="w-full border border-gray-300 rounded px-3 py-1.5 text-xs font-bold focus:border-primary uppercase">
+                            <option value="PROVEEDOR_NACIONAL">Nacional</option><option value="PROVEEDOR_INTERNACIONAL">Internacional</option>
+                        </select>
+                        <select id="np-tipo-contrib" class="w-full border border-gray-300 rounded px-3 py-1.5 text-xs font-bold focus:border-primary uppercase">
+                            <option value="ORDINARIO">Ordinario</option><option value="ESPECIAL">Especial</option>
+                        </select>
+                        <select id="np-tipo-per" class="w-full border border-gray-300 rounded px-3 py-1.5 text-xs font-bold focus:border-primary uppercase">
+                            <option value="JURIDICA">Jurídica</option><option value="NATURAL">Natural</option>
+                        </select>
                     </div>
                 </div>
 
-                <div class="flex justify-end pt-4 border-t border-gray-200">
-                    <button onclick="cerrarModalProveedor()" class="mr-4 text-sm font-bold text-gray-500 hover:text-gray-800">CANCELAR</button>
-                    <button onclick="guardarProveedorRápido()" class="bg-green-600 hover:bg-green-700 text-white font-black py-3 px-8 rounded-lg transition uppercase text-sm shadow-md">
-                        <i class="fa-solid fa-save mr-2"></i> GUARDAR PROVEEDOR EN MAESTRO
+                <div class="flex justify-end pt-3 border-t border-gray-200 gap-4">
+                    <button onclick="cerrarModalProveedor()" class="text-xs font-bold text-gray-500 hover:text-gray-800">CANCELAR</button>
+                    <button onclick="guardarProveedorRápido()" class="bg-green-600 hover:bg-green-700 text-white font-black py-2 px-6 rounded-lg transition uppercase text-xs shadow-md">
+                        <i class="fa-solid fa-save mr-2"></i> GUARDAR Y SELECCIONAR
                     </button>
                 </div>
             </div>
@@ -300,53 +274,84 @@
         let tasaBCV = 1; let tasaEUR = 0;
         let idEmpresaGlobal = null;
 
+        // Limpiador Fonético y Acentos (Motor Inteligente)
+        const normalizeText = (text) => {
+            if(!text) return '';
+            return text.toString().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
+        };
+
+        // Formateador Front-end para Teléfonos (Ej: +58 412 1234567)
+        function formatearTelFront(input) {
+            let val = input.value.replace(/[^\d+]/g, ''); // Permite solo numeros y +
+            if (val.length > 3 && !val.includes(' ')) {
+                // Pequeña máscara visual básica
+                val = val.replace(/(\+\d{2})(\d{3})(\d+)/, '$1 $2 $3');
+            }
+            input.value = val;
+        }
+
+        // Limpiador Back-end para Base de Datos (Internacional estricto)
+        function limpiarTelDB(val) {
+            if(!val) return '';
+            return val.replace(/[^\d+]/g, ''); // Se guarda limpio, ej: +584121234567
+        }
+
         window.onload = async () => {
             try {
-                // Tasas
                 const resTasa = await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?select=tasa&order=fecha_actualizacion.desc&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
                 const dTasa = await resTasa.json();
-                if(dTasa && dTasa.length > 0) { 
-                    tasaBCV = dTasa[0].tasa; 
-                    document.getElementById('tasa-actual').innerText = tasaBCV.toFixed(2); 
-                }
+                if(dTasa && dTasa.length > 0) { tasaBCV = dTasa[0].tasa; document.getElementById('tasa-actual').innerText = tasaBCV.toFixed(2); }
 
-                // Carga masiva (Blindaje de datos)
-                const [pRes, dRes] = await fetchAllData();
+                const [pRes, dRes] = await Promise.all([
+                    fetch(`${SUPABASE_URL}/rest/v1/vista_catalogo_web?select=*&limit=3000`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
+                    fetch(`${SUPABASE_URL}/rest/v1/directorio_maestro?select=*&limit=2000`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } })
+                ]);
+                
                 inventario = await pRes.json();
                 directorio = await dRes.json();
                 
-                if(inventario && inventario.length > 0) idEmpresaGlobal = inventario[0].id_empresa;
-                else if (directorio && directorio.length > 0) idEmpresaGlobal = directorio[0].id_empresa;
+                if(inventario.length > 0) idEmpresaGlobal = inventario[0].id_empresa;
+                else if (directorio.length > 0) idEmpresaGlobal = directorio[0].id_empresa;
 
-                // Indexación Fuse (protegido contra nulos)
-                fuseProd = new Fuse(inventario, { keys: ['nombre', 'id_producto_sku'], threshold: 0.3 });
-                fuseProv = new Fuse(directorio, { keys: ['nombre_razon_social', 'documento_identidad'], threshold: 0.3 });
+                // Preparación de Array Inteligente para Productos (Acentos, Código Barras, SKU)
+                const invPredictivo = inventario.map(p => ({
+                    ...p,
+                    busqueda_sucia: normalizeText(`${p.id_producto_sku} ${p.nombre} ${p.codigo_barras || ''}`)
+                }));
+
+                // Configuración agresiva de Fuse.js (Tolerancia a errores 40%)
+                fuseProd = new Fuse(invPredictivo, { 
+                    keys: ['busqueda_sucia', 'codigo_barras', 'id_producto_sku'], 
+                    threshold: 0.4, 
+                    ignoreLocation: true 
+                });
+                
+                const dirPredictivo = directorio.map(p => ({
+                    ...p, busqueda_sucia: normalizeText(`${p.documento_identidad} ${p.nombre_razon_social}`)
+                }));
+
+                fuseProv = new Fuse(dirPredictivo, { keys: ['busqueda_sucia'], threshold: 0.3 });
+
             } catch(e) { console.error("Error ERP:", e); }
         };
 
-        function fetchAllData() {
-            return Promise.all([
-                fetch(`${SUPABASE_URL}/rest/v1/vista_catalogo_web?select=*&limit=3000`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
-                fetch(`${SUPABASE_URL}/rest/v1/directorio_maestro?select=*&limit=2000`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } })
-            ]);
+        function cerrarDropdowns() { 
+            document.getElementById('lista-prov').classList.add('hidden'); 
+            document.getElementById('lista-busqueda-prod').classList.add('hidden');
         }
-
-        // --- MANEJO UI ---
-        function cerrarDropdowns() { document.getElementById('lista-prov').classList.add('hidden'); }
+        
         function toggleCredito(val) { document.getElementById('div-dias').style.display = val === 'Crédito' ? 'block' : 'none'; }
         function sincronizarEUR(val) { tasaEUR = parseFloat(val) || 0; }
         
         // --- PROVEEDORES ---
         function buscarProvPredictivo(texto) {
             const cont = document.getElementById('lista-prov');
-            if (!texto) { cont.classList.add('hidden'); return; }
-            const res = fuseProv.search(texto).slice(0, 6);
-            if(res.length === 0) cont.innerHTML = '<p class="p-3 text-xs text-red-500 font-bold text-center">NO ENCONTRADO</p>';
-            else cont.innerHTML = res.map(r => {
-                const nombre = r.item.nombre_razon_social || 'SIN NOMBRE';
-                const doc = r.item.documento_identidad || 'SIN DOCUMENTO';
-                return `<div class="p-3 border-b hover:bg-gray-50 cursor-pointer flex flex-col" onclick="seleccionarProv('${r.item.id}')"><span class="text-xs font-black text-primary">${nombre}</span><span class="text-[10px] text-gray-500 font-bold">${doc}</span></div>`;
-            }).join('');
+            const cleanText = normalizeText(texto);
+            if (!cleanText) { cont.classList.add('hidden'); return; }
+            
+            const res = fuseProv.search(cleanText).slice(0, 6);
+            if(res.length === 0) cont.innerHTML = '<p class="p-2 text-[10px] text-red-500 font-bold text-center">NO ENCONTRADO</p>';
+            else cont.innerHTML = res.map(r => `<div class="p-2 border-b hover:bg-gray-50 cursor-pointer flex flex-col" onclick="seleccionarProv('${r.item.id}')"><span class="text-xs font-black text-primary">${r.item.nombre_razon_social}</span><span class="text-[10px] text-gray-500 font-bold">${r.item.documento_identidad}</span></div>`).join('');
             cont.classList.remove('hidden');
         }
 
@@ -355,9 +360,10 @@
             document.getElementById('prov-id').value = p.id;
             document.getElementById('prov-rif').value = p.documento_identidad || '';
             document.getElementById('prov-nombre').value = p.nombre_razon_social || '';
-            document.getElementById('prov-direccion').value = p.direccion_principal || 'SIN DIRECCIÓN REGISTRADA';
-            document.getElementById('prov-telefono').value = p.telefono_principal || '';
+            document.getElementById('prov-direccion').value = p.direccion_principal || 'S/D';
             
+            // Visualmente con máscara (si existe), en DB estará limpio
+            document.getElementById('prov-telefono').value = p.telefono_principal || '';
             if(p.vendedor_asignado) document.getElementById('fac-vendedor').value = p.vendedor_asignado;
             if(p.celular_vendedor) document.getElementById('fac-vendedor-telefono').value = p.celular_vendedor;
             if(p.dias_credito) document.getElementById('fac-dias').value = p.dias_credito;
@@ -366,69 +372,71 @@
             cerrarDropdowns();
         }
 
-        // --- CREACIÓN PROVEEDOR MAESTRO ---
         function abrirModalProveedor() { document.getElementById('modal-proveedor').classList.remove('hidden'); }
         function cerrarModalProveedor() { document.getElementById('modal-proveedor').classList.add('hidden'); }
         
         async function guardarProveedorRápido() {
-            if(!idEmpresaGlobal) return alert("Error: No se detectó ID de Empresa.");
-            
+            if(!idEmpresaGlobal) return alert("Error estructural.");
             const rif = document.getElementById('np-tipo').value + document.getElementById('np-rif').value.trim().toUpperCase();
             const nombre = document.getElementById('np-nombre').value.trim().toUpperCase();
             const dirPrin = document.getElementById('np-direccion-prin').value.trim().toUpperCase();
 
-            if(!rif || !nombre || !dirPrin) return alert("Los campos marcados con (*) son obligatorios (RIF, Razón Social, Dirección).");
+            if(!rif || !nombre || !dirPrin) return alert("Faltan campos marcados con (*).");
 
             try {
+                // Inyectamos a Base de Datos con teléfonos limpiados de espacios
                 const body = { 
                     id_empresa: idEmpresaGlobal, 
                     documento_identidad: rif, 
                     nombre_razon_social: nombre, 
                     direccion_principal: dirPrin,
-                    direccion_secundaria: document.getElementById('np-direccion-sec').value.trim().toUpperCase(),
-                    telefono_principal: document.getElementById('np-tlf-prin').value.trim(),
-                    telefono_secundario: document.getElementById('np-tlf-sec').value.trim(),
-                    correo_electronico: document.getElementById('np-email').value.trim(),
+                    telefono_principal: limpiarTelDB(document.getElementById('np-tlf-prin').value),
+                    telefono_secundario: limpiarTelDB(document.getElementById('np-tlf-sec').value),
+                    correo_electronico: document.getElementById('np-email').value.trim().toLowerCase(),
                     vendedor_asignado: document.getElementById('np-vend-asig').value.trim().toUpperCase(),
-                    celular_vendedor: document.getElementById('np-cel-vend').value.trim(),
+                    celular_vendedor: limpiarTelDB(document.getElementById('np-cel-vend').value),
                     dias_credito: parseInt(document.getElementById('np-dias').value) || 0,
                     categoria_contacto: document.getElementById('np-categoria').value,
                     tipo_contribuyente: document.getElementById('np-tipo-contrib').value,
                     tipo_persona: document.getElementById('np-tipo-per').value,
-                    clasificacion_fiscal: document.getElementById('np-clas-fisc').value.trim().toUpperCase(),
                     estatus: 'ACTIVO' 
                 };
 
                 const res = await fetch(`${SUPABASE_URL}/rest/v1/directorio_maestro`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, body: JSON.stringify(body) });
-                if(!res.ok) throw new Error("Fallo guardando proveedor en la base de datos.");
+                if(!res.ok) throw new Error("Fallo guardando proveedor.");
                 
                 const data = await res.json();
-                const nuevoProv = data[0];
+                directorio.push(data[0]);
                 
-                directorio.push(nuevoProv);
-                fuseProv = new Fuse(directorio, { keys: ['nombre_razon_social', 'documento_identidad'], threshold: 0.3 });
+                const dirPredictivo = directorio.map(p => ({ ...p, busqueda_sucia: normalizeText(`${p.documento_identidad} ${p.nombre_razon_social}`) }));
+                fuseProv = new Fuse(dirPredictivo, { keys: ['busqueda_sucia'], threshold: 0.3 });
                 
                 cerrarModalProveedor();
-                seleccionarProv(nuevoProv.id);
-                alert("Proveedor registrado y seleccionado exitosamente.");
+                seleccionarProv(data[0].id);
             } catch(e) { alert("Error: " + e.message); }
         }
 
-        // --- PRODUCTOS ---
+        // --- MOTOR PRODUCTOS ---
         function buscarProdPredictivo(texto) {
             const cont = document.getElementById('lista-busqueda-prod');
-            if (!texto) { cont.innerHTML = '<p class="text-center text-xs text-gray-400 py-4 font-bold">ESCRIBE PARA BUSCAR</p>'; return; }
+            const cleanText = normalizeText(texto);
             
-            const res = fuseProd.search(texto).slice(0, 10);
+            if (!cleanText) { cont.classList.add('hidden'); return; }
+            
+            const res = fuseProd.search(cleanText).slice(0, 10);
+            cont.classList.remove('hidden');
+            
             if(res.length === 0) {
-                cont.innerHTML = `<p class="text-center text-xs text-red-500 py-4 font-bold">NO ENCONTRADO</p>`;
+                cont.innerHTML = `<div class="p-3 text-center"><p class="text-xs text-red-500 font-bold">NO ENCONTRADO</p></div>`;
             } else {
                 cont.innerHTML = res.map(r => {
-                    const nombreReal = r.item.nombre || 'SIN NOMBRE';
-                    const skuReal = r.item.id_producto_sku || 'SIN SKU';
-                    const nombreSeguro = nombreReal.replace(/'/g, "\\'").replace(/"/g, '&quot;');
-                    
-                    return `<div onclick="agregarARecepcion('${skuReal}', '${nombreSeguro}')" class="bg-white border border-gray-200 p-2 rounded cursor-pointer hover:border-primary transition flex flex-col gap-1 shadow-sm"><p class="text-[11px] font-black text-primary line-clamp-2">${nombreReal}</p><p class="text-[10px] text-gray-500 font-bold">${skuReal}</p></div>`;
+                    const n = (r.item.nombre || 'SIN NOMBRE').replace(/'/g, "\\'");
+                    const sku = r.item.id_producto_sku || '';
+                    const cb = r.item.codigo_barras ? ` | CB: ${r.item.codigo_barras}` : '';
+                    return `<div onclick="agregarARecepcion('${sku}', '${n}')" class="p-3 border-b hover:bg-blue-50 cursor-pointer flex flex-col gap-1 transition">
+                                <p class="text-[11px] font-black text-primary">${r.item.nombre}</p>
+                                <p class="text-[10px] text-gray-500 font-bold">SKU: ${sku}${cb}</p>
+                            </div>`;
                 }).join('');
             }
         }
@@ -437,7 +445,7 @@
             if (listaRecepcion.some(item => item.id_producto_sku === sku)) return alert("El producto ya está en la factura.");
             listaRecepcion.unshift({ id_producto_sku: sku, nombre: nombre, cantidad_recibida: 1, costo_unitario_usd: 0, impuesto_porcentaje: 16, tipo_impuesto: 'GENERAL' });
             document.getElementById('buscador-prod').value = '';
-            document.getElementById('lista-busqueda-prod').innerHTML = '<p class="text-center text-xs text-gray-400 py-4 font-bold">ESCRIBE PARA BUSCAR</p>';
+            document.getElementById('lista-busqueda-prod').classList.add('hidden');
             actualizarTablaRecepcion();
         }
 
@@ -454,7 +462,7 @@
             let baseUSD = 0; let ivaUSD = 0;
 
             if(listaRecepcion.length === 0) { 
-                tbody.innerHTML = '<tr><td colspan="6" class="py-10 text-center text-gray-400 font-bold uppercase"><i class="fa-solid fa-boxes-packing text-4xl mb-2 opacity-30 block"></i> Agrega productos desde el panel izquierdo</td></tr>'; 
+                tbody.innerHTML = '<tr><td colspan="6" class="py-12 text-center text-gray-400 font-bold uppercase"><i class="fa-solid fa-barcode text-4xl mb-2 opacity-30 block"></i> Usa el buscador superior para agregar productos</td></tr>'; 
                 document.getElementById('tot-base').innerText = 'US$ 0.00'; document.getElementById('tot-iva').innerText = 'US$ 0.00'; document.getElementById('tot-final').innerText = 'US$ 0.00'; document.getElementById('tot-bs').innerText = 'Bs. 0.00'; 
                 return; 
             }
@@ -465,17 +473,17 @@
                 baseUSD += subT; ivaUSD += mIva;
 
                 return `<tr class="border-b border-gray-100 hover:bg-gray-50">
-                    <td class="p-2"><p class="text-xs font-black text-primary line-clamp-1">${item.nombre}</p><p class="text-[9px] font-bold text-gray-400">${item.id_producto_sku}</p></td>
+                    <td class="p-2 pl-4"><p class="text-[11px] font-black text-primary line-clamp-1">${item.nombre}</p><p class="text-[9px] font-bold text-gray-400">${item.id_producto_sku}</p></td>
                     <td class="p-2 text-center">
-                        <select onchange="actualizarLinea(${i}, 'tipo_impuesto', this.value)" class="border border-gray-300 rounded px-1 py-1 text-xs font-bold focus:border-primary outline-none bg-white">
+                        <select onchange="actualizarLinea(${i}, 'tipo_impuesto', this.value)" class="w-full border border-gray-300 rounded px-1 py-1 text-[10px] font-bold focus:border-primary bg-white outline-none">
                             <option value="GENERAL" ${item.tipo_impuesto==='GENERAL'?'selected':''}>16%</option>
                             <option value="REDUCIDO" ${item.tipo_impuesto==='REDUCIDO'?'selected':''}>8%</option>
-                            <option value="EXENTO" ${item.tipo_impuesto==='EXENTO'?'selected':''}>0%</option>
+                            <option value="EXENTO" ${item.tipo_impuesto==='EXENTO'?'selected':''}>EXN</option>
                         </select>
                     </td>
-                    <td class="p-2 text-center"><input type="number" value="${item.cantidad_recibida}" min="1" onchange="actualizarLinea(${i}, 'cantidad_recibida', this.value)" class="w-16 border border-gray-300 rounded px-1 py-1 text-center text-sm font-bold focus:border-primary outline-none"></td>
-                    <td class="p-2 text-right"><input type="number" step="0.01" value="${item.costo_unitario_usd}" onchange="actualizarLinea(${i}, 'costo_unitario_usd', this.value)" class="w-24 border border-gray-300 rounded px-1 py-1 text-right font-bold text-gray-800 focus:border-primary outline-none"></td>
-                    <td class="p-2 text-right font-black text-gray-800">$ ${subT.toFixed(2)}</td>
+                    <td class="p-2 text-center"><input type="number" value="${item.cantidad_recibida}" min="1" onchange="actualizarLinea(${i}, 'cantidad_recibida', this.value)" class="w-16 border border-gray-300 rounded px-1 py-1 text-center text-xs font-bold focus:border-primary outline-none"></td>
+                    <td class="p-2 text-right"><input type="number" step="0.01" value="${item.costo_unitario_usd}" onchange="actualizarLinea(${i}, 'costo_unitario_usd', this.value)" class="w-24 border border-gray-300 rounded px-1 py-1 text-right text-xs font-bold focus:border-primary outline-none"></td>
+                    <td class="p-2 text-right text-xs font-black text-gray-800">$ ${subT.toFixed(2)}</td>
                     <td class="p-2 text-center"><button onclick="eliminarLinea(${i})" class="text-red-300 hover:text-red-500 transition"><i class="fa-solid fa-times-circle text-lg"></i></button></td>
                 </tr>`;
             }).join('');
@@ -486,61 +494,46 @@
             document.getElementById('tot-bs').innerText = `Bs. ${((baseUSD + ivaUSD) * tasaBCV).toFixed(2)}`;
         }
 
-        // --- TRANSACCIÓN V2 (ACID) ---
+        // --- TRANSACCIÓN V2 ---
         async function procesarCompraV2() {
             const pId = document.getElementById('prov-id').value;
-            const facNum = document.getElementById('fac-num').value.trim().toUpperCase();
-            const facControl = document.getElementById('fac-control').value.trim().toUpperCase();
-            
-            if(!pId) return alert("Seleccione un proveedor del Directorio.");
-            if(!facNum || !facControl) return alert("N° Factura y N° Control son obligatorios.");
-            
-            if(tasaEUR <= 0) return alert("ATENCIÓN: Debe ingresar una Tasa EUR válida en la parte superior derecha.");
-            if(listaRecepcion.length === 0) return alert("Debe agregar al menos un producto a la factura.");
+            if(!pId) return alert("Seleccione un proveedor.");
+            if(!document.getElementById('fac-num').value.trim() || !document.getElementById('fac-control').value.trim()) return alert("N° Factura y N° Control obligatorios.");
+            if(tasaEUR <= 0) return alert("ATENCIÓN: Tasa EUR en la cabecera no puede ser cero.");
+            if(listaRecepcion.length === 0) return alert("Agregue al menos un producto.");
 
             const base = parseFloat(document.getElementById('tot-base').innerText.replace('US$ ',''));
             const iva = parseFloat(document.getElementById('tot-iva').innerText.replace('US$ ',''));
-            const total = base + iva;
-
             const btn = document.querySelector('button[onclick="procesarCompraV2()"]');
             btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> REGISTRANDO...`; btn.disabled = true;
 
             try {
-                // Preparamos el vendedor combinado (Nombre - Celular) si ambos existen
-                let vendedorFinal = document.getElementById('fac-vendedor').value.trim();
-                const celVend = document.getElementById('fac-vendedor-telefono').value.trim();
-                if(celVend) vendedorFinal += ` - TLF: ${celVend}`;
+                const celDB = limpiarTelDB(document.getElementById('fac-vendedor-telefono').value);
+                let vendFin = document.getElementById('fac-vendedor').value.trim();
+                if(celDB) vendFin += ` (TLF: ${celDB})`;
 
                 const payload = {
                     p_id_proveedor: pId,
-                    p_numero_factura: facNum,
-                    p_numero_control: facControl,
-                    p_vendedor_proveedor: vendedorFinal,
+                    p_numero_factura: document.getElementById('fac-num').value.trim(),
+                    p_numero_control: document.getElementById('fac-control').value.trim(),
+                    p_vendedor_proveedor: vendFin,
                     p_condicion_pago: document.getElementById('fac-condicion').value,
                     p_dias_credito: parseInt(document.getElementById('fac-dias').value) || 0,
                     p_base_imponible_usd: base,
                     p_total_iva_usd: iva,
-                    p_total_usd: total,
-                    p_total_bs: total * tasaBCV,
+                    p_total_usd: base + iva,
+                    p_total_bs: (base + iva) * tasaBCV,
                     p_tasa_bcv: tasaBCV,
                     p_tasa_eur: tasaEUR,
                     p_detalles: listaRecepcion
                 };
 
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/registrar_compra_erp_v2`, { 
-                    method: 'POST', 
-                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, 
-                    body: JSON.stringify(payload) 
-                });
-
-                if(!res.ok) { const err = await res.json(); throw new Error(err.message || "Fallo en motor de base de datos."); }
-
-                alert("¡FACTURA DE COMPRA REGISTRADA EXITOSAMENTE!\nStock, Kardex y CxP actualizados de forma blindada.");
-                location.reload();
-            } catch(e) { alert("ERROR CRÍTICO: " + e.message); }
-            finally { btn.innerHTML = `<i class="fa-solid fa-lock"></i> PROCESAR FACTURA`; btn.disabled = false; }
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/registrar_compra_erp_v2`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                if(!res.ok) throw await res.json();
+                
+                alert("FACTURA REGISTRADA EXITOSAMENTE."); location.reload();
+            } catch(e) { alert("ERROR: " + (e.message||"Desconocido")); btn.innerHTML = `<i class="fa-solid fa-lock"></i> PROCESAR FACTURA`; btn.disabled = false; }
         }
-
         function limpiarTodo() { location.reload(); }
     </script>
     <script src="menu.js"></script>
