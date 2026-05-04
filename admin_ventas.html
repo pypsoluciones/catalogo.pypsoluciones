@@ -233,14 +233,11 @@
                 <button onclick="cerrarCobro()" class="text-gray-300 hover:text-white text-lg transition"><i class="fa-solid fa-times"></i></button>
             </div>
             <div class="p-5 bg-gray-50 space-y-3">
-                <!-- Monto total -->
                 <div class="bg-slate-100 border border-slate-200 rounded-lg p-3 text-center shadow-inner relative overflow-hidden">
                     <p class="text-gray-500 text-[8px] font-bold uppercase tracking-widest mb-0.5 z-10 relative">Monto a Liquidar</p>
                     <h2 class="text-3xl font-black text-primary leading-none mb-1 z-10 relative" id="modal-total-bs-final">Bs. 0.00</h2>
                     <p class="text-secondary font-black text-[10px] z-10 relative" id="modal-total-usd-final">US$ 0.00</p>
                 </div>
-
-                <!-- Método principal -->
                 <div>
                     <label class="block text-[9px] font-medium text-gray-500 uppercase mb-1">Método de Pago Principal</label>
                     <select id="cobro-metodo" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[11px] font-bold text-primary outline-none shadow-sm bg-white focus:border-tertiary transition" onchange="verificarIGTF(); calcularVuelto();">
@@ -253,13 +250,9 @@
                         <option value="POR_PAGAR">⏳ Dejar Por Pagar</option>
                     </select>
                 </div>
-
-                <!-- Alerta IGTF -->
                 <div id="caja-igtf" class="hidden bg-yellow-50 border border-yellow-200 p-2 rounded">
                     <p class="text-[9px] text-yellow-700 font-bold uppercase"><i class="fa-solid fa-triangle-exclamation"></i> Se aplicará 3% de IGTF al monto final</p>
                 </div>
-
-                <!-- NUEVO: Sección pago mixto -->
                 <div id="caja-pago-mixto" class="bg-blue-50 border border-blue-200 rounded p-2">
                     <div class="flex justify-between items-center mb-1.5">
                         <span class="text-[9px] font-bold text-primary uppercase">Pago Mixto (Opcional)</span>
@@ -268,8 +261,6 @@
                     <div id="lista-pagos-mixtos" class="space-y-1"></div>
                     <div id="saldo-restante-pago" class="text-[9px] font-bold text-primary mt-1 hidden">Saldo por asignar: <span id="val-saldo-restante">Bs. 0.00</span></div>
                 </div>
-
-                <!-- NUEVO: Calculadora de vuelto (solo efectivo) -->
                 <div id="caja-calculadora-vuelto" class="bg-green-50 border border-green-200 rounded p-2">
                     <label class="block text-[9px] font-bold text-green-700 uppercase mb-1"><i class="fa-solid fa-calculator mr-1"></i>Monto Recibido (Bs.)</label>
                     <input type="number" id="monto-recibido" step="0.01" min="0" placeholder="0.00"
@@ -281,8 +272,6 @@
                         <p id="val-vuelto-usd" class="text-[10px] font-bold text-gray-500">US$ 0.00</p>
                     </div>
                 </div>
-
-                <!-- Formato impresión -->
                 <div class="bg-gray-100 p-2 rounded border border-gray-200 shadow-inner">
                     <label class="block text-[8px] font-bold text-primary uppercase mb-0.5">Formato de Salida / Impresión</label>
                     <select id="cobro-formato-impresion" class="w-full border border-gray-300 rounded px-2 py-1.5 text-[10px] font-bold text-gray-700 outline-none bg-white focus:border-tertiary transition">
@@ -367,6 +356,25 @@
         </div>
     </div>
 
+    <!-- MODAL: IMPORTAR PRESUPUESTO -->
+    <div id="modal-importar-presupuesto" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[9990] hidden flex items-center justify-center p-4 fade-in" onclick="cerrarModalImportarPresupuesto()">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col border border-gray-200 h-[85vh] relative" onclick="event.stopPropagation()">
+            <div class="bg-primary text-white px-5 py-4 flex justify-between items-center shrink-0">
+                <h3 class="font-bold text-[12px] tracking-wide uppercase"><i class="fa-solid fa-file-import mr-2 text-tertiary"></i> Importar Presupuesto Aprobado</h3>
+                <button onclick="cerrarModalImportarPresupuesto()" class="text-gray-300 hover:text-white text-lg transition"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <div class="p-4 bg-gray-50 border-b border-gray-200 shrink-0 relative">
+                <i class="fa-solid fa-search absolute left-7 top-6 text-blue-400 text-sm"></i>
+                <input type="text" id="buscador-importar-pre" oninput="filtrarImportarPresupuesto()" placeholder="Buscar por Nombre, Documento o Nro..." class="w-full border-2 border-blue-200 rounded-lg pl-10 pr-4 py-2 text-xs font-bold uppercase focus:outline-none focus:border-blue-500 shadow-inner transition bg-white text-blue-900">
+            </div>
+            <div class="p-4 bg-gray-50 flex-1 overflow-y-auto custom-scroll">
+                <div id="lista-presupuestos-importar" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div class="col-span-2 text-center py-10 text-primary font-bold uppercase"><i class="fa-solid fa-spinner fa-spin text-3xl mb-2 block"></i> Buscando presupuestos...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- TICKET DE IMPRESIÓN -->
     <div id="ticket-impresion" class="hidden print:block"></div>
 
@@ -379,7 +387,6 @@
                 <button onclick="toggleMobileMenu()" class="md:hidden text-gray-600 hover:text-primary text-lg px-2"><i class="fa-solid fa-bars"></i></button>
                 <h1 class="text-xs font-bold text-primary flex items-center gap-2 uppercase tracking-tighter">
                     <i class="fa-solid fa-cash-register text-tertiary"></i> Punto de Venta
-                    <!-- NUEVO: badge modo cotización -->
                     <span id="badge-modo-cotizacion" class="hidden text-[8px] badge-cotizacion px-2 py-0.5 rounded font-bold uppercase"><i class="fa-solid fa-file-pen mr-1"></i>COTIZACIÓN</span>
                 </h1>
             </div>
@@ -400,6 +407,11 @@
                         <i class="fa-solid fa-rotate text-xs"></i>
                     </button>
                 </div>
+                <!-- NUEVO: Botón Importar Presupuesto -->
+                <button onclick="abrirModalImportarPresupuesto()" title="Importar Presupuesto del Taller o Mostrador"
+                    class="bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 px-3 py-2 rounded text-[10px] font-bold uppercase transition-all shadow-sm btn-press hidden sm:flex items-center gap-1">
+                    <i class="fa-solid fa-file-import text-indigo-500"></i> Importar
+                </button>
                 <!-- NUEVO: Botón Modo Cotización -->
                 <button onclick="toggleModoCotizacion()" id="btn-modo-cotizacion" title="Activar modo cotización (no afecta inventario ni caja)"
                     class="bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-700 px-3 py-2 rounded text-[10px] font-bold uppercase transition-all shadow-sm btn-press hidden sm:flex items-center gap-1">
@@ -418,9 +430,9 @@
 
         <div class="flex-1 flex flex-col md:flex-row overflow-hidden">
             <!-- PANEL IZQUIERDO: Catálogo -->
-          <div id="panel-izquierdo" class="w-full md:w-[55%] lg:w-[60%] h-full flex flex-col border-r border-gray-200 bg-white relative z-0 transition-all duration-300">
+            <div id="panel-izquierdo" class="w-full md:w-[55%] lg:w-[60%] h-full flex flex-col border-r border-gray-200 bg-white relative z-0 transition-all duration-300">
                 <div class="p-1.5 px-3 border-b border-gray-200 bg-gray-50 flex gap-2 shrink-0 overflow-x-auto no-scrollbar">
-                  <div class="relative flex-1 min-w-[150px]">
+                    <div class="relative flex-1 min-w-[150px]">
                         <div class="relative flex items-center w-full">
                             <i class="fa-solid fa-barcode absolute left-2.5 text-gray-400 text-[10px]"></i>
                             <input type="text" id="buscador-pos" oninput="buscarProductos()" onkeydown="manejarEnterBuscador(event)"
@@ -453,7 +465,7 @@
             </div>
 
             <!-- PANEL DERECHO: Facturación -->
-          <div id="panel-derecho" class="w-full md:w-[45%] lg:w-[40%] h-full flex flex-col bg-white shadow-[-5px_0_15px_rgba(0,0,0,0.03)] z-10 transition-all duration-300">
+            <div id="panel-derecho" class="w-full md:w-[45%] lg:w-[40%] h-full flex flex-col bg-white shadow-[-5px_0_15px_rgba(0,0,0,0.03)] z-10 transition-all duration-300">
                 <div class="bg-gray-50 p-2 border-b border-gray-200 shrink-0 flex flex-col gap-1.5 shadow-inner">
                     <h3 class="text-[11px] font-black text-primary uppercase tracking-wider border-b border-gray-200 pb-1"><i class="fa-solid fa-file-invoice mr-1 text-tertiary"></i> Facturación</h3>
                     <div class="grid grid-cols-3 gap-2">
@@ -578,7 +590,6 @@
                             <i class="fa-solid fa-list-check"></i>
                             <span id="badge-pausadas" class="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[8px] font-black w-4 h-4 rounded-full flex items-center justify-center hidden">0</span>
                         </button>
-                        <!-- NUEVO: Botón re-imprimir último ticket -->
                         <button onclick="reimprimirUltimoTicket()" id="btn-reimprimir" class="bg-white border border-gray-300 text-gray-400 hover:bg-purple-50 hover:text-purple-600 hover:border-purple-200 px-3 rounded shadow-sm transition-all text-[11px] font-bold uppercase btn-press flex items-center justify-center disabled:opacity-30" title="Re-imprimir último ticket" disabled>
                             <i class="fa-solid fa-rotate-right"></i>
                         </button>
@@ -593,8 +604,7 @@
             </div>
         </div>
     </main>
-
-    <script>
+        <script>
         const TOKEN_JWT = localStorage.getItem('pyp_token_seguro');
 
         let dbInventario = [], carrito = [], dbClientes = [], fuseInventario = null, fuseClientes = null, empresaActual = null;
@@ -604,9 +614,8 @@
         let posVistaActual = 'grid', modoSupermercado = false, nroFacturaEditable = false;
         let ultimaFechaFactura = null, correlativoActual = 1;
 
-        // NUEVO: variables para nuevas funcionalidades
         let modoCotizacion = false;
-        let ultimaVentaParaReimprimir = null; // guarda datos del último ticket impreso
+        let ultimaVentaParaReimprimir = null; 
 
         // ================================================================
         // INIT
@@ -615,17 +624,13 @@
             try {
                 const elFiltro = document.getElementById('filtro-stock-pos');
                 if (elFiltro) elFiltro.value = localStorage.getItem('pyp_pos_filtro_stock_default') || 'DISPONIBLE';
-
                 const elEmision = document.getElementById('pos-fecha-emision');
                 if (elEmision) elEmision.value = getFechaHoy();
-
                 const elVencimiento = document.getElementById('pos-fecha-vencimiento');
                 if (elVencimiento) elVencimiento.value = getFechaHoy();
-
                 const nombreUsuario = localStorage.getItem('pyp_usuario_nombre') || 'SISTEMA';
                 const elCajero = document.getElementById('txt-cajero-nombre');
                 if (elCajero) elCajero.innerText = nombreUsuario;
-
                 const vistaLocal = localStorage.getItem('pyp_pos_vista_inventario');
                 if (vistaLocal) posVistaActual = vistaLocal;
 
@@ -634,23 +639,14 @@
                 await inicializarCorrelativos();
                 sincronizarBCVSilencioso();
 
-                // NUEVO: advertir si hay carrito activo al cerrar/recargar
                 window.addEventListener('beforeunload', (e) => {
-                    if (carrito.length > 0) {
-                        e.preventDefault();
-                        e.returnValue = '¿Seguro que deseas salir? Tienes productos en la venta actual.';
-                        return e.returnValue;
-                    }
+                    if (carrito.length > 0) { e.preventDefault(); e.returnValue = '¿Seguro que deseas salir? Tienes productos en la venta actual.'; return e.returnValue; }
                 });
 
                 document.addEventListener('keydown', (e) => {
                     if (e.key === 'Escape') {
-                        cerrarCobro();
-                        cerrarModalNuevoCliente();
-                        cerrarModalFichaCompleta();
-                        cerrarVisor();
-                        cerrarInfoProducto();
-                        cerrarDashboardTurno();
+                        cerrarCobro(); cerrarModalNuevoCliente(); cerrarModalFichaCompleta();
+                        cerrarVisor(); cerrarInfoProducto(); cerrarDashboardTurno(); cerrarModalImportarPresupuesto();
                     }
                 });
             } catch (e) {
@@ -666,9 +662,6 @@
         function fmt(num) { return parseFloat(num || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
         function redondear(num) { return Math.round((num + Number.EPSILON) * 100) / 100; }
 
-        // ================================================================
-        // INTERFAZ GENERAL
-        // ================================================================
         function ajustarFechaVencimiento() {
             const emisionStr = document.getElementById('pos-fecha-emision').value;
             if (!emisionStr) return;
@@ -688,15 +681,11 @@
             const input = document.getElementById('pos-nro-factura');
             const icon = document.querySelector('#btn-edit-nro-factura i');
             if (nroFacturaEditable) {
-                input.readOnly = false;
-                input.classList.replace('border-red-300', 'border-blue-500');
-                icon.className = "fa-solid fa-unlock text-[8px]";
-                input.focus();
+                input.readOnly = false; input.classList.replace('border-red-300', 'border-blue-500');
+                icon.className = "fa-solid fa-unlock text-[8px]"; input.focus();
             } else {
-                input.readOnly = true;
-                input.classList.replace('border-blue-500', 'border-red-300');
-                icon.className = "fa-solid fa-lock text-[8px]";
-                inicializarCorrelativos();
+                input.readOnly = true; input.classList.replace('border-blue-500', 'border-red-300');
+                icon.className = "fa-solid fa-lock text-[8px]"; inicializarCorrelativos();
             }
         }
 
@@ -708,25 +697,23 @@
                 main.classList.add('layout-supermercado');
                 btn.innerHTML = `<i class="fa-solid fa-compress mr-1 text-tertiary"></i> MODO NORMAL`;
                 btn.classList.replace('bg-slate-800', 'bg-tertiary');
-                
-                document.getElementById('buscador-pos').value = ''; // Limpia textos viejos
-                buscarProductos(); // Esto obligará a ocultar la grilla por el Motor Reactivo
+                document.getElementById('buscador-pos').value = ''; 
+                buscarProductos(); 
                 setTimeout(() => document.getElementById('buscador-pos').focus(), 300);
             } else {
                 main.classList.remove('layout-supermercado');
-                btn.innerHTML = `<i class="fa-solid fa-barcode mr-1 text-tertiary"></i> MODO LECTOR`;
+                btn.innerHTML = `<i class="fa-solid fa-expand mr-1 text-tertiary"></i> Expandir`;
                 btn.classList.replace('bg-tertiary', 'bg-slate-800');
-                
-                buscarProductos(); // Esto restaurará el catálogo normal
+                buscarProductos(); 
             }
         }
-// ================================================================
+
+        // ================================================================
         // MOTOR DE ESCÁNER DE CÁMARA (POS)
         // ================================================================
         let _escanerStream = null; let _escanerInterval = null; let _escanerActivo = false;
 
         async function abrirEscanerPos() {
-            // Reutilizamos el modal de Inventario dinámicamente si no existe, lo creamos
             if (!document.getElementById('modal-escaner-pos')) {
                 document.body.insertAdjacentHTML('beforeend', `
                 <div id="modal-escaner-pos" class="fixed inset-0 bg-slate-900/85 backdrop-blur-sm z-[9999] hidden flex items-center justify-center p-4 fade-in">
@@ -776,7 +763,6 @@
                                     cerrarEscanerPos();
                                     const inp = document.getElementById('buscador-pos');
                                     inp.value = code.data;
-                                    // Forzar el enter para que se agregue al carrito automáticamente
                                     manejarEnterBuscador({ key: 'Enter', preventDefault: ()=>{} }); 
                                 }, 400);
                             }
@@ -795,33 +781,25 @@
             document.getElementById('modal-escaner-pos').classList.remove('flex');
             document.getElementById('pos-scan-status').innerText = 'Apunta al código';
         }
+
         function toggleAcordeon() {
             const caja = document.getElementById('caja-acordeon-totales');
             const icon = document.getElementById('icon-toggle-acordeon');
             const txt = document.getElementById('txt-toggle-acordeon');
             if (caja.classList.contains('hidden')) {
-                caja.classList.remove('hidden');
-                icon.classList.replace('fa-chevron-up', 'fa-chevron-down');
-                txt.innerText = 'OCULTAR DESGLOSE FISCAL';
+                caja.classList.remove('hidden'); icon.classList.replace('fa-chevron-up', 'fa-chevron-down'); txt.innerText = 'OCULTAR DESGLOSE FISCAL';
             } else {
-                caja.classList.add('hidden');
-                icon.classList.replace('fa-chevron-down', 'fa-chevron-up');
-                txt.innerText = 'MOSTRAR DESGLOSE FISCAL';
+                caja.classList.add('hidden'); icon.classList.replace('fa-chevron-down', 'fa-chevron-up'); txt.innerText = 'MOSTRAR DESGLOSE FISCAL';
             }
         }
 
         function limpiarVentaPOS() {
             if (carrito.length === 0) return;
             if (confirm("¿Estás seguro de vaciar la venta actual?")) {
-                carrito = [];
-                limpiarCliente();
-                actualizarUI_Carrito();
+                carrito = []; limpiarCliente(); actualizarUI_Carrito();
             }
         }
 
-        // ================================================================
-        // NUEVO: MODO COTIZACIÓN
-        // ================================================================
         function toggleModoCotizacion() {
             modoCotizacion = !modoCotizacion;
             const badge = document.getElementById('badge-modo-cotizacion');
@@ -837,9 +815,6 @@
             }
         }
 
-        // ================================================================
-        // NUEVO: DASHBOARD TURNO
-        // ================================================================
         async function abrirDashboardTurno() {
             document.getElementById('modal-dashboard-turno').classList.remove('hidden');
             document.getElementById('modal-dashboard-turno').classList.add('flex');
@@ -849,71 +824,40 @@
                 const usuario = localStorage.getItem('pyp_usuario_nombre') || 'SISTEMA';
                 const filtroEmpresa = empresaActual ? `id_empresa=eq.${empresaActual}` : `id_empresa=is.null`;
                 const hoy = getFechaHoy();
-                
-                // FIX: Apuntamos a la nueva tabla para leer las métricas del cajero (ventas_facturas)
                 const res = await fetch(
                     `${SUPABASE_URL}/rest/v1/ventas_facturas?${filtroEmpresa}&nombre_cajero=eq.${encodeURIComponent(usuario)}&fecha_emision=gte.${hoy}T00:00:00Z&select=*`,
                     { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }
                 );
-                
                 if (!res.ok) throw new Error("No se pudo cargar el turno.");
                 const facturas = await res.json();
 
                 const totalBs = facturas.reduce((acc, f) => acc + (f.total_bs || 0), 0);
                 const totalUsd = facturas.reduce((acc, f) => acc + (f.total_usd || 0), 0);
-                const completadas = facturas.filter(f => f.estatus === 'Completada').length;
                 const porPagar = facturas.filter(f => f.estatus === 'Por Pagar').length;
 
                 const metodos = {};
                 facturas.forEach(f => {
-                    const m = f.metodos_pago || 'DESCONOCIDO';
-                    metodos[m] = (metodos[m] || 0) + 1;
+                    const m = f.metodos_pago || 'DESCONOCIDO'; metodos[m] = (metodos[m] || 0) + 1;
                 });
                 const metodoTop = Object.entries(metodos).sort((a, b) => b[1] - a[1])[0];
 
                 let htmlMetodos = '';
                 Object.entries(metodos).forEach(([m, c]) => {
-                    htmlMetodos += `<div class="flex justify-between text-[10px] py-0.5 border-b border-gray-100 last:border-0">
-                        <span class="text-gray-600 font-bold">${m.replace(/_/g, ' ')}</span>
-                        <span class="font-black text-primary">${c} transacc.</span>
-                    </div>`;
+                    htmlMetodos += `<div class="flex justify-between text-[10px] py-0.5 border-b border-gray-100 last:border-0"><span class="text-gray-600 font-bold">${m.replace(/_/g, ' ')}</span><span class="font-black text-primary">${c} transacc.</span></div>`;
                 });
 
                 contenedor.innerHTML = `
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-                        <div class="bg-white p-3 rounded-lg border border-gray-200 text-center shadow-sm">
-                            <p class="text-[8px] font-bold text-gray-500 uppercase">Facturas</p>
-                            <p class="text-2xl font-black text-primary">${facturas.length}</p>
-                        </div>
-                        <div class="bg-white p-3 rounded-lg border border-green-200 text-center shadow-sm">
-                            <p class="text-[8px] font-bold text-green-600 uppercase">Total Bs.</p>
-                            <p class="text-lg font-black text-green-700">Bs. ${fmt(totalBs)}</p>
-                        </div>
-                        <div class="bg-white p-3 rounded-lg border border-blue-200 text-center shadow-sm">
-                            <p class="text-[8px] font-bold text-blue-600 uppercase">Total USD</p>
-                            <p class="text-lg font-black text-blue-700">$${fmt(totalUsd)}</p>
-                        </div>
-                        <div class="bg-white p-3 rounded-lg border border-gray-200 text-center shadow-sm">
-                            <p class="text-[8px] font-bold text-gray-500 uppercase">Por Cobrar</p>
-                            <p class="text-2xl font-black text-secondary">${porPagar}</p>
-                        </div>
+                        <div class="bg-white p-3 rounded-lg border border-gray-200 text-center shadow-sm"><p class="text-[8px] font-bold text-gray-500 uppercase">Facturas</p><p class="text-2xl font-black text-primary">${facturas.length}</p></div>
+                        <div class="bg-white p-3 rounded-lg border border-green-200 text-center shadow-sm"><p class="text-[8px] font-bold text-green-600 uppercase">Total Bs.</p><p class="text-lg font-black text-green-700">Bs. ${fmt(totalBs)}</p></div>
+                        <div class="bg-white p-3 rounded-lg border border-blue-200 text-center shadow-sm"><p class="text-[8px] font-bold text-blue-600 uppercase">Total USD</p><p class="text-lg font-black text-blue-700">$${fmt(totalUsd)}</p></div>
+                        <div class="bg-white p-3 rounded-lg border border-gray-200 text-center shadow-sm"><p class="text-[8px] font-bold text-gray-500 uppercase">Por Cobrar</p><p class="text-2xl font-black text-secondary">${porPagar}</p></div>
                     </div>
-                    <div class="bg-white rounded-lg border border-gray-200 p-3 mb-3 shadow-sm">
-                        <h4 class="text-[9px] font-bold text-gray-500 uppercase mb-2">Métodos de Pago del Turno</h4>
-                        ${htmlMetodos || '<p class="text-[10px] text-gray-400 text-center py-2">Sin datos</p>'}
-                    </div>
-                    <div class="text-[9px] text-gray-400 text-center">
-                        Cajero: <strong>${usuario}</strong> — Fecha: ${hoy}
-                        ${metodoTop ? ` — Método más usado: <strong>${metodoTop[0].replace(/_/g,' ')}</strong>` : ''}
-                    </div>`;
-            } catch (e) {
-                contenedor.innerHTML = `<div class="text-center py-6 text-red-500 font-bold text-xs">${e.message}</div>`;
-            }
+                    <div class="bg-white rounded-lg border border-gray-200 p-3 mb-3 shadow-sm"><h4 class="text-[9px] font-bold text-gray-500 uppercase mb-2">Métodos de Pago del Turno</h4>${htmlMetodos || '<p class="text-[10px] text-gray-400 text-center py-2">Sin datos</p>'}</div>
+                    <div class="text-[9px] text-gray-400 text-center">Cajero: <strong>${usuario}</strong> — Fecha: ${hoy} ${metodoTop ? ` — Método más usado: <strong>${metodoTop[0].replace(/_/g,' ')}</strong>` : ''}</div>`;
+            } catch (e) { contenedor.innerHTML = `<div class="text-center py-6 text-red-500 font-bold text-xs">${e.message}</div>`; }
         }
-        function cerrarDashboardTurno() {
-            document.getElementById('modal-dashboard-turno').classList.add('hidden');
-            document.getElementById('modal-dashboard-turno').classList.remove('flex');
-        }
+        function cerrarDashboardTurno() { document.getElementById('modal-dashboard-turno').classList.add('hidden'); document.getElementById('modal-dashboard-turno').classList.remove('flex'); }
 
         // ================================================================
         // CARGA / ERRORES
@@ -922,17 +866,14 @@
             const ol = document.getElementById('loading-overlay');
             document.getElementById('loading-text').innerText = titulo;
             document.getElementById('loading-error').innerText = subtitulo;
-            if (subtitulo) document.getElementById('loading-error').classList.remove('hidden');
-            else document.getElementById('loading-error').classList.add('hidden');
+            if (subtitulo) document.getElementById('loading-error').classList.remove('hidden'); else document.getElementById('loading-error').classList.add('hidden');
             document.getElementById('error-actions').classList.add('hidden');
             document.getElementById('loading-icon').className = "fa-solid fa-circle-notch fa-spin text-5xl text-primary mb-4";
             ol.classList.remove('hidden'); ol.classList.add('flex');
         }
 
         function mostrarErrorConexion(msg) {
-            if (msg.includes("Sesión") || msg.includes("token") || msg.includes("JWT") || msg.includes("inválida")) {
-                forzarCierreSesion(); return;
-            }
+            if (msg.includes("Sesión") || msg.includes("token") || msg.includes("JWT") || msg.includes("inválida")) { forzarCierreSesion(); return; }
             const ol = document.getElementById('loading-overlay');
             document.getElementById('loading-text').innerText = "Error del Sistema";
             document.getElementById('loading-error').innerText = msg.length < 100 ? msg : "Ocurrió un error inesperado. Verifica tu conexión a internet.";
@@ -942,16 +883,8 @@
             ol.classList.remove('hidden'); ol.classList.add('flex');
         }
 
-        function cerrarErrorCarga() {
-            document.getElementById('loading-overlay').classList.add('hidden');
-            document.getElementById('error-actions').classList.add('hidden');
-        }
-
-        function forzarCierreSesion() {
-            localStorage.removeItem('pyp_token_seguro');
-            localStorage.removeItem('pyp_usuario_nombre');
-            window.location.href = 'login.html';
-        }
+        function cerrarErrorCarga() { document.getElementById('loading-overlay').classList.add('hidden'); document.getElementById('error-actions').classList.add('hidden'); }
+        function forzarCierreSesion() { localStorage.removeItem('pyp_token_seguro'); localStorage.removeItem('pyp_usuario_nombre'); window.location.href = 'login.html'; }
 
         function actualizarIndicadorTasa(fechaIsoStr, forzarAlerta = false) {
             const badge = document.getElementById('status-tasa-badge');
@@ -964,12 +897,10 @@
             const fechaFormat = fechaTasa.toLocaleDateString('es-VE');
             if (isToday && !forzarAlerta) {
                 badge.className = "hidden md:flex items-center px-2 py-1 rounded text-[9px] font-bold uppercase tracking-wider bg-blue-50 text-primary border border-blue-200 shadow-sm transition-all";
-                texto.innerText = `TASA ACTUALIZADA (${fechaFormat})`;
-                icono.className = "fa-solid fa-check-circle mr-1 text-blue-500";
+                texto.innerText = `TASA ACTUALIZADA (${fechaFormat})`; icono.className = "fa-solid fa-check-circle mr-1 text-blue-500";
             } else {
                 badge.className = "hidden md:flex items-center px-2 py-1 rounded text-[9px] font-bold uppercase tracking-wider bg-red-50 text-red-600 border border-red-300 shadow-sm animate-pulse transition-all";
-                texto.innerText = `¡TASA DESACTUALIZADA! (${fechaFormat})`;
-                icono.className = "fa-solid fa-triangle-exclamation mr-1";
+                texto.innerText = `¡TASA DESACTUALIZADA! (${fechaFormat})`; icono.className = "fa-solid fa-triangle-exclamation mr-1";
             }
         }
 
@@ -978,14 +909,11 @@
         // ================================================================
         async function iniciarPuntoVenta() {
             try {
-                const resUser = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?select=id_empresa&limit=1`, {
-                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` }
-                });
+                const resUser = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?select=id_empresa&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
                 if (resUser.status === 401 || resUser.status === 403 || !TOKEN_JWT) throw new Error("Sesión inválida.");
                 if (!resUser.ok) throw new Error("Error de comunicación con la base de datos.");
                 const dataUser = await resUser.json();
-                if (dataUser.length > 0 && dataUser[0].id_empresa) empresaActual = dataUser[0].id_empresa;
-                else empresaActual = null;
+                if (dataUser.length > 0 && dataUser[0].id_empresa) empresaActual = dataUser[0].id_empresa; else empresaActual = null;
 
                 const [resTasa, resProd, resPre, resCli, resConf] = await Promise.all([
                     fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?select=*&order=fecha_actualizacion.desc&limit=5`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
@@ -999,8 +927,7 @@
 
                 const dataTasa = await resTasa.json();
                 if (dataTasa.length > 0) {
-                    const tUsd = dataTasa.find(t => t.moneda === 'USD');
-                    const tEur = dataTasa.find(t => t.moneda === 'EUR');
+                    const tUsd = dataTasa.find(t => t.moneda === 'USD'); const tEur = dataTasa.find(t => t.moneda === 'EUR');
                     if (tUsd) { tasaBCV = tUsd.tasa; document.getElementById('input-tasa-usd').value = tasaBCV.toFixed(2); actualizarIndicadorTasa(tUsd.fecha_actualizacion); }
                     if (tEur) { tasaBCVEur = tEur.tasa; document.getElementById('input-tasa-eur').value = tasaBCVEur.toFixed(2); }
                 }
@@ -1013,17 +940,11 @@
                 pypIgtf = parseFloat(getC('IGTF', '3')) / 100;
                 pypMostrarExento = getC('POS_MOSTRAR_EXENTO', 'SI');
 
-                const strCond = getC('CONDICIONES_PAGO', 'CONTADO|0');
-                let arrCond = [];
-                strCond.split(',').forEach(c => {
-                    const p = c.split('|');
-                    if (p[0]) arrCond.push({ nombre: p[0].trim().toUpperCase(), dias: parseInt(p[1] ? p[1].trim() : '0') || 0 });
-                });
+                const strCond = getC('CONDICIONES_PAGO', 'CONTADO|0'); let arrCond = [];
+                strCond.split(',').forEach(c => { const p = c.split('|'); if (p[0]) arrCond.push({ nombre: p[0].trim().toUpperCase(), dias: parseInt(p[1] ? p[1].trim() : '0') || 0 }); });
                 arrCond.sort((a, b) => a.dias - b.dias);
-                let htmlCond = '';
-                arrCond.forEach(c => { htmlCond += `<option value="${c.dias}">${c.nombre}</option>`; });
-                document.getElementById('pos-condicion').innerHTML = htmlCond;
-                ajustarFechaVencimiento();
+                let htmlCond = ''; arrCond.forEach(c => { htmlCond += `<option value="${c.dias}">${c.nombre}</option>`; });
+                document.getElementById('pos-condicion').innerHTML = htmlCond; ajustarFechaVencimiento();
 
                 dbClientes = await resCli.json();
                 fuseClientes = new Fuse(dbClientes, {
@@ -1046,37 +967,20 @@
             } catch (e) { mostrarErrorConexion(e.message); }
         }
 
-        // ================================================================
-        // CORRELATIVOS — FIX race condition: lee el máximo real en BD
-        // ================================================================
         async function inicializarCorrelativos() {
             const inputNroFactura = document.getElementById('pos-nro-factura');
             inputNroFactura.value = "Cargando...";
             try {
-                const resConf = await fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?parametro=eq.CORRELATIVO_INICIAL&select=valor`, {
-                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` }
-                });
+                const resConf = await fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?parametro=eq.CORRELATIVO_INICIAL&select=valor`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
                 let corrInicial = 0;
                 if (resConf.ok) { const dConf = await resConf.json(); if (dConf.length > 0) corrInicial = parseInt(dConf[0].valor, 10) || 0; }
-
                 const filtroEmpresa = empresaActual ? `id_empresa=eq.${empresaActual}` : `id_empresa=is.null`;
-                
-                // FIX: Apuntamos estrictamente a la tabla renombrada (ventas_facturas)
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/ventas_facturas?${filtroEmpresa}&tipo_transaccion=neq.Nota%20de%20Credito&select=correlativo&order=correlativo.desc&limit=1`, {
-                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` }
-                });
-                
-                if (res.ok) {
-                    const data = await res.json();
-                    correlativoActual = data.length > 0 ? (parseInt(data[0].correlativo, 10) || corrInicial) + 1 : corrInicial + 1;
-                } else { correlativoActual = corrInicial + 1; }
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/ventas_facturas?${filtroEmpresa}&tipo_transaccion=neq.Nota%20de%20Credito&select=correlativo&order=correlativo.desc&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                if (res.ok) { const data = await res.json(); correlativoActual = data.length > 0 ? (parseInt(data[0].correlativo, 10) || corrInicial) + 1 : corrInicial + 1; } else { correlativoActual = corrInicial + 1; }
                 inputNroFactura.value = String(correlativoActual).padStart(6, '0');
-            } catch (e) {
-                inputNroFactura.value = "";
-                inputNroFactura.placeholder = "000001";
-                inputNroFactura.readOnly = false;
-            }
+            } catch (e) { inputNroFactura.value = ""; inputNroFactura.placeholder = "000001"; inputNroFactura.readOnly = false; }
         }
+
         // ================================================================
         // CATÁLOGO DE PRODUCTOS
         // ================================================================
@@ -1088,26 +992,18 @@
             if (btnG) btnG.className = posVistaActual === 'grid' ? 'px-2 py-0.5 rounded text-tertiary bg-white shadow-sm transition text-xs' : 'px-2 py-0.5 rounded text-gray-500 hover:text-tertiary transition text-xs';
         }
 
-        // NUEVO: soporte lector código de barras — Enter en el buscador
         function manejarEnterBuscador(e) {
             if (e.key !== 'Enter') return;
             e.preventDefault();
             const query = document.getElementById('buscador-pos').value.trim();
             if (!query) return;
-            // buscar coincidencia exacta por código de barras o SKU primero
-            const exacto = dbInventario.find(p =>
-                (p.codigo_barras && p.codigo_barras.toUpperCase() === query.toUpperCase()) ||
-                (p.id_producto_sku && p.id_producto_sku.toUpperCase() === query.toUpperCase())
-            );
+            const exacto = dbInventario.find(p => (p.codigo_barras && p.codigo_barras.toString().toUpperCase() === query.toUpperCase()) || (p.id_producto_sku && p.id_producto_sku.toUpperCase() === query.toUpperCase()));
             if (exacto) {
                 const pUsd = exacto.pre && exacto.pre.es_precio_fijo_bs ? (exacto.pre.precio_fijo_bs / tasaBCV) : (exacto.pre ? exacto.pre.precio_general_usd : 0);
                 agregarAlCarrito(encodeURIComponent(JSON.stringify({ ...exacto, pUsd })));
                 document.getElementById('buscador-pos').value = '';
                 buscarProductos();
-                // flash visual de confirmación en el buscador
-                const inp = document.getElementById('buscador-pos');
-                inp.classList.add('border-green-400', 'bg-green-50');
-                setTimeout(() => inp.classList.remove('border-green-400', 'bg-green-50'), 600);
+                const inp = document.getElementById('buscador-pos'); inp.classList.add('border-green-400', 'bg-green-50'); setTimeout(() => inp.classList.remove('border-green-400', 'bg-green-50'), 600);
             }
         }
 
@@ -1116,21 +1012,11 @@
             const cat = document.getElementById('filtro-cat-pos').value;
             const stockFilter = document.getElementById('filtro-stock-pos').value;
             let data = dbInventario;
-
             const grid = document.getElementById('grid-productos');
 
-            // MOTOR REACTIVO: En modo supermercado, ocultar la grilla si no hay texto escrito
-            if (modoSupermercado && query === '') {
-                grid.classList.add('grid-escondido');
-                return; // Cortamos aquí para ahorrar memoria RAM
-            } else {
-                grid.classList.remove('grid-escondido');
-            }
+            if (modoSupermercado && query === '') { grid.classList.add('grid-escondido'); return; } else { grid.classList.remove('grid-escondido'); }
 
-            if (query !== '') { 
-                const qN = query.normalize("NFD").replace(/[\u0300-\u036f]/g, ""); 
-                data = fuseInventario.search(qN).map(r => r.item); 
-            }
+            if (query !== '') { const qN = query.normalize("NFD").replace(/[\u0300-\u036f]/g, ""); data = fuseInventario.search(qN).map(r => r.item); }
             if (cat !== 'TODAS') data = data.filter(p => p.categoria_del_producto === cat);
             if (stockFilter === 'DISPONIBLE') data = data.filter(p => p.stock_actual > 0 || p.permitir_negativo);
             
@@ -1215,7 +1101,7 @@
             document.getElementById('txt-cli-dir').innerText = c.direccion_fiscal || c.direccion_principal || 'SIN DIRECCIÓN FISCAL CARGADA';
             document.getElementById('txt-cli-tipo').innerText = c.tipo_contribuyente || 'NATURAL';
             document.getElementById('txt-cli-precio').innerText = c.nivel_precio || 'GENERAL';
-            document.getElementById('pos-id-cliente').value = c.id;
+            document.getElementById('pos-id-cliente').value = c.id || c.id_cliente || '';
             document.getElementById('pos-nivel-precio-cliente').value = c.nivel_precio || 'GENERAL';
             document.getElementById('dropdown-clientes').classList.add('hidden');
             document.getElementById('pos-buscador-cliente').value = '';
@@ -1241,7 +1127,6 @@
         async function guardarClienteRapido(e) {
             e.preventDefault(); const btn = document.getElementById('btn-guardar-cli-rap'); btn.innerHTML = `...`; btn.disabled = true;
             try {
-                // FIX: sanitización básica de campos antes de enviar
                 const doc = document.getElementById('cli-rap-doc').value.trim().toUpperCase().replace(/['";<>]/g, '');
                 const nom = document.getElementById('cli-rap-nom').value.trim().toUpperCase().replace(/['";<>]/g, '');
                 const dir = document.getElementById('cli-rap-dir').value.trim().toUpperCase().replace(/['";<>]/g, '');
@@ -1279,39 +1164,21 @@
             return pU;
         }
 
-        // FIX: validación precio manual — rechazar cero y negativos
         function actualizarPrecioManualItem(sku, moneda, valorStr) {
             const idx = carrito.findIndex(i => i.id_producto_sku === sku); if (idx === -1) return;
             let val = parseFloat(valorStr);
-            if (isNaN(val) || val <= 0) {
-                // restaurar al precio original calculado
-                carrito[idx].precio_manual_usd = undefined;
-                actualizarUI_Carrito();
-                return;
-            }
-            if (moneda === 'BS') carrito[idx].precio_manual_usd = val / tasaBCV;
-            else carrito[idx].precio_manual_usd = val;
+            if (isNaN(val) || val <= 0) { carrito[idx].precio_manual_usd = undefined; actualizarUI_Carrito(); return; }
+            if (moneda === 'BS') carrito[idx].precio_manual_usd = val / tasaBCV; else carrito[idx].precio_manual_usd = val;
             actualizarUI_Carrito();
         }
 
-        // MEJORADO: feedback visual al agregar al carrito
         function agregarAlCarrito(prodStr) {
             const p = JSON.parse(decodeURIComponent(prodStr));
             const idx = carrito.findIndex(i => i.id_producto_sku === p.id_producto_sku);
-            if (idx !== -1) {
-                if (carrito[idx].cantidad < p.stock_actual || p.permitir_negativo) carrito[idx].cantidad++;
-            } else {
-                carrito.push({ ...p, cantidad: 1, desc_tipo: 'MONTO_BS', desc_val: 0 });
-            }
+            if (idx !== -1) { if (carrito[idx].cantidad < p.stock_actual || p.permitir_negativo) carrito[idx].cantidad++; } 
+            else { carrito.push({ ...p, cantidad: 1, desc_tipo: 'MONTO_BS', desc_val: 0 }); }
             actualizarUI_Carrito();
-            // flash en el carrito para feedback visual
-            setTimeout(() => {
-                const lista = document.getElementById('lista-carrito');
-                if (lista && lista.firstElementChild) {
-                    lista.firstElementChild.classList.add('cart-flash');
-                    setTimeout(() => { if (lista.firstElementChild) lista.firstElementChild.classList.remove('cart-flash'); }, 500);
-                }
-            }, 50);
+            setTimeout(() => { const lista = document.getElementById('lista-carrito'); if (lista && lista.firstElementChild) { lista.firstElementChild.classList.add('cart-flash'); setTimeout(() => { if (lista.firstElementChild) lista.firstElementChild.classList.remove('cart-flash'); }, 500); } }, 50);
         }
 
         function modificarCantidad(sku, delta) {
@@ -1323,7 +1190,6 @@
             actualizarUI_Carrito();
         }
 
-        // FIX: confirmación antes de eliminar ítem
         function eliminarDelCarrito(sku) {
             if (!confirm("¿Eliminar este producto del carrito?")) return;
             carrito = carrito.filter(i => i.id_producto_sku !== sku);
@@ -1337,9 +1203,6 @@
             actualizarUI_Carrito();
         }
 
-        // ================================================================
-        // MOTOR MATEMÁTICO ESTRICTO (sin cambios en la lógica original)
-        // ================================================================
         let sumSubtotalBasePuroUsd = 0, descGeneralTotalUsd = 0, granTotalUsd = 0;
         let sumSubtotalBasePuroBs = 0, descGeneralTotalBs = 0, granTotalBs = 0;
 
@@ -1355,8 +1218,7 @@
                 document.getElementById('pos-total-bs').innerText = 'Bs. 0.00';
                 document.getElementById('pos-total-usd').innerText = 'US$ 0.00';
                 document.getElementById('pos-items').innerText = '0';
-                document.getElementById('btn-cobrar').disabled = true;
-                document.getElementById('btn-guardar').disabled = true;
+                document.getElementById('btn-cobrar').disabled = true; document.getElementById('btn-guardar').disabled = true;
                 return;
             }
 
@@ -1431,26 +1293,17 @@
             let factor = 1;
             if (sumSubtotalBasePuroBs > 0 && descGeneralTotalBs > 0) factor = 1 - (descGeneralTotalBs / sumSubtotalBasePuroBs);
 
-            let bG_Bs = redondear(basesBs['GENERAL'] * factor);
-            let bR1_Bs = redondear(basesBs['REDUCIDO_1'] * factor);
-            let bR2_Bs = redondear(basesBs['REDUCIDO_2'] * factor);
-            let bE_Bs = redondear(basesBs['EXENTO'] * factor);
+            let bG_Bs = redondear(basesBs['GENERAL'] * factor); let bR1_Bs = redondear(basesBs['REDUCIDO_1'] * factor); let bR2_Bs = redondear(basesBs['REDUCIDO_2'] * factor); let bE_Bs = redondear(basesBs['EXENTO'] * factor);
 
-            // Ajuste de céntimos por prorrateo
             let totalBasesProrrateadasBs = redondear(bG_Bs + bR1_Bs + bR2_Bs + bE_Bs);
             let baseObjetivoBs = redondear(sumSubtotalBasePuroBs - descGeneralTotalBs);
             let diferenciaBs = redondear(baseObjetivoBs - totalBasesProrrateadasBs);
             if (diferenciaBs !== 0) {
                 let maxBase = Math.max(bG_Bs, bR1_Bs, bR2_Bs, bE_Bs);
-                if (maxBase === bG_Bs) bG_Bs = redondear(bG_Bs + diferenciaBs);
-                else if (maxBase === bR1_Bs) bR1_Bs = redondear(bR1_Bs + diferenciaBs);
-                else if (maxBase === bR2_Bs) bR2_Bs = redondear(bR2_Bs + diferenciaBs);
-                else if (maxBase === bE_Bs) bE_Bs = redondear(bE_Bs + diferenciaBs);
+                if (maxBase === bG_Bs) bG_Bs = redondear(bG_Bs + diferenciaBs); else if (maxBase === bR1_Bs) bR1_Bs = redondear(bR1_Bs + diferenciaBs); else if (maxBase === bR2_Bs) bR2_Bs = redondear(bR2_Bs + diferenciaBs); else if (maxBase === bE_Bs) bE_Bs = redondear(bE_Bs + diferenciaBs);
             }
 
-            let ivaG_Bs = redondear(bG_Bs * pypIva);
-            let ivaR1_Bs = redondear(bR1_Bs * pypIvaRed1);
-            let ivaR2_Bs = redondear(bR2_Bs * pypIvaRed2);
+            let ivaG_Bs = redondear(bG_Bs * pypIva); let ivaR1_Bs = redondear(bR1_Bs * pypIvaRed1); let ivaR2_Bs = redondear(bR2_Bs * pypIvaRed2);
             granTotalBs = redondear(bG_Bs + bR1_Bs + bR2_Bs + bE_Bs + ivaG_Bs + ivaR1_Bs + ivaR2_Bs);
             granTotalUsd = redondear(granTotalBs / tasaBCV);
             descGeneralTotalUsd = redondear(descGeneralTotalBs / tasaBCV);
@@ -1470,43 +1323,29 @@
             document.getElementById('pos-items').innerText = itemsTotal;
             document.getElementById('pos-total-bs').innerText = `Bs. ${fmt(granTotalBs)}`;
             document.getElementById('pos-total-usd').innerText = `US$ ${fmt(granTotalUsd)}`;
-            document.getElementById('btn-cobrar').disabled = false;
-            document.getElementById('btn-guardar').disabled = false;
+            document.getElementById('btn-cobrar').disabled = false; document.getElementById('btn-guardar').disabled = false;
 
             contenedorFiscal.dataset.baseTotalUsd = redondear(bG_Usd + bR1_Usd + bR2_Usd);
             contenedorFiscal.dataset.exentoTotalUsd = bE_Usd;
-            // Guardar bases IVA para el ticket
-            contenedorFiscal.dataset.bG_Bs = bG_Bs;
-            contenedorFiscal.dataset.bR1_Bs = bR1_Bs;
-            contenedorFiscal.dataset.bR2_Bs = bR2_Bs;
-            contenedorFiscal.dataset.bE_Bs = bE_Bs;
-            contenedorFiscal.dataset.ivaG_Bs = ivaG_Bs;
-            contenedorFiscal.dataset.ivaR1_Bs = ivaR1_Bs;
-            contenedorFiscal.dataset.ivaR2_Bs = ivaR2_Bs;
+            contenedorFiscal.dataset.bG_Bs = bG_Bs; contenedorFiscal.dataset.bR1_Bs = bR1_Bs; contenedorFiscal.dataset.bR2_Bs = bR2_Bs; contenedorFiscal.dataset.bE_Bs = bE_Bs;
+            contenedorFiscal.dataset.ivaG_Bs = ivaG_Bs; contenedorFiscal.dataset.ivaR1_Bs = ivaR1_Bs; contenedorFiscal.dataset.ivaR2_Bs = ivaR2_Bs;
 
             actualizarContadorPausadas();
         }
 
         // ================================================================
-        // VENTAS PAUSADAS — FIX: guardar nivel_precio real del cliente
+        // VENTAS PAUSADAS
         // ================================================================
         function guardarVentaEnEspera() {
             if (carrito.length === 0) return;
             const objPausada = {
-                id_pausa: Date.now(),
-                fecha_pausa: new Date().toLocaleTimeString(),
-                carrito_data: carrito,
-                id_cliente: document.getElementById('pos-id-cliente').value,
-                doc_cliente: document.getElementById('txt-cli-doc').innerText,
-                nom_cliente: document.getElementById('txt-cli-nom').innerText,
-                dir_cliente: document.getElementById('txt-cli-dir').innerText,
-                tipo_cliente: document.getElementById('txt-cli-tipo').innerText,
-                // FIX: guardar nivel de precio real del cliente
-                nivel_precio_cliente: document.getElementById('pos-nivel-precio-cliente').value || 'GENERAL',
+                id_pausa: Date.now(), fecha_pausa: new Date().toLocaleTimeString(), carrito_data: carrito,
+                id_cliente: document.getElementById('pos-id-cliente').value, doc_cliente: document.getElementById('txt-cli-doc').innerText,
+                nom_cliente: document.getElementById('txt-cli-nom').innerText, dir_cliente: document.getElementById('txt-cli-dir').innerText,
+                tipo_cliente: document.getElementById('txt-cli-tipo').innerText, nivel_precio_cliente: document.getElementById('pos-nivel-precio-cliente').value || 'GENERAL',
                 monto_usd: granTotalUsd
             };
-            let pausadas = JSON.parse(localStorage.getItem('pyp_pos_pausadas') || '[]');
-            pausadas.push(objPausada);
+            let pausadas = JSON.parse(localStorage.getItem('pyp_pos_pausadas') || '[]'); pausadas.push(objPausada);
             localStorage.setItem('pyp_pos_pausadas', JSON.stringify(pausadas));
             carrito = []; limpiarCliente(); actualizarUI_Carrito();
         }
@@ -1514,531 +1353,280 @@
         function actualizarContadorPausadas() {
             let pausadas = JSON.parse(localStorage.getItem('pyp_pos_pausadas') || '[]');
             const badge = document.getElementById('badge-pausadas');
-            if (pausadas.length > 0) { badge.innerText = pausadas.length; badge.classList.remove('hidden'); }
-            else badge.classList.add('hidden');
+            if (pausadas.length > 0) { badge.innerText = pausadas.length; badge.classList.remove('hidden'); } else badge.classList.add('hidden');
         }
 
         function abrirModalVentasPausadas() {
             let pausadas = JSON.parse(localStorage.getItem('pyp_pos_pausadas') || '[]');
             const contenedor = document.getElementById('lista-ventas-pausadas');
-            if (pausadas.length === 0) {
-                contenedor.innerHTML = `<div class="p-6 text-center text-gray-400 font-bold text-xs uppercase"><i class="fa-solid fa-basket-shopping text-3xl mb-2 block text-gray-300"></i> No hay tickets en espera</div>`;
-            } else {
+            if (pausadas.length === 0) { contenedor.innerHTML = `<div class="p-6 text-center text-gray-400 font-bold text-xs uppercase"><i class="fa-solid fa-basket-shopping text-3xl mb-2 block text-gray-300"></i> No hay tickets en espera</div>`; } 
+            else {
                 let html = '';
                 pausadas.forEach(p => {
-                    // alerta si lleva más de 30 min pausada
                     const minsPausada = Math.floor((Date.now() - p.id_pausa) / 60000);
                     const alertaMin = minsPausada > 30 ? `<span class="text-[8px] text-red-500 font-bold ml-1"><i class="fa-solid fa-clock"></i> ${minsPausada} min</span>` : '';
-                    html += `<div class="bg-white border border-gray-200 rounded p-3 mb-2 flex justify-between items-center shadow-sm">
-                        <div>
-                            <div class="text-[11px] font-black text-primary uppercase">${p.nom_cliente} <span class="text-gray-400 font-normal">(${p.doc_cliente})</span>${alertaMin}</div>
-                            <div class="text-[9px] text-gray-500 font-bold mt-0.5"><i class="fa-regular fa-clock"></i> ${p.fecha_pausa} • ${p.carrito_data.length} Ítems • US$ ${fmt(p.monto_usd)}</div>
-                        </div>
-                        <div class="flex gap-2">
-                            <button onclick="eliminarPausada(${p.id_pausa})" class="bg-red-50 text-red-500 hover:bg-red-500 hover:text-white px-2 py-1.5 rounded transition shadow-sm text-[10px]"><i class="fa-solid fa-trash-can"></i></button>
-                            <button onclick="recuperarPausada(${p.id_pausa})" class="bg-tertiary hover:opacity-90 text-white px-3 py-1.5 rounded transition shadow-sm text-[10px] font-bold uppercase"><i class="fa-solid fa-upload mr-1"></i> Recuperar</button>
-                        </div>
-                    </div>`;
+                    html += `<div class="bg-white border border-gray-200 rounded p-3 mb-2 flex justify-between items-center shadow-sm"><div><div class="text-[11px] font-black text-primary uppercase">${p.nom_cliente} <span class="text-gray-400 font-normal">(${p.doc_cliente})</span>${alertaMin}</div><div class="text-[9px] text-gray-500 font-bold mt-0.5"><i class="fa-regular fa-clock"></i> ${p.fecha_pausa} • ${p.carrito_data.length} Ítems • US$ ${fmt(p.monto_usd)}</div></div><div class="flex gap-2"><button onclick="eliminarPausada(${p.id_pausa})" class="bg-red-50 text-red-500 hover:bg-red-500 hover:text-white px-2 py-1.5 rounded transition shadow-sm text-[10px]"><i class="fa-solid fa-trash-can"></i></button><button onclick="recuperarPausada(${p.id_pausa})" class="bg-tertiary hover:opacity-90 text-white px-3 py-1.5 rounded transition shadow-sm text-[10px] font-bold uppercase"><i class="fa-solid fa-upload mr-1"></i> Recuperar</button></div></div>`;
                 });
                 contenedor.innerHTML = html;
             }
-            document.getElementById('modal-ventas-pausadas').classList.remove('hidden');
-            document.getElementById('modal-ventas-pausadas').classList.add('flex');
+            document.getElementById('modal-ventas-pausadas').classList.remove('hidden'); document.getElementById('modal-ventas-pausadas').classList.add('flex');
         }
 
         function cerrarModalVentasPausadas() { document.getElementById('modal-ventas-pausadas').classList.add('hidden'); document.getElementById('modal-ventas-pausadas').classList.remove('flex'); }
 
         function eliminarPausada(id) {
-            let pausadas = JSON.parse(localStorage.getItem('pyp_pos_pausadas') || '[]');
-            pausadas = pausadas.filter(p => p.id_pausa !== id);
-            localStorage.setItem('pyp_pos_pausadas', JSON.stringify(pausadas));
-            abrirModalVentasPausadas(); actualizarContadorPausadas();
+            let pausadas = JSON.parse(localStorage.getItem('pyp_pos_pausadas') || '[]'); pausadas = pausadas.filter(p => p.id_pausa !== id);
+            localStorage.setItem('pyp_pos_pausadas', JSON.stringify(pausadas)); abrirModalVentasPausadas(); actualizarContadorPausadas();
         }
 
-        // FIX: recuperar también nivel_precio y datos completos del cliente
         function recuperarPausada(id) {
-            if (carrito.length > 0) {
-                if (!confirm("Tienes productos en la venta actual. ¿Deseas reemplazarla por la pausada?")) return;
-            }
-            let pausadas = JSON.parse(localStorage.getItem('pyp_pos_pausadas') || '[]');
-            const index = pausadas.findIndex(p => p.id_pausa === id);
+            if (carrito.length > 0) { if (!confirm("Tienes productos en la venta actual. ¿Deseas reemplazarla por la pausada?")) return; }
+            let pausadas = JSON.parse(localStorage.getItem('pyp_pos_pausadas') || '[]'); const index = pausadas.findIndex(p => p.id_pausa === id);
             if (index > -1) {
-                const rec = pausadas[index];
-                carrito = rec.carrito_data;
+                const rec = pausadas[index]; carrito = rec.carrito_data;
                 if (rec.id_cliente) {
-                    // FIX: restaurar nivel_precio real guardado en la pausa
-                    const cliFalso = {
-                        id: rec.id_cliente,
-                        documento_identidad: rec.doc_cliente,
-                        nombre_razon_social: rec.nom_cliente,
-                        tipo_contribuyente: rec.tipo_cliente || 'NATURAL',
-                        nivel_precio: rec.nivel_precio_cliente || 'GENERAL',
-                        direccion_fiscal: rec.dir_cliente || 'CARGADO DESDE PAUSA'
-                    };
+                    const cliFalso = { id: rec.id_cliente, documento_identidad: rec.doc_cliente, nombre_razon_social: rec.nom_cliente, tipo_contribuyente: rec.tipo_cliente || 'NATURAL', nivel_precio: rec.nivel_precio_cliente || 'GENERAL', direccion_fiscal: rec.dir_cliente || 'CARGADO DESDE PAUSA' };
                     ejecutarSeleccionCliente(cliFalso);
                 } else limpiarCliente();
-                pausadas.splice(index, 1);
-                localStorage.setItem('pyp_pos_pausadas', JSON.stringify(pausadas));
-                cerrarModalVentasPausadas();
-                actualizarUI_Carrito();
+                pausadas.splice(index, 1); localStorage.setItem('pyp_pos_pausadas', JSON.stringify(pausadas)); cerrarModalVentasPausadas(); actualizarUI_Carrito();
             }
         }
 
         // ================================================================
-        // NUEVO: PAGO MIXTO
+        // PAGO MIXTO Y VUELTO
         // ================================================================
         let lineasPagoMixto = [];
-
-        function agregarLineaPago() {
-            const id = Date.now();
-            lineasPagoMixto.push({ id, metodo: 'PAGO_MOVIL', monto: 0 });
-            renderizarLineasPago();
-        }
+        function agregarLineaPago() { const id = Date.now(); lineasPagoMixto.push({ id, metodo: 'PAGO_MOVIL', monto: 0 }); renderizarLineasPago(); }
 
         function renderizarLineasPago() {
-            const contenedor = document.getElementById('lista-pagos-mixtos');
-            const saldoEl = document.getElementById('saldo-restante-pago');
+            const contenedor = document.getElementById('lista-pagos-mixtos'); const saldoEl = document.getElementById('saldo-restante-pago');
             if (lineasPagoMixto.length === 0) { contenedor.innerHTML = ''; saldoEl.classList.add('hidden'); return; }
-            saldoEl.classList.remove('hidden');
-            let html = '';
+            saldoEl.classList.remove('hidden'); let html = '';
             lineasPagoMixto.forEach(l => {
-                html += `<div class="flex gap-1 items-center">
-                    <select onchange="actualizarLineaPago(${l.id}, 'metodo', this.value)" class="flex-1 border border-gray-300 rounded px-1 py-0.5 text-[9px] font-bold text-primary outline-none bg-white">
-                        <option value="EFECTIVO_BS" ${l.metodo === 'EFECTIVO_BS' ? 'selected' : ''}>Efectivo Bs.</option>
-                        <option value="PAGO_MOVIL" ${l.metodo === 'PAGO_MOVIL' ? 'selected' : ''}>Pago Móvil</option>
-                        <option value="PUNTO_VENTA" ${l.metodo === 'PUNTO_VENTA' ? 'selected' : ''}>Punto de Venta</option>
-                        <option value="EFECTIVO_USD" ${l.metodo === 'EFECTIVO_USD' ? 'selected' : ''}>Divisas USD</option>
-                        <option value="ZELLE" ${l.metodo === 'ZELLE' ? 'selected' : ''}>Zelle</option>
-                    </select>
-                    <input type="number" step="0.01" min="0" placeholder="Bs." value="${l.monto || ''}"
-                        onchange="actualizarLineaPago(${l.id}, 'monto', this.value)"
-                        class="w-20 border border-gray-300 rounded px-1 py-0.5 text-[10px] font-bold text-center outline-none">
-                    <button onclick="eliminarLineaPago(${l.id})" class="text-red-400 hover:text-red-600 text-xs px-1 transition"><i class="fa-solid fa-times"></i></button>
-                </div>`;
+                html += `<div class="flex gap-1 items-center"><select onchange="actualizarLineaPago(${l.id}, 'metodo', this.value)" class="flex-1 border border-gray-300 rounded px-1 py-0.5 text-[9px] font-bold text-primary outline-none bg-white"><option value="EFECTIVO_BS" ${l.metodo === 'EFECTIVO_BS' ? 'selected' : ''}>Efectivo Bs.</option><option value="PAGO_MOVIL" ${l.metodo === 'PAGO_MOVIL' ? 'selected' : ''}>Pago Móvil</option><option value="PUNTO_VENTA" ${l.metodo === 'PUNTO_VENTA' ? 'selected' : ''}>Punto de Venta</option><option value="EFECTIVO_USD" ${l.metodo === 'EFECTIVO_USD' ? 'selected' : ''}>Divisas USD</option><option value="ZELLE" ${l.metodo === 'ZELLE' ? 'selected' : ''}>Zelle</option></select><input type="number" step="0.01" min="0" placeholder="Bs." value="${l.monto || ''}" onchange="actualizarLineaPago(${l.id}, 'monto', this.value)" class="w-20 border border-gray-300 rounded px-1 py-0.5 text-[10px] font-bold text-center outline-none"><button onclick="eliminarLineaPago(${l.id})" class="text-red-400 hover:text-red-600 text-xs px-1 transition"><i class="fa-solid fa-times"></i></button></div>`;
             });
             contenedor.innerHTML = html;
-
             const totalPagado = lineasPagoMixto.reduce((acc, l) => acc + (parseFloat(l.monto) || 0), 0);
             const saldo = redondear(granTotalBs - totalPagado);
             document.getElementById('val-saldo-restante').innerText = `Bs. ${fmt(Math.max(saldo, 0))}`;
             document.getElementById('val-saldo-restante').className = saldo <= 0 ? 'text-green-600' : 'text-red-600';
         }
 
-        function actualizarLineaPago(id, campo, valor) {
-            const idx = lineasPagoMixto.findIndex(l => l.id === id); if (idx === -1) return;
-            if (campo === 'metodo') lineasPagoMixto[idx].metodo = valor;
-            if (campo === 'monto') lineasPagoMixto[idx].monto = parseFloat(valor) || 0;
-            renderizarLineasPago();
-        }
-
+        function actualizarLineaPago(id, campo, valor) { const idx = lineasPagoMixto.findIndex(l => l.id === id); if (idx === -1) return; if (campo === 'metodo') lineasPagoMixto[idx].metodo = valor; if (campo === 'monto') lineasPagoMixto[idx].monto = parseFloat(valor) || 0; renderizarLineasPago(); }
         function eliminarLineaPago(id) { lineasPagoMixto = lineasPagoMixto.filter(l => l.id !== id); renderizarLineasPago(); }
 
-        // ================================================================
-        // NUEVO: CALCULADORA DE VUELTO
-        // ================================================================
         function calcularVuelto() {
-            const metodo = document.getElementById('cobro-metodo').value;
-            const aplicaIgtf = metodo === 'EFECTIVO_USD' || metodo === 'ZELLE';
+            const metodo = document.getElementById('cobro-metodo').value; const aplicaIgtf = metodo === 'EFECTIVO_USD' || metodo === 'ZELLE';
             const totalFinalBs = redondear(granTotalBs + (aplicaIgtf ? redondear(granTotalBs * pypIgtf) : 0));
-            const cajaCal = document.getElementById('caja-calculadora-vuelto');
-            const resCal = document.getElementById('resultado-vuelto');
+            const cajaCal = document.getElementById('caja-calculadora-vuelto'); const resCal = document.getElementById('resultado-vuelto');
 
-            // Mostrar calculadora solo para métodos en efectivo
             if (metodo === 'EFECTIVO_BS' || metodo === 'EFECTIVO_USD') {
-                cajaCal.classList.remove('hidden');
-                const recibido = parseFloat(document.getElementById('monto-recibido').value) || 0;
-                let vuelto;
-                if (metodo === 'EFECTIVO_USD') {
-                    // recibido en USD
-                    const recibidoBs = recibido * tasaBCV;
-                    vuelto = redondear(recibidoBs - totalFinalBs);
-                } else {
-                    vuelto = redondear(recibido - totalFinalBs);
-                }
+                cajaCal.classList.remove('hidden'); const recibido = parseFloat(document.getElementById('monto-recibido').value) || 0; let vuelto;
+                if (metodo === 'EFECTIVO_USD') { const recibidoBs = recibido * tasaBCV; vuelto = redondear(recibidoBs - totalFinalBs); } else { vuelto = redondear(recibido - totalFinalBs); }
                 if (recibido > 0) {
-                    resCal.classList.remove('hidden');
-                    const vueltoBs = Math.max(vuelto, 0);
-                    document.getElementById('val-vuelto-bs').innerText = `Bs. ${fmt(vueltoBs)}`;
-                    document.getElementById('val-vuelto-usd').innerText = `US$ ${fmt(redondear(vueltoBs / tasaBCV))}`;
+                    resCal.classList.remove('hidden'); const vueltoBs = Math.max(vuelto, 0);
+                    document.getElementById('val-vuelto-bs').innerText = `Bs. ${fmt(vueltoBs)}`; document.getElementById('val-vuelto-usd').innerText = `US$ ${fmt(redondear(vueltoBs / tasaBCV))}`;
                     document.getElementById('val-vuelto-bs').className = vuelto < 0 ? 'text-lg font-black text-red-600' : 'text-lg font-black text-green-700';
                     if (vuelto < 0) document.getElementById('val-vuelto-bs').innerText = `Falta Bs. ${fmt(Math.abs(vuelto))}`;
                 } else resCal.classList.add('hidden');
             } else cajaCal.classList.add('hidden');
         }
 
-        // ================================================================
-        // MODAL COBRO
-        // ================================================================
         function verificarIGTF() {
-            const metodo = document.getElementById('cobro-metodo').value;
-            const aplica = (metodo === 'EFECTIVO_USD' || metodo === 'ZELLE');
+            const metodo = document.getElementById('cobro-metodo').value; const aplica = (metodo === 'EFECTIVO_USD' || metodo === 'ZELLE');
             document.getElementById('caja-igtf').classList.toggle('hidden', !aplica);
-            const tBs = granTotalBs;
-            const igtfBs = aplica ? redondear(tBs * pypIgtf) : 0;
-            document.getElementById('modal-total-bs-final').innerText = `Bs. ${fmt(tBs + igtfBs)}`;
-            document.getElementById('modal-total-usd-final').innerText = `US$ ${fmt(redondear((tBs + igtfBs) / tasaBCV))}`;
+            const tBs = granTotalBs; const igtfBs = aplica ? redondear(tBs * pypIgtf) : 0;
+            document.getElementById('modal-total-bs-final').innerText = `Bs. ${fmt(tBs + igtfBs)}`; document.getElementById('modal-total-usd-final').innerText = `US$ ${fmt(redondear((tBs + igtfBs) / tasaBCV))}`;
         }
 
-        function abrirCobro() {
-            lineasPagoMixto = [];
-            renderizarLineasPago();
-            document.getElementById('monto-recibido').value = '';
-            document.getElementById('resultado-vuelto').classList.add('hidden');
-            verificarIGTF();
-            calcularVuelto();
-            document.getElementById('modal-cobro').classList.remove('hidden');
-            document.getElementById('modal-cobro').classList.add('flex');
-        }
-
+        function abrirCobro() { lineasPagoMixto = []; renderizarLineasPago(); document.getElementById('monto-recibido').value = ''; document.getElementById('resultado-vuelto').classList.add('hidden'); verificarIGTF(); calcularVuelto(); document.getElementById('modal-cobro').classList.remove('hidden'); document.getElementById('modal-cobro').classList.add('flex'); }
         function cerrarCobro() { document.getElementById('modal-cobro').classList.add('hidden'); }
+        function reimprimirUltimoTicket() { if (!ultimaVentaParaReimprimir) return; const { formato, empresa, factura, items } = ultimaVentaParaReimprimir; generarHTMLImpresion(formato, empresa, factura, items); window.print(); }
 
         // ================================================================
-        // NUEVO: RE-IMPRIMIR ÚLTIMO TICKET
+        // IMPORTAR PRESUPUESTOS (NUEVO MOTOR)
         // ================================================================
-        function reimprimirUltimoTicket() {
-            if (!ultimaVentaParaReimprimir) return;
-            const { formato, empresa, factura, items } = ultimaVentaParaReimprimir;
-            generarHTMLImpresion(formato, empresa, factura, items);
-            window.print();
-        }
+        let presupuestosImportar = [];
+        let fuseImportarPre = null;
 
-        // ================================================================
-        // PROCESAR VENTA
-        // ================================================================
-        // Sprint 3D: usa RPC procesar_venta (transacción atómica).
-        // Si algo falla, puedes volver al método viejo cambiando esta bandera a false.
-        const USAR_RPC_PROCESAR_VENTA = true;
-        // ================================================================
-        async function procesarVenta(modo = 'NORMAL') {
-            if (USAR_RPC_PROCESAR_VENTA) {
-                return procesarVentaRPC(modo);
-            }
-            return procesarVentaLegacy(modo);
-        }
-
-        // ================================================================
-        // NUEVA implementación: 1 sola petición HTTP, transacción atómica
-        // ================================================================
-        async function procesarVentaRPC(modo = 'NORMAL') {
-            const btnCobrar = document.getElementById('btn-cobrar');
-            const btnGuardar = document.getElementById('btn-guardar');
-            btnCobrar.disabled = true; btnGuardar.disabled = true;
-            mostrarCarga(modo === 'DIRECTO' ? "Guardando..." : "Procesando...", "Procesando venta...");
+        async function abrirModalImportarPresupuesto() {
+            if (carrito.length > 0) { alert("Debes limpiar la venta actual (Icono de Papelera) antes de importar un presupuesto."); return; }
+            document.getElementById('modal-importar-presupuesto').classList.remove('hidden'); document.getElementById('modal-importar-presupuesto').classList.add('flex');
+            document.getElementById('lista-presupuestos-importar').innerHTML = '<div class="col-span-2 text-center py-10 text-primary font-bold uppercase"><i class="fa-solid fa-spinner fa-spin text-3xl mb-2 block"></i> Buscando presupuestos...</div>';
+            
             try {
-                const metodo = modo === 'DIRECTO' ? 'POR_PAGAR' : document.getElementById('cobro-metodo').value;
-                const usuario = localStorage.getItem('pyp_usuario_nombre') || 'SISTEMA';
+                const filtroEmpresa = empresaActual ? `id_empresa=eq.${empresaActual}&` : `id_empresa=is.null&`;
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/ventas_documentos?${filtroEmpresa}tipo_documento=eq.COTIZACION&estatus=in.(PENDIENTE,APROBADO)&order=fecha_emision.desc`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                if (!res.ok) throw new Error("Fallo al descargar");
+                presupuestosImportar = await res.json();
+                
+                fuseImportarPre = new Fuse(presupuestosImportar, {
+                    keys: ['correlativo', 'cliente_nombre', 'cliente_documento'], threshold: 0.3, ignoreLocation: true,
+                    getFn: (obj, path) => { let val = obj; for (let i = 0; i < path.length; i++) val = val ? val[path[i]] : null; return typeof val === 'string' ? val.normalize("NFD").replace(/[\u0300-\u036f]/g, "") : String(val); }
+                });
+                renderizarModalImportar(presupuestosImportar);
+            } catch (e) { document.getElementById('lista-presupuestos-importar').innerHTML = `<div class="col-span-2 text-center text-red-500 font-bold uppercase">Error de conexión. Verifica permisos (RLS).</div>`; }
+        }
 
-                // 🆕 Sprint 3D: el RPC procesar_venta busca el turno automáticamente
-                // por auth_id_cajero. Ya no validamos el turno aquí — si no existe,
-                // el RPC lanza una excepción clara.
+        function cerrarModalImportarPresupuesto() { document.getElementById('modal-importar-presupuesto').classList.add('hidden'); document.getElementById('modal-importar-presupuesto').classList.remove('flex'); }
 
-                const formatoPrint = document.getElementById('cobro-formato-impresion').value;
-                const condicionSel = document.getElementById('pos-condicion');
-                const condicion = condicionSel.options[condicionSel.selectedIndex].text;
-                const nroFactura = document.getElementById('pos-nro-factura').value.trim().toUpperCase();
-                const nroControl = document.getElementById('pos-nro-control').value.trim().toUpperCase();
-                const fechaVenc = document.getElementById('pos-fecha-vencimiento').value;
-                const fechaEmision = document.getElementById('pos-fecha-emision').value + 'T12:00:00Z';
+        function renderizarModalImportar(data) {
+            const contenedor = document.getElementById('lista-presupuestos-importar');
+            if (data.length === 0) { contenedor.innerHTML = `<div class="col-span-2 text-center py-10 text-gray-400 font-bold uppercase"><i class="fa-solid fa-folder-open text-4xl mb-2 block opacity-50"></i>No hay presupuestos pendientes.</div>`; return; }
+            let html = '';
+            data.forEach(p => {
+                const correlativo = String(p.correlativo).padStart(6, '0');
+                const total = parseFloat(p.total_usd).toFixed(2);
+                const origen = p.id_origen_taller ? 'TALLER' : 'MOSTRADOR';
+                const colorOrigen = p.id_origen_taller ? 'text-purple-600 bg-purple-50 border-purple-200' : 'text-gray-500 bg-gray-100 border-gray-200';
+                
+                html += `
+                <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md hover:border-indigo-300 transition cursor-pointer relative" onclick="ejecutarImportacion('${p.id_documento}', '${p.cliente_documento}', \`${p.cliente_nombre.replace(/"/g, '&quot;')}\`, '${p.id_origen_taller || ''}', '${p.id_cliente || ''}')">
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="font-mono font-bold text-gray-500 text-[10px] bg-gray-100 px-2 py-0.5 rounded">PRE-${correlativo}</span>
+                        <span class="text-[8px] font-black uppercase px-2 py-0.5 rounded border ${colorOrigen}">${origen}</span>
+                    </div>
+                    <div class="font-black text-primary text-xs uppercase truncate mb-1" title="${p.cliente_nombre}">${p.cliente_nombre}</div>
+                    <div class="text-[9px] text-gray-400 font-mono mb-3">${p.cliente_documento || 'V-00000000'}</div>
+                    <div class="flex justify-between items-end border-t border-gray-100 pt-2 mt-2">
+                        <span class="text-[9px] font-bold text-gray-400 uppercase">Total Estimado:</span>
+                        <span class="font-black text-secondary text-lg leading-none">$${total}</span>
+                    </div>
+                </div>`;
+            });
+            contenedor.innerHTML = html;
+        }
 
-                const aplicaIgtf = (metodo === 'EFECTIVO_USD' || metodo === 'ZELLE');
-                const igtfVal = aplicaIgtf ? pypIgtf * 100 : 0;
-                const totalBsFinal = redondear(granTotalBs + (aplicaIgtf ? redondear(granTotalBs * pypIgtf) : 0));
-                const totalUsdFinal = totalBsFinal / tasaBCV;
-                const baseImpUsd = parseFloat(document.getElementById('contenedor-totales-fiscales').dataset.baseTotalUsd) || 0;
-                const exentoUsd = parseFloat(document.getElementById('contenedor-totales-fiscales').dataset.exentoTotalUsd) || 0;
+        function filtrarImportarPresupuesto() {
+            let query = document.getElementById('buscador-importar-pre').value.trim();
+            if (query === '' || !fuseImportarPre) return renderizarModalImportar(presupuestosImportar);
+            const txtNormalizado = query.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            renderizarModalImportar(fuseImportarPre.search(txtNormalizado).map(r => r.item));
+        }
 
-                const estadoFinal = (metodo === 'POR_PAGAR' || modoCotizacion) ? (modoCotizacion ? 'Cotización' : 'Por Pagar') : 'Completada';
+        async function ejecutarImportacion(id_documento, docCliente, nomCliente, idOrigenTaller, idClienteBD) {
+            if(!confirm(`¿Importar este presupuesto a la caja para cobrarlo?`)) return;
+            cerrarModalImportarPresupuesto(); mostrarCarga("Importando...", "Descargando cargos...");
+            try {
+                document.getElementById('pos-id-cliente').value = idClienteBD || ''; 
+                document.getElementById('txt-cli-doc').innerText = docCliente || 'V-00000000';
+                document.getElementById('txt-cli-nom').innerText = nomCliente;
+                document.getElementById('info-cliente-seleccionado').classList.remove('hidden');
+                document.getElementById('pos-buscador-cliente').classList.add('hidden');
 
-                let metodoPagoFinal = metodo;
-                if (lineasPagoMixto.length > 0) {
-                    metodoPagoFinal = lineasPagoMixto.map(l => `${l.metodo}(${fmt(l.monto)}Bs)`).join('+');
-                }
+                const resDet = await fetch(`${SUPABASE_URL}/rest/v1/ventas_documentos_detalles?id_documento=eq.${id_documento}`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                if(!resDet.ok) throw new Error("Fallo al descargar ítems.");
+                const detalles = await resDet.json();
+                
+                carrito = detalles.map((d, index) => {
+                    const prodEnBD = dbInventario.find(p => p.id_producto_sku === d.producto_sku);
+                    const pNegativo = prodEnBD ? prodEnBD.permitir_negativo : true; 
+                    const sActual = prodEnBD ? prodEnBD.stock_actual : 9999;
+                    const imp = prodEnBD ? prodEnBD.tipo_impuesto : 'GENERAL';
 
-                // Armar payload de la factura
-                const payloadFactura = {
-                    id_cliente: document.getElementById('pos-id-cliente').value || null,
-                    cliente_documento: document.getElementById('txt-cli-doc').innerText,
-                    cliente_nombre: document.getElementById('txt-cli-nom').innerText,
-                    subtotal_usd: sumSubtotalBasePuroUsd,
-                    descuento_usd: descGeneralTotalUsd,
-                    total_usd: totalUsdFinal,
-                    total_bs: totalBsFinal,
-                    tasa_bcv_aplicada: tasaBCV,
-                    metodos_pago: metodoPagoFinal,
-                    condicion_pago: condicion,
-                    iva_porcentaje: pypIva * 100,
-                    igtf_porcentaje: igtfVal,
-                    base_imponible: baseImpUsd * tasaBCV,
-                    monto_exento: exentoUsd * tasaBCV,
-                    nombre_cajero: usuario,
-                    nro_factura_manual: nroFactura || null,
-                    nro_control_manual: nroControl || null,
-                    fecha_vencimiento: fechaVenc,
-                    fecha_emision: fechaEmision,
-                    estatus: estadoFinal,
-                    tipo_transaccion: modoCotizacion ? 'Cotización' : 'Venta',
-                    saldo_pendiente_usd: (estadoFinal === 'Por Pagar' || estadoFinal === 'Cotización') ? totalUsdFinal : 0
-                };
-
-                // Armar payload de items
-                const payloadItems = carrito.map(i => ({
-                    producto_sku: i.id_producto_sku,
-                    producto_nombre: i.nombre,
-                    cantidad: i.cantidad,
-                    precio_unitario_usd: calcularPrecioUnitario(i, i.cantidad)
-                }));
-
-                // Armar payload de caja (si aplica). El RPC determina id_cierre por auth_id_cajero.
-                let payloadCaja = null;
-                if (metodo !== 'POR_PAGAR' && !modoCotizacion) {
-                    payloadCaja = {
-                        fecha: new Date().toISOString(),
-                        tipo: 'INGRESO',
-                        concepto: `COBRO FACTURA NRO: ${nroFactura} - CLIENTE: ${document.getElementById('txt-cli-nom').innerText}`,
-                        monto_usd: totalUsdFinal,
-                        monto_bs: totalBsFinal,
-                        metodo_pago: metodoPagoFinal,
-                        usuario: usuario
+                    return {
+                        id_interno: Date.now() + index, id_producto_sku: d.producto_sku, nombre: d.producto_nombre,
+                        pUsd: d.precio_unitario_usd, precio_manual_usd: d.precio_unitario_usd,
+                        cantidad: d.cantidad, permitir_negativo: pNegativo, stock_actual: sActual, tipo_impuesto: imp,
+                        desc_tipo: 'MONTO_BS', desc_val: 0
                     };
-                }
-
-                // ÚNICA PETICIÓN HTTP que hace TODO de forma atómica
-                mostrarCarga("Procesando venta...", "Guardando factura, detalles y stock...");
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/procesar_venta`, {
-                    method: 'POST',
-                    headers: {
-                        'apikey': SUPABASE_KEY,
-                        'Authorization': `Bearer ${TOKEN_JWT}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        p_factura: payloadFactura,
-                        p_items: payloadItems,
-                        p_caja: payloadCaja
-                    })
                 });
 
-                if (!res.ok) {
-                    const errObj = await res.json();
-                    throw new Error(errObj.message || errObj.hint || "Fallo al procesar la venta.");
-                }
+                fetch(`${SUPABASE_URL}/rest/v1/ventas_documentos?id_documento=eq.${id_documento}`, {
+                    method: 'PATCH', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ estatus: 'FACTURADO' })
+                });
 
-                const result = await res.json();
-                const fId = result.id_factura;
+                actualizarUI_Carrito(); cerrarErrorCarga();
+                if(idOrigenTaller) { setTimeout(() => alert("INFO: Este presupuesto proviene del Taller Técnico. Procede a cobrar normalmente. Al finalizar, ve al Taller y entrégale el equipo al cliente."), 500); }
+            } catch (e) { mostrarErrorConexion("No se pudo importar: " + e.message); }
+        }
 
-                // IMPRESIÓN (igual que antes)
-                if (modo !== 'DIRECTO') {
-                    let empresaPrint = { nombre_empresa: 'P&P SOLUCIONES', rif: 'J-00000000-0', direccion_fiscal: 'SIN DIRECCIÓN FISCAL' };
-                    generarHTMLImpresion(formatoPrint, empresaPrint, payloadFactura, carrito);
-                    ultimaVentaParaReimprimir = { formato: formatoPrint, empresa: empresaPrint, factura: payloadFactura, items: JSON.parse(JSON.stringify(carrito)) };
-                    document.getElementById('btn-reimprimir').disabled = false;
-                    window.print();
-                }
+        // ================================================================
+        // PROCESAR VENTA (RPC / LEGACY)
+        // ================================================================
+        const USAR_RPC_PROCESAR_VENTA = true;
+        async function procesarVenta(modo = 'NORMAL') { if (USAR_RPC_PROCESAR_VENTA) { return procesarVentaRPC(modo); } return procesarVentaLegacy(modo); }
+
+        async function procesarVentaRPC(modo = 'NORMAL') {
+            const btnCobrar = document.getElementById('btn-cobrar'); const btnGuardar = document.getElementById('btn-guardar');
+            btnCobrar.disabled = true; btnGuardar.disabled = true; mostrarCarga(modo === 'DIRECTO' ? "Guardando..." : "Procesando...", "Procesando venta...");
+            try {
+                const metodo = modo === 'DIRECTO' ? 'POR_PAGAR' : document.getElementById('cobro-metodo').value; const usuario = localStorage.getItem('pyp_usuario_nombre') || 'SISTEMA';
+                const formatoPrint = document.getElementById('cobro-formato-impresion').value; const condicionSel = document.getElementById('pos-condicion'); const condicion = condicionSel.options[condicionSel.selectedIndex].text;
+                const nroFactura = document.getElementById('pos-nro-factura').value.trim().toUpperCase(); const nroControl = document.getElementById('pos-nro-control').value.trim().toUpperCase();
+                const fechaVenc = document.getElementById('pos-fecha-vencimiento').value; const fechaEmision = document.getElementById('pos-fecha-emision').value + 'T12:00:00Z';
+                const aplicaIgtf = (metodo === 'EFECTIVO_USD' || metodo === 'ZELLE'); const igtfVal = aplicaIgtf ? pypIgtf * 100 : 0;
+                const totalBsFinal = redondear(granTotalBs + (aplicaIgtf ? redondear(granTotalBs * pypIgtf) : 0)); const totalUsdFinal = totalBsFinal / tasaBCV;
+                const baseImpUsd = parseFloat(document.getElementById('contenedor-totales-fiscales').dataset.baseTotalUsd) || 0; const exentoUsd = parseFloat(document.getElementById('contenedor-totales-fiscales').dataset.exentoTotalUsd) || 0;
+                const estadoFinal = (metodo === 'POR_PAGAR' || modoCotizacion) ? (modoCotizacion ? 'Cotización' : 'Por Pagar') : 'Completada';
+                let metodoPagoFinal = metodo; if (lineasPagoMixto.length > 0) { metodoPagoFinal = lineasPagoMixto.map(l => `${l.metodo}(${fmt(l.monto)}Bs)`).join('+'); }
+
+                const payloadFactura = { id_cliente: document.getElementById('pos-id-cliente').value || null, cliente_documento: document.getElementById('txt-cli-doc').innerText, cliente_nombre: document.getElementById('txt-cli-nom').innerText, subtotal_usd: sumSubtotalBasePuroUsd, descuento_usd: descGeneralTotalUsd, total_usd: totalUsdFinal, total_bs: totalBsFinal, tasa_bcv_aplicada: tasaBCV, metodos_pago: metodoPagoFinal, condicion_pago: condicion, iva_porcentaje: pypIva * 100, igtf_porcentaje: igtfVal, base_imponible: baseImpUsd * tasaBCV, monto_exento: exentoUsd * tasaBCV, nombre_cajero: usuario, nro_factura_manual: nroFactura || null, nro_control_manual: nroControl || null, fecha_vencimiento: fechaVenc, fecha_emision: fechaEmision, estatus: estadoFinal, tipo_transaccion: modoCotizacion ? 'Cotización' : 'Venta', saldo_pendiente_usd: (estadoFinal === 'Por Pagar' || estadoFinal === 'Cotización') ? totalUsdFinal : 0 };
+                const payloadItems = carrito.map(i => ({ producto_sku: i.id_producto_sku, producto_nombre: i.nombre, cantidad: i.cantidad, precio_unitario_usd: calcularPrecioUnitario(i, i.cantidad) }));
+                let payloadCaja = null; if (metodo !== 'POR_PAGAR' && !modoCotizacion) { payloadCaja = { fecha: new Date().toISOString(), tipo: 'INGRESO', concepto: `COBRO FACTURA NRO: ${nroFactura} - CLIENTE: ${document.getElementById('txt-cli-nom').innerText}`, monto_usd: totalUsdFinal, monto_bs: totalBsFinal, metodo_pago: metodoPagoFinal, usuario: usuario }; }
+
+                mostrarCarga("Procesando venta...", "Guardando factura, detalles y stock...");
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/procesar_venta`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ p_factura: payloadFactura, p_items: payloadItems, p_caja: payloadCaja }) });
+                if (!res.ok) { const errObj = await res.json(); throw new Error(errObj.message || errObj.hint || "Fallo al procesar la venta."); }
+
+                if (modo !== 'DIRECTO') { let empresaPrint = { nombre_empresa: 'P&P SOLUCIONES', rif: 'J-00000000-0', direccion_fiscal: 'SIN DIRECCIÓN FISCAL' }; generarHTMLImpresion(formatoPrint, empresaPrint, payloadFactura, carrito); ultimaVentaParaReimprimir = { formato: formatoPrint, empresa: empresaPrint, factura: payloadFactura, items: JSON.parse(JSON.stringify(carrito)) }; document.getElementById('btn-reimprimir').disabled = false; window.print(); }
 
                 if (nroFacturaEditable) toggleEditNroFactura();
-                carrito = [];
-                document.getElementById('pos-input-desc-general').value = '';
-                document.getElementById('pos-nro-control').value = '';
-                document.getElementById('pos-condicion').selectedIndex = 0;
-                document.getElementById('pos-fecha-emision').value = getFechaHoy();
-                ajustarFechaVencimiento();
-                limpiarCliente();
-                cerrarCobro();
-                actualizarUI_Carrito();
-                await iniciarPuntoVenta();
-                await inicializarCorrelativos();
-                cerrarErrorCarga();
-            } catch (e) {
-                mostrarErrorConexion(e.message);
-            } finally {
-                btnCobrar.disabled = false; btnGuardar.disabled = false;
-            }
+                carrito = []; document.getElementById('pos-input-desc-general').value = ''; document.getElementById('pos-nro-control').value = ''; document.getElementById('pos-condicion').selectedIndex = 0; document.getElementById('pos-fecha-emision').value = getFechaHoy(); ajustarFechaVencimiento(); limpiarCliente(); cerrarCobro(); actualizarUI_Carrito(); await iniciarPuntoVenta(); await inicializarCorrelativos(); cerrarErrorCarga();
+            } catch (e) { mostrarErrorConexion(e.message); } finally { btnCobrar.disabled = false; btnGuardar.disabled = false; }
         }
 
-        // ================================================================
-        // VIEJA implementación (queda como respaldo). NO se llama si USAR_RPC_PROCESAR_VENTA = true
-        // ================================================================
-       async function procesarVentaLegacy(modo = 'NORMAL') {
-            const btnCobrar = document.getElementById('btn-cobrar');
-            const btnGuardar = document.getElementById('btn-guardar');
-            btnCobrar.disabled = true; btnGuardar.disabled = true;
-            mostrarCarga(modo === 'DIRECTO' ? "Guardando..." : "Procesando...", "Verificando Turno de Caja...");
+        async function procesarVentaLegacy(modo = 'NORMAL') {
+            const btnCobrar = document.getElementById('btn-cobrar'); const btnGuardar = document.getElementById('btn-guardar'); btnCobrar.disabled = true; btnGuardar.disabled = true; mostrarCarga(modo === 'DIRECTO' ? "Guardando..." : "Procesando...", "Verificando Turno de Caja...");
             try {
-                const metodo = modo === 'DIRECTO' ? 'POR_PAGAR' : document.getElementById('cobro-metodo').value;
-                const usuario = localStorage.getItem('pyp_usuario_nombre') || 'SISTEMA';
-                let idCierreActivo = null;
+                const metodo = modo === 'DIRECTO' ? 'POR_PAGAR' : document.getElementById('cobro-metodo').value; const usuario = localStorage.getItem('pyp_usuario_nombre') || 'SISTEMA'; let idCierreActivo = null;
+                if (metodo !== 'POR_PAGAR') { const resTurno = await fetch(`${SUPABASE_URL}/rest/v1/cierres_caja?id_empresa=${empresaActual ? 'eq.' + empresaActual : 'is.null'}&usuario_cajero=eq.${usuario}&estatus=eq.ABIERTA&select=id_cierre`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }); const dataTurno = await resTurno.json(); if (dataTurno.length === 0) throw new Error("CAJA CERRADA: Debes ir a 'Finanzas > Control de Caja' y abrir tu turno antes de facturar y cobrar."); idCierreActivo = dataTurno[0].id_cierre; }
+                const formatoPrint = document.getElementById('cobro-formato-impresion').value; const condicionSel = document.getElementById('pos-condicion'); const condicion = condicionSel.options[condicionSel.selectedIndex].text; const nroFactura = document.getElementById('pos-nro-factura').value.trim().toUpperCase(); const nroControl = document.getElementById('pos-nro-control').value.trim().toUpperCase(); const fechaVenc = document.getElementById('pos-fecha-vencimiento').value; const fechaEmision = document.getElementById('pos-fecha-emision').value + 'T12:00:00Z'; const aplicaIgtf = (metodo === 'EFECTIVO_USD' || metodo === 'ZELLE'); const igtfVal = aplicaIgtf ? pypIgtf * 100 : 0; const totalBsFinal = redondear(granTotalBs + (aplicaIgtf ? redondear(granTotalBs * pypIgtf) : 0)); const totalUsdFinal = totalBsFinal / tasaBCV; const baseImpUsd = parseFloat(document.getElementById('contenedor-totales-fiscales').dataset.baseTotalUsd) || 0; const exentoUsd = parseFloat(document.getElementById('contenedor-totales-fiscales').dataset.exentoTotalUsd) || 0; const estadoFinal = (metodo === 'POR_PAGAR' || modoCotizacion) ? (modoCotizacion ? 'Cotización' : 'Por Pagar') : 'Completada'; let metodoPagoFinal = metodo; if (lineasPagoMixto.length > 0) { metodoPagoFinal = lineasPagoMixto.map(l => `${l.metodo}(${fmt(l.monto)}Bs)`).join('+'); }
 
-                if (metodo !== 'POR_PAGAR') {
-                    const resTurno = await fetch(
-                        `${SUPABASE_URL}/rest/v1/cierres_caja?id_empresa=${empresaActual ? 'eq.' + empresaActual : 'is.null'}&usuario_cajero=eq.${usuario}&estatus=eq.ABIERTA&select=id_cierre`,
-                        { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }
-                    );
-                    const dataTurno = await resTurno.json();
-                    if (dataTurno.length === 0) throw new Error("CAJA CERRADA: Debes ir a 'Finanzas > Control de Caja' y abrir tu turno antes de facturar y cobrar.");
-                    idCierreActivo = dataTurno[0].id_cierre;
-                }
-
-                const formatoPrint = document.getElementById('cobro-formato-impresion').value;
-                const condicionSel = document.getElementById('pos-condicion');
-                const condicion = condicionSel.options[condicionSel.selectedIndex].text;
-                const nroFactura = document.getElementById('pos-nro-factura').value.trim().toUpperCase();
-                const nroControl = document.getElementById('pos-nro-control').value.trim().toUpperCase();
-                const fechaVenc = document.getElementById('pos-fecha-vencimiento').value;
-                const fechaEmision = document.getElementById('pos-fecha-emision').value + 'T12:00:00Z';
-
-                const aplicaIgtf = (metodo === 'EFECTIVO_USD' || metodo === 'ZELLE');
-                const igtfVal = aplicaIgtf ? pypIgtf * 100 : 0;
-                const totalBsFinal = redondear(granTotalBs + (aplicaIgtf ? redondear(granTotalBs * pypIgtf) : 0));
-                const totalUsdFinal = totalBsFinal / tasaBCV;
-                const baseImpUsd = parseFloat(document.getElementById('contenedor-totales-fiscales').dataset.baseTotalUsd) || 0;
-                const exentoUsd = parseFloat(document.getElementById('contenedor-totales-fiscales').dataset.exentoTotalUsd) || 0;
-
-                const estadoFinal = (metodo === 'POR_PAGAR' || modoCotizacion) ? (modoCotizacion ? 'Cotización' : 'Por Pagar') : 'Completada';
-
-                let metodoPagoFinal = metodo;
-                if (lineasPagoMixto.length > 0) {
-                    metodoPagoFinal = lineasPagoMixto.map(l => `${l.metodo}(${fmt(l.monto)}Bs)`).join('+');
-                }
-
-                const payloadFactura = {
-                    id_empresa: empresaActual || null,
-                    id_cliente: document.getElementById('pos-id-cliente').value || null,
-                    cliente_documento: document.getElementById('txt-cli-doc').innerText,
-                    cliente_nombre: document.getElementById('txt-cli-nom').innerText,
-                    subtotal_usd: sumSubtotalBasePuroUsd,
-                    descuento_usd: descGeneralTotalUsd,
-                    total_usd: totalUsdFinal,
-                    total_bs: totalBsFinal,
-                    tasa_bcv_aplicada: tasaBCV,
-                    metodos_pago: metodoPagoFinal,
-                    condicion_pago: condicion,
-                    iva_porcentaje: pypIva * 100,
-                    igtf_porcentaje: igtfVal,
-                    base_imponible: baseImpUsd * tasaBCV,
-                    monto_exento: exentoUsd * tasaBCV,
-                    nombre_cajero: usuario,
-                    nro_factura_manual: nroFactura || null,
-                    nro_control_manual: nroControl || null,
-                    fecha_vencimiento: fechaVenc,
-                    fecha_emision: fechaEmision,
-                    estatus: estadoFinal,
-                    tipo_transaccion: modoCotizacion ? 'Cotización' : 'Venta',
-                    saldo_pendiente_usd: (estadoFinal === 'Por Pagar' || estadoFinal === 'Cotización') ? totalUsdFinal : 0
-                };
-
-                // FIX: apuntamos a ventas_facturas
-                const resF = await fetch(`${SUPABASE_URL}/rest/v1/ventas_facturas`, {
-                    method: 'POST',
-                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
-                    body: JSON.stringify(payloadFactura)
-                });
-                
-                if (!resF.ok) { const errObj = await resF.json(); throw new Error(errObj.message || "Fallo al guardar factura."); }
-                const fId = (await resF.json())[0].id_factura;
-
-                if (metodo !== 'POR_PAGAR' && !modoCotizacion) {
-                    const payloadCaja = { id_empresa: empresaActual || null, id_factura: fId, id_cierre: idCierreActivo, fecha: new Date().toISOString(), tipo: 'INGRESO', concepto: `COBRO FACTURA NRO: ${nroFactura} - CLIENTE: ${document.getElementById('txt-cli-nom').innerText}`, monto_usd: totalUsdFinal, monto_bs: totalBsFinal, metodo_pago: metodoPagoFinal, usuario: usuario };
-                    fetch(`${SUPABASE_URL}/rest/v1/caja_movimientos`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify(payloadCaja) });
-                }
+                const payloadFactura = { id_empresa: empresaActual || null, id_cliente: document.getElementById('pos-id-cliente').value || null, cliente_documento: document.getElementById('txt-cli-doc').innerText, cliente_nombre: document.getElementById('txt-cli-nom').innerText, subtotal_usd: sumSubtotalBasePuroUsd, descuento_usd: descGeneralTotalUsd, total_usd: totalUsdFinal, total_bs: totalBsFinal, tasa_bcv_aplicada: tasaBCV, metodos_pago: metodoPagoFinal, condicion_pago: condicion, iva_porcentaje: pypIva * 100, igtf_porcentaje: igtfVal, base_imponible: baseImpUsd * tasaBCV, monto_exento: exentoUsd * tasaBCV, nombre_cajero: usuario, nro_factura_manual: nroFactura || null, nro_control_manual: nroControl || null, fecha_vencimiento: fechaVenc, fecha_emision: fechaEmision, estatus: estadoFinal, tipo_transaccion: modoCotizacion ? 'Cotización' : 'Venta', saldo_pendiente_usd: (estadoFinal === 'Por Pagar' || estadoFinal === 'Cotización') ? totalUsdFinal : 0 };
+                const resF = await fetch(`${SUPABASE_URL}/rest/v1/ventas_facturas`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, body: JSON.stringify(payloadFactura) });
+                if (!resF.ok) { const errObj = await resF.json(); throw new Error(errObj.message || "Fallo al guardar factura."); } const fId = (await resF.json())[0].id_factura;
+                if (metodo !== 'POR_PAGAR' && !modoCotizacion) { const payloadCaja = { id_empresa: empresaActual || null, id_factura: fId, id_cierre: idCierreActivo, fecha: new Date().toISOString(), tipo: 'INGRESO', concepto: `COBRO FACTURA NRO: ${nroFactura} - CLIENTE: ${document.getElementById('txt-cli-nom').innerText}`, monto_usd: totalUsdFinal, monto_bs: totalBsFinal, metodo_pago: metodoPagoFinal, usuario: usuario }; fetch(`${SUPABASE_URL}/rest/v1/caja_movimientos`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify(payloadCaja) }); }
 
                 const promesas = [];
                 carrito.forEach(i => {
                     const prAplicado = calcularPrecioUnitario(i, i.cantidad);
-                    
-                    // FIX: apuntamos a ventas_facturas_detalles
-                    promesas.push(fetch(`${SUPABASE_URL}/rest/v1/ventas_facturas_detalles`, { 
-                        method: 'POST', 
-                        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, 
-                        body: JSON.stringify({ id_empresa: empresaActual || null, factura_id: fId, producto_sku: i.id_producto_sku, producto_nombre: i.nombre, cantidad: i.cantidad, precio_unitario_usd: prAplicado, subtotal_usd: prAplicado * i.cantidad }) 
-                    }));
-                    
-                    if (!i.permitir_negativo && !modoCotizacion) {
-                        promesas.push(fetch(`${SUPABASE_URL}/rest/v1/productos?id_producto_sku=eq.${i.id_producto_sku}`, { 
-                            method: 'PATCH', 
-                            headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, 
-                            body: JSON.stringify({ stock_actual: i.stock_actual - i.cantidad }) 
-                        }));
-                    }
+                    promesas.push(fetch(`${SUPABASE_URL}/rest/v1/ventas_facturas_detalles`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ id_empresa: empresaActual || null, factura_id: fId, producto_sku: i.id_producto_sku, producto_nombre: i.nombre, cantidad: i.cantidad, precio_unitario_usd: prAplicado, subtotal_usd: prAplicado * i.cantidad }) }));
+                    if (!i.permitir_negativo && !modoCotizacion) { promesas.push(fetch(`${SUPABASE_URL}/rest/v1/productos?id_producto_sku=eq.${i.id_producto_sku}`, { method: 'PATCH', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ stock_actual: i.stock_actual - i.cantidad }) })); }
                 });
                 await Promise.all(promesas);
 
-                if (modo !== 'DIRECTO') {
-                    let empresaPrint = { nombre_empresa: 'P&P SOLUCIONES', rif: 'J-00000000-0', direccion_fiscal: 'SIN DIRECCIÓN FISCAL' };
-                    generarHTMLImpresion(formatoPrint, empresaPrint, payloadFactura, carrito);
-                    ultimaVentaParaReimprimir = { formato: formatoPrint, empresa: empresaPrint, factura: payloadFactura, items: JSON.parse(JSON.stringify(carrito)) };
-                    document.getElementById('btn-reimprimir').disabled = false;
-                    window.print();
-                }
+                if (modo !== 'DIRECTO') { let empresaPrint = { nombre_empresa: 'P&P SOLUCIONES', rif: 'J-00000000-0', direccion_fiscal: 'SIN DIRECCIÓN FISCAL' }; generarHTMLImpresion(formatoPrint, empresaPrint, payloadFactura, carrito); ultimaVentaParaReimprimir = { formato: formatoPrint, empresa: empresaPrint, factura: payloadFactura, items: JSON.parse(JSON.stringify(carrito)) }; document.getElementById('btn-reimprimir').disabled = false; window.print(); }
 
                 if (nroFacturaEditable) toggleEditNroFactura();
-                carrito = [];
-                document.getElementById('pos-input-desc-general').value = '';
-                document.getElementById('pos-nro-control').value = '';
-                document.getElementById('pos-condicion').selectedIndex = 0;
-                document.getElementById('pos-fecha-emision').value = getFechaHoy();
-                ajustarFechaVencimiento();
-                limpiarCliente();
-                cerrarCobro();
-                actualizarUI_Carrito();
-                await iniciarPuntoVenta();
-                await inicializarCorrelativos();
-                cerrarErrorCarga();
-            } catch (e) {
-                mostrarErrorConexion(e.message);
-            } finally {
-                btnCobrar.disabled = false; btnGuardar.disabled = false;
-            }
+                carrito = []; document.getElementById('pos-input-desc-general').value = ''; document.getElementById('pos-nro-control').value = ''; document.getElementById('pos-condicion').selectedIndex = 0; document.getElementById('pos-fecha-emision').value = getFechaHoy(); ajustarFechaVencimiento(); limpiarCliente(); cerrarCobro(); actualizarUI_Carrito(); await iniciarPuntoVenta(); await inicializarCorrelativos(); cerrarErrorCarga();
+            } catch (e) { mostrarErrorConexion(e.message); } finally { btnCobrar.disabled = false; btnGuardar.disabled = false; }
         }
 
         // ================================================================
-        // FIX CRÍTICO: generarHTMLImpresion — IVA dinámico en lugar de 0.16 hardcodeado
+        // IMPRESIÓN
         // ================================================================
         function generarHTMLImpresion(formato, empresa, factura, items) {
             const contenedor = document.getElementById('ticket-impresion');
             contenedor.className = `hidden print:block formato-${formato}`;
-            const docCliente = document.getElementById('txt-cli-doc').innerText;
-            const nomCliente = document.getElementById('txt-cli-nom').innerText;
-            const dirCliente = document.getElementById('txt-cli-dir').innerText;
-            const fechaE = new Date(factura.fecha_emision).toLocaleDateString('es-VE');
-            const fechaV = new Date(factura.fecha_vencimiento + 'T12:00:00Z').toLocaleDateString('es-VE');
-
-            // FIX: usar tasas dinámicas guardadas en el payload
-            const ivaPorc = factura.iva_porcentaje || (pypIva * 100);
-            const ivaRate = ivaPorc / 100;
-
-            // Calcular IVA real a mostrar en el ticket usando la base imponible del payload
-            const baseImpBs = factura.base_imponible || 0;
-            const ivaCalculadoBs = redondear(baseImpBs * ivaRate);
-            const igtfBs = factura.igtf_porcentaje > 0 ? redondear(factura.total_bs * (factura.igtf_porcentaje / 100)) : 0;
+            const docCliente = document.getElementById('txt-cli-doc').innerText; const nomCliente = document.getElementById('txt-cli-nom').innerText; const dirCliente = document.getElementById('txt-cli-dir').innerText;
+            const fechaE = new Date(factura.fecha_emision).toLocaleDateString('es-VE'); const fechaV = new Date(factura.fecha_vencimiento + 'T12:00:00Z').toLocaleDateString('es-VE');
+            const ivaPorc = factura.iva_porcentaje || (pypIva * 100); const ivaRate = ivaPorc / 100;
+            const baseImpBs = factura.base_imponible || 0; const ivaCalculadoBs = redondear(baseImpBs * ivaRate); const igtfBs = factura.igtf_porcentaje > 0 ? redondear(factura.total_bs * (factura.igtf_porcentaje / 100)) : 0;
 
             let htmlItems = '';
             items.forEach(i => {
-                const prAplicado = calcularPrecioUnitario(i, i.cantidad);
-                const subTotBs = redondear(prAplicado * i.cantidad * factura.tasa_bcv_aplicada);
-                const indImpuesto = (i.tipo_impuesto === 'EXENTO') ? '(E)' : `(${ivaPorc.toFixed(0)}%)`;
-                if (formato === 'carta') {
-                    htmlItems += `<tr style="border-bottom: 1px solid #ddd; font-size: 11px;"><td style="padding: 6px 4px;">${i.id_producto_sku}</td><td style="padding: 6px 4px;">${i.nombre}</td><td style="padding: 6px 4px; text-align: center;">${i.cantidad}</td><td style="padding: 6px 4px; text-align: right;">Bs. ${fmt(prAplicado * factura.tasa_bcv_aplicada)}</td><td style="padding: 6px 4px; text-align: right; font-weight: bold;">Bs. ${fmt(subTotBs)} ${indImpuesto}</td></tr>`;
-                } else {
-                    htmlItems += `<div style="margin-bottom: 5px;"><div style="font-weight: bold;">${i.nombre}</div><div style="display: flex; justify-content: space-between;"><span>${i.cantidad}x ${fmt(prAplicado)}$/Bs.${fmt(prAplicado * factura.tasa_bcv_aplicada)}</span><span>Bs.${fmt(subTotBs)} ${indImpuesto}</span></div></div>`;
-                }
+                const prAplicado = calcularPrecioUnitario(i, i.cantidad); const subTotBs = redondear(prAplicado * i.cantidad * factura.tasa_bcv_aplicada); const indImpuesto = (i.tipo_impuesto === 'EXENTO') ? '(E)' : `(${ivaPorc.toFixed(0)}%)`;
+                if (formato === 'carta') { htmlItems += `<tr style="border-bottom: 1px solid #ddd; font-size: 11px;"><td style="padding: 6px 4px;">${i.id_producto_sku}</td><td style="padding: 6px 4px;">${i.nombre}</td><td style="padding: 6px 4px; text-align: center;">${i.cantidad}</td><td style="padding: 6px 4px; text-align: right;">Bs. ${fmt(prAplicado * factura.tasa_bcv_aplicada)}</td><td style="padding: 6px 4px; text-align: right; font-weight: bold;">Bs. ${fmt(subTotBs)} ${indImpuesto}</td></tr>`; } 
+                else { htmlItems += `<div style="margin-bottom: 5px;"><div style="font-weight: bold;">${i.nombre}</div><div style="display: flex; justify-content: space-between;"><span>${i.cantidad}x ${fmt(prAplicado)}$/Bs.${fmt(prAplicado * factura.tasa_bcv_aplicada)}</span><span>Bs.${fmt(subTotBs)} ${indImpuesto}</span></div></div>`; }
             });
 
             if (formato === 'carta') {
                 contenedor.innerHTML = `<div style="max-width: 800px; margin: 0 auto; color: #333;">
-                    <div style="text-align: center; margin-bottom: 20px;">
-                        <h2 style="margin:0; font-size: 24px; color: var(--color-primary);">${empresa.nombre_empresa}</h2>
-                        <p style="margin:0; font-weight: bold;">RIF: ${empresa.rif}</p>
-                        <p style="margin:0; font-size: 11px;">DIRECCIÓN: ${empresa.direccion_fiscal}</p>
-                        <h3 style="margin-top:15px; font-size: 18px;">${factura.tipo_transaccion === 'Cotización' ? 'COTIZACIÓN' : 'DOCUMENTO'} ${factura.nro_factura_manual ? 'NRO: ' + factura.nro_factura_manual : ''}</h3>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 20px; border: 1px solid #ccc; padding: 15px; border-radius: 4px; background: #fafafa; font-size: 12px;">
-                        <div><strong>Cliente:</strong> ${nomCliente}<br><strong>C.I./RIF:</strong> ${docCliente}<br><strong>Dirección:</strong> ${dirCliente}</div>
-                        <div style="text-align: right;"><strong>Fecha Emisión:</strong> ${fechaE}<br><strong>Vencimiento:</strong> ${fechaV}<br><strong>Condición:</strong> ${factura.condicion_pago}<br><strong>Pago:</strong> ${factura.metodos_pago.replace(/_/g, ' ')}</div>
-                    </div>
-                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
-                        <thead style="background: var(--color-primary); color: white;"><tr><th style="padding: 8px 4px; text-align:left;">SKU</th><th style="padding: 8px 4px; text-align:left;">Descripción</th><th style="padding: 8px 4px; width: 50px;">Cant.</th><th style="padding: 8px 4px; text-align:right;">Precio Unt.</th><th style="padding: 8px 4px; text-align:right;">Total Bs</th></tr></thead>
-                        <tbody>${htmlItems}</tbody>
-                    </table>
+                    <div style="text-align: center; margin-bottom: 20px;"><h2 style="margin:0; font-size: 24px; color: var(--color-primary);">${empresa.nombre_empresa}</h2><p style="margin:0; font-weight: bold;">RIF: ${empresa.rif}</p><p style="margin:0; font-size: 11px;">DIRECCIÓN: ${empresa.direccion_fiscal}</p><h3 style="margin-top:15px; font-size: 18px;">${factura.tipo_transaccion === 'Cotización' ? 'COTIZACIÓN' : 'DOCUMENTO'} ${factura.nro_factura_manual ? 'NRO: ' + factura.nro_factura_manual : ''}</h3></div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 20px; border: 1px solid #ccc; padding: 15px; border-radius: 4px; background: #fafafa; font-size: 12px;"><div><strong>Cliente:</strong> ${nomCliente}<br><strong>C.I./RIF:</strong> ${docCliente}<br><strong>Dirección:</strong> ${dirCliente}</div><div style="text-align: right;"><strong>Fecha Emisión:</strong> ${fechaE}<br><strong>Vencimiento:</strong> ${fechaV}<br><strong>Condición:</strong> ${factura.condicion_pago}<br><strong>Pago:</strong> ${factura.metodos_pago.replace(/_/g, ' ')}</div></div>
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;"><thead style="background: var(--color-primary); color: white;"><tr><th style="padding: 8px 4px; text-align:left;">SKU</th><th style="padding: 8px 4px; text-align:left;">Descripción</th><th style="padding: 8px 4px; width: 50px;">Cant.</th><th style="padding: 8px 4px; text-align:right;">Precio Unt.</th><th style="padding: 8px 4px; text-align:right;">Total Bs</th></tr></thead><tbody>${htmlItems}</tbody></table>
                     <div style="width: 320px; margin-left: auto; font-size: 12px;">
                         <div style="display: flex; justify-content: space-between; padding: 3px 0;"><span>Exento:</span><span>Bs. ${fmt(factura.monto_exento)}</span></div>
                         <div style="display: flex; justify-content: space-between; padding: 3px 0;"><span>Base Imponible:</span><span>Bs. ${fmt(baseImpBs)}</span></div>
@@ -2046,103 +1634,60 @@
                         ${factura.igtf_porcentaje > 0 ? `<div style="display: flex; justify-content: space-between; padding: 3px 0;"><span>IGTF (${factura.igtf_porcentaje}%):</span><span>Bs. ${fmt(igtfBs)}</span></div>` : ''}
                         <div style="display: flex; justify-content: space-between; font-weight: 900; font-size: 18px; margin-top: 5px; border-top: 2px solid var(--color-primary); padding-top: 5px;"><span>TOTAL:</span><span>Bs. ${fmt(factura.total_bs)}</span></div>
                         <div style="display: flex; justify-content: space-between; color: var(--color-secondary); font-weight: bold; font-size: 14px;"><span>Ref USD (Tasa: ${fmt(factura.tasa_bcv_aplicada)}):</span><span>$${fmt(factura.total_usd)}</span></div>
-                    </div>
-                </div>`;
+                    </div></div>`;
             } else {
                 contenedor.innerHTML = `<div style="text-align: center; margin-bottom: 10px; border-bottom: 1px dashed #000; padding-bottom: 5px;">
-                    <strong style="font-size: 1.2em;">${empresa.nombre_empresa}</strong><br>RIF: ${empresa.rif}<br>${empresa.direccion_fiscal}<br><br>
-                    ${factura.tipo_transaccion === 'Cotización' ? 'COTIZACIÓN' : 'FACT'}: ${factura.nro_factura_manual || 'N/A'}<br>
-                    CTRL: ${factura.nro_control_manual || 'N/A'}<br>FECHA: ${fechaE}${factura.condicion_pago !== 'CONTADO' ? '<br>VENCE: ' + fechaV : ''}
-                </div>
-                <div style="margin-bottom: 10px;"><strong>Cliente:</strong> ${nomCliente}<br><strong>C.I./RIF:</strong> ${docCliente}</div>
-                <div style="border-top: 1px dashed #000; border-bottom: 1px dashed #000; margin-bottom: 10px; padding: 5px 0;">${htmlItems}</div>
-                <div>
-                    <div style="display: flex; justify-content: space-between;"><span>Exento:</span><span>Bs. ${fmt(factura.monto_exento)}</span></div>
-                    <div style="display: flex; justify-content: space-between;"><span>B. Imponible:</span><span>Bs. ${fmt(baseImpBs)}</span></div>
-                    <div style="display: flex; justify-content: space-between;"><span>IVA (${ivaPorc.toFixed(0)}%):</span><span>Bs. ${fmt(ivaCalculadoBs)}</span></div>
-                    ${factura.igtf_porcentaje > 0 ? `<div style="display: flex; justify-content: space-between;"><span>IGTF (${factura.igtf_porcentaje}%):</span><span>Bs. ${fmt(igtfBs)}</span></div>` : ''}
+                    <strong style="font-size: 1.2em;">${empresa.nombre_empresa}</strong><br>RIF: ${empresa.rif}<br>${empresa.direccion_fiscal}<br><br>${factura.tipo_transaccion === 'Cotización' ? 'COTIZACIÓN' : 'FACT'}: ${factura.nro_factura_manual || 'N/A'}<br>CTRL: ${factura.nro_control_manual || 'N/A'}<br>FECHA: ${fechaE}${factura.condicion_pago !== 'CONTADO' ? '<br>VENCE: ' + fechaV : ''}</div>
+                    <div style="margin-bottom: 10px;"><strong>Cliente:</strong> ${nomCliente}<br><strong>C.I./RIF:</strong> ${docCliente}</div>
+                    <div style="border-top: 1px dashed #000; border-bottom: 1px dashed #000; margin-bottom: 10px; padding: 5px 0;">${htmlItems}</div>
+                    <div><div style="display: flex; justify-content: space-between;"><span>Exento:</span><span>Bs. ${fmt(factura.monto_exento)}</span></div><div style="display: flex; justify-content: space-between;"><span>B. Imponible:</span><span>Bs. ${fmt(baseImpBs)}</span></div><div style="display: flex; justify-content: space-between;"><span>IVA (${ivaPorc.toFixed(0)}%):</span><span>Bs. ${fmt(ivaCalculadoBs)}</span></div>${factura.igtf_porcentaje > 0 ? `<div style="display: flex; justify-content: space-between;"><span>IGTF (${factura.igtf_porcentaje}%):</span><span>Bs. ${fmt(igtfBs)}</span></div>` : ''}
                     <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 1.2em; border-top: 1px solid #000; margin-top: 5px; padding-top: 5px;"><span>TOTAL Bs:</span><span>${fmt(factura.total_bs)}</span></div>
-                    <div style="display: flex; justify-content: space-between; font-weight: bold; margin-top: 2px;"><span>Ref USD:</span><span>$${fmt(factura.total_usd)}</span></div>
-                    <div style="text-align: right; font-size: 0.8em; color: #555;">Tasa: Bs. ${fmt(factura.tasa_bcv_aplicada)}</div>
-                </div>
-                <div style="text-align: center; margin-top: 15px; font-size: 0.9em;">¡Gracias por su compra!<br>Cajero: ${factura.nombre_cajero}</div>`;
+                    <div style="display: flex; justify-content: space-between; font-weight: bold; margin-top: 2px;"><span>Ref USD:</span><span>$${fmt(factura.total_usd)}</span></div><div style="text-align: right; font-size: 0.8em; color: #555;">Tasa: Bs. ${fmt(factura.tasa_bcv_aplicada)}</div></div>
+                    <div style="text-align: center; margin-top: 15px; font-size: 0.9em;">¡Gracias por su compra!<br>Cajero: ${factura.nombre_cajero}</div>`;
             }
         }
 
-        // ================================================================
-        // VISOR DE IMÁGENES / FICHA DE PRODUCTO
-        // ================================================================
-        function abrirVisorEnPOS(imgUrl) {
-            const main = document.getElementById('viewer-img-main'); main.src = imgUrl;
-            document.getElementById('viewer-thumbnails').innerHTML = '';
-            document.getElementById('media-viewer').classList.remove('hidden');
-            document.getElementById('media-viewer').classList.add('flex');
-        }
+        function abrirVisorEnPOS(imgUrl) { const main = document.getElementById('viewer-img-main'); main.src = imgUrl; document.getElementById('viewer-thumbnails').innerHTML = ''; document.getElementById('media-viewer').classList.remove('hidden'); document.getElementById('media-viewer').classList.add('flex'); }
         function cerrarVisor() { document.getElementById('media-viewer').classList.add('hidden'); document.getElementById('media-viewer').classList.remove('flex'); }
         function cerrarInfoProducto() { document.getElementById('modal-info-producto').classList.add('hidden'); document.getElementById('info-prod-video').src = ''; }
 
         // ================================================================
-        // SINCRONIZACIÓN BCV — FIX: timeout + badge en error silencioso
+        // SINCRONIZACIÓN BCV
         // ================================================================
         async function sincronizarBCVSilencioso() {
             try {
-                // FIX: timeout de 8 segundos con AbortController
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 8000);
+                const controller = new AbortController(); const timeoutId = setTimeout(() => controller.abort(), 8000);
                 const resUsd = await fetch('https://ve.dolarapi.com/v1/dolares/oficial', { signal: controller.signal });
-                clearTimeout(timeoutId);
-                if (!resUsd.ok) throw new Error("API caída");
+                clearTimeout(timeoutId); if (!resUsd.ok) throw new Error("API caída");
                 const dataUsd = await resUsd.json();
                 if (dataUsd && dataUsd.promedio) {
-                    tasaBCV = parseFloat(dataUsd.promedio);
-                    document.getElementById('input-tasa-usd').value = tasaBCV.toFixed(2);
+                    tasaBCV = parseFloat(dataUsd.promedio); document.getElementById('input-tasa-usd').value = tasaBCV.toFixed(2);
                     await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?moneda=eq.USD`, { method: 'DELETE', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
                     await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ moneda: 'USD', tasa: tasaBCV, fecha_actualizacion: new Date().toISOString() }) });
-                    actualizarIndicadorTasa(new Date().toISOString());
-                    actualizarUI_Carrito();
+                    actualizarIndicadorTasa(new Date().toISOString()); actualizarUI_Carrito();
                 }
-            } catch (e) {
-                // FIX: en lugar de catch vacío, mostrar advertencia en el badge
-                actualizarIndicadorTasa(new Date(0).toISOString(), true);
-                console.warn("Sync BCV silencioso falló:", e.message);
-            }
+            } catch (e) { actualizarIndicadorTasa(new Date(0).toISOString(), true); console.warn("Sync BCV silencioso falló:", e.message); }
         }
 
         async function sincronizarBCV() {
             const btn = document.getElementById('btn-sync-bcv'); const icon = btn.querySelector('i');
-            btn.disabled = true; icon.classList.add('fa-spin');
-            const tUsd = document.getElementById('input-tasa-usd'); tUsd.classList.add('bg-blue-100');
+            btn.disabled = true; icon.classList.add('fa-spin'); const tUsd = document.getElementById('input-tasa-usd'); tUsd.classList.add('bg-blue-100');
             try {
-                // FIX: timeout de 10 segundos con AbortController
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 10000);
+                const controller = new AbortController(); const timeoutId = setTimeout(() => controller.abort(), 10000);
                 const resUsd = await fetch('https://ve.dolarapi.com/v1/dolares/oficial', { signal: controller.signal });
-                clearTimeout(timeoutId);
-                if (!resUsd.ok) throw new Error("API de Dólar caída.");
+                clearTimeout(timeoutId); if (!resUsd.ok) throw new Error("API de Dólar caída.");
                 const dataUsd = await resUsd.json();
                 if (dataUsd && dataUsd.promedio) {
-                    tasaBCV = parseFloat(dataUsd.promedio);
-                    document.getElementById('input-tasa-usd').value = tasaBCV.toFixed(2);
+                    tasaBCV = parseFloat(dataUsd.promedio); document.getElementById('input-tasa-usd').value = tasaBCV.toFixed(2);
                     await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?moneda=eq.USD`, { method: 'DELETE', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
                     await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ moneda: 'USD', tasa: tasaBCV, fecha_actualizacion: new Date().toISOString() }) });
-                    actualizarIndicadorTasa(new Date().toISOString());
-                    actualizarUI_Carrito();
+                    actualizarIndicadorTasa(new Date().toISOString()); actualizarUI_Carrito();
                 } else throw new Error("Datos del BCV inválidos.");
-            } catch (e) {
-                alert("Error BCV: El servidor oficial no responde. Por favor verifica la tasa en internet e ingrésala manualmente.");
-                actualizarIndicadorTasa(new Date(0).toISOString(), true);
-            } finally {
-                btn.disabled = false; icon.classList.remove('fa-spin'); tUsd.classList.remove('bg-blue-100');
-            }
+            } catch (e) { alert("Error BCV: El servidor oficial no responde. Por favor verifica la tasa en internet e ingrésala manualmente."); actualizarIndicadorTasa(new Date(0).toISOString(), true); } 
+            finally { btn.disabled = false; icon.classList.remove('fa-spin'); tUsd.classList.remove('bg-blue-100'); }
         }
 
-        function guardarTasaManual(moneda, valor) {
-            const tasa = parseFloat(valor);
-            if (isNaN(tasa) || tasa <= 0) return;
-            if (moneda === 'USD') { tasaBCV = tasa; actualizarUI_Carrito(); }
-            if (moneda === 'EUR') tasaBCVEur = tasa;
-        }
-
+        function guardarTasaManual(moneda, valor) { const tasa = parseFloat(valor); if (isNaN(tasa) || tasa <= 0) return; if (moneda === 'USD') { tasaBCV = tasa; actualizarUI_Carrito(); } if (moneda === 'EUR') tasaBCVEur = tasa; }
     </script>
 </body>
 </html>
