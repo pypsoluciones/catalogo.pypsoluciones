@@ -279,6 +279,7 @@
     =========================================== -->
     <script>
         const TOKEN_JWT = localStorage.getItem('pyp_token_seguro');
+        let empresaActual = null; // <-- NUEVO: Variable global de empresa
         let tabActual = 'taller'; 
         let destinoDirectorio = 'taller'; 
         let clientesUnicos = [];
@@ -289,6 +290,15 @@
         let carritoCotizacionTaller = [];
 
         window.onload = async () => {
+            // Obtenemos la empresa del usuario activo al arrancar
+            try {
+                const resUser = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?select=id_empresa&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                if (resUser.ok) {
+                    const dataUser = await resUser.json();
+                    if (dataUser.length > 0) empresaActual = dataUser[0].id_empresa;
+                }
+            } catch (e) { console.warn("Error capturando empresa"); }
+
             await Promise.all([
                 cargarTableroTaller(),
                 cargarDirectorio(),
@@ -615,13 +625,33 @@
             const btn = document.getElementById('btn-emitir-presupuesto'); btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Emitiendo...';
             try {
                 const diag = document.getElementById('panel-orden-diagnostico').value.trim();
-                const payloadCabecera = { cliente_documento: ordenAbiertaActual.cliente_documento || 'V-00000000', cliente_nombre: ordenAbiertaActual.cliente_nombre, tipo_documento: 'COTIZACION', subtotal_usd: ordenAbiertaActual.total_cotizacion, total_usd: ordenAbiertaActual.total_cotizacion, estatus: 'PENDIENTE', nombre_cajero: localStorage.getItem('pyp_usuario_nombre') || 'TALLER', id_origen_taller: ordenAbiertaActual.id_orden, notas_internas: `[OS-${ordenAbiertaActual.correlativo}] Diagnóstico: ${diag}` };
+                // INYECCIÓN MULTI-TENANT: Añadimos id_empresa a cabecera y detalles
+                const payloadCabecera = { 
+                    id_empresa: empresaActual, // Sello de seguridad
+                    cliente_documento: ordenAbiertaActual.cliente_documento || 'V-00000000', 
+                    cliente_nombre: ordenAbiertaActual.cliente_nombre, 
+                    tipo_documento: 'COTIZACION', 
+                    subtotal_usd: ordenAbiertaActual.total_cotizacion, 
+                    total_usd: ordenAbiertaActual.total_cotizacion, 
+                    estatus: 'PENDIENTE', 
+                    nombre_cajero: localStorage.getItem('pyp_usuario_nombre') || 'TALLER', 
+                    id_origen_taller: ordenAbiertaActual.id_orden, 
+                    notas_internas: `[OS-${ordenAbiertaActual.correlativo}] Diagnóstico: ${diag}` 
+                };
 
                 const resDoc = await fetch(`${SUPABASE_URL}/rest/v1/ventas_documentos`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, body: JSON.stringify(payloadCabecera) });
                 if(!resDoc.ok) throw new Error("Fallo Cabecera");
                 const idDoc = (await resDoc.json())[0].id_documento;
 
-                const payloadDetalles = carritoCotizacionTaller.map(d => ({ id_documento: idDoc, producto_sku: d.sku, producto_nombre: `[OS-${ordenAbiertaActual.correlativo}] ` + d.descripcion, cantidad: d.cantidad, precio_unitario_usd: d.precio, subtotal_linea_usd: d.cantidad * d.precio }));
+                const payloadDetalles = carritoCotizacionTaller.map(d => ({ 
+                    id_empresa: empresaActual, // Sello de seguridad
+                    id_documento: idDoc, 
+                    producto_sku: d.sku, 
+                    producto_nombre: `[OS-${ordenAbiertaActual.correlativo}] ` + d.descripcion, 
+                    cantidad: d.cantidad, 
+                    precio_unitario_usd: d.precio, 
+                    subtotal_linea_usd: d.cantidad * d.precio 
+                }));
                 await fetch(`${SUPABASE_URL}/rest/v1/ventas_documentos_detalles`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify(payloadDetalles) });
 
                 await fetch(`${SUPABASE_URL}/rest/v1/servicio_ordenes?id_orden=eq.${ordenAbiertaActual.id_orden}`, { method: 'PATCH', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ estatus: 'Esperando Repuesto', diagnostico_tecnico: diag }) });
