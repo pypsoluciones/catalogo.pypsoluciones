@@ -603,14 +603,47 @@
 
         function eliminarDelCarritoTaller(id_temp) { carritoCotizacionTaller = carritoCotizacionTaller.filter(i => i.id_temp !== id_temp); renderizarCarritoTaller(); }
 
+       function modificarCantidadTaller(id_temp, delta) {
+            const idx = carritoCotizacionTaller.findIndex(i => i.id_temp === id_temp);
+            if (idx === -1) return;
+            const nuevo = carritoCotizacionTaller[idx].cantidad + delta;
+            if (nuevo <= 0) return; // Evita bajar de 1. Para eliminar, se usa el botón de papelera.
+            carritoCotizacionTaller[idx].cantidad = nuevo;
+            renderizarCarritoTaller();
+        }
+
         function renderizarCarritoTaller() {
-            const contenedor = document.getElementById('lista-detalles-orden'); let totalUsd = 0;
-            if(carritoCotizacionTaller.length === 0) { contenedor.innerHTML = '<div class="h-full flex flex-col items-center justify-center text-gray-400 opacity-50"><i class="fa-solid fa-box-open text-3xl mb-2"></i><p class="font-bold text-[10px] uppercase tracking-widest">Añade repuestos o cargos</p></div>'; } 
-            else {
+            const contenedor = document.getElementById('lista-detalles-orden'); 
+            let totalUsd = 0;
+            
+            if(carritoCotizacionTaller.length === 0) { 
+                contenedor.innerHTML = '<div class="h-full flex flex-col items-center justify-center text-gray-400 opacity-50"><i class="fa-solid fa-box-open text-3xl mb-2"></i><p class="font-bold text-[10px] uppercase tracking-widest">Añade repuestos o cargos</p></div>'; 
+            } else {
                 let html = '';
                 carritoCotizacionTaller.forEach(d => {
-                    const subLinea = d.cantidad * d.precio; totalUsd += subLinea;
-                    html += `<div class="bg-white border border-gray-200 rounded p-2 flex justify-between items-center shadow-sm"><div class="flex-1 truncate pr-2"><div class="font-bold text-primary text-[10px] uppercase truncate">${d.descripcion}</div><div class="text-[8px] text-gray-500 font-mono">${d.sku}</div></div><div class="flex gap-2 items-center"><div class="text-right"><div class="text-[11px] font-black text-secondary">$${subLinea.toFixed(2)}</div></div><button onclick="eliminarDelCarritoTaller(${d.id_temp})" class="text-red-400 hover:text-red-600 p-1"><i class="fa-solid fa-trash-can text-sm"></i></button></div></div>`;
+                    const subLinea = d.cantidad * d.precio; 
+                    totalUsd += subLinea;
+                    html += `
+                    <div class="bg-white border border-gray-200 rounded p-2 flex justify-between items-center shadow-sm">
+                        <div class="flex-1 min-w-0 pr-2">
+                            <div class="font-bold text-primary text-[10px] uppercase truncate" title="${d.descripcion}">${d.descripcion}</div>
+                            <div class="text-[8px] text-gray-500 font-mono">${d.sku}</div>
+                        </div>
+                        <div class="flex items-center gap-3 shrink-0">
+                            <!-- Controles de Cantidad -->
+                            <div class="flex items-center border border-gray-200 rounded overflow-hidden h-6 w-16">
+                                <button type="button" onclick="modificarCantidadTaller(${d.id_temp}, -1)" class="bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold w-1/3 flex items-center justify-center h-full transition"><i class="fa-solid fa-minus text-[8px]"></i></button>
+                                <div class="w-1/3 text-center text-[10px] font-black text-primary flex items-center justify-center h-full bg-white">${d.cantidad}</div>
+                                <button type="button" onclick="modificarCantidadTaller(${d.id_temp}, 1)" class="bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold w-1/3 flex items-center justify-center h-full transition"><i class="fa-solid fa-plus text-[8px]"></i></button>
+                            </div>
+                            
+                            <div class="text-right w-16">
+                                <div class="text-[11px] font-black text-secondary">$${subLinea.toFixed(2)}</div>
+                            </div>
+                            
+                            <button type="button" onclick="eliminarDelCarritoTaller(${d.id_temp})" class="text-red-400 hover:text-red-600 p-1 transition" title="Eliminar"><i class="fa-solid fa-trash-can text-sm"></i></button>
+                        </div>
+                    </div>`;
                 });
                 contenedor.innerHTML = html;
             }
