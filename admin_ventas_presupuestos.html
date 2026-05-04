@@ -4,7 +4,7 @@
     <script src="config.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>P&P Admin | Control de Presupuestos</title>
+    <title>P&P Admin | Módulo de Presupuestos</title>
 
     <script>
         const cPri = localStorage.getItem('pyp_color_primario') || '#143B62';
@@ -38,7 +38,7 @@
         .custom-scroll::-webkit-scrollbar-thumb { background-color: var(--color-primary); border-radius: 4px; }
         .btn-press:active { transform: scale(0.96); }
         
-        /* Drawer (Panel Lateral) Animations */
+        /* Drawer Animations */
         .drawer-overlay { transition: opacity 0.3s ease; }
         .drawer-panel { transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .drawer-open .drawer-overlay { opacity: 1; pointer-events: auto; }
@@ -59,13 +59,12 @@
                     <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-0.5">Aprobaciones y Cotizaciones a Clientes</p>
                 </div>
             </div>
-          <div class="flex gap-3">
-                <!-- Botón que redirige al POS para armar la cotización -->
+            <div class="flex gap-3">
                 <button onclick="window.location.href='admin_ventas.html'" class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-1.5 rounded-lg font-black text-[11px] uppercase tracking-wider shadow-sm transition btn-press flex items-center gap-2">
                     <i class="fa-solid fa-plus"></i> Nueva Cotización
                 </button>
-                <div class="relative w-64">
-                    <i class="fa-solid fa-search absolute left-3 top-2.5 text-gray-400 text-xs"></i>    
+                <div class="relative w-64 hidden md:block">
+                    <i class="fa-solid fa-search absolute left-3 top-2.5 text-gray-400 text-xs"></i>
                     <input type="text" id="buscador-presupuestos" oninput="filtrarPresupuestos()" placeholder="Buscar por Cliente o Nro..." class="w-full border border-gray-300 rounded-lg pl-8 pr-4 py-1.5 text-xs font-bold uppercase focus:outline-none focus:border-primary shadow-sm transition bg-white">
                 </div>
                 <select id="filtro-estatus" onchange="filtrarPresupuestos()" class="border border-gray-300 rounded-lg px-3 py-1.5 text-xs font-bold text-gray-700 outline-none bg-white shadow-sm focus:border-primary uppercase">
@@ -142,12 +141,13 @@
             </div>
 
             <div class="p-4 bg-white border-t border-gray-200 shrink-0 grid grid-cols-2 gap-2" id="botonera-drawer">
-                <!-- Los botones se generan dinámicamente según el estatus -->
+                <!-- Botones JS -->
             </div>
 
         </div>
     </div>
-<!-- ==========================================
+
+    <!-- ==========================================
          MOTOR LÓGICO: MÓDULO DE PRESUPUESTOS
     =========================================== -->
     <script>
@@ -156,15 +156,11 @@
         let fusePresupuestos;
         let presupuestoActivo = null;
 
-        window.onload = async () => {
-            await cargarPresupuestos();
-        };
+        window.onload = async () => { await cargarPresupuestos(); };
 
         // --- 1. CARGA Y RENDERIZADO DE LA TABLA ---
-       // --- 1. CARGA Y RENDERIZADO DE LA TABLA (MULTI-TENANT) ---
         async function cargarPresupuestos() {
             try {
-                // Obtenemos empresa actual para filtrar
                 const resUser = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?select=id_empresa&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
                 let filtroEmpresa = '';
                 if (resUser.ok) {
@@ -172,41 +168,30 @@
                     if (dataUser.length > 0 && dataUser[0].id_empresa) filtroEmpresa = `id_empresa=eq.${dataUser[0].id_empresa}&`;
                 }
 
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/ventas_documentos?${filtroEmpresa}tipo_documento=eq.COTIZACION&order=fecha_emision.desc`, {
-                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` }
-                });
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/ventas_documentos?${filtroEmpresa}tipo_documento=eq.COTIZACION&order=fecha_emision.desc`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
 
                 if (!res.ok) throw new Error("Fallo al descargar presupuestos.");
                 presupuestosGlobal = await res.json();
                 
                 fusePresupuestos = new Fuse(presupuestosGlobal, {
-                    keys: ['correlativo', 'cliente_nombre', 'cliente_documento'],
-                    threshold: 0.3, ignoreLocation: true,
-                    getFn: (obj, path) => {
-                        let val = obj;
-                        for (let i = 0; i < path.length; i++) val = val ? val[path[i]] : null;
-                        return typeof val === 'string' ? val.normalize("NFD").replace(/[\u0300-\u036f]/g, "") : String(val);
-                    }
+                    keys: ['correlativo', 'cliente_nombre', 'cliente_documento'], threshold: 0.3, ignoreLocation: true,
+                    getFn: (obj, path) => { let val = obj; for (let i = 0; i < path.length; i++) val = val ? val[path[i]] : null; return typeof val === 'string' ? val.normalize("NFD").replace(/[\u0300-\u036f]/g, "") : String(val); }
                 });
 
                 renderizarTabla(presupuestosGlobal);
             } catch (e) {
-                document.getElementById('tabla-presupuestos').innerHTML = `<tr><td colspan="7" class="p-10 text-center text-red-500 font-bold uppercase"><i class="fa-solid fa-triangle-exclamation mb-2 text-2xl block"></i>Error de conexión o permisos RLS.</td></tr>`;
+                document.getElementById('tabla-presupuestos').innerHTML = `<tr><td colspan="7" class="p-10 text-center text-red-500 font-bold uppercase"><i class="fa-solid fa-triangle-exclamation mb-2 text-2xl block"></i>Error de conexión o permisos.</td></tr>`;
             }
         }
 
         function renderizarTabla(data) {
             const tbody = document.getElementById('tabla-presupuestos');
-            
-            if (data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="p-10 text-center text-gray-400 font-bold uppercase"><i class="fa-solid fa-folder-open mb-2 text-2xl block opacity-50"></i>Sin Documentos</td></tr>`;
-                return;
-            }
+            if (data.length === 0) { tbody.innerHTML = `<tr><td colspan="7" class="p-10 text-center text-gray-400 font-bold uppercase"><i class="fa-solid fa-folder-open mb-2 text-2xl block opacity-50"></i>Sin Documentos</td></tr>`; return; }
 
             let html = '';
             data.forEach(p => {
                 const fecha = new Date(p.fecha_emision).toLocaleDateString('es-VE', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
-                const total = parseFloat(p.total_usd).toFixed(2);
+                const total = parseFloat(p.total_usd || 0).toFixed(2);
                 
                 let badgeClass = 'bg-gray-100 text-gray-600 border-gray-300';
                 if (p.estatus === 'PENDIENTE') badgeClass = 'bg-amber-50 text-amber-700 border-amber-300 animate-pulse';
@@ -218,45 +203,34 @@
 
                 html += `
                 <tr class="hover:bg-blue-50 transition cursor-pointer border-b border-gray-50" onclick="abrirDrawer('${p.id_documento}')">
-                    <td class="py-2.5 px-4 font-mono font-bold text-gray-500">PRE-${String(p.correlativo).padStart(6, '0')}</td>
+                    <td class="py-2.5 px-4 font-mono font-bold text-gray-500">PRE-${String(p.correlativo || '0').padStart(6, '0')}</td>
                     <td class="py-2.5 px-4 text-[10px] text-gray-500 font-bold">${fecha}</td>
-                    <td class="py-2.5 px-4"><div class="font-black text-primary uppercase text-[10px] truncate max-w-[200px]">${p.cliente_nombre}</div><div class="text-[8px] text-gray-400 font-mono">${p.cliente_documento || 'N/A'}</div></td>
+                    <td class="py-2.5 px-4"><div class="font-black text-primary uppercase text-[10px] truncate max-w-[200px]">${p.cliente_nombre || 'S/N'}</div><div class="text-[8px] text-gray-400 font-mono">${p.cliente_documento || 'N/A'}</div></td>
                     <td class="py-2.5 px-4 text-center">${origen}</td>
                     <td class="py-2.5 px-4 text-right font-black text-secondary">$${total}</td>
-                    <td class="py-2.5 px-4 text-center"><span class="px-2 py-0.5 rounded text-[8px] font-black border ${badgeClass} uppercase tracking-wider">${p.estatus}</span></td>
+                    <td class="py-2.5 px-4 text-center"><span class="px-2 py-0.5 rounded text-[8px] font-black border ${badgeClass} uppercase tracking-wider">${p.estatus || 'PENDIENTE'}</span></td>
                     <td class="py-2.5 px-4 text-center"><button class="text-gray-400 hover:text-primary transition p-1"><i class="fa-solid fa-chevron-right"></i></button></td>
                 </tr>`;
             });
             tbody.innerHTML = html;
         }
 
-        // --- 2. FILTROS Y BÚSQUEDA ---
         function filtrarPresupuestos() {
             let query = document.getElementById('buscador-presupuestos').value.trim();
             const estatus = document.getElementById('filtro-estatus').value;
-            
             let data = presupuestosGlobal;
 
-            if (query !== '') {
-                const qNorm = query.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                data = fusePresupuestos.search(qNorm).map(r => r.item);
-            }
-
-            if (estatus !== 'TODOS') {
-                data = data.filter(p => p.estatus === estatus);
-            }
-
+            if (query !== '') { const qNorm = query.normalize("NFD").replace(/[\u0300-\u036f]/g, ""); data = fusePresupuestos.search(qNorm).map(r => r.item); }
+            if (estatus !== 'TODOS') data = data.filter(p => p.estatus === estatus);
             renderizarTabla(data);
         }
 
-        // --- 3. PANEL LATERAL (DRAWER) ---
-       // --- 3. PANEL LATERAL (DRAWER) BLINDADO ---
+        // --- 3. PANEL LATERAL (DRAWER) BLINDADO ---
         async function abrirDrawer(id_documento) {
             try {
                 presupuestoActivo = presupuestosGlobal.find(p => p.id_documento === id_documento);
                 if (!presupuestoActivo) throw new Error("Documento no encontrado en memoria.");
 
-                // Manejo de nulos seguro
                 const correlativo = presupuestoActivo.correlativo ? String(presupuestoActivo.correlativo).padStart(6, '0') : '000000';
                 const totalUsd = parseFloat(presupuestoActivo.total_usd || 0).toFixed(2);
                 const nombreCliente = presupuestoActivo.cliente_nombre || 'CLIENTE GENÉRICO';
@@ -281,19 +255,15 @@
 
                 document.getElementById('drawer-lista-detalles').innerHTML = '<div class="text-center py-6"><i class="fa-solid fa-spinner fa-spin text-primary"></i></div>';
                 construirBotonera(estatus);
-                
-                // Abre el panel
                 document.getElementById('drawer-container').classList.add('drawer-open');
 
                 // Descarga de detalles
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/ventas_documentos_detalles?id_documento=eq.${id_documento}`, {
-                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` }
-                });
-                
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/ventas_documentos_detalles?id_documento=eq.${id_documento}`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
                 if (!res.ok) throw new Error("Fallo API de detalles");
-                const detalles = await res.json();
                 
+                const detalles = await res.json();
                 let htmlDetalles = '';
+                
                 if (detalles.length === 0) {
                     htmlDetalles = '<div class="text-center text-gray-400 text-[10px] font-bold p-4">Sin cargos detallados.</div>';
                 } else {
@@ -304,7 +274,7 @@
                                 <div class="font-bold text-primary text-[10px] uppercase truncate">${d.producto_nombre || 'Artículo'}</div>
                                 <div class="text-[8px] text-gray-500 font-mono">${d.producto_sku || 'N/A'}</div>
                             </div>
-                            <div class="text-right">
+                            <div class="text-right shrink-0">
                                 <div class="text-[11px] font-black text-secondary">$${parseFloat(d.subtotal_linea_usd || 0).toFixed(2)}</div>
                                 <div class="text-[8px] text-gray-400 font-bold">${parseFloat(d.cantidad || 0)} x $${parseFloat(d.precio_unitario_usd || 0).toFixed(2)}</div>
                             </div>
@@ -315,36 +285,25 @@
 
             } catch (e) {
                 console.error("Error abriendo Drawer:", e);
-                alert("Error al intentar abrir el presupuesto. Revisa la consola.");
+                alert("Error al abrir el presupuesto.");
                 cerrarDrawer();
             }
         }
 
-        function cerrarDrawer() {
-            document.getElementById('drawer-container').classList.remove('drawer-open');
-            presupuestoActivo = null;
-        }
+        function cerrarDrawer() { document.getElementById('drawer-container').classList.remove('drawer-open'); presupuestoActivo = null; }
 
-        // --- 4. ACCIONES FINANCIERAS (EL FILTRO PROFIT) ---
+        // --- 4. ACCIONES FINANCIERAS ---
         function construirBotonera(estatus) {
             const btnContainer = document.getElementById('botonera-drawer');
-            let html = '';
+            let html = `<button onclick="imprimirPresupuesto()" class="col-span-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-black py-2 rounded text-[10px] uppercase tracking-wider shadow-sm transition btn-press border border-gray-200 flex items-center justify-center gap-2"><i class="fa-solid fa-print"></i> Imprimir / PDF</button>`;
 
-            // Botón de impresión (Siempre disponible)
-            html += `<button onclick="imprimirPresupuesto()" class="col-span-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-black py-2 rounded text-[10px] uppercase tracking-wider shadow-sm transition btn-press border border-gray-200 flex items-center justify-center gap-2"><i class="fa-solid fa-print"></i> Imprimir / PDF</button>`;
-
-            // Lógica Transaccional Estricta
             if (estatus === 'PENDIENTE') {
                 html += `
                 <button onclick="cambiarEstatusDocumento('RECHAZADO')" class="bg-red-50 hover:bg-red-500 hover:text-white text-red-600 border border-red-200 font-black py-2 rounded text-[10px] uppercase tracking-wider shadow-sm transition btn-press">Rechazar</button>
                 <button onclick="cambiarEstatusDocumento('APROBADO')" class="bg-emerald-500 hover:bg-emerald-600 text-white font-black py-2 rounded text-[10px] uppercase tracking-wider shadow-sm transition btn-press flex items-center justify-center gap-1"><i class="fa-solid fa-check-double"></i> Aprobar</button>`;
             } 
-            else if (estatus === 'APROBADO') {
-                html += `<div class="col-span-2 text-center text-[9px] font-black text-emerald-600 bg-emerald-50 border border-emerald-200 rounded py-2 uppercase tracking-widest"><i class="fa-solid fa-check-circle mr-1"></i> Listo para que la Caja lo importe</div>`;
-            }
-            else if (estatus === 'FACTURADO') {
-                html += `<div class="col-span-2 text-center text-[9px] font-black text-blue-600 bg-blue-50 border border-blue-200 rounded py-2 uppercase tracking-widest"><i class="fa-solid fa-lock mr-1"></i> Cerrado y Facturado</div>`;
-            }
+            else if (estatus === 'APROBADO') { html += `<div class="col-span-2 text-center text-[9px] font-black text-emerald-600 bg-emerald-50 border border-emerald-200 rounded py-2 uppercase tracking-widest"><i class="fa-solid fa-check-circle mr-1"></i> Aprobado - Listo para Facturar en POS</div>`; }
+            else if (estatus === 'FACTURADO') { html += `<div class="col-span-2 text-center text-[9px] font-black text-blue-600 bg-blue-50 border border-blue-200 rounded py-2 uppercase tracking-widest"><i class="fa-solid fa-lock mr-1"></i> Cerrado y Facturado</div>`; }
 
             btnContainer.innerHTML = html;
         }
@@ -354,35 +313,26 @@
             if (!confirm(`¿Estás seguro de marcar este presupuesto como ${nuevoEstatus}?`)) return;
 
             try {
-                // 1. Actualizamos el documento en la base de datos
                 await fetch(`${SUPABASE_URL}/rest/v1/ventas_documentos?id_documento=eq.${presupuestoActivo.id_documento}`, {
-                    method: 'PATCH',
-                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' },
+                    method: 'PATCH', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' },
                     body: JSON.stringify({ estatus: nuevoEstatus })
                 });
 
-                // 2. Si proviene del taller y fue Aprobado, notificamos al taller automáticamente.
+                // Notificación al Taller
                 if (nuevoEstatus === 'APROBADO' && presupuestoActivo.id_origen_taller) {
                     await fetch(`${SUPABASE_URL}/rest/v1/servicio_ordenes?id_orden=eq.${presupuestoActivo.id_origen_taller}`, {
-                        method: 'PATCH',
-                        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ estatus: 'En Revisión', diagnostico_tecnico: 'PRESUPUESTO APROBADO. PROCEDER A REPARAR.' })
+                        method: 'PATCH', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ estatus: 'Listo', diagnostico_tecnico: 'PRESUPUESTO APROBADO. PROCEDER A REPARAR.' })
                     });
                 }
 
                 alert(`Presupuesto ${nuevoEstatus} con éxito.`);
-                cerrarDrawer();
-                await cargarPresupuestos(); // Refrescamos la tabla
-
-            } catch (e) {
-                alert("Error de conexión al actualizar estatus.");
-            }
+                cerrarDrawer(); await cargarPresupuestos();
+            } catch (e) { alert("Error de conexión al actualizar estatus."); }
         }
 
         function imprimirPresupuesto() {
             if (!presupuestoActivo) return;
-            
-            // Reconstruimos los items leyendo el HTML del panel lateral (cero peticiones extra a la BD)
             const detallesNodos = document.getElementById('drawer-lista-detalles').children;
             let filasTabla = '';
             
@@ -390,21 +340,14 @@
                 const nombre = detallesNodos[i].querySelector('.text-primary').innerText;
                 const sku = detallesNodos[i].querySelector('.font-mono').innerText;
                 const montoTotal = detallesNodos[i].querySelector('.text-secondary').innerText;
-                const cantidadPrecio = detallesNodos[i].querySelector('.text-gray-400').innerText; // Ej: "2 x $15.00"
+                const cantidadPrecio = detallesNodos[i].querySelector('.text-gray-400').innerText; 
                 
-                filasTabla += `
-                    <tr style="border-bottom: 1px solid #eee;">
-                        <td style="padding: 8px; font-size: 12px; color: #333;"><b>${nombre}</b><br><span style="font-size: 10px; color: #777;">SKU: ${sku}</span></td>
-                        <td style="padding: 8px; font-size: 12px; color: #333; text-align: center;">${cantidadPrecio}</td>
-                        <td style="padding: 8px; font-size: 12px; color: #333; text-align: right;"><b>${montoTotal}</b></td>
-                    </tr>
-                `;
+                filasTabla += `<tr style="border-bottom: 1px solid #eee;"><td style="padding: 8px; font-size: 12px; color: #333;"><b>${nombre}</b><br><span style="font-size: 10px; color: #777;">SKU: ${sku}</span></td><td style="padding: 8px; font-size: 12px; color: #333; text-align: center;">${cantidadPrecio}</td><td style="padding: 8px; font-size: 12px; color: #333; text-align: right;"><b>${montoTotal}</b></td></tr>`;
             }
 
             const fechaFormat = new Date(presupuestoActivo.fecha_emision).toLocaleDateString('es-VE', { year: 'numeric', month: 'long', day: 'numeric' });
-            const nroDoc = `PRE-${String(presupuestoActivo.correlativo).padStart(6, '0')}`;
+            const nroDoc = `PRE-${String(presupuestoActivo.correlativo || '0').padStart(6, '0')}`;
 
-            // Plantilla Corporativa A4 (Aislada del CSS general)
             const htmlImpresion = `
                 <html>
                 <head>
@@ -423,51 +366,17 @@
                     </style>
                 </head>
                 <body>
-                    <div class="header">
-                        <div>
-                            <h1 class="title">P&P SOLUCIONES</h1>
-                            <p style="font-size: 12px; color: #666; margin: 5px 0;">RIF: J-00000000-0<br>Caracas, Venezuela</p>
-                        </div>
-                        <div style="text-align: right;">
-                            <h2 style="margin:0; color: #E67E22; font-size: 20px;">PRESUPUESTO</h2>
-                            <p style="font-size: 14px; font-weight: bold; margin: 5px 0;">Nro: ${nroDoc}</p>
-                            <p style="font-size: 12px; color: #666; margin: 0;">Fecha: ${fechaFormat}</p>
-                        </div>
-                    </div>
-
-                    <div class="info-box">
-                        <h3 style="font-size: 11px; text-transform: uppercase; color: #143B62; margin-top: 0;">Datos del Cliente</h3>
-                        <p style="margin: 5px 0; font-size: 14px;"><b>Razón Social:</b> ${presupuestoActivo.cliente_nombre.toUpperCase()}</p>
-                        <p style="margin: 5px 0; font-size: 13px; color: #555;"><b>Documento:</b> ${presupuestoActivo.cliente_documento || 'N/A'}</p>
-                    </div>
-
-                    <table>
-                        <thead>
-                            <tr><th>Descripción del Cargo</th><th style="text-align: center;">Cant. x Precio Unitario</th><th style="text-align: right;">Subtotal</th></tr>
-                        </thead>
-                        <tbody>
-                            ${filasTabla}
-                        </tbody>
-                    </table>
-
-                    <div class="totales">
-                        <div class="totales-row"><span>Subtotal:</span> <span>$${parseFloat(presupuestoActivo.subtotal_usd).toFixed(2)}</span></div>
-                        <div class="totales-row gran-total"><span>TOTAL USD:</span> <span>$${parseFloat(presupuestoActivo.total_usd).toFixed(2)}</span></div>
-                    </div>
-                    
-                    <div style="clear: both; margin-top: 80px; text-align: center; font-size: 11px; color: #777; border-top: 1px dashed #ccc; padding-top: 20px;">
-                        Este documento es un presupuesto válido por 15 días. No representa una factura fiscal.<br>
-                        Emitido por: ${presupuestoActivo.nombre_cajero || 'SISTEMA'}
-                    </div>
+                    <div class="header"><div><h1 class="title">P&P SOLUCIONES</h1><p style="font-size: 12px; color: #666; margin: 5px 0;">RIF: J-00000000-0<br>Caracas, Venezuela</p></div><div style="text-align: right;"><h2 style="margin:0; color: #E67E22; font-size: 20px;">PRESUPUESTO</h2><p style="font-size: 14px; font-weight: bold; margin: 5px 0;">Nro: ${nroDoc}</p><p style="font-size: 12px; color: #666; margin: 0;">Fecha: ${fechaFormat}</p></div></div>
+                    <div class="info-box"><h3 style="font-size: 11px; text-transform: uppercase; color: #143B62; margin-top: 0;">Datos del Cliente</h3><p style="margin: 5px 0; font-size: 14px;"><b>Razón Social:</b> ${(presupuestoActivo.cliente_nombre || '').toUpperCase()}</p><p style="margin: 5px 0; font-size: 13px; color: #555;"><b>Documento:</b> ${presupuestoActivo.cliente_documento || 'N/A'}</p></div>
+                    <table><thead><tr><th>Descripción del Cargo</th><th style="text-align: center;">Cant. x Precio Unitario</th><th style="text-align: right;">Subtotal</th></tr></thead><tbody>${filasTabla}</tbody></table>
+                    <div class="totales"><div class="totales-row"><span>Subtotal:</span> <span>$${parseFloat(presupuestoActivo.subtotal_usd || 0).toFixed(2)}</span></div><div class="totales-row gran-total"><span>TOTAL USD:</span> <span>$${parseFloat(presupuestoActivo.total_usd || 0).toFixed(2)}</span></div></div>
+                    <div style="clear: both; margin-top: 80px; text-align: center; font-size: 11px; color: #777; border-top: 1px dashed #ccc; padding-top: 20px;">Este documento es un presupuesto válido por 15 días. No representa una factura fiscal.<br>Emitido por: ${presupuestoActivo.nombre_cajero || 'SISTEMA'}</div>
                 </body>
-                </html>
-            `;
+                </html>`;
 
-            // Abrimos ventana oculta, escribimos el HTML y disparamos la impresión.
             const ventanaImp = window.open('', '_blank');
             ventanaImp.document.write(htmlImpresion);
-            ventanaImp.document.close();
-            ventanaImp.focus();
+            ventanaImp.document.close(); ventanaImp.focus();
             setTimeout(() => { ventanaImp.print(); }, 500);
         }
     </script>
