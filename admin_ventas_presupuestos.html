@@ -67,13 +67,13 @@
                     <i class="fa-solid fa-search absolute left-3 top-2.5 text-gray-400 text-xs"></i>
                     <input type="text" id="buscador-presupuestos" oninput="filtrarPresupuestos()" placeholder="Buscar por Cliente o Nro..." class="w-full border border-gray-300 rounded-lg pl-8 pr-4 py-1.5 text-xs font-bold uppercase focus:outline-none focus:border-primary shadow-sm transition bg-white">
                 </div>
-                <select id="filtro-estatus" onchange="filtrarPresupuestos()" class="border border-gray-300 rounded-lg px-3 py-1.5 text-xs font-bold text-gray-700 outline-none bg-white shadow-sm focus:border-primary uppercase">
-                    <option value="TODOS">Todos los Estados</option>
-                    <option value="PENDIENTE">Pendientes (Por Aprobar)</option>
-                    <option value="APROBADO">Aprobados</option>
-                    <option value="FACTURADO">Facturados (Cerrados)</option>
-                    <option value="RECHAZADO">Rechazados</option>
-                </select>
+               <select id="filtro-estatus" onchange="filtrarPresupuestos()" class="border border-gray-300 rounded-lg px-3 py-1.5 text-xs font-bold text-gray-700 outline-none bg-white shadow-sm focus:border-primary uppercase">
+    <option value="TODOS">Todos los Estados</option>
+    <option value="PENDIENTE">Pendientes (Por Aprobar)</option>
+    <option value="APROBADO">Aprobados</option>
+    <option value="FACTURADO">Facturados (Cerrados)</option>
+    <option value="ANULADO">Anulados</option>
+</select>
             </div>
         </header>
 
@@ -151,234 +151,242 @@
          MOTOR LÓGICO: MÓDULO DE PRESUPUESTOS
     =========================================== -->
     <script>
-        const TOKEN_JWT = localStorage.getItem('pyp_token_seguro');
-        let presupuestosGlobal = [];
-        let fusePresupuestos;
-        let presupuestoActivo = null;
+      const TOKEN_JWT = localStorage.getItem('pyp_token_seguro');
+let presupuestosGlobal = [];
+let fusePresupuestos;
+let presupuestoActivo = null;
 
-        window.onload = async () => { await cargarPresupuestos(); };
+window.onload = async () => { await cargarPresupuestos(); };
 
-        // --- 1. CARGA Y RENDERIZADO DE LA TABLA ---
-        async function cargarPresupuestos() {
-            try {
-                const resUser = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?select=id_empresa&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
-                let filtroEmpresa = '';
-                if (resUser.ok) {
-                    const dataUser = await resUser.json();
-                    if (dataUser.length > 0 && dataUser[0].id_empresa) filtroEmpresa = `id_empresa=eq.${dataUser[0].id_empresa}&`;
-                }
-
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/ventas_documentos?${filtroEmpresa}tipo_documento=eq.COTIZACION&order=fecha_emision.desc`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
-
-                if (!res.ok) throw new Error("Fallo al descargar presupuestos.");
-                presupuestosGlobal = await res.json();
-                
-                fusePresupuestos = new Fuse(presupuestosGlobal, {
-                    keys: ['correlativo', 'cliente_nombre', 'cliente_documento'], threshold: 0.3, ignoreLocation: true,
-                    getFn: (obj, path) => { let val = obj; for (let i = 0; i < path.length; i++) val = val ? val[path[i]] : null; return typeof val === 'string' ? val.normalize("NFD").replace(/[\u0300-\u036f]/g, "") : String(val); }
-                });
-
-                renderizarTabla(presupuestosGlobal);
-            } catch (e) {
-                document.getElementById('tabla-presupuestos').innerHTML = `<tr><td colspan="7" class="p-10 text-center text-red-500 font-bold uppercase"><i class="fa-solid fa-triangle-exclamation mb-2 text-2xl block"></i>Error de conexión o permisos.</td></tr>`;
-            }
+// --- 1. CARGA Y RENDERIZADO DE LA TABLA ---
+async function cargarPresupuestos() {
+    try {
+        const resUser = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?select=id_empresa&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+        let filtroEmpresa = '';
+        if (resUser.ok) {
+            const dataUser = await resUser.json();
+            if (dataUser.length > 0 && dataUser[0].id_empresa) filtroEmpresa = `id_empresa=eq.${dataUser[0].id_empresa}&`;
         }
 
-        function renderizarTabla(data) {
-            const tbody = document.getElementById('tabla-presupuestos');
-            if (data.length === 0) { tbody.innerHTML = `<tr><td colspan="7" class="p-10 text-center text-gray-400 font-bold uppercase"><i class="fa-solid fa-folder-open mb-2 text-2xl block opacity-50"></i>Sin Documentos</td></tr>`; return; }
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/ventas_documentos?${filtroEmpresa}tipo_documento=eq.COTIZACION&order=fecha_emision.desc`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
 
-            let html = '';
-            data.forEach(p => {
-                const fecha = new Date(p.fecha_emision).toLocaleDateString('es-VE', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
-                const total = parseFloat(p.total_usd || 0).toFixed(2);
-                
-                let badgeClass = 'bg-gray-100 text-gray-600 border-gray-300';
-                if (p.estatus === 'PENDIENTE') badgeClass = 'bg-amber-50 text-amber-700 border-amber-300 animate-pulse';
-                if (p.estatus === 'APROBADO') badgeClass = 'bg-emerald-50 text-emerald-700 border-emerald-300';
-                if (p.estatus === 'FACTURADO') badgeClass = 'bg-blue-50 text-blue-700 border-blue-300';
-                if (p.estatus === 'RECHAZADO') badgeClass = 'bg-red-50 text-red-700 border-red-300';
+        if (!res.ok) throw new Error("Fallo al descargar presupuestos.");
+        presupuestosGlobal = await res.json();
+        
+        fusePresupuestos = new Fuse(presupuestosGlobal, {
+            keys: ['correlativo', 'cliente_nombre', 'cliente_documento'], threshold: 0.3, ignoreLocation: true,
+            getFn: (obj, path) => { let val = obj; for (let i = 0; i < path.length; i++) val = val ? val[path[i]] : null; return typeof val === 'string' ? val.normalize("NFD").replace(/[\u0300-\u036f]/g, "") : String(val); }
+        });
 
-                const origen = p.id_origen_taller ? `<span class="text-[9px] font-black text-purple-600 bg-purple-50 px-1.5 py-0.5 border border-purple-200 rounded uppercase">Taller</span>` : `<span class="text-[9px] font-black text-gray-500 bg-gray-100 px-1.5 py-0.5 border border-gray-200 rounded uppercase">Mostrador</span>`;
+        renderizarTabla(presupuestosGlobal);
+    } catch (e) {
+        document.getElementById('tabla-presupuestos').innerHTML = `<tr><td colspan="7" class="p-10 text-center text-red-500 font-bold uppercase"><i class="fa-solid fa-triangle-exclamation mb-2 text-2xl block"></i>Error de conexión o permisos.</td></tr>`;
+    }
+}
 
-                html += `
-                <tr class="hover:bg-blue-50 transition cursor-pointer border-b border-gray-50" onclick="abrirDrawer('${p.id_documento}')">
-                    <td class="py-2.5 px-4 font-mono font-bold text-gray-500">PRE-${String(p.correlativo || '0').padStart(6, '0')}</td>
-                    <td class="py-2.5 px-4 text-[10px] text-gray-500 font-bold">${fecha}</td>
-                    <td class="py-2.5 px-4"><div class="font-black text-primary uppercase text-[10px] truncate max-w-[200px]">${p.cliente_nombre || 'S/N'}</div><div class="text-[8px] text-gray-400 font-mono">${p.cliente_documento || 'N/A'}</div></td>
-                    <td class="py-2.5 px-4 text-center">${origen}</td>
-                    <td class="py-2.5 px-4 text-right font-black text-secondary">$${total}</td>
-                    <td class="py-2.5 px-4 text-center"><span class="px-2 py-0.5 rounded text-[8px] font-black border ${badgeClass} uppercase tracking-wider">${p.estatus || 'PENDIENTE'}</span></td>
-                    <td class="py-2.5 px-4 text-center"><button class="text-gray-400 hover:text-primary transition p-1"><i class="fa-solid fa-chevron-right"></i></button></td>
-                </tr>`;
+function renderizarTabla(data) {
+    const tbody = document.getElementById('tabla-presupuestos');
+    if (data.length === 0) { tbody.innerHTML = `<tr><td colspan="7" class="p-10 text-center text-gray-400 font-bold uppercase"><i class="fa-solid fa-folder-open mb-2 text-2xl block opacity-50"></i>Sin Documentos</td></tr>`; return; }
+
+    let html = '';
+    data.forEach(p => {
+        const fecha = new Date(p.fecha_emision).toLocaleDateString('es-VE', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+        const total = parseFloat(p.total_usd || 0).toFixed(2);
+        
+        let badgeClass = 'bg-gray-100 text-gray-600 border-gray-300';
+        if (p.estatus === 'PENDIENTE') badgeClass = 'bg-amber-50 text-amber-700 border-amber-300 animate-pulse';
+        if (p.estatus === 'APROBADO') badgeClass = 'bg-emerald-50 text-emerald-700 border-emerald-300';
+        if (p.estatus === 'FACTURADO') badgeClass = 'bg-blue-50 text-blue-700 border-blue-300';
+        if (p.estatus === 'ANULADO') badgeClass = 'bg-red-50 text-red-700 border-red-300 line-through opacity-75'; // Estética ERP para anulados
+
+        const origen = p.id_origen_taller ? `<span class="text-[9px] font-black text-purple-600 bg-purple-50 px-1.5 py-0.5 border border-purple-200 rounded uppercase">Taller</span>` : `<span class="text-[9px] font-black text-gray-500 bg-gray-100 px-1.5 py-0.5 border border-gray-200 rounded uppercase">Mostrador</span>`;
+
+        html += `
+        <tr class="hover:bg-blue-50 transition cursor-pointer border-b border-gray-50" onclick="abrirDrawer('${p.id_documento}')">
+            <td class="py-2.5 px-4 font-mono font-bold text-gray-500">PRE-${String(p.correlativo || '0').padStart(6, '0')}</td>
+            <td class="py-2.5 px-4 text-[10px] text-gray-500 font-bold">${fecha}</td>
+            <td class="py-2.5 px-4"><div class="font-black text-primary uppercase text-[10px] truncate max-w-[200px]">${p.cliente_nombre || 'S/N'}</div><div class="text-[8px] text-gray-400 font-mono">${p.cliente_documento || 'N/A'}</div></td>
+            <td class="py-2.5 px-4 text-center">${origen}</td>
+            <td class="py-2.5 px-4 text-right font-black text-secondary">$${total}</td>
+            <td class="py-2.5 px-4 text-center"><span class="px-2 py-0.5 rounded text-[8px] font-black border ${badgeClass} uppercase tracking-wider">${p.estatus || 'PENDIENTE'}</span></td>
+            <td class="py-2.5 px-4 text-center"><button class="text-gray-400 hover:text-primary transition p-1"><i class="fa-solid fa-chevron-right"></i></button></td>
+        </tr>`;
+    });
+    tbody.innerHTML = html;
+}
+
+function filtrarPresupuestos() {
+    let query = document.getElementById('buscador-presupuestos').value.trim();
+    const estatus = document.getElementById('filtro-estatus').value;
+    let data = presupuestosGlobal;
+
+    if (query !== '') { const qNorm = query.normalize("NFD").replace(/[\u0300-\u036f]/g, ""); data = fusePresupuestos.search(qNorm).map(r => r.item); }
+    if (estatus !== 'TODOS') data = data.filter(p => p.estatus === estatus);
+    renderizarTabla(data);
+}
+
+// --- 3. PANEL LATERAL (DRAWER) BLINDADO ---
+async function abrirDrawer(id_documento_raw) {
+    try {
+        const id_doc = String(id_documento_raw).trim();
+        presupuestoActivo = presupuestosGlobal.find(p => String(p.id_documento).trim() === id_doc);
+        
+        if (!presupuestoActivo) throw new Error(`Documento ID ${id_doc} no encontrado en la memoria visual.`);
+
+        const correlativo = presupuestoActivo.correlativo ? String(presupuestoActivo.correlativo).padStart(6, '0') : '000000';
+        const totalUsd = parseFloat(presupuestoActivo.total_usd || 0).toFixed(2);
+        const nombreCliente = presupuestoActivo.cliente_nombre || 'CLIENTE GENÉRICO';
+        const docCliente = presupuestoActivo.cliente_documento || 'N/A';
+        const estatus = presupuestoActivo.estatus || 'PENDIENTE';
+
+        document.getElementById('drawer-nro-doc').innerText = `PRE-${correlativo}`;
+        document.getElementById('drawer-cliente-nom').innerText = nombreCliente;
+        document.getElementById('drawer-cliente-doc').innerText = docCliente;
+        document.getElementById('drawer-total-usd').innerText = `$${totalUsd}`;
+        
+        const badge = document.getElementById('drawer-estatus-badge');
+        badge.innerText = estatus;
+        badge.className = `px-2 py-0.5 rounded text-[8px] font-black uppercase border ${estatus === 'PENDIENTE' ? 'bg-amber-50 text-amber-700 border-amber-300' : estatus === 'APROBADO' ? 'bg-emerald-50 text-emerald-700 border-emerald-300' : estatus === 'ANULADO' ? 'bg-red-50 text-red-700 border-red-300' : 'bg-gray-100 text-gray-500 border-gray-300'}`;
+
+        if (presupuestoActivo.notas_internas) {
+            document.getElementById('drawer-notas').innerText = presupuestoActivo.notas_internas;
+            document.getElementById('drawer-notas').classList.remove('hidden');
+        } else {
+            document.getElementById('drawer-notas').classList.add('hidden');
+        }
+
+        document.getElementById('drawer-lista-detalles').innerHTML = '<div class="text-center py-6"><i class="fa-solid fa-spinner fa-spin text-primary"></i></div>';
+        construirBotonera(estatus);
+        document.getElementById('drawer-container').classList.add('drawer-open');
+
+        // Descarga de detalles
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/ventas_documentos_detalles?id_documento=eq.${id_doc}`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+        if (!res.ok) throw new Error("Fallo la API de detalles en Supabase.");
+        
+        const detalles = await res.json();
+        let htmlDetalles = '';
+        
+        if (detalles.length === 0) {
+            htmlDetalles = '<div class="text-center text-gray-400 text-[10px] font-bold p-4">Sin cargos detallados.</div>';
+        } else {
+            detalles.forEach(d => {
+                htmlDetalles += `
+                <div class="bg-white border border-gray-200 rounded p-2 flex justify-between items-center shadow-sm">
+                    <div class="flex-1 truncate pr-2">
+                        <div class="font-bold text-primary text-[10px] uppercase truncate">${d.producto_nombre || 'Artículo'}</div>
+                        <div class="text-[8px] text-gray-500 font-mono">${d.producto_sku || 'N/A'}</div>
+                    </div>
+                    <div class="text-right shrink-0">
+                        <div class="text-[11px] font-black text-secondary">$${parseFloat(d.subtotal_linea_usd || 0).toFixed(2)}</div>
+                        <div class="text-[8px] text-gray-400 font-bold">${parseFloat(d.cantidad || 0)} x $${parseFloat(d.precio_unitario_usd || 0).toFixed(2)}</div>
+                    </div>
+                </div>`;
             });
-            tbody.innerHTML = html;
+        }
+        document.getElementById('drawer-lista-detalles').innerHTML = htmlDetalles;
+
+    } catch (e) {
+        console.error("🔥 Error crítico en Drawer:", e.message);
+        alert(`Falla de sistema: ${e.message}`);
+        cerrarDrawer();
+    }
+}
+
+function cerrarDrawer() { document.getElementById('drawer-container').classList.remove('drawer-open'); presupuestoActivo = null; }
+
+// --- 4. ACCIONES FINANCIERAS ---
+function construirBotonera(estatus) {
+    const btnContainer = document.getElementById('botonera-drawer');
+    let html = `<button onclick="imprimirPresupuesto()" class="col-span-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-black py-2 rounded text-[10px] uppercase tracking-wider shadow-sm transition btn-press border border-gray-200 flex items-center justify-center gap-2"><i class="fa-solid fa-print"></i> Imprimir / PDF</button>`;
+
+    if (estatus === 'PENDIENTE') {
+        html += `
+        <button onclick="cambiarEstatusDocumento('ANULADO')" class="bg-red-50 hover:bg-red-500 hover:text-white text-red-600 border border-red-200 font-black py-2 rounded text-[10px] uppercase tracking-wider shadow-sm transition btn-press"><i class="fa-solid fa-ban"></i> Anular</button>
+        <button onclick="cambiarEstatusDocumento('APROBADO')" class="bg-emerald-500 hover:bg-emerald-600 text-white font-black py-2 rounded text-[10px] uppercase tracking-wider shadow-sm transition btn-press flex items-center justify-center gap-1"><i class="fa-solid fa-check-double"></i> Aprobar</button>`;
+    } 
+    else if (estatus === 'APROBADO') { html += `<div class="col-span-2 text-center text-[9px] font-black text-emerald-600 bg-emerald-50 border border-emerald-200 rounded py-2 uppercase tracking-widest"><i class="fa-solid fa-check-circle mr-1"></i> Aprobado - Listo para Facturar</div>`; }
+    else if (estatus === 'FACTURADO') { html += `<div class="col-span-2 text-center text-[9px] font-black text-blue-600 bg-blue-50 border border-blue-200 rounded py-2 uppercase tracking-widest"><i class="fa-solid fa-lock mr-1"></i> Cerrado y Facturado</div>`; }
+    else if (estatus === 'ANULADO') { html += `<div class="col-span-2 text-center text-[9px] font-black text-red-600 bg-red-50 border border-red-200 rounded py-2 uppercase tracking-widest"><i class="fa-solid fa-ban mr-1"></i> Documento Anulado</div>`; }
+
+    btnContainer.innerHTML = html;
+}
+
+async function cambiarEstatusDocumento(nuevoEstatus) {
+    if (!presupuestoActivo) return;
+    if (!confirm(`¿Estás seguro de marcar la cotización como ${nuevoEstatus}?`)) return;
+
+    try {
+        await fetch(`${SUPABASE_URL}/rest/v1/ventas_documentos?id_documento=eq.${presupuestoActivo.id_documento}`, {
+            method: 'PATCH', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ estatus: nuevoEstatus })
+        });
+
+        // Notificación al Taller (Solo si se aprueba)
+        if (nuevoEstatus === 'APROBADO' && presupuestoActivo.id_origen_taller) {
+            await fetch(`${SUPABASE_URL}/rest/v1/servicio_ordenes?id_orden=eq.${presupuestoActivo.id_origen_taller}`, {
+                method: 'PATCH', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ estatus: 'Listo', diagnostico_tecnico: 'PRESUPUESTO APROBADO. PROCEDER A REPARAR.' })
+            });
         }
 
-        function filtrarPresupuestos() {
-            let query = document.getElementById('buscador-presupuestos').value.trim();
-            const estatus = document.getElementById('filtro-estatus').value;
-            let data = presupuestosGlobal;
+        cerrarDrawer(); 
+        await cargarPresupuestos();
+    } catch (e) { alert("Error de conexión al actualizar estatus en Supabase."); }
+}
 
-            if (query !== '') { const qNorm = query.normalize("NFD").replace(/[\u0300-\u036f]/g, ""); data = fusePresupuestos.search(qNorm).map(r => r.item); }
-            if (estatus !== 'TODOS') data = data.filter(p => p.estatus === estatus);
-            renderizarTabla(data);
-        }
-
-        // --- 3. PANEL LATERAL (DRAWER) BLINDADO ---
-        async function abrirDrawer(id_documento) {
-            try {
-                presupuestoActivo = presupuestosGlobal.find(p => p.id_documento === id_documento);
-                if (!presupuestoActivo) throw new Error("Documento no encontrado en memoria.");
-
-                const correlativo = presupuestoActivo.correlativo ? String(presupuestoActivo.correlativo).padStart(6, '0') : '000000';
-                const totalUsd = parseFloat(presupuestoActivo.total_usd || 0).toFixed(2);
-                const nombreCliente = presupuestoActivo.cliente_nombre || 'CLIENTE GENÉRICO';
-                const docCliente = presupuestoActivo.cliente_documento || 'N/A';
-                const estatus = presupuestoActivo.estatus || 'PENDIENTE';
-
-                document.getElementById('drawer-nro-doc').innerText = `PRE-${correlativo}`;
-                document.getElementById('drawer-cliente-nom').innerText = nombreCliente;
-                document.getElementById('drawer-cliente-doc').innerText = docCliente;
-                document.getElementById('drawer-total-usd').innerText = `$${totalUsd}`;
-                
-                const badge = document.getElementById('drawer-estatus-badge');
-                badge.innerText = estatus;
-                badge.className = `px-2 py-0.5 rounded text-[8px] font-black uppercase border ${estatus === 'PENDIENTE' ? 'bg-amber-50 text-amber-700 border-amber-300' : estatus === 'APROBADO' ? 'bg-emerald-50 text-emerald-700 border-emerald-300' : 'bg-gray-100 text-gray-500 border-gray-300'}`;
-
-                if (presupuestoActivo.notas_internas) {
-                    document.getElementById('drawer-notas').innerText = presupuestoActivo.notas_internas;
-                    document.getElementById('drawer-notas').classList.remove('hidden');
-                } else {
-                    document.getElementById('drawer-notas').classList.add('hidden');
-                }
-
-                document.getElementById('drawer-lista-detalles').innerHTML = '<div class="text-center py-6"><i class="fa-solid fa-spinner fa-spin text-primary"></i></div>';
-                construirBotonera(estatus);
-                document.getElementById('drawer-container').classList.add('drawer-open');
-
-                // Descarga de detalles
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/ventas_documentos_detalles?id_documento=eq.${id_documento}`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
-                if (!res.ok) throw new Error("Fallo API de detalles");
-                
-                const detalles = await res.json();
-                let htmlDetalles = '';
-                
-                if (detalles.length === 0) {
-                    htmlDetalles = '<div class="text-center text-gray-400 text-[10px] font-bold p-4">Sin cargos detallados.</div>';
-                } else {
-                    detalles.forEach(d => {
-                        htmlDetalles += `
-                        <div class="bg-white border border-gray-200 rounded p-2 flex justify-between items-center shadow-sm">
-                            <div class="flex-1 truncate pr-2">
-                                <div class="font-bold text-primary text-[10px] uppercase truncate">${d.producto_nombre || 'Artículo'}</div>
-                                <div class="text-[8px] text-gray-500 font-mono">${d.producto_sku || 'N/A'}</div>
-                            </div>
-                            <div class="text-right shrink-0">
-                                <div class="text-[11px] font-black text-secondary">$${parseFloat(d.subtotal_linea_usd || 0).toFixed(2)}</div>
-                                <div class="text-[8px] text-gray-400 font-bold">${parseFloat(d.cantidad || 0)} x $${parseFloat(d.precio_unitario_usd || 0).toFixed(2)}</div>
-                            </div>
-                        </div>`;
-                    });
-                }
-                document.getElementById('drawer-lista-detalles').innerHTML = htmlDetalles;
-
-            } catch (e) {
-                console.error("Error abriendo Drawer:", e);
-                alert("Error al abrir el presupuesto.");
-                cerrarDrawer();
-            }
-        }
-
-        function cerrarDrawer() { document.getElementById('drawer-container').classList.remove('drawer-open'); presupuestoActivo = null; }
-
-        // --- 4. ACCIONES FINANCIERAS ---
-        function construirBotonera(estatus) {
-            const btnContainer = document.getElementById('botonera-drawer');
-            let html = `<button onclick="imprimirPresupuesto()" class="col-span-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-black py-2 rounded text-[10px] uppercase tracking-wider shadow-sm transition btn-press border border-gray-200 flex items-center justify-center gap-2"><i class="fa-solid fa-print"></i> Imprimir / PDF</button>`;
-
-            if (estatus === 'PENDIENTE') {
-                html += `
-                <button onclick="cambiarEstatusDocumento('RECHAZADO')" class="bg-red-50 hover:bg-red-500 hover:text-white text-red-600 border border-red-200 font-black py-2 rounded text-[10px] uppercase tracking-wider shadow-sm transition btn-press">Rechazar</button>
-                <button onclick="cambiarEstatusDocumento('APROBADO')" class="bg-emerald-500 hover:bg-emerald-600 text-white font-black py-2 rounded text-[10px] uppercase tracking-wider shadow-sm transition btn-press flex items-center justify-center gap-1"><i class="fa-solid fa-check-double"></i> Aprobar</button>`;
-            } 
-            else if (estatus === 'APROBADO') { html += `<div class="col-span-2 text-center text-[9px] font-black text-emerald-600 bg-emerald-50 border border-emerald-200 rounded py-2 uppercase tracking-widest"><i class="fa-solid fa-check-circle mr-1"></i> Aprobado - Listo para Facturar en POS</div>`; }
-            else if (estatus === 'FACTURADO') { html += `<div class="col-span-2 text-center text-[9px] font-black text-blue-600 bg-blue-50 border border-blue-200 rounded py-2 uppercase tracking-widest"><i class="fa-solid fa-lock mr-1"></i> Cerrado y Facturado</div>`; }
-
-            btnContainer.innerHTML = html;
-        }
-
-        async function cambiarEstatusDocumento(nuevoEstatus) {
-            if (!presupuestoActivo) return;
-            if (!confirm(`¿Estás seguro de marcar este presupuesto como ${nuevoEstatus}?`)) return;
-
-            try {
-                await fetch(`${SUPABASE_URL}/rest/v1/ventas_documentos?id_documento=eq.${presupuestoActivo.id_documento}`, {
-                    method: 'PATCH', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ estatus: nuevoEstatus })
-                });
-
-                // Notificación al Taller
-                if (nuevoEstatus === 'APROBADO' && presupuestoActivo.id_origen_taller) {
-                    await fetch(`${SUPABASE_URL}/rest/v1/servicio_ordenes?id_orden=eq.${presupuestoActivo.id_origen_taller}`, {
-                        method: 'PATCH', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ estatus: 'Listo', diagnostico_tecnico: 'PRESUPUESTO APROBADO. PROCEDER A REPARAR.' })
-                    });
-                }
-
-                alert(`Presupuesto ${nuevoEstatus} con éxito.`);
-                cerrarDrawer(); await cargarPresupuestos();
-            } catch (e) { alert("Error de conexión al actualizar estatus."); }
-        }
-
-        function imprimirPresupuesto() {
-            if (!presupuestoActivo) return;
-            const detallesNodos = document.getElementById('drawer-lista-detalles').children;
-            let filasTabla = '';
+function imprimirPresupuesto() {
+    if (!presupuestoActivo) return;
+    const detallesNodos = document.getElementById('drawer-lista-detalles').children;
+    let filasTabla = '';
+    
+    for (let i = 0; i < detallesNodos.length; i++) {
+        // Validación de nodos para evitar quiebre si está vacío
+        if(detallesNodos[i].querySelector('.text-primary')) {
+            const nombre = detallesNodos[i].querySelector('.text-primary').innerText;
+            const sku = detallesNodos[i].querySelector('.font-mono').innerText;
+            const montoTotal = detallesNodos[i].querySelector('.text-secondary').innerText;
+            const cantidadPrecio = detallesNodos[i].querySelector('.text-gray-400').innerText; 
             
-            for (let i = 0; i < detallesNodos.length; i++) {
-                const nombre = detallesNodos[i].querySelector('.text-primary').innerText;
-                const sku = detallesNodos[i].querySelector('.font-mono').innerText;
-                const montoTotal = detallesNodos[i].querySelector('.text-secondary').innerText;
-                const cantidadPrecio = detallesNodos[i].querySelector('.text-gray-400').innerText; 
-                
-                filasTabla += `<tr style="border-bottom: 1px solid #eee;"><td style="padding: 8px; font-size: 12px; color: #333;"><b>${nombre}</b><br><span style="font-size: 10px; color: #777;">SKU: ${sku}</span></td><td style="padding: 8px; font-size: 12px; color: #333; text-align: center;">${cantidadPrecio}</td><td style="padding: 8px; font-size: 12px; color: #333; text-align: right;"><b>${montoTotal}</b></td></tr>`;
-            }
-
-            const fechaFormat = new Date(presupuestoActivo.fecha_emision).toLocaleDateString('es-VE', { year: 'numeric', month: 'long', day: 'numeric' });
-            const nroDoc = `PRE-${String(presupuestoActivo.correlativo || '0').padStart(6, '0')}`;
-
-            const htmlImpresion = `
-                <html>
-                <head>
-                    <title>Cotización ${nroDoc}</title>
-                    <style>
-                        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 40px; color: #333; }
-                        .header { display: flex; justify-content: space-between; border-bottom: 2px solid #143B62; padding-bottom: 20px; margin-bottom: 20px; }
-                        .title { color: #143B62; font-size: 24px; font-weight: 900; margin: 0; text-transform: uppercase; }
-                        .info-box { background: #f9fafb; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #eee; }
-                        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-                        th { background: #143B62; color: white; padding: 10px; font-size: 11px; text-transform: uppercase; text-align: left; }
-                        .totales { width: 300px; float: right; background: #fff; border: 1px solid #ddd; border-radius: 8px; overflow: hidden; }
-                        .totales-row { display: flex; justify-content: space-between; padding: 10px 15px; border-bottom: 1px solid #eee; font-size: 13px; }
-                        .totales-row.gran-total { background: #E67E22; color: white; font-size: 16px; font-weight: 900; border: none; }
-                        @media print { body { padding: 0; } }
-                    </style>
-                </head>
-                <body>
-                    <div class="header"><div><h1 class="title">P&P SOLUCIONES</h1><p style="font-size: 12px; color: #666; margin: 5px 0;">RIF: J-00000000-0<br>Caracas, Venezuela</p></div><div style="text-align: right;"><h2 style="margin:0; color: #E67E22; font-size: 20px;">PRESUPUESTO</h2><p style="font-size: 14px; font-weight: bold; margin: 5px 0;">Nro: ${nroDoc}</p><p style="font-size: 12px; color: #666; margin: 0;">Fecha: ${fechaFormat}</p></div></div>
-                    <div class="info-box"><h3 style="font-size: 11px; text-transform: uppercase; color: #143B62; margin-top: 0;">Datos del Cliente</h3><p style="margin: 5px 0; font-size: 14px;"><b>Razón Social:</b> ${(presupuestoActivo.cliente_nombre || '').toUpperCase()}</p><p style="margin: 5px 0; font-size: 13px; color: #555;"><b>Documento:</b> ${presupuestoActivo.cliente_documento || 'N/A'}</p></div>
-                    <table><thead><tr><th>Descripción del Cargo</th><th style="text-align: center;">Cant. x Precio Unitario</th><th style="text-align: right;">Subtotal</th></tr></thead><tbody>${filasTabla}</tbody></table>
-                    <div class="totales"><div class="totales-row"><span>Subtotal:</span> <span>$${parseFloat(presupuestoActivo.subtotal_usd || 0).toFixed(2)}</span></div><div class="totales-row gran-total"><span>TOTAL USD:</span> <span>$${parseFloat(presupuestoActivo.total_usd || 0).toFixed(2)}</span></div></div>
-                    <div style="clear: both; margin-top: 80px; text-align: center; font-size: 11px; color: #777; border-top: 1px dashed #ccc; padding-top: 20px;">Este documento es un presupuesto válido por 15 días. No representa una factura fiscal.<br>Emitido por: ${presupuestoActivo.nombre_cajero || 'SISTEMA'}</div>
-                </body>
-                </html>`;
-
-            const ventanaImp = window.open('', '_blank');
-            ventanaImp.document.write(htmlImpresion);
-            ventanaImp.document.close(); ventanaImp.focus();
-            setTimeout(() => { ventanaImp.print(); }, 500);
+            filasTabla += `<tr style="border-bottom: 1px solid #eee;"><td style="padding: 8px; font-size: 12px; color: #333;"><b>${nombre}</b><br><span style="font-size: 10px; color: #777;">SKU: ${sku}</span></td><td style="padding: 8px; font-size: 12px; color: #333; text-align: center;">${cantidadPrecio}</td><td style="padding: 8px; font-size: 12px; color: #333; text-align: right;"><b>${montoTotal}</b></td></tr>`;
         }
+    }
+
+    const fechaFormat = new Date(presupuestoActivo.fecha_emision).toLocaleDateString('es-VE', { year: 'numeric', month: 'long', day: 'numeric' });
+    const nroDoc = `PRE-${String(presupuestoActivo.correlativo || '0').padStart(6, '0')}`;
+    let marcaAnulado = presupuestoActivo.estatus === 'ANULADO' ? '<h1 style="color:red; text-align:center; border: 2px solid red; padding: 10px; text-transform:uppercase; transform: rotate(-15deg); position:absolute; top:30%; left:25%; opacity:0.3; font-size:60px;">ANULADO</h1>' : '';
+
+    const htmlImpresion = `
+        <html>
+        <head>
+            <title>Cotización ${nroDoc}</title>
+            <style>
+                body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 40px; color: #333; position: relative; }
+                .header { display: flex; justify-content: space-between; border-bottom: 2px solid #143B62; padding-bottom: 20px; margin-bottom: 20px; }
+                .title { color: #143B62; font-size: 24px; font-weight: 900; margin: 0; text-transform: uppercase; }
+                .info-box { background: #f9fafb; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #eee; }
+                table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+                th { background: #143B62; color: white; padding: 10px; font-size: 11px; text-transform: uppercase; text-align: left; }
+                .totales { width: 300px; float: right; background: #fff; border: 1px solid #ddd; border-radius: 8px; overflow: hidden; }
+                .totales-row { display: flex; justify-content: space-between; padding: 10px 15px; border-bottom: 1px solid #eee; font-size: 13px; }
+                .totales-row.gran-total { background: #E67E22; color: white; font-size: 16px; font-weight: 900; border: none; }
+                @media print { body { padding: 0; } }
+            </style>
+        </head>
+        <body>
+            ${marcaAnulado}
+            <div class="header"><div><h1 class="title">P&P SOLUCIONES</h1><p style="font-size: 12px; color: #666; margin: 5px 0;">RIF: J-00000000-0<br>Caracas, Venezuela</p></div><div style="text-align: right;"><h2 style="margin:0; color: #E67E22; font-size: 20px;">PRESUPUESTO</h2><p style="font-size: 14px; font-weight: bold; margin: 5px 0;">Nro: ${nroDoc}</p><p style="font-size: 12px; color: #666; margin: 0;">Fecha: ${fechaFormat}</p></div></div>
+            <div class="info-box"><h3 style="font-size: 11px; text-transform: uppercase; color: #143B62; margin-top: 0;">Datos del Cliente</h3><p style="margin: 5px 0; font-size: 14px;"><b>Razón Social:</b> ${(presupuestoActivo.cliente_nombre || '').toUpperCase()}</p><p style="margin: 5px 0; font-size: 13px; color: #555;"><b>Documento:</b> ${presupuestoActivo.cliente_documento || 'N/A'}</p></div>
+            <table><thead><tr><th>Descripción del Cargo</th><th style="text-align: center;">Cant. x Precio Unitario</th><th style="text-align: right;">Subtotal</th></tr></thead><tbody>${filasTabla}</tbody></table>
+            <div class="totales"><div class="totales-row"><span>Subtotal:</span> <span>$${parseFloat(presupuestoActivo.subtotal_usd || 0).toFixed(2)}</span></div><div class="totales-row gran-total"><span>TOTAL USD:</span> <span>$${parseFloat(presupuestoActivo.total_usd || 0).toFixed(2)}</span></div></div>
+            <div style="clear: both; margin-top: 80px; text-align: center; font-size: 11px; color: #777; border-top: 1px dashed #ccc; padding-top: 20px;">Este documento es un presupuesto válido por 15 días. No representa una factura fiscal.<br>Emitido por: ${presupuestoActivo.nombre_cajero || 'SISTEMA'}</div>
+        </body>
+        </html>`;
+
+    const ventanaImp = window.open('', '_blank');
+    ventanaImp.document.write(htmlImpresion);
+    ventanaImp.document.close(); ventanaImp.focus();
+    setTimeout(() => { ventanaImp.print(); }, 500);
+}
     </script>
 </body>
 </html>
