@@ -3,6 +3,8 @@
 <head>
     <!-- Configuración central P&P (cargada antes de cualquier otro script) -->
     <script src="config.js"></script>
+    <!-- DOCUMENT_CONFIG: Contrato unificado de tipos de documentos -->
+    <script src="document_config.js"></script>
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -833,7 +835,7 @@
 
                 const totalBs = facturas.reduce((acc, f) => acc + (f.total_bs || 0), 0);
                 const totalUsd = facturas.reduce((acc, f) => acc + (f.total_usd || 0), 0);
-                const porPagar = facturas.filter(f => f.estatus === 'Por Pagar').length;
+                const porPagar = facturas.filter(f => f.estatus === 'POR_PAGAR').length;
 
                 const metodos = {};
                 facturas.forEach(f => {
@@ -934,11 +936,11 @@
 
                 let dConf = []; if (resConf.ok) dConf = await resConf.json();
                 const getC = (p, def) => { const items = dConf.filter(c => c.parametro === p); return items.length > 0 ? items[items.length - 1].valor : def; };
-                pypIva = parseFloat(getC('IVA_GENERAL', '16')) / 100;
+                pypIva = parseFloat(getC('IVA_PORCENTAJE_DEFAULT', getC('IVA_GENERAL', '16'))) / 100;
                 pypIvaRed1 = parseFloat(getC('IVA_REDUCIDO_1', '8')) / 100;
                 pypIvaRed2 = parseFloat(getC('IVA_REDUCIDO_2', '12')) / 100;
-                pypIgtf = parseFloat(getC('IGTF', '3')) / 100;
-                pypMostrarExento = getC('POS_MOSTRAR_EXENTO', 'SI');
+                pypIgtf = parseFloat(getC('IGTF_PORCENTAJE_DEFAULT', getC('IGTF', '3'))) / 100;
+                pypMostrarExento = (function(){ const v = getC('POS_MOSTRAR_EXENTO', 'SI').toString().toUpperCase(); return (v === 'TRUE' || v === 'SI' || v === 'YES' || v === '1') ? 'SI' : 'NO'; })();
 
                 const strCond = getC('CONDICIONES_PAGO', 'CONTADO|0'); let arrCond = [];
                 strCond.split(',').forEach(c => { const p = c.split('|'); if (p[0]) arrCond.push({ nombre: p[0].trim().toUpperCase(), dias: parseInt(p[1] ? p[1].trim() : '0') || 0 }); });
@@ -975,8 +977,8 @@
                 let corrInicial = 0;
                 if (resConf.ok) { const dConf = await resConf.json(); if (dConf.length > 0) corrInicial = parseInt(dConf[0].valor, 10) || 0; }
                 const filtroEmpresa = empresaActual ? `id_empresa=eq.${empresaActual}` : `id_empresa=is.null`;
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/ventas_facturas?${filtroEmpresa}&tipo_transaccion=neq.Nota%20de%20Credito&select=correlativo&order=correlativo.desc&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
-                if (res.ok) { const data = await res.json(); correlativoActual = data.length > 0 ? (parseInt(data[0].correlativo, 10) || corrInicial) + 1 : corrInicial + 1; } else { correlativoActual = corrInicial + 1; }
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/ventas_facturas?${filtroEmpresa}&tipo_transaccion=eq.FACTURA&select=correlativo_interno&order=correlativo_interno.desc&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                if (res.ok) { const data = await res.json(); correlativoActual = data.length > 0 ? (parseInt(data[0].correlativo_interno, 10) || corrInicial) + 1 : corrInicial + 1; } else { correlativoActual = corrInicial + 1; }
                 inputNroFactura.value = String(correlativoActual).padStart(6, '0');
             } catch (e) { inputNroFactura.value = ""; inputNroFactura.placeholder = "000001"; inputNroFactura.readOnly = false; }
         }
@@ -1456,12 +1458,12 @@
             
             try {
                 const filtroEmpresa = empresaActual ? `id_empresa=eq.${empresaActual}&` : `id_empresa=is.null&`;
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/ventas_documentos?${filtroEmpresa}tipo_documento=eq.COTIZACION&estatus=in.(PENDIENTE,APROBADO)&order=fecha_emision.desc`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/documentos_comerciales?${filtroEmpresa}tipo_documento=eq.PRESUPUESTO&estatus=in.(PENDIENTE,APROBADO)&order=fecha_emision.desc`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
                 if (!res.ok) throw new Error("Fallo al descargar");
                 presupuestosImportar = await res.json();
                 
                 fuseImportarPre = new Fuse(presupuestosImportar, {
-                    keys: ['correlativo', 'cliente_nombre', 'cliente_documento'], threshold: 0.3, ignoreLocation: true,
+                    keys: ['correlativo', 'persona_nombre', 'persona_documento'], threshold: 0.3, ignoreLocation: true,
                     getFn: (obj, path) => { let val = obj; for (let i = 0; i < path.length; i++) val = val ? val[path[i]] : null; return typeof val === 'string' ? val.normalize("NFD").replace(/[\u0300-\u036f]/g, "") : String(val); }
                 });
                 renderizarModalImportar(presupuestosImportar);
@@ -1514,7 +1516,7 @@
                 document.getElementById('info-cliente-seleccionado').classList.remove('hidden');
                 document.getElementById('pos-buscador-cliente').classList.add('hidden');
 
-                const resDet = await fetch(`${SUPABASE_URL}/rest/v1/ventas_documentos_detalles?id_documento=eq.${id_documento}`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                const resDet = await fetch(`${SUPABASE_URL}/rest/v1/documentos_comerciales_detalles?id_documento=eq.${id_documento}`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
                 if(!resDet.ok) throw new Error("Fallo al descargar ítems.");
                 const detalles = await resDet.json();
                 
@@ -1532,10 +1534,8 @@
                     };
                 });
 
-                fetch(`${SUPABASE_URL}/rest/v1/ventas_documentos?id_documento=eq.${id_documento}`, {
-                    method: 'PATCH', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ estatus: 'FACTURADO' })
-                });
+                // Guardar id_documento_origen para que procesar_factura lo marque como CONVERTIDO automáticamente
+                window.__id_documento_origen_importado = id_documento;
 
                 actualizarUI_Carrito(); cerrarErrorCarga();
                 if(idOrigenTaller) { setTimeout(() => alert("INFO: Este presupuesto proviene del Taller Técnico. Procede a cobrar normalmente. Al finalizar, ve al Taller y entrégale el equipo al cliente."), 500); }
@@ -1545,63 +1545,201 @@
         // ================================================================
         // PROCESAR VENTA (RPC / LEGACY)
         // ================================================================
-        const USAR_RPC_PROCESAR_VENTA = true;
-        async function procesarVenta(modo = 'NORMAL') { if (USAR_RPC_PROCESAR_VENTA) { return procesarVentaRPC(modo); } return procesarVentaLegacy(modo); }
+        // Wrapper de compatibilidad: siempre usa RPC nueva
+        async function procesarVenta(modo = 'NORMAL') { return procesarVentaRPC(modo); }
 
         async function procesarVentaRPC(modo = 'NORMAL') {
             const btnCobrar = document.getElementById('btn-cobrar'); const btnGuardar = document.getElementById('btn-guardar');
-            btnCobrar.disabled = true; btnGuardar.disabled = true; mostrarCarga(modo === 'DIRECTO' ? "Guardando..." : "Procesando...", "Procesando venta...");
+            btnCobrar.disabled = true; btnGuardar.disabled = true;
+            mostrarCarga(modo === 'DIRECTO' ? "Guardando..." : "Procesando...", "Procesando venta...");
             try {
-                const metodo = modo === 'DIRECTO' ? 'POR_PAGAR' : document.getElementById('cobro-metodo').value; const usuario = localStorage.getItem('pyp_usuario_nombre') || 'SISTEMA';
-                const formatoPrint = document.getElementById('cobro-formato-impresion').value; const condicionSel = document.getElementById('pos-condicion'); const condicion = condicionSel.options[condicionSel.selectedIndex].text;
-                const nroFactura = document.getElementById('pos-nro-factura').value.trim().toUpperCase(); const nroControl = document.getElementById('pos-nro-control').value.trim().toUpperCase();
-                const fechaVenc = document.getElementById('pos-fecha-vencimiento').value; const fechaEmision = document.getElementById('pos-fecha-emision').value + 'T12:00:00Z';
-                const aplicaIgtf = (metodo === 'EFECTIVO_USD' || metodo === 'ZELLE'); const igtfVal = aplicaIgtf ? pypIgtf * 100 : 0;
-                const totalBsFinal = redondear(granTotalBs + (aplicaIgtf ? redondear(granTotalBs * pypIgtf) : 0)); const totalUsdFinal = totalBsFinal / tasaBCV;
-                const baseImpUsd = parseFloat(document.getElementById('contenedor-totales-fiscales').dataset.baseTotalUsd) || 0; const exentoUsd = parseFloat(document.getElementById('contenedor-totales-fiscales').dataset.exentoTotalUsd) || 0;
-                const estadoFinal = (metodo === 'POR_PAGAR' || modoCotizacion) ? (modoCotizacion ? 'Cotización' : 'Por Pagar') : 'Completada';
-                let metodoPagoFinal = metodo; if (lineasPagoMixto.length > 0) { metodoPagoFinal = lineasPagoMixto.map(l => `${l.metodo}(${fmt(l.monto)}Bs)`).join('+'); }
+                // ─────────────────────────────────────────────────────────────
+                // RECOLECTAR DATOS DE PANTALLA
+                // ─────────────────────────────────────────────────────────────
+                const metodo = modo === 'DIRECTO' ? 'POR_PAGAR' : document.getElementById('cobro-metodo').value;
+                const usuario = localStorage.getItem('pyp_usuario_nombre') || 'SISTEMA';
+                const formatoPrint = document.getElementById('cobro-formato-impresion').value;
+                const condicionSel = document.getElementById('pos-condicion');
+                const condicion = condicionSel.options[condicionSel.selectedIndex].text;
+                const nroFactura = document.getElementById('pos-nro-factura').value.trim().toUpperCase();
+                const nroControl = document.getElementById('pos-nro-control').value.trim().toUpperCase();
+                const fechaVenc = document.getElementById('pos-fecha-vencimiento').value;
+                const fechaEmision = document.getElementById('pos-fecha-emision').value + 'T12:00:00Z';
+                const aplicaIgtf = (metodo === 'EFECTIVO_USD' || metodo === 'ZELLE');
+                const igtfVal = aplicaIgtf ? pypIgtf * 100 : 0;
+                const totalBsFinal = redondear(granTotalBs + (aplicaIgtf ? redondear(granTotalBs * pypIgtf) : 0));
+                const totalUsdFinal = totalBsFinal / tasaBCV;
+                const baseImpUsd = parseFloat(document.getElementById('contenedor-totales-fiscales').dataset.baseTotalUsd) || 0;
+                const exentoUsd = parseFloat(document.getElementById('contenedor-totales-fiscales').dataset.exentoTotalUsd) || 0;
+                let metodoPagoFinal = metodo;
+                if (lineasPagoMixto.length > 0) { metodoPagoFinal = lineasPagoMixto.map(l => `${l.metodo}(${fmt(l.monto)}Bs)`).join('+'); }
 
-                const payloadFactura = { id_cliente: document.getElementById('pos-id-cliente').value || null, cliente_documento: document.getElementById('txt-cli-doc').innerText, cliente_nombre: document.getElementById('txt-cli-nom').innerText, subtotal_usd: sumSubtotalBasePuroUsd, descuento_usd: descGeneralTotalUsd, total_usd: totalUsdFinal, total_bs: totalBsFinal, tasa_bcv_aplicada: tasaBCV, metodos_pago: metodoPagoFinal, condicion_pago: condicion, iva_porcentaje: pypIva * 100, igtf_porcentaje: igtfVal, base_imponible: baseImpUsd * tasaBCV, monto_exento: exentoUsd * tasaBCV, nombre_cajero: usuario, nro_factura_manual: nroFactura || null, nro_control_manual: nroControl || null, fecha_vencimiento: fechaVenc, fecha_emision: fechaEmision, estatus: estadoFinal, tipo_transaccion: modoCotizacion ? 'Cotización' : 'Venta', saldo_pendiente_usd: (estadoFinal === 'Por Pagar' || estadoFinal === 'Cotización') ? totalUsdFinal : 0 };
-                const payloadItems = carrito.map(i => ({ producto_sku: i.id_producto_sku, producto_nombre: i.nombre, cantidad: i.cantidad, precio_unitario_usd: calcularPrecioUnitario(i, i.cantidad) }));
-                let payloadCaja = null; if (metodo !== 'POR_PAGAR' && !modoCotizacion) { payloadCaja = { fecha: new Date().toISOString(), tipo: 'INGRESO', concepto: `COBRO FACTURA NRO: ${nroFactura} - CLIENTE: ${document.getElementById('txt-cli-nom').innerText}`, monto_usd: totalUsdFinal, monto_bs: totalBsFinal, metodo_pago: metodoPagoFinal, usuario: usuario }; }
+                // Mapeo de condición de pago a UPPER_SNAKE_CASE
+                const condicionUpper = condicion.toUpperCase().includes('CONTADO') ? 'CONTADO' : 'CREDITO';
 
-                mostrarCarga("Procesando venta...", "Guardando factura, detalles y stock...");
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/procesar_venta`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ p_factura: payloadFactura, p_items: payloadItems, p_caja: payloadCaja }) });
-                if (!res.ok) { const errObj = await res.json(); throw new Error(errObj.message || errObj.hint || "Fallo al procesar la venta."); }
+                // ─────────────────────────────────────────────────────────────
+                // ENRUTADOR DOCUMENT_CONFIG: PRESUPUESTO vs FACTURA
+                // ─────────────────────────────────────────────────────────────
+                const cfg = modoCotizacion 
+                    ? DOCUMENT_CONFIG.PRESUPUESTO 
+                    : DOCUMENT_CONFIG.FACTURA;
 
-                if (modo !== 'DIRECTO') { let empresaPrint = { nombre_empresa: 'P&P SOLUCIONES', rif: 'J-00000000-0', direccion_fiscal: 'SIN DIRECCIÓN FISCAL' }; generarHTMLImpresion(formatoPrint, empresaPrint, payloadFactura, carrito); ultimaVentaParaReimprimir = { formato: formatoPrint, empresa: empresaPrint, factura: payloadFactura, items: JSON.parse(JSON.stringify(carrito)) }; document.getElementById('btn-reimprimir').disabled = false; window.print(); }
+                const payloadItems = carrito.map(i => ({
+                    producto_sku: i.id_producto_sku,
+                    producto_nombre: i.nombre,
+                    cantidad: i.cantidad,
+                    precio_unitario_usd: calcularPrecioUnitario(i, i.cantidad),
+                    tipo_impuesto: i.tipo_impuesto || 'GENERAL'
+                }));
 
+                if (modoCotizacion) {
+                    // ═════════════════════════════════════════════════════════
+                    // FLUJO PRESUPUESTO → procesar_documento_comercial
+                    // ═════════════════════════════════════════════════════════
+                    const payloadDoc = {
+                        tipo_documento: 'PRESUPUESTO',
+                        id_persona: document.getElementById('pos-id-cliente').value || null,
+                        persona_documento: document.getElementById('txt-cli-doc').innerText,
+                        persona_nombre: document.getElementById('txt-cli-nom').innerText,
+                        subtotal_usd: sumSubtotalBasePuroUsd,
+                        descuento_usd: descGeneralTotalUsd,
+                        total_usd: totalUsdFinal,
+                        total_bs: totalBsFinal,
+                        tasa_bcv_aplicada: tasaBCV,
+                        metodos_pago: metodoPagoFinal,
+                        condicion_pago: condicionUpper,
+                        iva_porcentaje: pypIva * 100,
+                        igtf_porcentaje: igtfVal,
+                        base_imponible: baseImpUsd * tasaBCV,
+                        monto_exento: exentoUsd * tasaBCV,
+                        nombre_cajero: usuario,
+                        fecha_emision: fechaEmision,
+                        fecha_vencimiento: fechaVenc,
+                        estatus: 'PENDIENTE'
+                    };
+
+                    mostrarCarga("Generando presupuesto...", "Guardando documento comercial...");
+                    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${cfg.rpc_creacion}`, {
+                        method: 'POST',
+                        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ p_documento: payloadDoc, p_items: payloadItems })
+                    });
+                    if (!res.ok) { const errObj = await res.json(); throw new Error(errObj.message || errObj.hint || "Fallo al procesar el presupuesto."); }
+
+                    // Para impresión: usar payload con campos legacy compatibles
+                    const facturaPrint = {
+                        ...payloadDoc,
+                        tipo_transaccion: 'Cotización',
+                        nro_factura_manual: nroFactura,
+                        nro_control_manual: nroControl,
+                        numero_factura_fiscal: nroFactura,
+                        numero_control_fiscal: nroControl
+                    };
+
+                    if (modo !== 'DIRECTO') {
+                        const empresaPrint = { nombre_empresa: 'P&P SOLUCIONES', rif: 'J-00000000-0', direccion_fiscal: 'SIN DIRECCIÓN FISCAL' };
+                        generarHTMLImpresion(formatoPrint, empresaPrint, facturaPrint, carrito);
+                        ultimaVentaParaReimprimir = { formato: formatoPrint, empresa: empresaPrint, factura: facturaPrint, items: JSON.parse(JSON.stringify(carrito)) };
+                        document.getElementById('btn-reimprimir').disabled = false;
+                        window.print();
+                    }
+
+                } else {
+                    // ═════════════════════════════════════════════════════════
+                    // FLUJO FACTURA → procesar_factura
+                    // ═════════════════════════════════════════════════════════
+                    // Estatus mapeado a UPPER_SNAKE_CASE
+                    const estatusFactura = (metodo === 'POR_PAGAR') ? 'POR_PAGAR' : 'PAGADA';
+
+                    const payloadFactura = {
+                        tipo_transaccion: 'FACTURA',
+                        // modo_facturacion lo tomará la RPC desde configuracion_sistema (MODO_FACTURACION_DEFAULT)
+                        numero_factura_fiscal: nroFactura || null,
+                        numero_control_fiscal: nroControl || null,
+                        id_persona: document.getElementById('pos-id-cliente').value || null,
+                        persona_documento: document.getElementById('txt-cli-doc').innerText,
+                        persona_nombre: document.getElementById('txt-cli-nom').innerText,
+                        subtotal_usd: sumSubtotalBasePuroUsd,
+                        descuento_usd: descGeneralTotalUsd,
+                        total_usd: totalUsdFinal,
+                        total_bs: totalBsFinal,
+                        tasa_bcv_aplicada: tasaBCV,
+                        metodos_pago: metodoPagoFinal,
+                        condicion_pago: condicionUpper,
+                        iva_porcentaje: pypIva * 100,
+                        igtf_porcentaje: igtfVal,
+                        base_imponible: baseImpUsd * tasaBCV,
+                        monto_exento: exentoUsd * tasaBCV,
+                        nombre_cajero: usuario,
+                        fecha_emision: fechaEmision,
+                        fecha_vencimiento: fechaVenc,
+                        estatus: estatusFactura,
+                        saldo_pendiente_usd: (estatusFactura === 'POR_PAGAR') ? totalUsdFinal : 0,
+                        // Trazabilidad: si vino de un presupuesto importado, lo enlazamos
+                        id_documento_origen: window.__id_documento_origen_importado || null
+                    };
+
+                    let payloadCaja = null;
+                    if (metodo !== 'POR_PAGAR') {
+                        payloadCaja = {
+                            fecha: new Date().toISOString(),
+                            tipo: 'INGRESO',
+                            concepto: `COBRO FACTURA NRO: ${nroFactura} - CLIENTE: ${document.getElementById('txt-cli-nom').innerText}`,
+                            monto_usd: totalUsdFinal,
+                            monto_bs: totalBsFinal,
+                            metodo_pago: metodoPagoFinal,
+                            usuario: usuario
+                        };
+                    }
+
+                    mostrarCarga("Procesando venta...", "Guardando factura, detalles y stock...");
+                    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${cfg.rpc_creacion}`, {
+                        method: 'POST',
+                        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ p_factura: payloadFactura, p_items: payloadItems, p_caja: payloadCaja })
+                    });
+                    if (!res.ok) { const errObj = await res.json(); throw new Error(errObj.message || errObj.hint || "Fallo al procesar la venta."); }
+
+                    // Para impresión: agregar campos legacy compatibles
+                    const facturaPrint = {
+                        ...payloadFactura,
+                        tipo_transaccion: 'Venta',
+                        nro_factura_manual: nroFactura,
+                        nro_control_manual: nroControl
+                    };
+
+                    if (modo !== 'DIRECTO') {
+                        const empresaPrint = { nombre_empresa: 'P&P SOLUCIONES', rif: 'J-00000000-0', direccion_fiscal: 'SIN DIRECCIÓN FISCAL' };
+                        generarHTMLImpresion(formatoPrint, empresaPrint, facturaPrint, carrito);
+                        ultimaVentaParaReimprimir = { formato: formatoPrint, empresa: empresaPrint, factura: facturaPrint, items: JSON.parse(JSON.stringify(carrito)) };
+                        document.getElementById('btn-reimprimir').disabled = false;
+                        window.print();
+                    }
+                }
+
+                // ─────────────────────────────────────────────────────────────
+                // LIMPIEZA POST-VENTA
+                // ─────────────────────────────────────────────────────────────
                 if (nroFacturaEditable) toggleEditNroFactura();
-                carrito = []; document.getElementById('pos-input-desc-general').value = ''; document.getElementById('pos-nro-control').value = ''; document.getElementById('pos-condicion').selectedIndex = 0; document.getElementById('pos-fecha-emision').value = getFechaHoy(); ajustarFechaVencimiento(); limpiarCliente(); cerrarCobro(); actualizarUI_Carrito(); await iniciarPuntoVenta(); await inicializarCorrelativos(); cerrarErrorCarga();
-            } catch (e) { mostrarErrorConexion(e.message); } finally { btnCobrar.disabled = false; btnGuardar.disabled = false; }
-        }
-
-        async function procesarVentaLegacy(modo = 'NORMAL') {
-            const btnCobrar = document.getElementById('btn-cobrar'); const btnGuardar = document.getElementById('btn-guardar'); btnCobrar.disabled = true; btnGuardar.disabled = true; mostrarCarga(modo === 'DIRECTO' ? "Guardando..." : "Procesando...", "Verificando Turno de Caja...");
-            try {
-                const metodo = modo === 'DIRECTO' ? 'POR_PAGAR' : document.getElementById('cobro-metodo').value; const usuario = localStorage.getItem('pyp_usuario_nombre') || 'SISTEMA'; let idCierreActivo = null;
-                if (metodo !== 'POR_PAGAR') { const resTurno = await fetch(`${SUPABASE_URL}/rest/v1/cierres_caja?id_empresa=${empresaActual ? 'eq.' + empresaActual : 'is.null'}&usuario_cajero=eq.${usuario}&estatus=eq.ABIERTA&select=id_cierre`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }); const dataTurno = await resTurno.json(); if (dataTurno.length === 0) throw new Error("CAJA CERRADA: Debes ir a 'Finanzas > Control de Caja' y abrir tu turno antes de facturar y cobrar."); idCierreActivo = dataTurno[0].id_cierre; }
-                const formatoPrint = document.getElementById('cobro-formato-impresion').value; const condicionSel = document.getElementById('pos-condicion'); const condicion = condicionSel.options[condicionSel.selectedIndex].text; const nroFactura = document.getElementById('pos-nro-factura').value.trim().toUpperCase(); const nroControl = document.getElementById('pos-nro-control').value.trim().toUpperCase(); const fechaVenc = document.getElementById('pos-fecha-vencimiento').value; const fechaEmision = document.getElementById('pos-fecha-emision').value + 'T12:00:00Z'; const aplicaIgtf = (metodo === 'EFECTIVO_USD' || metodo === 'ZELLE'); const igtfVal = aplicaIgtf ? pypIgtf * 100 : 0; const totalBsFinal = redondear(granTotalBs + (aplicaIgtf ? redondear(granTotalBs * pypIgtf) : 0)); const totalUsdFinal = totalBsFinal / tasaBCV; const baseImpUsd = parseFloat(document.getElementById('contenedor-totales-fiscales').dataset.baseTotalUsd) || 0; const exentoUsd = parseFloat(document.getElementById('contenedor-totales-fiscales').dataset.exentoTotalUsd) || 0; const estadoFinal = (metodo === 'POR_PAGAR' || modoCotizacion) ? (modoCotizacion ? 'Cotización' : 'Por Pagar') : 'Completada'; let metodoPagoFinal = metodo; if (lineasPagoMixto.length > 0) { metodoPagoFinal = lineasPagoMixto.map(l => `${l.metodo}(${fmt(l.monto)}Bs)`).join('+'); }
-
-                const payloadFactura = { id_empresa: empresaActual || null, id_cliente: document.getElementById('pos-id-cliente').value || null, cliente_documento: document.getElementById('txt-cli-doc').innerText, cliente_nombre: document.getElementById('txt-cli-nom').innerText, subtotal_usd: sumSubtotalBasePuroUsd, descuento_usd: descGeneralTotalUsd, total_usd: totalUsdFinal, total_bs: totalBsFinal, tasa_bcv_aplicada: tasaBCV, metodos_pago: metodoPagoFinal, condicion_pago: condicion, iva_porcentaje: pypIva * 100, igtf_porcentaje: igtfVal, base_imponible: baseImpUsd * tasaBCV, monto_exento: exentoUsd * tasaBCV, nombre_cajero: usuario, nro_factura_manual: nroFactura || null, nro_control_manual: nroControl || null, fecha_vencimiento: fechaVenc, fecha_emision: fechaEmision, estatus: estadoFinal, tipo_transaccion: modoCotizacion ? 'Cotización' : 'Venta', saldo_pendiente_usd: (estadoFinal === 'Por Pagar' || estadoFinal === 'Cotización') ? totalUsdFinal : 0 };
-                const resF = await fetch(`${SUPABASE_URL}/rest/v1/ventas_facturas`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, body: JSON.stringify(payloadFactura) });
-                if (!resF.ok) { const errObj = await resF.json(); throw new Error(errObj.message || "Fallo al guardar factura."); } const fId = (await resF.json())[0].id_factura;
-                if (metodo !== 'POR_PAGAR' && !modoCotizacion) { const payloadCaja = { id_empresa: empresaActual || null, id_factura: fId, id_cierre: idCierreActivo, fecha: new Date().toISOString(), tipo: 'INGRESO', concepto: `COBRO FACTURA NRO: ${nroFactura} - CLIENTE: ${document.getElementById('txt-cli-nom').innerText}`, monto_usd: totalUsdFinal, monto_bs: totalBsFinal, metodo_pago: metodoPagoFinal, usuario: usuario }; fetch(`${SUPABASE_URL}/rest/v1/caja_movimientos`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify(payloadCaja) }); }
-
-                const promesas = [];
-                carrito.forEach(i => {
-                    const prAplicado = calcularPrecioUnitario(i, i.cantidad);
-                    promesas.push(fetch(`${SUPABASE_URL}/rest/v1/ventas_facturas_detalles`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ id_empresa: empresaActual || null, factura_id: fId, producto_sku: i.id_producto_sku, producto_nombre: i.nombre, cantidad: i.cantidad, precio_unitario_usd: prAplicado, subtotal_usd: prAplicado * i.cantidad }) }));
-                    if (!i.permitir_negativo && !modoCotizacion) { promesas.push(fetch(`${SUPABASE_URL}/rest/v1/productos?id_producto_sku=eq.${i.id_producto_sku}`, { method: 'PATCH', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ stock_actual: i.stock_actual - i.cantidad }) })); }
-                });
-                await Promise.all(promesas);
-
-                if (modo !== 'DIRECTO') { let empresaPrint = { nombre_empresa: 'P&P SOLUCIONES', rif: 'J-00000000-0', direccion_fiscal: 'SIN DIRECCIÓN FISCAL' }; generarHTMLImpresion(formatoPrint, empresaPrint, payloadFactura, carrito); ultimaVentaParaReimprimir = { formato: formatoPrint, empresa: empresaPrint, factura: payloadFactura, items: JSON.parse(JSON.stringify(carrito)) }; document.getElementById('btn-reimprimir').disabled = false; window.print(); }
-
-                if (nroFacturaEditable) toggleEditNroFactura();
-                carrito = []; document.getElementById('pos-input-desc-general').value = ''; document.getElementById('pos-nro-control').value = ''; document.getElementById('pos-condicion').selectedIndex = 0; document.getElementById('pos-fecha-emision').value = getFechaHoy(); ajustarFechaVencimiento(); limpiarCliente(); cerrarCobro(); actualizarUI_Carrito(); await iniciarPuntoVenta(); await inicializarCorrelativos(); cerrarErrorCarga();
-            } catch (e) { mostrarErrorConexion(e.message); } finally { btnCobrar.disabled = false; btnGuardar.disabled = false; }
+                carrito = [];
+                document.getElementById('pos-input-desc-general').value = '';
+                document.getElementById('pos-nro-control').value = '';
+                document.getElementById('pos-condicion').selectedIndex = 0;
+                document.getElementById('pos-fecha-emision').value = getFechaHoy();
+                ajustarFechaVencimiento();
+                limpiarCliente();
+                cerrarCobro();
+                actualizarUI_Carrito();
+                window.__id_documento_origen_importado = null;  // Limpiar trazabilidad
+                await iniciarPuntoVenta();
+                await inicializarCorrelativos();
+                cerrarErrorCarga();
+            } catch (e) {
+                mostrarErrorConexion(e.message);
+            } finally {
+                btnCobrar.disabled = false;
+                btnGuardar.disabled = false;
+            }
         }
 
         // ================================================================
