@@ -194,6 +194,7 @@
                 <div>
                     <div class="ticker-label">USD · BCV Oficial</div>
                     <div class="ticker-val" id="dash-tasa-usd">Bs. —</div>
+                    <div class="ticker-fecha" id="dash-tasa-usd-fecha" style="font-size:10px;color:#94a3b8;font-weight:600;"></div>
                 </div>
                 <span class="ticker-chip">BCV</span>
             </div>
@@ -202,6 +203,7 @@
                 <div>
                     <div class="ticker-label">EUR · BCV Oficial</div>
                     <div class="ticker-val" id="dash-tasa-eur">Bs. —</div>
+                    <div class="ticker-fecha" id="dash-tasa-eur-fecha" style="font-size:10px;color:#94a3b8;font-weight:600;"></div>
                 </div>
                 <span class="ticker-chip">BCV</span>
             </div>
@@ -361,8 +363,8 @@ async function cargarIndicadoresGlobales(usuario) {
                     fetch(`${SUPABASE_URL}/rest/v1/directorio_maestro?${filtroEmpresa}select=id&tipo_persona=eq.CLIENTE`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
                     fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
                     fetch(`${SUPABASE_URL}/rest/v1/cierres_caja?${filtroEmpresa}usuario_cajero=eq.${usuario}&estatus=eq.ABIERTA&select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
-                    fetch(`${SUPABASE_URL}/rest/v1/facturas?${filtroEmpresa}fecha_emision=gte.${hoyIso}T00:00:00Z&estatus=neq.Anulada&select=total_usd,tipo_transaccion`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
-                    fetch(`${SUPABASE_URL}/rest/v1/facturas?${filtroEmpresa}estatus=eq.Por Pagar&saldo_pendiente_usd=gt.0&select=saldo_pendiente_usd,fecha_vencimiento`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
+                    fetch(`${SUPABASE_URL}/rest/v1/ventas_facturas?${filtroEmpresa}fecha_emision=gte.${hoyIso}T00:00:00Z&estatus=neq.ANULADA&select=total_usd,tipo_transaccion`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
+                    fetch(`${SUPABASE_URL}/rest/v1/ventas_facturas?${filtroEmpresa}estatus=in.(POR_PAGAR,PARCIAL,VENCIDA)&saldo_pendiente_usd=gt.0&select=saldo_pendiente_usd,fecha_vencimiento`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
                     fetch(`${SUPABASE_URL}/rest/v1/servicio_ordenes?${filtroEmpresa}estatus=neq.Facturado&select=id_orden`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } })
                 ]);
 
@@ -374,8 +376,25 @@ async function cargarIndicadoresGlobales(usuario) {
                     const dataTasa = await resTasa.json();
                     const usd = dataTasa.find(t => t.moneda === 'USD');
                     const eur = dataTasa.find(t => t.moneda === 'EUR');
-                    if (usd) document.getElementById('dash-tasa-usd').innerText = `Bs. ${usd.tasa.toFixed(2)}`;
-                    if (eur) document.getElementById('dash-tasa-eur').innerText = `Bs. ${eur.tasa.toFixed(2)}`;
+                    if (usd) document.getElementById('dash-tasa-usd').innerText = `Bs. ${parseFloat(usd.tasa).toFixed(4)}`;
+                    if (eur) document.getElementById('dash-tasa-eur').innerText = `Bs. ${parseFloat(eur.tasa).toFixed(4)}`;
+                    
+                    // Badges de fecha/hora última actualización
+                    const formatearFechaTasa = (fechaIso) => {
+                        if (!fechaIso) return '';
+                        const fecha = new Date(fechaIso);
+                        if (isNaN(fecha.getTime())) return '';
+                        const ahora = new Date();
+                        const diffMin = Math.floor((ahora - fecha) / 60000);
+                        if (diffMin < 1) return 'ahora';
+                        if (diffMin < 60) return `hace ${diffMin}m`;
+                        if (diffMin < 1440) return `hace ${Math.floor(diffMin/60)}h`;
+                        return fecha.toLocaleDateString('es-VE', { day: '2-digit', month: '2-digit' });
+                    };
+                    const elFechaUsd = document.getElementById('dash-tasa-usd-fecha');
+                    const elFechaEur = document.getElementById('dash-tasa-eur-fecha');
+                    if (usd && elFechaUsd) elFechaUsd.innerText = formatearFechaTasa(usd.fecha_actualizacion);
+                    if (eur && elFechaEur) elFechaEur.innerText = formatearFechaTasa(eur.fecha_actualizacion);
                 }
 
                 if (resCaja.ok) {
@@ -395,7 +414,7 @@ async function cargarIndicadoresGlobales(usuario) {
                     const dataVen = await resVen.json();
                     let totalDia = 0;
                     dataVen.forEach(f => {
-                        if (f.tipo_transaccion === 'Nota de Credito') totalDia -= Math.abs(parseFloat(f.total_usd));
+                        if (f.tipo_transaccion === 'NOTA_CREDITO') totalDia -= Math.abs(parseFloat(f.total_usd));
                         else totalDia += parseFloat(f.total_usd);
                     });
                     document.getElementById('dash-ventas-hoy').innerText = `$${fmt(totalDia)}`;
