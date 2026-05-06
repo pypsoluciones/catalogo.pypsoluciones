@@ -228,6 +228,58 @@
     </div>
 
     <!-- MODAL: COBRO CON CALCULADORA DE VUELTO Y PAGO MIXTO -->
+    <!-- ═══════════════════════════════════════════════════════════════════
+        MODAL: TURNO NO ABIERTO (bloqueo profesional sin error 400)
+    ═══════════════════════════════════════════════════════════════════ -->
+    <div id="modal-sin-turno" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[9990] hidden flex items-center justify-center p-4 fade-in">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden border-t-8 border-amber-400">
+            <div class="bg-amber-50 px-5 py-4 flex items-center gap-3 border-b border-amber-200">
+                <div class="bg-amber-400 text-white w-10 h-10 rounded-full flex items-center justify-center text-xl shrink-0">
+                    <i class="fa-solid fa-cash-register"></i>
+                </div>
+                <div>
+                    <h3 class="font-black text-amber-900 text-sm uppercase tracking-wide">Turno Sin Abrir</h3>
+                    <p class="text-[10px] text-amber-800">No puedes facturar a contado sin turno activo</p>
+                </div>
+            </div>
+            <div class="p-5 space-y-3">
+                <p class="text-[11px] text-gray-700 leading-relaxed">
+                    <strong>Antes de facturar a contado</strong>, debes abrir tu turno de caja y asignar el fondo inicial desde la bóveda. Esto garantiza el control de ingresos, vueltos y arqueo al final de la jornada.
+                </p>
+                <div class="bg-blue-50 border border-blue-200 rounded p-2 text-[10px] text-blue-800">
+                    <i class="fa-solid fa-info-circle mr-1"></i>
+                    También puedes guardar la venta como <strong>"POR PAGAR"</strong> (crédito) sin necesidad de turno abierto.
+                </div>
+                <div class="grid grid-cols-2 gap-2 pt-2">
+                    <button onclick="cerrarModalSinTurno()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 rounded text-[10px] uppercase transition">
+                        Cancelar
+                    </button>
+                    <button onclick="cerrarModalSinTurno(); abrirModalTurno();" class="bg-secondary hover:opacity-90 text-white font-black py-2 rounded text-[10px] uppercase transition shadow">
+                        <i class="fa-solid fa-key mr-1"></i>Abrir Turno
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ═══════════════════════════════════════════════════════════════════
+        MODAL: GESTIÓN DE TURNO (apertura + cierre rápido)
+    ═══════════════════════════════════════════════════════════════════ -->
+    <div id="modal-turno" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[9990] hidden flex items-center justify-center p-4 fade-in">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
+            <div class="bg-primary px-5 py-3 flex justify-between items-center">
+                <h3 class="font-bold text-white text-[12px] tracking-wide uppercase">
+                    <i class="fa-solid fa-cash-register text-tertiary mr-2"></i>
+                    <span id="modal-turno-titulo">Gestión de Turno</span>
+                </h3>
+                <button onclick="cerrarModalTurno()" class="text-gray-300 hover:text-white text-lg transition"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <div id="modal-turno-body" class="p-5 bg-gray-50 space-y-3">
+                <!-- Contenido dinámico se renderiza por renderizarModalTurno() -->
+            </div>
+        </div>
+    </div>
+    
     <div id="modal-cobro" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[9990] hidden flex items-center justify-center p-4 fade-in">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden flex flex-col border border-gray-200 relative">
             <div class="bg-primary px-4 py-3 flex justify-between items-center shrink-0">
@@ -448,7 +500,7 @@
                     </div>
                 </div>
                 <!-- NUEVO: Botón Resumen de Turno -->
-                <button onclick="abrirDashboardTurno()" title="Ver resumen del turno"
+                <button onclick="abrirModalTurno()" title="Gestionar turno de caja"
                     class="bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-600 px-3 py-2 rounded text-[10px] font-bold uppercase transition-all shadow-sm btn-press hidden sm:flex items-center gap-1">
                     <i class="fa-solid fa-chart-line text-tertiary"></i> Turno
                 </button>
@@ -578,7 +630,10 @@
                     <div id="caja-acordeon-totales" class="flex flex-col gap-0.5 p-3 pb-0">
                         <div class="flex justify-between items-center text-xs text-gray-500 font-bold uppercase">
                             <span>Subtotal Base</span>
-                            <span id="pos-subtotal" class="text-gray-900 font-black">Bs. 0.00</span>
+                            <div class="flex flex-col items-end">
+                                <span id="pos-subtotal" class="text-gray-900 font-black">Bs. 0.00</span>
+                                <span id="pos-subtotal-usd" class="text-[9px] text-secondary font-black opacity-80">US$ 0.00</span>
+                            </div>
                         </div>
                         <div class="flex justify-between items-center text-xs text-gray-500 font-bold uppercase mt-0.5">
                             <div class="flex items-center gap-1">
@@ -1518,6 +1573,10 @@
             contenedorFiscal.innerHTML = htmlTotales;
 
             document.getElementById('pos-subtotal').innerText = `Bs. ${fmt(sumSubtotalBasePuroBs)}`;
+            
+            // Mostrar también subtotal en USD si el elemento existe
+            const elSubtotalUsd = document.getElementById('pos-subtotal-usd');
+            if (elSubtotalUsd) elSubtotalUsd.innerText = `US$ ${fmt(sumSubtotalBasePuroUsd)}`;
             document.getElementById('pos-descuento-general-val').innerText = `- Bs. ${fmt(descGeneralTotalBs)}`;
             document.getElementById('pos-items').innerText = itemsTotal;
             document.getElementById('pos-total-bs').innerText = `Bs. ${fmt(granTotalBs)}`;
@@ -1638,20 +1697,320 @@
             document.getElementById('modal-total-bs-final').innerText = `Bs. ${fmt(tBs + igtfBs)}`; document.getElementById('modal-total-usd-final').innerText = `US$ ${fmt(redondear((tBs + igtfBs) / tasaBCVCalculo))}`;
         }
 
-        function abrirCobro() {
+        // ════════════════════════════════════════════════════════════════════
+        // VALIDACIÓN: Tope de descuento general (no permitir > subtotal)
+        // ════════════════════════════════════════════════════════════════════
+        function validarTopeDescuento(input) {
+            const tipo = document.getElementById('pos-type-desc-general').value;
+            const valor = parseFloat(input.value) || 0;
+            
+            if (valor < 0) { input.value = 0; return; }
+            
+            if (tipo === 'PORCENTAJE') {
+                if (valor > 100) {
+                    input.value = 100;
+                    input.classList.add('bg-red-50', 'border-red-300');
+                    setTimeout(() => input.classList.remove('bg-red-50', 'border-red-300'), 1500);
+                }
+            } else if (tipo === 'MONTO_BS') {
+                if (valor > sumSubtotalBasePuroBs) {
+                    input.value = sumSubtotalBasePuroBs.toFixed(2);
+                    input.classList.add('bg-red-50', 'border-red-300');
+                    setTimeout(() => input.classList.remove('bg-red-50', 'border-red-300'), 1500);
+                }
+            } else if (tipo === 'MONTO') {
+                if (valor > sumSubtotalBasePuroUsd) {
+                    input.value = sumSubtotalBasePuroUsd.toFixed(2);
+                    input.classList.add('bg-red-50', 'border-red-300');
+                    setTimeout(() => input.classList.remove('bg-red-50', 'border-red-300'), 1500);
+                }
+            }
+            
+            actualizarUI_Carrito();
+        }
+        
+        // ════════════════════════════════════════════════════════════════════
+        // GESTIÓN DE TURNO DE CAJA (modal rápido del POS)
+        // ════════════════════════════════════════════════════════════════════
+        let __turnoCacheActivo = null;
+        
+        async function abrirModalTurno() {
+            const modal = document.getElementById('modal-turno');
+            const body = document.getElementById('modal-turno-body');
+            const titulo = document.getElementById('modal-turno-titulo');
+            
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            body.innerHTML = '<div class="text-center py-8 text-gray-500"><i class="fa-solid fa-spinner fa-spin text-2xl mb-2"></i><p class="text-[10px]">Verificando estado del turno...</p></div>';
+            
+            try {
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/verificar_turno_activo`, {
+                    method: 'POST',
+                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                });
+                const data = await res.json();
+                __turnoCacheActivo = data;
+                
+                if (data && data.tiene_turno) {
+                    titulo.innerText = 'Turno Abierto';
+                    renderizarModalTurnoAbierto(data);
+                } else {
+                    titulo.innerText = 'Abrir Turno';
+                    renderizarModalAperturaTurno();
+                }
+            } catch (e) {
+                body.innerHTML = `<div class="text-center py-6 text-red-600"><i class="fa-solid fa-triangle-exclamation text-2xl mb-2"></i><p class="text-[11px] font-bold">Error: ${e.message}</p></div>`;
+            }
+        }
+        
+        function cerrarModalTurno() {
+            const modal = document.getElementById('modal-turno');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+        
+        async function renderizarModalAperturaTurno() {
+            const body = document.getElementById('modal-turno-body');
+            
+            // Obtener saldo actual de bóveda
+            let saldoBoveda = { saldo_usd: 0, saldo_bs: 0 };
+            try {
+                const filtroEmpresa = empresaActual ? `id_empresa=eq.${empresaActual}&` : '';
+                const r = await fetch(`${SUPABASE_URL}/rest/v1/boveda?${filtroEmpresa}select=saldo_usd,saldo_bs&limit=1`, {
+                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` }
+                });
+                if (r.ok) {
+                    const d = await r.json();
+                    if (d.length > 0) saldoBoveda = d[0];
+                }
+            } catch (e) { console.warn('Error leyendo bóveda:', e); }
+            
+            body.innerHTML = `
+                <div class="bg-blue-50 border border-blue-200 rounded p-3 text-center">
+                    <p class="text-[8px] text-blue-700 font-bold uppercase tracking-widest mb-1">Saldo Disponible en Bóveda</p>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <p class="text-[9px] text-blue-600">USD</p>
+                            <p class="text-base font-black text-blue-900">$${parseFloat(saldoBoveda.saldo_usd).toFixed(2)}</p>
+                        </div>
+                        <div>
+                            <p class="text-[9px] text-blue-600">Bolívares</p>
+                            <p class="text-base font-black text-blue-900">Bs. ${parseFloat(saldoBoveda.saldo_bs).toFixed(2)}</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="border-t border-gray-200 pt-3">
+                    <p class="text-[10px] font-bold text-gray-700 uppercase mb-2">Asignar Fondo Inicial al Turno:</p>
+                    
+                    <label class="block text-[9px] font-medium text-gray-500 uppercase mb-1">Monto USD a retirar</label>
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="text-secondary font-black text-sm">$</span>
+                        <input type="number" id="turno-monto-usd" step="0.01" min="0" max="${saldoBoveda.saldo_usd}" placeholder="0.00" value="0.00"
+                            class="flex-1 border border-gray-300 rounded px-2 py-2 text-sm font-black text-gray-800 outline-none focus:border-tertiary text-right">
+                    </div>
+                    
+                    <label class="block text-[9px] font-medium text-gray-500 uppercase mb-1">Monto Bolívares a retirar</label>
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="text-secondary font-black text-sm">Bs.</span>
+                        <input type="number" id="turno-monto-bs" step="0.01" min="0" max="${saldoBoveda.saldo_bs}" placeholder="0.00" value="0.00"
+                            class="flex-1 border border-gray-300 rounded px-2 py-2 text-sm font-black text-gray-800 outline-none focus:border-tertiary text-right">
+                    </div>
+                    
+                    <label class="block text-[9px] font-medium text-gray-500 uppercase mb-1">Concepto / Observaciones</label>
+                    <input type="text" id="turno-concepto" placeholder="Apertura turno de la mañana"
+                        class="w-full border border-gray-300 rounded px-2 py-2 text-[11px] outline-none focus:border-tertiary mb-3">
+                </div>
+                
+                <div class="bg-amber-50 border border-amber-200 rounded p-2 text-[9px] text-amber-800">
+                    <i class="fa-solid fa-info-circle mr-1"></i>
+                    El monto saldrá de la bóveda y quedará registrado en tu turno como fondo inicial.
+                </div>
+                
+                <div class="grid grid-cols-2 gap-2 pt-2">
+                    <button onclick="cerrarModalTurno()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 rounded text-[10px] uppercase transition">
+                        Cancelar
+                    </button>
+                    <button onclick="ejecutarAperturaTurno()" id="btn-ejec-apertura" class="bg-secondary hover:opacity-90 text-white font-black py-2 rounded text-[10px] uppercase transition shadow">
+                        <i class="fa-solid fa-key mr-1"></i>Abrir Turno
+                    </button>
+                </div>
+            `;
+        }
+        
+        async function ejecutarAperturaTurno() {
+            const btn = document.getElementById('btn-ejec-apertura');
+            const montoUsd = parseFloat(document.getElementById('turno-monto-usd').value) || 0;
+            const montoBs = parseFloat(document.getElementById('turno-monto-bs').value) || 0;
+            const concepto = document.getElementById('turno-concepto').value.trim() || 'Apertura turno';
+            
+            if (montoUsd === 0 && montoBs === 0) {
+                alert('Debe asignar al menos un monto en USD o Bolívares.');
+                return;
+            }
+            
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i>Abriendo...';
+            
+            try {
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/abrir_turno_caja`, {
+                    method: 'POST',
+                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        p_monto_usd: montoUsd,
+                        p_monto_bs: montoBs,
+                        p_concepto: concepto
+                    })
+                });
+                const data = await res.json();
+                
+                if (!res.ok || data.code) {
+                    throw new Error(data.message || data.hint || 'Error al abrir el turno');
+                }
+                
+                // Éxito: refrescar UI
+                cerrarModalTurno();
+                actualizarUI_Carrito();
+                
+                // Notificación visual
+                if (typeof mostrarNotif === 'function') {
+                    mostrarNotif('Turno abierto exitosamente. Ya puedes facturar a contado.', 'success');
+                } else {
+                    alert('Turno abierto exitosamente. Ya puedes facturar a contado.');
+                }
+            } catch (e) {
+                alert('Error al abrir turno:\n\n' + e.message);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-key mr-1"></i>Abrir Turno';
+            }
+        }
+        
+        function renderizarModalTurnoAbierto(data) {
+            const body = document.getElementById('modal-turno-body');
+            const horas = parseFloat(data.horas_abierto || 0).toFixed(1);
+            const fechaApertura = new Date(data.fecha_apertura);
+            
+            body.innerHTML = `
+                <div class="bg-green-50 border border-green-200 rounded p-3">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse"></span>
+                        <p class="text-[11px] font-black text-green-900 uppercase">Turno Activo</p>
+                    </div>
+                    <p class="text-[10px] text-green-800 mb-1"><strong>Cajero:</strong> ${data.usuario_cajero}</p>
+                    <p class="text-[10px] text-green-800 mb-1"><strong>Apertura:</strong> ${fechaApertura.toLocaleString('es-VE')}</p>
+                    <p class="text-[10px] text-green-800"><strong>Tiempo abierto:</strong> ${horas} horas</p>
+                </div>
+                
+                <div class="bg-slate-50 border border-slate-200 rounded p-3">
+                    <p class="text-[8px] text-gray-500 font-bold uppercase tracking-widest mb-2">Fondo Inicial del Turno</p>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="text-center">
+                            <p class="text-[9px] text-gray-500">USD</p>
+                            <p class="text-base font-black text-primary">$${parseFloat(data.monto_apertura_usd || 0).toFixed(2)}</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-[9px] text-gray-500">Bolívares</p>
+                            <p class="text-base font-black text-primary">Bs. ${parseFloat(data.monto_apertura_bs || 0).toFixed(2)}</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-2 pt-2">
+                    <button onclick="cerrarModalTurno()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 rounded text-[10px] uppercase transition">
+                        Cerrar
+                    </button>
+                    <button onclick="window.location.href='admin_caja.html'" class="bg-primary hover:opacity-90 text-white font-black py-2 rounded text-[10px] uppercase transition shadow">
+                        <i class="fa-solid fa-arrow-up-right-from-square mr-1"></i>Ver Detalle
+                    </button>
+                </div>
+                
+                <div class="border-t border-gray-200 pt-3 mt-2">
+                    <button onclick="if(confirm('¿Cerrar el turno actual? Esto requerirá arqueo posterior en Caja.')) window.location.href='admin_caja.html#cerrar';" 
+                        class="w-full bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 font-bold py-2 rounded text-[10px] uppercase transition">
+                        <i class="fa-solid fa-lock mr-1"></i>Cerrar Turno (Arqueo Completo)
+                    </button>
+                </div>
+            `;
+        }
+        
+        async function abrirCobro() {
             // Si está en modo cotización, NO abrir modal de cobro - generar directo
             if (modoCotizacion) {
                 procesarVenta('NORMAL');
                 return;
             }
+            
+            // ═══════════════════════════════════════════════════════════
+            // VALIDACIÓN DE TURNO ABIERTO (CRÍTICO)
+            // El cajero NO puede facturar a CONTADO sin turno abierto
+            // ═══════════════════════════════════════════════════════════
+            try {
+                const resTurno = await fetch(`${SUPABASE_URL}/rest/v1/rpc/verificar_turno_activo`, {
+                    method: 'POST',
+                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                });
+                const dataTurno = await resTurno.json();
+                
+                if (!dataTurno || !dataTurno.tiene_turno) {
+                    // Mostrar modal específico de "Sin Turno" en lugar de error genérico
+                    mostrarModalSinTurno();
+                    return;
+                }
+                
+                // Guardar id_cierre actual para enviarlo en p_caja
+                window.__id_cierre_activo = dataTurno.id_cierre;
+            } catch (e) {
+                console.error('Error verificando turno:', e);
+                mostrarModalSinTurno();
+                return;
+            }
+            
+            // ═══════════════════════════════════════════════════════════
+            // PRE-LLENADO INTELIGENTE
+            // Por defecto: monto recibido = total a pagar (caso más común)
+            // Cajero puede modificarlo si es pago parcial o exceso
+            // ═══════════════════════════════════════════════════════════
             lineasPagoMixto = []; 
-            renderizarLineasPago(); 
-            document.getElementById('monto-recibido').value = ''; 
+            renderizarLineasPago();
+            
+            // Calcular total a pagar incluyendo IGTF si aplica
+            const metodoInicial = document.getElementById('cobro-metodo').value;
+            const aplicaIgtfInicial = (metodoInicial === 'EFECTIVO_USD' || metodoInicial === 'ZELLE');
+            const totalConIgtf = redondear(granTotalBs + (aplicaIgtfInicial ? redondear(granTotalBs * pypIgtf) : 0));
+            
+            // Pre-llenar monto recibido con el total exacto
+            const inputMonto = document.getElementById('monto-recibido');
+            inputMonto.value = totalConIgtf.toFixed(2);
+            inputMonto.select(); // Seleccionar para que el cajero pueda sobrescribir fácil
+            
             document.getElementById('resultado-vuelto').classList.add('hidden'); 
             verificarIGTF(); 
-            calcularVuelto(); 
+            calcularVuelto();
             document.getElementById('modal-cobro').classList.remove('hidden'); 
-            document.getElementById('modal-cobro').classList.add('flex'); 
+            document.getElementById('modal-cobro').classList.add('flex');
+            
+            // Focus en el input para edición rápida
+            setTimeout(() => inputMonto.focus(), 100);
+        }
+        
+        // ════════════════════════════════════════════════════════════════
+        // MODAL ESPECÍFICO: TURNO NO ABIERTO
+        // ════════════════════════════════════════════════════════════════
+        function mostrarModalSinTurno() {
+            const modal = document.getElementById('modal-sin-turno');
+            if (modal) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+        }
+        function cerrarModalSinTurno() {
+            const modal = document.getElementById('modal-sin-turno');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
         }
         function cerrarCobro() { document.getElementById('modal-cobro').classList.add('hidden'); }
         function reimprimirUltimoTicket() { if (!ultimaVentaParaReimprimir) return; const { formato, empresa, factura, items } = ultimaVentaParaReimprimir; generarHTMLImpresion(formato, empresa, factura, items); window.print(); }
@@ -1904,7 +2263,8 @@
                             monto_usd: totalUsdFinal,
                             monto_bs: totalBsFinal,
                             metodo_pago: metodoPagoFinal,
-                            usuario: usuario
+                            usuario: usuario,
+                            id_cierre: window.__id_cierre_activo || null  // Vincular movimiento con turno activo
                         };
                     }
 
