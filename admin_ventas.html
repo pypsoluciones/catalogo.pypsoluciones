@@ -384,12 +384,19 @@
 
     <!-- MAIN -->
     <main class="flex-1 flex flex-col h-screen overflow-hidden bg-[#f4f6f8] w-full z-10 relative">
+        <!-- BANNER MODO COTIZACIÓN (visible solo cuando modoCotizacion = true) -->
+        <div id="banner-modo-cotizacion" class="hidden bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-400 text-amber-900 py-2 px-4 text-center font-black text-sm uppercase tracking-widest shadow-lg border-y-2 border-amber-600 animate-pulse">
+            <i class="fa-solid fa-triangle-exclamation mr-2"></i>
+            MODO COTIZACIÓN ACTIVO — NO afecta inventario ni caja
+            <i class="fa-solid fa-file-pen ml-2"></i>
+        </div>
         <header class="bg-white shadow-sm px-4 flex justify-between items-center z-10 shrink-0 border-b border-gray-200 h-12">
             <div class="flex items-center gap-3">
                 <button onclick="toggleMobileMenu()" class="md:hidden text-gray-600 hover:text-primary text-lg px-2"><i class="fa-solid fa-bars"></i></button>
                 <h1 class="text-xs font-bold text-primary flex items-center gap-2 uppercase tracking-tighter">
                     <i class="fa-solid fa-cash-register text-tertiary"></i> Punto de Venta
                     <span id="badge-modo-cotizacion" class="hidden text-[8px] badge-cotizacion px-2 py-0.5 rounded font-bold uppercase"><i class="fa-solid fa-file-pen mr-1"></i>COTIZACIÓN</span>
+                    <!-- Banner amarillo de modo cotización (visible cuando modoCotizacion=true) -->
                 </h1>
             </div>
             <div class="flex items-center gap-2">
@@ -399,11 +406,13 @@
                 <div class="bg-slate-50 border border-slate-200 px-2 py-1.5 rounded hidden sm:flex items-center gap-3 shadow-sm">
                     <div class="flex items-center gap-1 text-[10px] font-bold text-primary">
                         <span title="Dólar Oficial" class="cursor-help">🇺🇸 USD:</span>
-                        <input type="number" id="input-tasa-usd" step="0.01" class="w-16 bg-white border border-slate-200 rounded px-1 py-0.5 outline-none text-right focus:border-tertiary transition font-black" value="0.00" onchange="guardarTasaManual('USD', this.value)">
+                        <input type="number" id="input-tasa-usd" step="0.0001" class="w-20 bg-white border border-slate-200 rounded px-1 py-0.5 outline-none text-right focus:border-tertiary transition font-black" value="0.0000" onchange="guardarTasaManual('USD', this.value)" title="Tasa BCV USD con 4 decimales de precisión">
+                        <span id="fecha-tasa-usd" class="text-[8px] font-bold ml-1 text-gray-400" title="Última actualización"></span>
                     </div>
                     <div class="flex items-center gap-1 text-[10px] font-bold text-primary border-l border-slate-200 pl-3">
                         <span title="Euro Oficial" class="cursor-help">🇪🇺 EUR:</span>
-                        <input type="number" id="input-tasa-eur" step="0.01" class="w-16 bg-white border border-slate-200 rounded px-1 py-0.5 outline-none text-right focus:border-tertiary transition font-black" value="0.00" onchange="guardarTasaManual('EUR', this.value)">
+                        <input type="number" id="input-tasa-eur" step="0.0001" class="w-20 bg-white border border-slate-200 rounded px-1 py-0.5 outline-none text-right focus:border-tertiary transition font-black" value="0.0000" onchange="guardarTasaManual('EUR', this.value)" title="Tasa BCV EUR con 4 decimales de precisión">
+                        <span id="fecha-tasa-eur" class="text-[8px] font-bold ml-1 text-gray-400" title="Última actualización"></span>
                     </div>
                     <button onclick="sincronizarBCV()" id="btn-sync-bcv" class="bg-primary hover:opacity-90 text-white w-7 h-7 rounded flex items-center justify-center transition-colors shadow-md btn-press ml-1" title="Sincronizar BCV Manualmente">
                         <i class="fa-solid fa-rotate text-xs"></i>
@@ -414,11 +423,30 @@
                     class="bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 px-3 py-2 rounded text-[10px] font-bold uppercase transition-all shadow-sm btn-press hidden sm:flex items-center gap-1">
                     <i class="fa-solid fa-file-import text-indigo-500"></i> Importar
                 </button>
-                <!-- NUEVO: Botón Modo Cotización -->
-                <button onclick="toggleModoCotizacion()" id="btn-modo-cotizacion" title="Activar modo cotización (no afecta inventario ni caja)"
-                    class="bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-700 px-3 py-2 rounded text-[10px] font-bold uppercase transition-all shadow-sm btn-press hidden sm:flex items-center gap-1">
-                    <i class="fa-solid fa-file-pen text-amber-500"></i> Cotizar
-                </button>
+                <!-- NUEVO: Selector de Tipo de Documento Comercial -->
+                <div class="relative hidden sm:inline-block" id="contenedor-selector-doc">
+                    <button onclick="toggleSelectorDoc()" id="btn-modo-cotizacion" title="Crear documento comercial: Cotización, Pedido, Proforma o Nota de Entrega"
+                        class="bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-700 px-3 py-2 rounded text-[10px] font-bold uppercase transition-all shadow-sm btn-press flex items-center gap-1">
+                        <i class="fa-solid fa-file-pen text-amber-500"></i>
+                        <span id="lbl-tipo-doc">Cotizar</span>
+                        <i class="fa-solid fa-caret-down text-[8px] ml-1"></i>
+                    </button>
+                    <!-- Menú desplegable -->
+                    <div id="menu-tipo-doc" class="hidden absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-2xl border border-amber-200 z-50 overflow-hidden">
+                        <button onclick="seleccionarTipoDoc('PRESUPUESTO')" class="w-full text-left px-3 py-2 hover:bg-amber-50 text-[10px] font-bold uppercase text-amber-800 border-b border-amber-100 transition flex items-center gap-2">
+                            <i class="fa-solid fa-file-invoice text-amber-500 w-4"></i>Cotización / Presupuesto
+                        </button>
+                        <button onclick="seleccionarTipoDoc('PEDIDO')" class="w-full text-left px-3 py-2 hover:bg-amber-50 text-[10px] font-bold uppercase text-amber-800 border-b border-amber-100 transition flex items-center gap-2">
+                            <i class="fa-solid fa-clipboard-list text-amber-500 w-4"></i>Pedido
+                        </button>
+                        <button onclick="seleccionarTipoDoc('PROFORMA')" class="w-full text-left px-3 py-2 hover:bg-amber-50 text-[10px] font-bold uppercase text-amber-800 border-b border-amber-100 transition flex items-center gap-2">
+                            <i class="fa-solid fa-file-contract text-amber-500 w-4"></i>Proforma
+                        </button>
+                        <button onclick="seleccionarTipoDoc('NOTA_ENTREGA')" class="w-full text-left px-3 py-2 hover:bg-amber-50 text-[10px] font-bold uppercase text-amber-800 transition flex items-center gap-2">
+                            <i class="fa-solid fa-truck text-amber-500 w-4"></i>Nota de Entrega
+                        </button>
+                    </div>
+                </div>
                 <!-- NUEVO: Botón Resumen de Turno -->
                 <button onclick="abrirDashboardTurno()" title="Ver resumen del turno"
                     class="bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-600 px-3 py-2 rounded text-[10px] font-bold uppercase transition-all shadow-sm btn-press hidden sm:flex items-center gap-1">
@@ -611,12 +639,98 @@
 
         let dbInventario = [], carrito = [], dbClientes = [], fuseInventario = null, fuseClientes = null, empresaActual = null;
         let tasaBCV = 1, tasaBCVEur = 1;
+        let tasaBCVCalculo = 1, tasaBCVEurCalculo = 1;  // Tasas truncadas a 2 decimales para cálculos
+        
+        // ────────────────────────────────────────────────────────────────────
+        // TRUNCAR TASA: regla fiscal venezolana (NO redondear)
+        // Ej: 490.9860 → 490.98 (no 490.99)
+        // Esto se hace porque el SENIAT y los bancos siempre truncan,
+        // y los cálculos manuales del cliente deben coincidir al céntimo.
+        // ────────────────────────────────────────────────────────────────────
+        function truncarTasa(valor) {
+            if (typeof valor !== 'number' || !isFinite(valor)) valor = parseFloat(valor) || 0;
+            return Math.floor(valor * 100) / 100;
+        }
         let pypIva = 0.16, pypIvaRed1 = 0.08, pypIvaRed2 = 0.12, pypIgtf = 0.03, pypMostrarExento = 'SI';
         let imgDefecto = 'data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22150%22%20height%3D%22150%22%20viewBox%3D%220%200%20150%20150%22%3E%3Crect%20width%3D%22150%22%20height%3D%22150%22%20fill%3D%22%23f8fafc%22/%3E%3Ctext%20x%3D%2250%25%22%20y%3D%2250%25%22%20font-family%3D%22Arial%2Csans-serif%22%20font-size%3D%2214%22%20fill%3D%22%2394a3b8%22%20text-anchor%3D%22middle%22%20dy%3D%22.3em%22%3ESIN%20FOTO%3C/text%3E%3C/svg%3E';
         let posVistaActual = 'grid', modoSupermercado = false, nroFacturaEditable = false;
         let ultimaFechaFactura = null, correlativoActual = 1;
 
         let modoCotizacion = false;
+        let tipoDocumentoActual = 'FACTURA';  // FACTURA | PRESUPUESTO | PEDIDO | PROFORMA | NOTA_ENTREGA
+        
+        // ────────────────────────────────────────────────────────────────────
+        // SELECTOR DE TIPO DE DOCUMENTO COMERCIAL (dropdown)
+        // ────────────────────────────────────────────────────────────────────
+        function toggleSelectorDoc() {
+            const menu = document.getElementById('menu-tipo-doc');
+            menu.classList.toggle('hidden');
+        }
+        
+        // Cerrar dropdown si se hace click fuera
+        document.addEventListener('click', function(e) {
+            const cont = document.getElementById('contenedor-selector-doc');
+            const menu = document.getElementById('menu-tipo-doc');
+            if (cont && menu && !cont.contains(e.target)) {
+                menu.classList.add('hidden');
+            }
+        });
+        
+        function seleccionarTipoDoc(tipo) {
+            tipoDocumentoActual = tipo;
+            const cfg = (typeof DOCUMENT_CONFIG !== 'undefined' && DOCUMENT_CONFIG[tipo]) ? DOCUMENT_CONFIG[tipo] : null;
+            const lblBtn = document.getElementById('lbl-tipo-doc');
+            const banner = document.getElementById('banner-modo-cotizacion');
+            const badge = document.getElementById('badge-modo-cotizacion');
+            const btnCot = document.getElementById('btn-modo-cotizacion');
+            const btnProcesar = document.getElementById('btn-cobrar');
+            const btnGuardar = document.getElementById('btn-guardar');
+            
+            // Si seleccionó FACTURA → desactivar modo cotización
+            if (tipo === 'FACTURA') {
+                modoCotizacion = false;
+                lblBtn.textContent = 'Cotizar';
+                banner.classList.add('hidden');
+                badge.classList.add('hidden');
+                btnCot.classList.replace('bg-amber-200', 'bg-amber-50');
+                if (btnProcesar) {
+                    btnProcesar.classList.remove('bg-amber-500', 'hover:bg-amber-600');
+                    btnProcesar.classList.add('bg-secondary');
+                    btnProcesar.innerHTML = '<i class="fa-solid fa-hand-holding-dollar text-white text-sm"></i> Procesar';
+                }
+                if (btnGuardar) {
+                    btnGuardar.classList.remove('bg-amber-700', 'hover:bg-amber-800');
+                    btnGuardar.classList.add('bg-primary');
+                    btnGuardar.innerHTML = '<i class="fa-solid fa-save mr-1"></i>Guardar';
+                }
+            } else {
+                // Documento comercial → activar modo cotización con etiqueta correcta
+                modoCotizacion = true;
+                const etiqueta = cfg ? cfg.etiqueta_singular.toUpperCase() : tipo;
+                lblBtn.textContent = etiqueta;
+                badge.classList.remove('hidden');
+                badge.innerHTML = `<i class="fa-solid fa-file-pen mr-1"></i>${etiqueta}`;
+                banner.classList.remove('hidden');
+                banner.innerHTML = `
+                    <i class="fa-solid fa-triangle-exclamation mr-2"></i>
+                    MODO ${etiqueta} ACTIVO — NO afecta inventario ni caja
+                    <i class="fa-solid fa-file-pen ml-2"></i>
+                `;
+                btnCot.classList.replace('bg-amber-50', 'bg-amber-200');
+                if (btnProcesar) {
+                    btnProcesar.classList.remove('bg-secondary');
+                    btnProcesar.classList.add('bg-amber-500', 'hover:bg-amber-600');
+                    btnProcesar.innerHTML = `<i class="fa-solid fa-file-pen text-white mr-1"></i>GENERAR ${etiqueta}`;
+                }
+                if (btnGuardar) {
+                    btnGuardar.classList.remove('bg-primary');
+                    btnGuardar.classList.add('bg-amber-700', 'hover:bg-amber-800');
+                    btnGuardar.innerHTML = `<i class="fa-solid fa-save text-white mr-1"></i>GUARDAR ${etiqueta}`;
+                }
+            }
+            
+            document.getElementById('menu-tipo-doc').classList.add('hidden');
+        }
         let ultimaVentaParaReimprimir = null; 
 
         // ================================================================
@@ -803,17 +917,56 @@
         }
 
         function toggleModoCotizacion() {
+            // LEGACY: ahora redirige al selector de tipo
+            if (modoCotizacion) {
+                seleccionarTipoDoc('FACTURA');  // desactivar
+            } else {
+                seleccionarTipoDoc('PRESUPUESTO');  // activar como presupuesto por defecto
+            }
+        }
+        
+        function _toggleModoCotizacion_OLD_NO_USAR() {
             modoCotizacion = !modoCotizacion;
             const badge = document.getElementById('badge-modo-cotizacion');
             const btnCot = document.getElementById('btn-modo-cotizacion');
+            const banner = document.getElementById('banner-modo-cotizacion');
+            const btnProcesar = document.getElementById('btn-cobrar');
+            const btnGuardar = document.getElementById('btn-guardar');
+            
             if (modoCotizacion) {
                 badge.classList.remove('hidden');
+                banner.classList.remove('hidden');
                 btnCot.classList.replace('bg-amber-50', 'bg-amber-200');
                 btnCot.title = 'Modo COTIZACIÓN activo — click para desactivar';
+                
+                // Cambiar botón "PROCESAR" a "GENERAR COTIZACIÓN" amarillo
+                if (btnProcesar) {
+                    btnProcesar.classList.remove('bg-secondary');
+                    btnProcesar.classList.add('bg-amber-500', 'hover:bg-amber-600');
+                    btnProcesar.innerHTML = '<i class="fa-solid fa-file-pen text-white mr-1"></i>GENERAR COTIZACIÓN';
+                }
+                if (btnGuardar) {
+                    btnGuardar.classList.remove('bg-primary');
+                    btnGuardar.classList.add('bg-amber-700', 'hover:bg-amber-800');
+                    btnGuardar.innerHTML = '<i class="fa-solid fa-save text-white mr-1"></i>GUARDAR COTIZACIÓN';
+                }
             } else {
                 badge.classList.add('hidden');
+                banner.classList.add('hidden');
                 btnCot.classList.replace('bg-amber-200', 'bg-amber-50');
                 btnCot.title = 'Activar modo cotización (no afecta inventario ni caja)';
+                
+                // Restaurar botones a su estado normal
+                if (btnProcesar) {
+                    btnProcesar.classList.remove('bg-amber-500', 'hover:bg-amber-600');
+                    btnProcesar.classList.add('bg-secondary');
+                    btnProcesar.innerHTML = '<i class="fa-solid fa-hand-holding-dollar text-white text-sm"></i> Procesar';
+                }
+                if (btnGuardar) {
+                    btnGuardar.classList.remove('bg-amber-700', 'hover:bg-amber-800');
+                    btnGuardar.classList.add('bg-primary');
+                    btnGuardar.innerHTML = '<i class="fa-solid fa-save mr-1"></i>Guardar';
+                }
             }
         }
 
@@ -930,8 +1083,19 @@
                 const dataTasa = await resTasa.json();
                 if (dataTasa.length > 0) {
                     const tUsd = dataTasa.find(t => t.moneda === 'USD'); const tEur = dataTasa.find(t => t.moneda === 'EUR');
-                    if (tUsd) { tasaBCV = tUsd.tasa; document.getElementById('input-tasa-usd').value = tasaBCV.toFixed(2); actualizarIndicadorTasa(tUsd.fecha_actualizacion); }
-                    if (tEur) { tasaBCVEur = tEur.tasa; document.getElementById('input-tasa-eur').value = tasaBCVEur.toFixed(2); }
+                    if (tUsd) { 
+                        tasaBCV = parseFloat(tUsd.tasa); 
+                        tasaBCVCalculo = truncarTasa(tasaBCV);
+                        document.getElementById('input-tasa-usd').value = tasaBCV.toFixed(4); 
+                        actualizarIndicadorTasa(tUsd.fecha_actualizacion);
+                        actualizarBadgeFechaTasa('USD', tUsd.fecha_actualizacion);
+                    }
+                    if (tEur) { 
+                        tasaBCVEur = parseFloat(tEur.tasa); 
+                        tasaBCVEurCalculo = truncarTasa(tasaBCVEur);
+                        document.getElementById('input-tasa-eur').value = tasaBCVEur.toFixed(4);
+                        actualizarBadgeFechaTasa('EUR', tEur.fecha_actualizacion);
+                    }
                 }
 
                 let dConf = []; if (resConf.ok) dConf = await resConf.json();
@@ -973,14 +1137,26 @@
             const inputNroFactura = document.getElementById('pos-nro-factura');
             inputNroFactura.value = "Cargando...";
             try {
-                const resConf = await fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?parametro=eq.CORRELATIVO_INICIAL&select=valor`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                // Leer correlativo inicial de configuracion (eliminado en FASE 2.D, default 0)
                 let corrInicial = 0;
-                if (resConf.ok) { const dConf = await resConf.json(); if (dConf.length > 0) corrInicial = parseInt(dConf[0].valor, 10) || 0; }
+                
+                // Buscar última factura emitida en la empresa
                 const filtroEmpresa = empresaActual ? `id_empresa=eq.${empresaActual}` : `id_empresa=is.null`;
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/ventas_facturas?${filtroEmpresa}&tipo_transaccion=eq.FACTURA&select=correlativo_interno&order=correlativo_interno.desc&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
-                if (res.ok) { const data = await res.json(); correlativoActual = data.length > 0 ? (parseInt(data[0].correlativo_interno, 10) || corrInicial) + 1 : corrInicial + 1; } else { correlativoActual = corrInicial + 1; }
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/ventas_facturas?${filtroEmpresa}&tipo_transaccion=eq.FACTURA&estatus=neq.ANULADA&select=correlativo_interno&order=correlativo_interno.desc&limit=1`, { 
+                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } 
+                });
+                if (res.ok) { 
+                    const data = await res.json(); 
+                    correlativoActual = data.length > 0 ? (parseInt(data[0].correlativo_interno, 10) || corrInicial) + 1 : corrInicial + 1; 
+                } else { 
+                    correlativoActual = corrInicial + 1; 
+                }
                 inputNroFactura.value = String(correlativoActual).padStart(6, '0');
-            } catch (e) { inputNroFactura.value = ""; inputNroFactura.placeholder = "000001"; inputNroFactura.readOnly = false; }
+            } catch (e) { 
+                inputNroFactura.value = ""; 
+                inputNroFactura.placeholder = "000001"; 
+                inputNroFactura.readOnly = false; 
+            }
         }
 
         // ================================================================
@@ -1001,7 +1177,7 @@
             if (!query) return;
             const exacto = dbInventario.find(p => (p.codigo_barras && p.codigo_barras.toString().toUpperCase() === query.toUpperCase()) || (p.id_producto_sku && p.id_producto_sku.toUpperCase() === query.toUpperCase()));
             if (exacto) {
-                const pUsd = exacto.pre && exacto.pre.es_precio_fijo_bs ? (exacto.pre.precio_fijo_bs / tasaBCV) : (exacto.pre ? exacto.pre.precio_general_usd : 0);
+                const pUsd = exacto.pre && exacto.pre.es_precio_fijo_bs ? (exacto.pre.precio_fijo_bs / tasaBCVCalculo) : (exacto.pre ? exacto.pre.precio_general_usd : 0);
                 agregarAlCarrito(encodeURIComponent(JSON.stringify({ ...exacto, pUsd })));
                 document.getElementById('buscador-pos').value = '';
                 buscarProductos();
@@ -1033,7 +1209,7 @@
                 grid.className = "dynamic-grid-table";
                 html = `<div class="bg-white rounded shadow-sm border border-gray-200 overflow-hidden overflow-x-auto custom-scroll pb-2"><table class="w-full text-left text-[9px] whitespace-nowrap min-w-[500px]"><thead class="bg-primary text-white uppercase tracking-wider sticky top-0"><tr><th class="py-1.5 px-2">Info</th><th class="py-1.5 px-2">SKU</th><th class="py-1.5 px-2">Producto</th><th class="py-1.5 px-2 text-center">Stock</th><th class="py-1.5 px-2 text-right">Precio ($)</th><th class="py-1.5 px-2 text-center">Acción</th></tr></thead><tbody class="divide-y divide-gray-100">`;
                 data.slice(0, 50).forEach(p => {
-                    const pUsd = p.pre && p.pre.es_precio_fijo_bs ? (p.pre.precio_fijo_bs / tasaBCV) : (p.pre ? p.pre.precio_general_usd : 0);
+                    const pUsd = p.pre && p.pre.es_precio_fijo_bs ? (p.pre.precio_fijo_bs / tasaBCVCalculo) : (p.pre ? p.pre.precio_general_usd : 0);
                     const prodStr = encodeURIComponent(JSON.stringify({ ...p, pUsd }));
                     const bStkColor = p.stock_actual > 0 ? "text-gray-900 font-bold" : "text-red-600 font-bold";
                     html += `<tr class="hover:bg-blue-50 transition cursor-pointer" onclick="agregarAlCarrito('${prodStr}')"><td class="py-1 px-2 text-center"><button onclick="event.stopPropagation(); abrirInfoProducto('${prodStr}')" class="text-tertiary hover:opacity-80 transition"><i class="fa-solid fa-info-circle text-xs"></i></button></td><td class="py-1 px-2 font-mono text-gray-500">${p.id_producto_sku}</td><td class="py-1 px-2 font-bold text-primary truncate max-w-[150px]">${p.nombre}</td><td class="py-1 px-2 text-center ${bStkColor}">${p.stock_actual}</td><td class="py-1 px-2 text-right font-black text-primary">$${fmt(pUsd)}</td><td class="py-1 px-2 text-center"><button class="bg-secondary text-white px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider">Agregar</button></td></tr>`;
@@ -1043,8 +1219,8 @@
                 grid.className = "dynamic-grid-grid";
                 data.slice(0, 40).forEach(p => {
                     const img = p.imagen_principal || imgDefecto;
-                    const pUsd = p.pre && p.pre.es_precio_fijo_bs ? (p.pre.precio_fijo_bs / tasaBCV) : (p.pre ? p.pre.precio_general_usd : 0);
-                    const pBs = pUsd * tasaBCV;
+                    const pUsd = p.pre && p.pre.es_precio_fijo_bs ? (p.pre.precio_fijo_bs / tasaBCVCalculo) : (p.pre ? p.pre.precio_general_usd : 0);
+                    const pBs = pUsd * tasaBCVCalculo;
                     const prodStr = encodeURIComponent(JSON.stringify({ ...p, pUsd }));
                     let btnInfo = `<button onclick="event.stopPropagation(); abrirInfoProducto('${prodStr}')" class="absolute top-1 left-1 bg-tertiary text-white w-5 h-5 rounded flex items-center justify-center transition shadow hover:opacity-90 z-10"><i class="fa-solid fa-info text-[8px]"></i></button>`;
                     const bStkColor = p.stock_actual > 0 ? "text-gray-900 bg-gray-100 border-gray-300" : "text-red-600 bg-red-50 border-red-300";
@@ -1159,7 +1335,7 @@
         // ================================================================
         function calcularPrecioUnitario(prod, cantidad) {
             if (prod.precio_manual_usd !== undefined && prod.precio_manual_usd !== "") return Number(prod.precio_manual_usd);
-            let pU = prod.pUsd !== undefined ? prod.pUsd : (prod.pre && prod.pre.es_precio_fijo_bs ? (Number(prod.pre.precio_fijo_bs) / tasaBCV) : (Number(prod.pre ? prod.pre.precio_general_usd : 0) || 0));
+            let pU = prod.pUsd !== undefined ? prod.pUsd : (prod.pre && prod.pre.es_precio_fijo_bs ? (Number(prod.pre.precio_fijo_bs) / tasaBCVCalculo) : (Number(prod.pre ? prod.pre.precio_general_usd : 0) || 0));
             if (prod.requerido_precio_3 && cantidad >= prod.requerido_precio_3 && prod.pre && prod.pre.precio_3_usd != null) pU = Number(prod.pre.precio_3_usd);
             else if (prod.requerido_precio_2 && cantidad >= prod.requerido_precio_2 && prod.pre && prod.pre.precio_2_usd != null) pU = Number(prod.pre.precio_2_usd);
             else if (prod.requerido_precio_1 && cantidad >= prod.requerido_precio_1 && prod.pre && prod.pre.precio_1_usd != null) pU = Number(prod.pre.precio_1_usd);
@@ -1170,7 +1346,7 @@
             const idx = carrito.findIndex(i => i.id_producto_sku === sku); if (idx === -1) return;
             let val = parseFloat(valorStr);
             if (isNaN(val) || val <= 0) { carrito[idx].precio_manual_usd = undefined; actualizarUI_Carrito(); return; }
-            if (moneda === 'BS') carrito[idx].precio_manual_usd = val / tasaBCV; else carrito[idx].precio_manual_usd = val;
+            if (moneda === 'BS') carrito[idx].precio_manual_usd = val / tasaBCVCalculo; else carrito[idx].precio_manual_usd = val;
             actualizarUI_Carrito();
         }
 
@@ -1232,14 +1408,35 @@
             carrito.forEach(item => {
                 let baseUsd = redondear(calcularPrecioUnitario(item, item.cantidad));
                 const lineaBaseUsd = redondear(baseUsd * item.cantidad);
-                const lineaBaseBs = redondear(lineaBaseUsd * tasaBCV);
+                const lineaBaseBs = redondear(lineaBaseUsd * tasaBCVCalculo);
 
-                let descLineaUsd = 0;
-                if (item.desc_tipo === 'PORCENTAJE') descLineaUsd = redondear(lineaBaseUsd * (item.desc_val / 100));
-                else if (item.desc_tipo === 'MONTO') descLineaUsd = redondear(item.desc_val);
-                else if (item.desc_tipo === 'MONTO_BS') descLineaUsd = redondear(item.desc_val / tasaBCV);
-                if (descLineaUsd > lineaBaseUsd) descLineaUsd = lineaBaseUsd;
-                const descLineaBs = redondear(descLineaUsd * tasaBCV);
+                // ═══════════════════════════════════════════════════════════════
+                // FIX MATEMÁTICO: descuento se calcula en MONEDA NATIVA, no se redondea prematuramente a USD
+                // ═══════════════════════════════════════════════════════════════
+                let descLineaUsd = 0, descLineaBs = 0;
+                
+                if (item.desc_tipo === 'PORCENTAJE') {
+                    // % aplica a la base en ambas monedas, sin perder precisión
+                    descLineaUsd = lineaBaseUsd * (item.desc_val / 100);
+                    descLineaBs = lineaBaseBs * (item.desc_val / 100);
+                } else if (item.desc_tipo === 'MONTO') {
+                    // Monto en USD: se respeta tal cual y se convierte a Bs con tasa completa
+                    descLineaUsd = item.desc_val;
+                    descLineaBs = item.desc_val * tasaBCVCalculo;
+                } else if (item.desc_tipo === 'MONTO_BS') {
+                    // Monto en Bs: se respeta EXACTAMENTE el valor que tipeó el cajero
+                    // Solo se convierte a USD para el almacenamiento, sin afectar el descuento real en Bs
+                    descLineaBs = item.desc_val;
+                    descLineaUsd = item.desc_val / tasaBCVCalculo;
+                }
+                
+                // Tope: el descuento no puede ser mayor que la base
+                if (descLineaBs > lineaBaseBs) { descLineaBs = lineaBaseBs; descLineaUsd = lineaBaseUsd; }
+                if (descLineaUsd > lineaBaseUsd) { descLineaUsd = lineaBaseUsd; descLineaBs = lineaBaseBs; }
+                
+                // Redondeo SOLO al final, para visualización
+                descLineaUsd = redondear(descLineaUsd);
+                descLineaBs = redondear(descLineaBs);
 
                 const totalLineaNetaUsd = redondear(lineaBaseUsd - descLineaUsd);
                 const totalLineaNetaBs = redondear(lineaBaseBs - descLineaBs);
@@ -1260,7 +1457,7 @@
                             <h4 class="text-[10px] font-black text-primary truncate uppercase leading-tight mb-1 pr-4">${item.nombre}</h4>
                             <div class="flex items-center gap-2 mt-0.5">
                                 <div class="flex items-center"><span class="text-[10px] font-bold text-gray-500 mr-0.5">US$</span><input type="number" step="0.01" min="0.01" class="w-16 border-b border-gray-300 text-[12px] font-black text-secondary px-1 outline-none focus:border-tertiary text-center transition bg-transparent" value="${baseUsd.toFixed(2)}" onchange="actualizarPrecioManualItem('${item.id_producto_sku}', 'USD', this.value)" title="Modificar Precio USD"></div>
-                                <div class="flex items-center"><span class="text-[10px] font-bold text-gray-500 mr-0.5">Bs.</span><input type="number" step="0.01" min="0.01" class="w-[70px] border-b border-gray-300 text-[12px] font-black text-primary px-1 outline-none focus:border-tertiary text-center transition bg-transparent" value="${redondear(baseUsd * tasaBCV).toFixed(2)}" onchange="actualizarPrecioManualItem('${item.id_producto_sku}', 'BS', this.value)" title="Modificar Precio Bs"></div>
+                                <div class="flex items-center"><span class="text-[10px] font-bold text-gray-500 mr-0.5">Bs.</span><input type="number" step="0.01" min="0.01" class="w-[70px] border-b border-gray-300 text-[12px] font-black text-primary px-1 outline-none focus:border-tertiary text-center transition bg-transparent" value="${redondear(baseUsd * tasaBCVCalculo).toFixed(2)}" onchange="actualizarPrecioManualItem('${item.id_producto_sku}', 'BS', this.value)" title="Modificar Precio Bs"></div>
                             </div>
                             <div class="flex items-center gap-1 mt-1 pt-1 border-t border-gray-100">
                                 <span class="text-[8px] text-red-500 font-bold uppercase">Desc:</span>
@@ -1289,7 +1486,7 @@
             descGeneralTotalBs = 0;
             if (typeDescGeneral === 'PORCENTAJE' && inputDescGeneral > 0) descGeneralTotalBs = redondear(sumSubtotalBasePuroBs * (inputDescGeneral / 100));
             else if (typeDescGeneral === 'MONTO_BS' && inputDescGeneral > 0) descGeneralTotalBs = inputDescGeneral;
-            else if (typeDescGeneral === 'MONTO' && inputDescGeneral > 0) descGeneralTotalBs = redondear(inputDescGeneral * tasaBCV);
+            else if (typeDescGeneral === 'MONTO' && inputDescGeneral > 0) descGeneralTotalBs = redondear(inputDescGeneral * tasaBCVCalculo);
             if (descGeneralTotalBs > sumSubtotalBasePuroBs) descGeneralTotalBs = sumSubtotalBasePuroBs;
 
             let factor = 1;
@@ -1307,10 +1504,10 @@
 
             let ivaG_Bs = redondear(bG_Bs * pypIva); let ivaR1_Bs = redondear(bR1_Bs * pypIvaRed1); let ivaR2_Bs = redondear(bR2_Bs * pypIvaRed2);
             granTotalBs = redondear(bG_Bs + bR1_Bs + bR2_Bs + bE_Bs + ivaG_Bs + ivaR1_Bs + ivaR2_Bs);
-            granTotalUsd = redondear(granTotalBs / tasaBCV);
-            descGeneralTotalUsd = redondear(descGeneralTotalBs / tasaBCV);
+            granTotalUsd = redondear(granTotalBs / tasaBCVCalculo);
+            descGeneralTotalUsd = redondear(descGeneralTotalBs / tasaBCVCalculo);
 
-            let bG_Usd = redondear(bG_Bs / tasaBCV); let bR1_Usd = redondear(bR1_Bs / tasaBCV); let bR2_Usd = redondear(bR2_Bs / tasaBCV); let bE_Usd = redondear(bE_Bs / tasaBCV);
+            let bG_Usd = redondear(bG_Bs / tasaBCVCalculo); let bR1_Usd = redondear(bR1_Bs / tasaBCVCalculo); let bR2_Usd = redondear(bR2_Bs / tasaBCVCalculo); let bE_Usd = redondear(bE_Bs / tasaBCVCalculo);
 
             let htmlTotales = '';
             const Fila = (etiqueta, valBs) => `<div class="flex justify-between items-center text-xs text-gray-500 font-bold uppercase"><span>${etiqueta}</span><span class="text-gray-900 font-black">Bs. ${fmt(valBs)}</span></div>`;
@@ -1424,10 +1621,10 @@
 
             if (metodo === 'EFECTIVO_BS' || metodo === 'EFECTIVO_USD') {
                 cajaCal.classList.remove('hidden'); const recibido = parseFloat(document.getElementById('monto-recibido').value) || 0; let vuelto;
-                if (metodo === 'EFECTIVO_USD') { const recibidoBs = recibido * tasaBCV; vuelto = redondear(recibidoBs - totalFinalBs); } else { vuelto = redondear(recibido - totalFinalBs); }
+                if (metodo === 'EFECTIVO_USD') { const recibidoBs = recibido * tasaBCVCalculo; vuelto = redondear(recibidoBs - totalFinalBs); } else { vuelto = redondear(recibido - totalFinalBs); }
                 if (recibido > 0) {
                     resCal.classList.remove('hidden'); const vueltoBs = Math.max(vuelto, 0);
-                    document.getElementById('val-vuelto-bs').innerText = `Bs. ${fmt(vueltoBs)}`; document.getElementById('val-vuelto-usd').innerText = `US$ ${fmt(redondear(vueltoBs / tasaBCV))}`;
+                    document.getElementById('val-vuelto-bs').innerText = `Bs. ${fmt(vueltoBs)}`; document.getElementById('val-vuelto-usd').innerText = `US$ ${fmt(redondear(vueltoBs / tasaBCVCalculo))}`;
                     document.getElementById('val-vuelto-bs').className = vuelto < 0 ? 'text-lg font-black text-red-600' : 'text-lg font-black text-green-700';
                     if (vuelto < 0) document.getElementById('val-vuelto-bs').innerText = `Falta Bs. ${fmt(Math.abs(vuelto))}`;
                 } else resCal.classList.add('hidden');
@@ -1438,10 +1635,24 @@
             const metodo = document.getElementById('cobro-metodo').value; const aplica = (metodo === 'EFECTIVO_USD' || metodo === 'ZELLE');
             document.getElementById('caja-igtf').classList.toggle('hidden', !aplica);
             const tBs = granTotalBs; const igtfBs = aplica ? redondear(tBs * pypIgtf) : 0;
-            document.getElementById('modal-total-bs-final').innerText = `Bs. ${fmt(tBs + igtfBs)}`; document.getElementById('modal-total-usd-final').innerText = `US$ ${fmt(redondear((tBs + igtfBs) / tasaBCV))}`;
+            document.getElementById('modal-total-bs-final').innerText = `Bs. ${fmt(tBs + igtfBs)}`; document.getElementById('modal-total-usd-final').innerText = `US$ ${fmt(redondear((tBs + igtfBs) / tasaBCVCalculo))}`;
         }
 
-        function abrirCobro() { lineasPagoMixto = []; renderizarLineasPago(); document.getElementById('monto-recibido').value = ''; document.getElementById('resultado-vuelto').classList.add('hidden'); verificarIGTF(); calcularVuelto(); document.getElementById('modal-cobro').classList.remove('hidden'); document.getElementById('modal-cobro').classList.add('flex'); }
+        function abrirCobro() {
+            // Si está en modo cotización, NO abrir modal de cobro - generar directo
+            if (modoCotizacion) {
+                procesarVenta('NORMAL');
+                return;
+            }
+            lineasPagoMixto = []; 
+            renderizarLineasPago(); 
+            document.getElementById('monto-recibido').value = ''; 
+            document.getElementById('resultado-vuelto').classList.add('hidden'); 
+            verificarIGTF(); 
+            calcularVuelto(); 
+            document.getElementById('modal-cobro').classList.remove('hidden'); 
+            document.getElementById('modal-cobro').classList.add('flex'); 
+        }
         function cerrarCobro() { document.getElementById('modal-cobro').classList.add('hidden'); }
         function reimprimirUltimoTicket() { if (!ultimaVentaParaReimprimir) return; const { formato, empresa, factura, items } = ultimaVentaParaReimprimir; generarHTMLImpresion(formato, empresa, factura, items); window.print(); }
 
@@ -1568,7 +1779,7 @@
                 const aplicaIgtf = (metodo === 'EFECTIVO_USD' || metodo === 'ZELLE');
                 const igtfVal = aplicaIgtf ? pypIgtf * 100 : 0;
                 const totalBsFinal = redondear(granTotalBs + (aplicaIgtf ? redondear(granTotalBs * pypIgtf) : 0));
-                const totalUsdFinal = totalBsFinal / tasaBCV;
+                const totalUsdFinal = totalBsFinal / tasaBCVCalculo;
                 const baseImpUsd = parseFloat(document.getElementById('contenedor-totales-fiscales').dataset.baseTotalUsd) || 0;
                 const exentoUsd = parseFloat(document.getElementById('contenedor-totales-fiscales').dataset.exentoTotalUsd) || 0;
                 let metodoPagoFinal = metodo;
@@ -1581,8 +1792,12 @@
                 // ENRUTADOR DOCUMENT_CONFIG: PRESUPUESTO vs FACTURA
                 // ─────────────────────────────────────────────────────────────
                 const cfg = modoCotizacion 
-                    ? DOCUMENT_CONFIG.PRESUPUESTO 
+                    ? DOCUMENT_CONFIG[tipoDocumentoActual] 
                     : DOCUMENT_CONFIG.FACTURA;
+                
+                if (!cfg) {
+                    throw new Error(`Tipo de documento "${tipoDocumentoActual}" no encontrado en DOCUMENT_CONFIG`);
+                }
 
                 const payloadItems = carrito.map(i => ({
                     producto_sku: i.id_producto_sku,
@@ -1597,7 +1812,7 @@
                     // FLUJO PRESUPUESTO → procesar_documento_comercial
                     // ═════════════════════════════════════════════════════════
                     const payloadDoc = {
-                        tipo_documento: 'PRESUPUESTO',
+                        tipo_documento: tipoDocumentoActual,
                         id_persona: document.getElementById('pos-id-cliente').value || null,
                         persona_documento: document.getElementById('txt-cli-doc').innerText,
                         persona_nombre: document.getElementById('txt-cli-nom').innerText,
@@ -1610,30 +1825,31 @@
                         condicion_pago: condicionUpper,
                         iva_porcentaje: pypIva * 100,
                         igtf_porcentaje: igtfVal,
-                        base_imponible: baseImpUsd * tasaBCV,
-                        monto_exento: exentoUsd * tasaBCV,
+                        base_imponible: baseImpUsd * tasaBCVCalculo,
+                        monto_exento: exentoUsd * tasaBCVCalculo,
                         nombre_cajero: usuario,
                         fecha_emision: fechaEmision,
                         fecha_vencimiento: fechaVenc,
                         estatus: 'PENDIENTE'
                     };
 
-                    mostrarCarga("Generando presupuesto...", "Guardando documento comercial...");
+                    mostrarCarga(`Generando ${cfg.etiqueta_singular}...`, "Guardando documento comercial...");
                     const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${cfg.rpc_creacion}`, {
                         method: 'POST',
                         headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' },
                         body: JSON.stringify({ p_documento: payloadDoc, p_items: payloadItems })
                     });
-                    if (!res.ok) { const errObj = await res.json(); throw new Error(errObj.message || errObj.hint || "Fallo al procesar el presupuesto."); }
+                    if (!res.ok) { const errObj = await res.json(); throw new Error(errObj.message || errObj.hint || `Fallo al procesar el ${cfg.etiqueta_singular}.`); }
 
                     // Para impresión: usar payload con campos legacy compatibles
                     const facturaPrint = {
                         ...payloadDoc,
-                        tipo_transaccion: 'Cotización',
+                        tipo_transaccion: cfg.etiqueta_singular,  // dinámico: Cotización, Pedido, Proforma, Nota de Entrega
                         nro_factura_manual: nroFactura,
                         nro_control_manual: nroControl,
                         numero_factura_fiscal: nroFactura,
-                        numero_control_fiscal: nroControl
+                        numero_control_fiscal: nroControl,
+                        tipo_documento_visible: cfg.etiqueta_singular.toUpperCase()
                     };
 
                     if (modo !== 'DIRECTO') {
@@ -1668,8 +1884,8 @@
                         condicion_pago: condicionUpper,
                         iva_porcentaje: pypIva * 100,
                         igtf_porcentaje: igtfVal,
-                        base_imponible: baseImpUsd * tasaBCV,
-                        monto_exento: exentoUsd * tasaBCV,
+                        base_imponible: baseImpUsd * tasaBCVCalculo,
+                        monto_exento: exentoUsd * tasaBCVCalculo,
                         nombre_cajero: usuario,
                         fecha_emision: fechaEmision,
                         fecha_vencimiento: fechaVenc,
@@ -1731,6 +1947,12 @@
                 cerrarCobro();
                 actualizarUI_Carrito();
                 window.__id_documento_origen_importado = null;  // Limpiar trazabilidad
+                
+                // Reset selector tipo a FACTURA por defecto si se generó un doc comercial
+                if (modoCotizacion) {
+                    seleccionarTipoDoc('FACTURA');
+                }
+                
                 await iniciarPuntoVenta();
                 await inicializarCorrelativos();
                 cerrarErrorCarga();
@@ -1762,7 +1984,7 @@
 
             if (formato === 'carta') {
                 contenedor.innerHTML = `<div style="max-width: 800px; margin: 0 auto; color: #333;">
-                    <div style="text-align: center; margin-bottom: 20px;"><h2 style="margin:0; font-size: 24px; color: var(--color-primary);">${empresa.nombre_empresa}</h2><p style="margin:0; font-weight: bold;">RIF: ${empresa.rif}</p><p style="margin:0; font-size: 11px;">DIRECCIÓN: ${empresa.direccion_fiscal}</p><h3 style="margin-top:15px; font-size: 18px;">${factura.tipo_transaccion === 'Cotización' ? 'COTIZACIÓN' : 'DOCUMENTO'} ${factura.nro_factura_manual ? 'NRO: ' + factura.nro_factura_manual : ''}</h3></div>
+                    <div style="text-align: center; margin-bottom: 20px;"><h2 style="margin:0; font-size: 24px; color: var(--color-primary);">${empresa.nombre_empresa}</h2><p style="margin:0; font-weight: bold;">RIF: ${empresa.rif}</p><p style="margin:0; font-size: 11px;">DIRECCIÓN: ${empresa.direccion_fiscal}</p><h3 style="margin-top:15px; font-size: 18px;">${factura.tipo_documento_visible || (factura.tipo_transaccion === 'Cotización' ? 'COTIZACIÓN' : 'DOCUMENTO')} ${factura.nro_factura_manual ? 'NRO: ' + factura.nro_factura_manual : ''}</h3></div>
                     <div style="display: flex; justify-content: space-between; margin-bottom: 20px; border: 1px solid #ccc; padding: 15px; border-radius: 4px; background: #fafafa; font-size: 12px;"><div><strong>Cliente:</strong> ${nomCliente}<br><strong>C.I./RIF:</strong> ${docCliente}<br><strong>Dirección:</strong> ${dirCliente}</div><div style="text-align: right;"><strong>Fecha Emisión:</strong> ${fechaE}<br><strong>Vencimiento:</strong> ${fechaV}<br><strong>Condición:</strong> ${factura.condicion_pago}<br><strong>Pago:</strong> ${factura.metodos_pago.replace(/_/g, ' ')}</div></div>
                     <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;"><thead style="background: var(--color-primary); color: white;"><tr><th style="padding: 8px 4px; text-align:left;">SKU</th><th style="padding: 8px 4px; text-align:left;">Descripción</th><th style="padding: 8px 4px; width: 50px;">Cant.</th><th style="padding: 8px 4px; text-align:right;">Precio Unt.</th><th style="padding: 8px 4px; text-align:right;">Total Bs</th></tr></thead><tbody>${htmlItems}</tbody></table>
                     <div style="width: 320px; margin-left: auto; font-size: 12px;">
@@ -1775,7 +1997,7 @@
                     </div></div>`;
             } else {
                 contenedor.innerHTML = `<div style="text-align: center; margin-bottom: 10px; border-bottom: 1px dashed #000; padding-bottom: 5px;">
-                    <strong style="font-size: 1.2em;">${empresa.nombre_empresa}</strong><br>RIF: ${empresa.rif}<br>${empresa.direccion_fiscal}<br><br>${factura.tipo_transaccion === 'Cotización' ? 'COTIZACIÓN' : 'FACT'}: ${factura.nro_factura_manual || 'N/A'}<br>CTRL: ${factura.nro_control_manual || 'N/A'}<br>FECHA: ${fechaE}${factura.condicion_pago !== 'CONTADO' ? '<br>VENCE: ' + fechaV : ''}</div>
+                    <strong style="font-size: 1.2em;">${empresa.nombre_empresa}</strong><br>RIF: ${empresa.rif}<br>${empresa.direccion_fiscal}<br><br>${factura.tipo_documento_visible || (factura.tipo_transaccion === 'Cotización' ? 'COTIZACIÓN' : 'FACT')}: ${factura.nro_factura_manual || 'N/A'}<br>CTRL: ${factura.nro_control_manual || 'N/A'}<br>FECHA: ${fechaE}${factura.condicion_pago !== 'CONTADO' ? '<br>VENCE: ' + fechaV : ''}</div>
                     <div style="margin-bottom: 10px;"><strong>Cliente:</strong> ${nomCliente}<br><strong>C.I./RIF:</strong> ${docCliente}</div>
                     <div style="border-top: 1px dashed #000; border-bottom: 1px dashed #000; margin-bottom: 10px; padding: 5px 0;">${htmlItems}</div>
                     <div><div style="display: flex; justify-content: space-between;"><span>Exento:</span><span>Bs. ${fmt(factura.monto_exento)}</span></div><div style="display: flex; justify-content: space-between;"><span>B. Imponible:</span><span>Bs. ${fmt(baseImpBs)}</span></div><div style="display: flex; justify-content: space-between;"><span>IVA (${ivaPorc.toFixed(0)}%):</span><span>Bs. ${fmt(ivaCalculadoBs)}</span></div>${factura.igtf_porcentaje > 0 ? `<div style="display: flex; justify-content: space-between;"><span>IGTF (${factura.igtf_porcentaje}%):</span><span>Bs. ${fmt(igtfBs)}</span></div>` : ''}
@@ -1792,40 +2014,165 @@
         // ================================================================
         // SINCRONIZACIÓN BCV
         // ================================================================
+        // ────────────────────────────────────────────────────────────────────
+        // BADGE de fecha/hora última actualización de tasa (USD/EUR)
+        // ────────────────────────────────────────────────────────────────────
+        function actualizarBadgeFechaTasa(moneda, fechaIso) {
+            const elId = moneda === 'EUR' ? 'fecha-tasa-eur' : 'fecha-tasa-usd';
+            const el = document.getElementById(elId);
+            if (!el) return;
+            try {
+                const fecha = new Date(fechaIso);
+                if (isNaN(fecha.getTime())) { el.textContent = 'sin datos'; return; }
+                const ahora = new Date();
+                const diffMin = Math.floor((ahora - fecha) / 60000);
+                const fechaStr = fecha.toLocaleDateString('es-VE', { day: '2-digit', month: '2-digit', year: '2-digit' });
+                const horaStr = fecha.toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit', hour12: false });
+                
+                let etiqueta;
+                if (diffMin < 1) etiqueta = 'ahora';
+                else if (diffMin < 60) etiqueta = `hace ${diffMin}m`;
+                else if (diffMin < 1440) etiqueta = `hace ${Math.floor(diffMin/60)}h`;
+                else etiqueta = `${fechaStr} ${horaStr}`;
+                
+                el.textContent = etiqueta;
+                el.title = `Última actualización: ${fechaStr} ${horaStr}`;
+                
+                // Color según antigüedad
+                el.className = 'text-[8px] font-bold ml-1 px-1 rounded ' + 
+                    (diffMin < 60 ? 'text-green-600 bg-green-50' :
+                     diffMin < 240 ? 'text-amber-600 bg-amber-50' :
+                     'text-red-600 bg-red-50');
+            } catch (e) { el.textContent = ''; }
+        }
+        
         async function sincronizarBCVSilencioso() {
             try {
-                const controller = new AbortController(); const timeoutId = setTimeout(() => controller.abort(), 8000);
-                const resUsd = await fetch('https://ve.dolarapi.com/v1/dolares/oficial', { signal: controller.signal });
-                clearTimeout(timeoutId); if (!resUsd.ok) throw new Error("API caída");
-                const dataUsd = await resUsd.json();
-                if (dataUsd && dataUsd.promedio) {
-                    tasaBCV = parseFloat(dataUsd.promedio); document.getElementById('input-tasa-usd').value = tasaBCV.toFixed(2);
-                    await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?moneda=eq.USD`, { method: 'DELETE', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
-                    await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ moneda: 'USD', tasa: tasaBCV, fecha_actualizacion: new Date().toISOString() }) });
-                    actualizarIndicadorTasa(new Date().toISOString()); actualizarUI_Carrito();
+                const controller = new AbortController(); 
+                const timeoutId = setTimeout(() => controller.abort(), 10000);
+                
+                // Sincronizar USD y EUR en paralelo
+                const [resUsd, resEur] = await Promise.all([
+                    fetch('https://ve.dolarapi.com/v1/dolares/oficial', { signal: controller.signal }),
+                    fetch('https://ve.dolarapi.com/v1/euros/oficial', { signal: controller.signal })
+                ]);
+                clearTimeout(timeoutId);
+                
+                const ahora = new Date().toISOString();
+                
+                // USD
+                if (resUsd.ok) {
+                    const dataUsd = await resUsd.json();
+                    if (dataUsd && dataUsd.promedio) {
+                        tasaBCV = parseFloat(dataUsd.promedio); 
+                        tasaBCVCalculo = truncarTasa(tasaBCV);
+                        document.getElementById('input-tasa-usd').value = tasaBCV.toFixed(4);
+                        await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?moneda=eq.USD`, { method: 'DELETE', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                        await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ moneda: 'USD', tasa: tasaBCVCalculo, fecha_actualizacion: ahora }) });
+                        actualizarIndicadorTasa(ahora);
+                        actualizarBadgeFechaTasa('USD', ahora);
+                    }
                 }
-            } catch (e) { actualizarIndicadorTasa(new Date(0).toISOString(), true); console.warn("Sync BCV silencioso falló:", e.message); }
+                
+                // EUR (faltaba en el sistema original)
+                if (resEur.ok) {
+                    const dataEur = await resEur.json();
+                    if (dataEur && dataEur.promedio) {
+                        tasaBCVEur = parseFloat(dataEur.promedio);
+                        tasaBCVEurCalculo = truncarTasa(tasaBCVEur);
+                        document.getElementById('input-tasa-eur').value = tasaBCVEur.toFixed(4);
+                        await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?moneda=eq.EUR`, { method: 'DELETE', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                        await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ moneda: 'EUR', tasa: tasaBCVEur, fecha_actualizacion: ahora }) });
+                        actualizarBadgeFechaTasa('EUR', ahora);
+                    }
+                }
+                
+                actualizarUI_Carrito();
+            } catch (e) { 
+                actualizarIndicadorTasa(new Date(0).toISOString(), true); 
+                console.warn("Sync BCV silencioso falló:", e.message); 
+            }
         }
 
         async function sincronizarBCV() {
-            const btn = document.getElementById('btn-sync-bcv'); const icon = btn.querySelector('i');
-            btn.disabled = true; icon.classList.add('fa-spin'); const tUsd = document.getElementById('input-tasa-usd'); tUsd.classList.add('bg-blue-100');
+            const btn = document.getElementById('btn-sync-bcv'); 
+            const icon = btn.querySelector('i');
+            btn.disabled = true; 
+            icon.classList.add('fa-spin'); 
+            const tUsd = document.getElementById('input-tasa-usd'); 
+            const tEur = document.getElementById('input-tasa-eur');
+            tUsd.classList.add('bg-blue-100');
+            tEur.classList.add('bg-blue-100');
+            
             try {
-                const controller = new AbortController(); const timeoutId = setTimeout(() => controller.abort(), 10000);
-                const resUsd = await fetch('https://ve.dolarapi.com/v1/dolares/oficial', { signal: controller.signal });
-                clearTimeout(timeoutId); if (!resUsd.ok) throw new Error("API de Dólar caída.");
+                const controller = new AbortController(); 
+                const timeoutId = setTimeout(() => controller.abort(), 12000);
+                
+                const [resUsd, resEur] = await Promise.all([
+                    fetch('https://ve.dolarapi.com/v1/dolares/oficial', { signal: controller.signal }),
+                    fetch('https://ve.dolarapi.com/v1/euros/oficial', { signal: controller.signal })
+                ]);
+                clearTimeout(timeoutId);
+                
+                if (!resUsd.ok) throw new Error("API de Dólar caída.");
+                
+                const ahora = new Date().toISOString();
+                let actualizoUsd = false, actualizoEur = false;
+                
+                // USD
                 const dataUsd = await resUsd.json();
                 if (dataUsd && dataUsd.promedio) {
-                    tasaBCV = parseFloat(dataUsd.promedio); document.getElementById('input-tasa-usd').value = tasaBCV.toFixed(2);
+                    tasaBCV = parseFloat(dataUsd.promedio); 
+                    tasaBCVCalculo = truncarTasa(tasaBCV);
+                    document.getElementById('input-tasa-usd').value = tasaBCV.toFixed(4);
                     await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?moneda=eq.USD`, { method: 'DELETE', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
-                    await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ moneda: 'USD', tasa: tasaBCV, fecha_actualizacion: new Date().toISOString() }) });
-                    actualizarIndicadorTasa(new Date().toISOString()); actualizarUI_Carrito();
-                } else throw new Error("Datos del BCV inválidos.");
-            } catch (e) { alert("Error BCV: El servidor oficial no responde. Por favor verifica la tasa en internet e ingrésala manualmente."); actualizarIndicadorTasa(new Date(0).toISOString(), true); } 
-            finally { btn.disabled = false; icon.classList.remove('fa-spin'); tUsd.classList.remove('bg-blue-100'); }
+                    await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ moneda: 'USD', tasa: tasaBCVCalculo, fecha_actualizacion: ahora }) });
+                    actualizarIndicadorTasa(ahora); 
+                    actualizarBadgeFechaTasa('USD', ahora);
+                    actualizoUsd = true;
+                }
+                
+                // EUR
+                if (resEur.ok) {
+                    const dataEur = await resEur.json();
+                    if (dataEur && dataEur.promedio) {
+                        tasaBCVEur = parseFloat(dataEur.promedio); 
+                        tasaBCVEurCalculo = truncarTasa(tasaBCVEur);
+                        document.getElementById('input-tasa-eur').value = tasaBCVEur.toFixed(4);
+                        await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?moneda=eq.EUR`, { method: 'DELETE', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                        await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ moneda: 'EUR', tasa: tasaBCVEur, fecha_actualizacion: ahora }) });
+                        actualizarBadgeFechaTasa('EUR', ahora);
+                        actualizoEur = true;
+                    }
+                }
+                
+                actualizarUI_Carrito();
+                
+                if (!actualizoUsd) throw new Error("Datos del BCV inválidos.");
+            } catch (e) { 
+                alert("Error BCV: El servidor oficial no responde. Por favor verifica la tasa en internet e ingrésala manualmente.\n\nDetalle: " + e.message); 
+                actualizarIndicadorTasa(new Date(0).toISOString(), true); 
+            } finally { 
+                btn.disabled = false; 
+                icon.classList.remove('fa-spin'); 
+                tUsd.classList.remove('bg-blue-100'); 
+                tEur.classList.remove('bg-blue-100');
+            }
         }
 
-        function guardarTasaManual(moneda, valor) { const tasa = parseFloat(valor); if (isNaN(tasa) || tasa <= 0) return; if (moneda === 'USD') { tasaBCV = tasa; actualizarUI_Carrito(); } if (moneda === 'EUR') tasaBCVEur = tasa; }
+        function guardarTasaManual(moneda, valor) { 
+            const tasa = parseFloat(valor); 
+            if (isNaN(tasa) || tasa <= 0) return; 
+            if (moneda === 'USD') { 
+                tasaBCV = tasa; 
+                tasaBCVCalculo = truncarTasa(tasa);
+                actualizarUI_Carrito(); 
+            } 
+            if (moneda === 'EUR') {
+                tasaBCVEur = tasa;
+                tasaBCVEurCalculo = truncarTasa(tasa);
+            }
+        }
     </script>
 </body>
 </html>
