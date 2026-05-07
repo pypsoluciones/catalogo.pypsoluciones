@@ -200,34 +200,32 @@
             </div>
 
             <div>
-                <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Caja de destino *</label>
-                <select id="asig-destino" required class="w-full border border-gray-300 rounded px-3 py-2 text-xs font-bold uppercase focus:border-secondary outline-none bg-white"></select>
+                <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Cajero destinatario *</label>
+                <select id="asig-cajero" required class="w-full border border-gray-300 rounded px-3 py-2 text-xs font-bold uppercase focus:border-secondary outline-none bg-white"></select>
+                <p class="text-[10px] text-gray-500 mt-1">El fondo será asignado a la caja chica del cajero seleccionado.</p>
             </div>
 
             <div>
-                <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Asignar a Cajero (opcional)</label>
-                <select id="asig-cajero" class="w-full border border-gray-300 rounded px-3 py-2 text-xs font-bold uppercase focus:border-secondary outline-none bg-white">
-                    <option value="">(Cualquier cajero podrá aceptar)</option>
-                </select>
-                <p class="text-[10px] text-gray-500 mt-1">Si especificas un cajero, solo él podrá aceptar este fondo.</p>
-            </div>
-
-            <div class="grid grid-cols-2 gap-3">
-                <div class="bg-green-50 border border-green-200 rounded p-2">
-                    <label class="block text-[9px] font-bold text-green-800 uppercase mb-1">Monto USD ($)</label>
-                    <input type="number" id="asig-usd" step="0.01" min="0" placeholder="0.00" class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm font-black text-center outline-none bg-white focus:border-secondary">
-                    <p class="text-[9px] text-green-700 mt-1" id="asig-disp-usd">Disponible: $0.00</p>
-                </div>
-                <div class="bg-blue-50 border border-blue-200 rounded p-2">
-                    <label class="block text-[9px] font-bold text-blue-800 uppercase mb-1">Monto Bs</label>
-                    <input type="number" id="asig-bs" step="0.01" min="0" placeholder="0.00" class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm font-black text-center outline-none bg-white focus:border-secondary">
-                    <p class="text-[9px] text-blue-700 mt-1" id="asig-disp-bs">Disponible: Bs 0.00</p>
+                <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Moneda *</label>
+                <div class="grid grid-cols-2 gap-2">
+                    <label class="flex items-center gap-2 cursor-pointer bg-white border-2 border-gray-200 rounded p-2 hover:border-green-400 transition has-[:checked]:border-green-500 has-[:checked]:bg-green-50">
+                        <input type="radio" name="asig-moneda" value="USD" checked onchange="onChangeMonedaAsig()" class="text-green-600"><span class="text-xs font-black text-green-700">USD ($)</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer bg-white border-2 border-gray-200 rounded p-2 hover:border-blue-400 transition has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50">
+                        <input type="radio" name="asig-moneda" value="BS" onchange="onChangeMonedaAsig()" class="text-blue-600"><span class="text-xs font-black text-blue-700">Bolívares (Bs)</span>
+                    </label>
                 </div>
             </div>
 
             <div>
-                <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Concepto</label>
-                <input type="text" id="asig-concepto" maxlength="200" placeholder="Apertura turno, refuerzo de caja..." class="w-full border border-gray-300 rounded px-3 py-2 text-xs uppercase outline-none focus:border-secondary">
+                <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Monto *</label>
+                <input type="number" id="asig-monto" required step="0.01" min="0.01" placeholder="0.00" class="w-full border border-gray-300 rounded px-3 py-2 text-lg font-black text-center outline-none bg-white focus:border-secondary">
+                <p class="text-[10px] text-gray-500 mt-1" id="asig-disp">Disponible: $0.00</p>
+            </div>
+
+            <div>
+                <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Concepto *</label>
+                <input type="text" id="asig-concepto" required minlength="3" maxlength="200" placeholder="Apertura turno, refuerzo de caja..." class="w-full border border-gray-300 rounded px-3 py-2 text-xs uppercase outline-none focus:border-secondary">
             </div>
 
             <button type="submit" id="btn-guardar-asig" class="w-full bg-secondary hover:opacity-90 text-white font-bold py-2.5 rounded shadow btn-press uppercase text-[11px] tracking-wider transition mt-2">Emitir Transferencia</button>
@@ -257,17 +255,22 @@
                 <select id="mov-subtipo" required class="w-full mt-1 border border-gray-300 rounded-lg p-2 text-sm bg-white outline-none focus:border-primary"></select>
             </div>
 
-            <div class="grid grid-cols-2 gap-3">
-                <div>
-                    <label class="text-[10px] font-bold text-gray-600 uppercase tracking-wide">Monto USD</label>
-                    <input id="mov-monto-usd" type="number" step="0.01" min="0" placeholder="0.00" class="w-full mt-1 border border-gray-300 rounded-lg p-2 text-sm font-mono outline-none focus:border-primary">
-                </div>
-                <div>
-                    <label class="text-[10px] font-bold text-gray-600 uppercase tracking-wide">Monto Bs</label>
-                    <input id="mov-monto-bs" type="number" step="0.01" min="0" placeholder="0.00" class="w-full mt-1 border border-gray-300 rounded-lg p-2 text-sm font-mono outline-none focus:border-primary">
+            <div>
+                <label class="text-[10px] font-bold text-gray-600 uppercase tracking-wide">Moneda *</label>
+                <div class="grid grid-cols-2 gap-2 mt-1">
+                    <label class="flex items-center justify-center gap-2 cursor-pointer bg-white border-2 border-gray-200 rounded p-2 hover:border-green-400 transition has-[:checked]:border-green-500 has-[:checked]:bg-green-50">
+                        <input type="radio" name="mov-moneda" value="USD" checked onchange="onChangeMonedaMov()" class="text-green-600"><span class="text-xs font-black text-green-700">USD ($)</span>
+                    </label>
+                    <label class="flex items-center justify-center gap-2 cursor-pointer bg-white border-2 border-gray-200 rounded p-2 hover:border-blue-400 transition has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50">
+                        <input type="radio" name="mov-moneda" value="BS" onchange="onChangeMonedaMov()" class="text-blue-600"><span class="text-xs font-black text-blue-700">Bolívares (Bs)</span>
+                    </label>
                 </div>
             </div>
-            <p class="text-[9px] text-gray-500 italic">Puede ingresar uno o ambos montos. Al menos uno debe ser mayor a cero.</p>
+
+            <div>
+                <label class="text-[10px] font-bold text-gray-600 uppercase tracking-wide">Monto *</label>
+                <input id="mov-monto" type="number" step="0.01" min="0.01" required placeholder="0.00" class="w-full mt-1 border border-gray-300 rounded-lg p-2 text-lg font-black text-center font-mono outline-none focus:border-primary">
+            </div>
 
             <div>
                 <label class="text-[10px] font-bold text-gray-600 uppercase tracking-wide">Concepto *</label>
@@ -285,6 +288,64 @@
             </div>
 
             <button type="submit" id="btn-guardar-mov" class="w-full bg-primary hover:opacity-90 text-white font-black py-2.5 rounded-lg uppercase text-[11px] tracking-wide btn-press transition shadow-md mt-2"><i class="fa-solid fa-check mr-1"></i> Confirmar Movimiento</button>
+        </form>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     MODAL: TRANSFERENCIA INTERNA (bóveda ↔ cuenta bancaria ↔ caja chica)
+     ════════════════════════════════════════════════════════════════ -->
+<div id="modal-transferencia" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[9990] hidden flex items-center justify-center p-4 fade-in">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col border border-gray-200">
+        <div class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-4 shrink-0">
+            <div class="flex justify-between items-center">
+                <h3 class="font-black text-sm tracking-wide uppercase flex items-center gap-2"><i class="fa-solid fa-right-left"></i> Transferencia Interna</h3>
+                <button onclick="cerrarModalTransferencia()" class="text-white/70 hover:text-white transition"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <p class="text-[11px] font-bold mt-1 opacity-90">Mover dinero entre bóveda y cuentas internas</p>
+        </div>
+        <form id="form-transferencia" onsubmit="guardarTransferencia(event)" class="p-5 bg-gray-50 space-y-3">
+            <div>
+                <label class="text-[10px] font-bold text-gray-600 uppercase tracking-wide">Origen *</label>
+                <select id="trf-origen" required onchange="onChangeTrfOrigen()" class="w-full mt-1 border border-gray-300 rounded-lg p-2 text-sm bg-white outline-none focus:border-purple-500"></select>
+                <p id="trf-origen-saldo" class="text-[10px] text-gray-500 mt-1"></p>
+            </div>
+
+            <div class="flex justify-center"><i class="fa-solid fa-arrow-down text-purple-500 text-xl"></i></div>
+
+            <div>
+                <label class="text-[10px] font-bold text-gray-600 uppercase tracking-wide">Destino *</label>
+                <select id="trf-destino" required class="w-full mt-1 border border-gray-300 rounded-lg p-2 text-sm bg-white outline-none focus:border-purple-500"></select>
+            </div>
+
+            <div>
+                <label class="text-[10px] font-bold text-gray-600 uppercase tracking-wide">Moneda *</label>
+                <div class="grid grid-cols-2 gap-2 mt-1">
+                    <label class="flex items-center justify-center gap-2 cursor-pointer bg-white border-2 border-gray-200 rounded p-2 hover:border-green-400 transition has-[:checked]:border-green-500 has-[:checked]:bg-green-50">
+                        <input type="radio" name="trf-moneda" value="USD" checked onchange="onChangeTrfOrigen()" class="text-green-600"><span class="text-xs font-black text-green-700">USD ($)</span>
+                    </label>
+                    <label class="flex items-center justify-center gap-2 cursor-pointer bg-white border-2 border-gray-200 rounded p-2 hover:border-blue-400 transition has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50">
+                        <input type="radio" name="trf-moneda" value="BS" onchange="onChangeTrfOrigen()" class="text-blue-600"><span class="text-xs font-black text-blue-700">Bolívares (Bs)</span>
+                    </label>
+                </div>
+            </div>
+
+            <div>
+                <label class="text-[10px] font-bold text-gray-600 uppercase tracking-wide">Monto *</label>
+                <input id="trf-monto" type="number" step="0.01" min="0.01" required placeholder="0.00" class="w-full mt-1 border border-gray-300 rounded-lg p-2 text-lg font-black text-center font-mono outline-none focus:border-purple-500">
+            </div>
+
+            <div>
+                <label class="text-[10px] font-bold text-gray-600 uppercase tracking-wide">Concepto *</label>
+                <input id="trf-concepto" type="text" required minlength="3" maxlength="200" class="w-full mt-1 border border-gray-300 rounded-lg p-2 text-sm outline-none focus:border-purple-500" placeholder="Ej: Reposición caja chica desde bóveda">
+            </div>
+
+            <div>
+                <label class="text-[10px] font-bold text-gray-600 uppercase tracking-wide">Referencia</label>
+                <input id="trf-referencia" type="text" maxlength="200" class="w-full mt-1 border border-gray-300 rounded-lg p-2 text-sm outline-none focus:border-purple-500" placeholder="Comprobante (opcional)">
+            </div>
+
+            <button type="submit" id="btn-guardar-trf" class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:opacity-90 text-white font-black py-2.5 rounded-lg uppercase text-[11px] tracking-wide btn-press transition shadow-md mt-2"><i class="fa-solid fa-right-left mr-1"></i> Confirmar Transferencia</button>
         </form>
     </div>
 </div>
@@ -639,7 +700,7 @@ function renderTarjetaBoveda(c) {
             : ''}
 
         <!-- Botones de acción inline (Opción C) -->
-        <div class="mt-3 grid grid-cols-3 gap-1.5 relative">
+        <div class="mt-3 grid grid-cols-2 gap-1.5 relative">
             <button onclick="abrirModalMovimiento('BOVEDA', '${c.id}', 'INGRESO', '${escapeHtml(c.nombre).replace(/'/g, "\\'")}')"
                 class="bg-green-500/30 hover:bg-green-500/50 border border-green-400/40 text-white py-1.5 rounded text-[9px] font-black uppercase tracking-wider btn-press transition flex items-center justify-center gap-1">
                 <i class="fa-solid fa-arrow-down"></i> Ingreso
@@ -647,6 +708,10 @@ function renderTarjetaBoveda(c) {
             <button onclick="abrirModalMovimiento('BOVEDA', '${c.id}', 'EGRESO', '${escapeHtml(c.nombre).replace(/'/g, "\\'")}')"
                 class="bg-red-500/30 hover:bg-red-500/50 border border-red-400/40 text-white py-1.5 rounded text-[9px] font-black uppercase tracking-wider btn-press transition flex items-center justify-center gap-1">
                 <i class="fa-solid fa-arrow-up"></i> Egreso
+            </button>
+            <button onclick="abrirModalTransferencia('BOVEDA', '${c.id}')"
+                class="bg-purple-500/30 hover:bg-purple-500/50 border border-purple-400/40 text-white py-1.5 rounded text-[9px] font-black uppercase tracking-wider btn-press transition flex items-center justify-center gap-1">
+                <i class="fa-solid fa-right-left"></i> Transferir
             </button>
             <button onclick="abrirModalHistorial('BOVEDA', '${c.id}', '${escapeHtml(c.nombre).replace(/'/g, "\\'")}')"
                 class="bg-white/10 hover:bg-white/20 border border-white/20 text-white py-1.5 rounded text-[9px] font-black uppercase tracking-wider btn-press transition flex items-center justify-center gap-1">
@@ -712,7 +777,7 @@ function renderTarjetaCuenta(c) {
         </div>
 
         <!-- Botones de acción inline (Opción C) -->
-        <div class="mt-3 grid grid-cols-3 gap-1.5">
+        <div class="mt-3 grid grid-cols-2 gap-1.5">
             <button onclick="abrirModalMovimiento('CUENTA', '${c.id}', 'INGRESO', '${escapeHtml(c.nombre).replace(/'/g, "\\'")}')"
                 class="bg-green-50 hover:bg-green-100 border border-green-200 text-green-700 py-1.5 rounded text-[9px] font-black uppercase tracking-wider btn-press transition flex items-center justify-center gap-1">
                 <i class="fa-solid fa-arrow-down"></i> Ingreso
@@ -720,6 +785,10 @@ function renderTarjetaCuenta(c) {
             <button onclick="abrirModalMovimiento('CUENTA', '${c.id}', 'EGRESO', '${escapeHtml(c.nombre).replace(/'/g, "\\'")}')"
                 class="bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 py-1.5 rounded text-[9px] font-black uppercase tracking-wider btn-press transition flex items-center justify-center gap-1">
                 <i class="fa-solid fa-arrow-up"></i> Egreso
+            </button>
+            <button onclick="abrirModalTransferencia('CUENTA', '${c.id}')"
+                class="bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-700 py-1.5 rounded text-[9px] font-black uppercase tracking-wider btn-press transition flex items-center justify-center gap-1">
+                <i class="fa-solid fa-right-left"></i> Transferir
             </button>
             <button onclick="abrirModalHistorial('CUENTA', '${c.id}', '${escapeHtml(c.nombre).replace(/'/g, "\\'")}')"
                 class="bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-700 py-1.5 rounded text-[9px] font-black uppercase tracking-wider btn-press transition flex items-center justify-center gap-1">
@@ -886,21 +955,21 @@ function abrirModalAsignarFondo() {
         return alert("⛔ Solo SuperAdmin, Admin o Supervisor pueden asignar fondos.");
     }
     document.getElementById('form-asignar-fondo').reset();
+    document.querySelector('input[name="asig-moneda"][value="USD"]').checked = true;
 
     // Origen: bóveda + cuentas tipo BANCO
     const origenes = dbCuentas.filter(c => c.es_boveda || c.tipo_cuenta === 'BANCO');
     document.getElementById('asig-origen').innerHTML = '<option value="">Selecciona origen...</option>' +
         origenes.map(c => `<option value="${c.id}|${c.es_boveda ? 'BOVEDA' : 'CUENTA'}">${c.es_boveda ? '🏦 ' : '🏛️ '}${escapeHtml(c.nombre)}</option>`).join('');
 
-    // Destino: cajas chicas
-    const cajas = dbCuentas.filter(c => c.tipo_cuenta === 'CAJA_CHICA');
-    document.getElementById('asig-destino').innerHTML = '<option value="">Selecciona destino...</option>' +
-        cajas.map(c => `<option value="${c.id}">💰 ${escapeHtml(c.nombre)}${c.cajero_nombre ? ' (' + escapeHtml(c.cajero_nombre) + ')' : ''}</option>`).join('');
-
-    // Cajeros
+    // Cajero (obligatorio, sin opción "cualquier cajero")
     const cajeros = dbUsuarios.filter(u => u.auth_id);
-    document.getElementById('asig-cajero').innerHTML = '<option value="">(Cualquier cajero podrá aceptar)</option>' +
-        cajeros.map(u => `<option value="${u.auth_id}">${escapeHtml(u.nombre_completo)} (${escapeHtml(u.usuario_login)})</option>`).join('');
+    if (cajeros.length === 0) {
+        document.getElementById('asig-cajero').innerHTML = '<option value="">⚠️ No hay cajeros registrados</option>';
+    } else {
+        document.getElementById('asig-cajero').innerHTML = '<option value="">Selecciona cajero...</option>' +
+            cajeros.map(u => `<option value="${u.auth_id}">${escapeHtml(u.nombre_completo)} (${escapeHtml(u.usuario_login)})</option>`).join('');
+    }
 
     actualizarLimitesAsignacion();
 
@@ -911,21 +980,25 @@ function cerrarModalAsignarFondo() {
     document.getElementById('modal-asignar-fondo').classList.add('hidden');
     document.getElementById('modal-asignar-fondo').classList.remove('flex');
 }
+function onChangeMonedaAsig() {
+    actualizarLimitesAsignacion();
+}
 function actualizarLimitesAsignacion() {
     const sel = document.getElementById('asig-origen').value;
+    const monedaEl = document.querySelector('input[name="asig-moneda"]:checked');
+    const moneda = monedaEl ? monedaEl.value : 'USD';
+    const dispEl = document.getElementById('asig-disp');
     if (!sel) {
-        document.getElementById('asig-disp-usd').textContent = 'Disponible: $0.00';
-        document.getElementById('asig-disp-bs').textContent = 'Disponible: Bs 0.00';
+        if (dispEl) dispEl.textContent = `Disponible: ${moneda === 'USD' ? '$0.00' : 'Bs 0.00'}`;
         document.getElementById('asig-origen-info').textContent = '';
         return;
     }
     const [id] = sel.split('|');
     const c = dbCuentas.find(x => x.id === id);
     if (c) {
-        document.getElementById('asig-disp-usd').textContent = `Disponible: $${fmt(c.saldo_disponible_usd)}`;
-        document.getElementById('asig-disp-bs').textContent = `Disponible: Bs ${fmt(c.saldo_disponible_bs)}`;
-        document.getElementById('asig-usd').max = c.saldo_disponible_usd;
-        document.getElementById('asig-bs').max = c.saldo_disponible_bs;
+        const disp = moneda === 'USD' ? `$${fmt(c.saldo_disponible_usd)}` : `Bs ${fmt(c.saldo_disponible_bs)}`;
+        if (dispEl) dispEl.textContent = `Disponible: ${disp}`;
+        document.getElementById('asig-monto').max = moneda === 'USD' ? c.saldo_disponible_usd : c.saldo_disponible_bs;
         let info = '';
         if (parseFloat(c.en_transito_usd) > 0 || parseFloat(c.en_transito_bs) > 0) {
             info = `⚠️ Esta cuenta tiene dinero en tránsito reservado.`;
@@ -939,35 +1012,38 @@ async function procesarAsignacionFondo(e) {
     const btn = document.getElementById('btn-guardar-asig'); btn.disabled = true;
 
     const origenSel = document.getElementById('asig-origen').value;
-    const destinoSel = document.getElementById('asig-destino').value;
-    const cajero = document.getElementById('asig-cajero').value || null;
-    const usd = parseFloat(document.getElementById('asig-usd').value) || 0;
-    const bs = parseFloat(document.getElementById('asig-bs').value) || 0;
-    const concepto = document.getElementById('asig-concepto').value.trim() || null;
+    const cajero = document.getElementById('asig-cajero').value;
+    const moneda = document.querySelector('input[name="asig-moneda"]:checked').value;
+    const monto = parseFloat(document.getElementById('asig-monto').value) || 0;
+    const concepto = document.getElementById('asig-concepto').value.trim();
 
-    if (!origenSel || !destinoSel) { alert("Selecciona origen y destino."); btn.disabled = false; return; }
-    if (usd === 0 && bs === 0) { alert("Debes asignar al menos USD o Bs."); btn.disabled = false; return; }
+    if (!origenSel) { alert("⛔ Selecciona el origen del fondo."); btn.disabled = false; return; }
+    if (!cajero) { alert("⛔ Selecciona el cajero destinatario."); btn.disabled = false; return; }
+    if (monto <= 0) { alert("⛔ El monto debe ser mayor a cero."); btn.disabled = false; return; }
+    if (concepto.length < 3) { alert("⛔ El concepto debe tener al menos 3 caracteres."); btn.disabled = false; return; }
 
     const [idOrigen, tipoOrigen] = origenSel.split('|');
+    const montoUsd = moneda === 'USD' ? red(monto) : 0;
+    const montoBs  = moneda === 'BS'  ? red(monto) : 0;
 
     mostrarCarga("Emitiendo transferencia...");
     try {
         const r = await rpc('solicitar_transferencia_fondo', {
             p_id_origen: idOrigen,
             p_tipo_origen: tipoOrigen,
-            p_id_cuenta_destino: destinoSel,
-            p_monto_usd: red(usd),
-            p_monto_bs: red(bs),
+            p_id_cuenta_destino: null,
+            p_monto_usd: montoUsd,
+            p_monto_bs: montoBs,
             p_auth_id_receptor: cajero,
             p_concepto: concepto
         });
         cerrarErrorCarga();
         cerrarModalAsignarFondo();
-        alert(`✅ Transferencia emitida.\n\nNro. operación: ${r.numero_operacion}\n\nEl cajero${cajero ? '' : ' destino'} debe aceptarla.`);
+        alert(`✅ Transferencia emitida al cajero seleccionado.\n\nNro. operación: ${r.numero_operacion}\n\nEl cajero debe aceptarla desde su sesión.`);
         await cargarDatos();
     } catch (err) {
         cerrarErrorCarga();
-        alert("❌ " + err.message);
+        alert("❌ " + (err.message || 'Error desconocido').substring(0, 220));
     } finally {
         btn.disabled = false;
     }
@@ -1252,10 +1328,10 @@ function abrirModalMovimiento(tipoTarget, idTarget, direccion, nombreCuenta) {
     select.innerHTML = opciones.map(o => `<option value="${o.value}">${o.label}</option>`).join('');
 
     // Reset campos
-    document.getElementById('mov-monto-usd').value = '';
-    document.getElementById('mov-monto-bs').value = '';
+    document.getElementById('mov-monto').value = '';
     document.getElementById('mov-concepto').value = '';
     document.getElementById('mov-referencia').value = '';
+    document.querySelector('input[name="mov-moneda"][value="USD"]').checked = true;
 
     // Mostrar saldo actual
     const cuenta = dbCuentas.find(c => c.id === idTarget);
@@ -1277,6 +1353,10 @@ function cerrarModalMovimiento() {
     movContextoActual = null;
 }
 
+function onChangeMonedaMov() {
+    // Solo cosmético: el saldo actual ya muestra ambos
+}
+
 async function guardarMovimiento(e) {
     e.preventDefault();
     if (!movContextoActual) return;
@@ -1287,14 +1367,14 @@ async function guardarMovimiento(e) {
     const tipoTarget = movContextoActual.tipoTarget;
     const idTarget = movContextoActual.idTarget;
     const subtipo = document.getElementById('mov-subtipo').value;
-    const montoUsd = parseFloat(document.getElementById('mov-monto-usd').value) || 0;
-    const montoBs = parseFloat(document.getElementById('mov-monto-bs').value) || 0;
+    const moneda = document.querySelector('input[name="mov-moneda"]:checked').value;
+    const monto = parseFloat(document.getElementById('mov-monto').value) || 0;
     const concepto = document.getElementById('mov-concepto').value.trim();
     const referencia = document.getElementById('mov-referencia').value.trim() || null;
 
-    if (montoUsd <= 0 && montoBs <= 0) {
+    if (monto <= 0) {
         btn.disabled = false;
-        return alert("⛔ Debe ingresar al menos un monto positivo (USD o Bs).");
+        return alert("⛔ El monto debe ser mayor a cero.");
     }
     if (concepto.length < 3) {
         btn.disabled = false;
@@ -1309,8 +1389,8 @@ async function guardarMovimiento(e) {
             payload = {
                 p_id_boveda: idTarget,
                 p_tipo: subtipo,
-                p_monto_usd: montoUsd,
-                p_monto_bs: montoBs,
+                p_moneda: moneda,
+                p_monto: monto,
                 p_concepto: concepto,
                 p_referencia: referencia
             };
@@ -1319,20 +1399,20 @@ async function guardarMovimiento(e) {
             payload = {
                 p_id_cuenta: idTarget,
                 p_tipo: subtipo,
-                p_monto_usd: montoUsd,
-                p_monto_bs: montoBs,
+                p_moneda: moneda,
+                p_monto: monto,
                 p_concepto: concepto,
                 p_referencia: referencia
             };
         }
 
-        await rpc(rpcName, payload);
+        const r = await rpc(rpcName, payload);
         cerrarErrorCarga();
         cerrarModalMovimiento();
+        alert(`✅ Movimiento registrado.\n\nNro. operación: ${r.numero_operacion}`);
         await cargarDatos();
     } catch (err) {
         cerrarErrorCarga();
-        // Mensaje limpio (filosofía Cero Soporte)
         let msg = err.message || 'Error desconocido';
         if (msg.length > 220) msg = msg.substring(0, 220) + '…';
         alert("❌ " + msg);
@@ -1393,6 +1473,8 @@ function renderHistorial(movs, tipoTarget) {
         const concepto = m.concepto || m.tipo;
         const referencia = m.referencia || m.observaciones || '';
         const usuario = m.usuario || '';
+        const numOp = m.numero_operacion || '';
+        const moneda = parseFloat(m.monto_usd) > 0 ? 'USD' : 'BS';
 
         html += `
         <div class="${colorBg} border rounded-lg p-2.5 flex items-center gap-3">
@@ -1400,7 +1482,11 @@ function renderHistorial(movs, tipoTarget) {
                 <i class="fa-solid ${icono} text-[11px]"></i>
             </div>
             <div class="flex-1 min-w-0">
-                <p class="text-[11px] font-black ${colorTxt} uppercase tracking-wide truncate">${escapeHtml(m.tipo)}</p>
+                <div class="flex items-center gap-2 flex-wrap">
+                    <p class="text-[11px] font-black ${colorTxt} uppercase tracking-wide">${escapeHtml(m.tipo)}</p>
+                    ${numOp ? `<span class="text-[8px] font-mono font-black bg-gray-800 text-white px-1.5 py-0.5 rounded">${escapeHtml(numOp)}</span>` : ''}
+                    <span class="text-[8px] font-mono font-black ${moneda === 'USD' ? 'bg-green-600' : 'bg-blue-600'} text-white px-1.5 py-0.5 rounded">${moneda}</span>
+                </div>
                 <p class="text-[10px] text-gray-700 font-bold truncate">${escapeHtml(concepto)}</p>
                 ${referencia ? `<p class="text-[9px] text-gray-500 italic truncate">Ref: ${escapeHtml(referencia)}</p>` : ''}
                 <p class="text-[8px] text-gray-400 font-mono mt-0.5">${fechaStr}${usuario ? ' · ' + escapeHtml(usuario) : ''}</p>
@@ -1416,6 +1502,120 @@ function renderHistorial(movs, tipoTarget) {
         html += `<p class="text-center text-[10px] text-gray-500 italic mt-3">Mostrando los últimos 100 movimientos</p>`;
     }
     cont.innerHTML = html;
+}
+
+// ════════════════════════════════════════════════════════════════
+// MÓDULO DE TRANSFERENCIA INTERNA (bóveda ↔ cuenta)
+// ════════════════════════════════════════════════════════════════
+let trfContextoOrigen = null;  // { tipo, id }
+
+function abrirModalTransferencia(tipoOrigen, idOrigen) {
+    trfContextoOrigen = { tipo: tipoOrigen, id: idOrigen };
+
+    document.getElementById('form-transferencia').reset();
+    document.querySelector('input[name="trf-moneda"][value="USD"]').checked = true;
+
+    // Construir lista combinada de orígenes (bóvedas + cuentas no caja chica usualmente, pero permitimos todas)
+    const opcionesOrigen = dbCuentas.filter(c => true).map(c => {
+        const tipo = c.es_boveda ? 'BOVEDA' : 'CUENTA';
+        const icon = c.es_boveda ? '🏦' : (c.tipo_cuenta === 'BANCO' ? '🏛️' : (c.tipo_cuenta === 'CAJA_CHICA' ? '💰' : '💼'));
+        return { tipo, id: c.id, label: `${icon} ${c.nombre}`, c };
+    });
+
+    const selOrigen = document.getElementById('trf-origen');
+    selOrigen.innerHTML = '<option value="">Selecciona origen...</option>' +
+        opcionesOrigen.map(o => `<option value="${o.id}|${o.tipo}" ${o.id === idOrigen ? 'selected' : ''}>${escapeHtml(o.label)}</option>`).join('');
+
+    rebuildTrfDestinos();
+    selOrigen.addEventListener('change', rebuildTrfDestinos, { once: false });
+
+    onChangeTrfOrigen();
+    document.getElementById('modal-transferencia').classList.remove('hidden');
+    document.getElementById('modal-transferencia').classList.add('flex');
+}
+
+function rebuildTrfDestinos() {
+    const origenSel = document.getElementById('trf-origen').value;
+    const [origenId] = origenSel.split('|');
+
+    // Destino: cualquier cuenta/bóveda excepto el origen
+    const opcionesDestino = dbCuentas.filter(c => c.id !== origenId).map(c => {
+        const tipo = c.es_boveda ? 'BOVEDA' : 'CUENTA';
+        const icon = c.es_boveda ? '🏦' : (c.tipo_cuenta === 'BANCO' ? '🏛️' : (c.tipo_cuenta === 'CAJA_CHICA' ? '💰' : '💼'));
+        const cajeroTag = c.cajero_nombre ? ` (${c.cajero_nombre})` : '';
+        return { tipo, id: c.id, label: `${icon} ${c.nombre}${cajeroTag}` };
+    });
+
+    const selDestino = document.getElementById('trf-destino');
+    selDestino.innerHTML = '<option value="">Selecciona destino...</option>' +
+        opcionesDestino.map(o => `<option value="${o.id}|${o.tipo}">${escapeHtml(o.label)}</option>`).join('');
+}
+
+function onChangeTrfOrigen() {
+    const sel = document.getElementById('trf-origen').value;
+    const monedaEl = document.querySelector('input[name="trf-moneda"]:checked');
+    const moneda = monedaEl ? monedaEl.value : 'USD';
+    const saldoEl = document.getElementById('trf-origen-saldo');
+
+    if (!sel) { saldoEl.textContent = ''; return; }
+    const [id] = sel.split('|');
+    const c = dbCuentas.find(x => x.id === id);
+    if (c) {
+        const disp = moneda === 'USD' ? `$${fmt(c.saldo_disponible_usd)}` : `Bs ${fmt(c.saldo_disponible_bs)}`;
+        saldoEl.textContent = `Saldo disponible: ${disp}`;
+        document.getElementById('trf-monto').max = moneda === 'USD' ? c.saldo_disponible_usd : c.saldo_disponible_bs;
+    }
+}
+
+function cerrarModalTransferencia() {
+    document.getElementById('modal-transferencia').classList.add('hidden');
+    document.getElementById('modal-transferencia').classList.remove('flex');
+    trfContextoOrigen = null;
+}
+
+async function guardarTransferencia(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btn-guardar-trf');
+    btn.disabled = true;
+
+    const origenSel = document.getElementById('trf-origen').value;
+    const destinoSel = document.getElementById('trf-destino').value;
+    const moneda = document.querySelector('input[name="trf-moneda"]:checked').value;
+    const monto = parseFloat(document.getElementById('trf-monto').value) || 0;
+    const concepto = document.getElementById('trf-concepto').value.trim();
+    const referencia = document.getElementById('trf-referencia').value.trim() || null;
+
+    if (!origenSel) { btn.disabled = false; return alert("⛔ Selecciona el origen."); }
+    if (!destinoSel) { btn.disabled = false; return alert("⛔ Selecciona el destino."); }
+    if (origenSel === destinoSel) { btn.disabled = false; return alert("⛔ Origen y destino no pueden ser iguales."); }
+    if (monto <= 0) { btn.disabled = false; return alert("⛔ El monto debe ser mayor a cero."); }
+    if (concepto.length < 3) { btn.disabled = false; return alert("⛔ El concepto debe tener al menos 3 caracteres."); }
+
+    const [idOrigen, tipoOrigen] = origenSel.split('|');
+    const [idDestino, tipoDestino] = destinoSel.split('|');
+
+    mostrarCarga("Procesando transferencia...");
+    try {
+        const r = await rpc('registrar_transferencia_interna', {
+            p_origen_tipo: tipoOrigen,
+            p_origen_id: idOrigen,
+            p_destino_tipo: tipoDestino,
+            p_destino_id: idDestino,
+            p_moneda: moneda,
+            p_monto: monto,
+            p_concepto: concepto,
+            p_referencia: referencia
+        });
+        cerrarErrorCarga();
+        cerrarModalTransferencia();
+        alert(`✅ Transferencia completada.\n\nNro. operación: ${r.numero_operacion}`);
+        await cargarDatos();
+    } catch (err) {
+        cerrarErrorCarga();
+        alert("❌ " + (err.message || 'Error desconocido').substring(0, 220));
+    } finally {
+        btn.disabled = false;
+    }
 }
 </script>
 
