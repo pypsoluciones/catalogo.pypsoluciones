@@ -236,6 +236,75 @@
 </div>
 
 <!-- ════════════════════════════════════════════════════════════════
+     MODAL: REGISTRAR MOVIMIENTO (Ingreso / Egreso)
+     ════════════════════════════════════════════════════════════════ -->
+<div id="modal-movimiento" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[9990] hidden flex items-center justify-center p-4 fade-in">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col border border-gray-200">
+        <div id="mov-header" class="p-4 text-white shrink-0">
+            <div class="flex justify-between items-center">
+                <h3 id="mov-titulo" class="font-black text-sm tracking-wide uppercase flex items-center gap-2"><i id="mov-icono" class="fa-solid fa-arrow-down"></i><span id="mov-titulo-txt">Ingreso</span></h3>
+                <button onclick="cerrarModalMovimiento()" class="text-white/70 hover:text-white transition"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <p id="mov-cuenta-nombre" class="text-[11px] font-bold mt-1 opacity-90"></p>
+        </div>
+        <form id="form-movimiento" onsubmit="guardarMovimiento(event)" class="p-5 bg-gray-50 space-y-3">
+            <input type="hidden" id="mov-target-tipo">
+            <input type="hidden" id="mov-target-id">
+            <input type="hidden" id="mov-direccion">
+
+            <div>
+                <label class="text-[10px] font-bold text-gray-600 uppercase tracking-wide">Subtipo *</label>
+                <select id="mov-subtipo" required class="w-full mt-1 border border-gray-300 rounded-lg p-2 text-sm bg-white outline-none focus:border-primary"></select>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="text-[10px] font-bold text-gray-600 uppercase tracking-wide">Monto USD</label>
+                    <input id="mov-monto-usd" type="number" step="0.01" min="0" placeholder="0.00" class="w-full mt-1 border border-gray-300 rounded-lg p-2 text-sm font-mono outline-none focus:border-primary">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-gray-600 uppercase tracking-wide">Monto Bs</label>
+                    <input id="mov-monto-bs" type="number" step="0.01" min="0" placeholder="0.00" class="w-full mt-1 border border-gray-300 rounded-lg p-2 text-sm font-mono outline-none focus:border-primary">
+                </div>
+            </div>
+            <p class="text-[9px] text-gray-500 italic">Puede ingresar uno o ambos montos. Al menos uno debe ser mayor a cero.</p>
+
+            <div>
+                <label class="text-[10px] font-bold text-gray-600 uppercase tracking-wide">Concepto *</label>
+                <input id="mov-concepto" type="text" required minlength="3" maxlength="200" class="w-full mt-1 border border-gray-300 rounded-lg p-2 text-sm outline-none focus:border-primary" placeholder="Ej: Depósito inicial de capital">
+            </div>
+
+            <div>
+                <label class="text-[10px] font-bold text-gray-600 uppercase tracking-wide">Referencia</label>
+                <input id="mov-referencia" type="text" maxlength="200" class="w-full mt-1 border border-gray-300 rounded-lg p-2 text-sm outline-none focus:border-primary" placeholder="Nro. de comprobante u observación (opcional)">
+            </div>
+
+            <div id="mov-saldo-actual" class="bg-blue-50 border border-blue-200 rounded-lg p-2 text-[10px] hidden">
+                <p class="font-bold text-blue-700">Saldo actual</p>
+                <p class="text-blue-900 font-mono mt-0.5"><span id="mov-saldo-actual-usd">$0.00</span> · <span id="mov-saldo-actual-bs">Bs 0.00</span></p>
+            </div>
+
+            <button type="submit" id="btn-guardar-mov" class="w-full bg-primary hover:opacity-90 text-white font-black py-2.5 rounded-lg uppercase text-[11px] tracking-wide btn-press transition shadow-md mt-2"><i class="fa-solid fa-check mr-1"></i> Confirmar Movimiento</button>
+        </form>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     MODAL: HISTORIAL DE MOVIMIENTOS
+     ════════════════════════════════════════════════════════════════ -->
+<div id="modal-historial" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[9990] hidden flex items-center justify-center p-4 fade-in">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[85vh] overflow-hidden flex flex-col border border-gray-200">
+        <div class="bg-primary text-white p-3 flex justify-between items-center shrink-0">
+            <h3 class="font-bold text-[12px] tracking-wide uppercase"><i class="fa-solid fa-list mr-2 text-tertiary"></i> Historial — <span id="hist-cuenta-nombre"></span></h3>
+            <button onclick="cerrarModalHistorial()" class="text-gray-300 hover:text-white transition"><i class="fa-solid fa-times"></i></button>
+        </div>
+        <div id="hist-contenido" class="flex-1 overflow-y-auto p-4 custom-scroll bg-gray-50">
+            <div class="text-center py-10 text-gray-400 font-bold uppercase tracking-widest text-xs"><i class="fa-solid fa-circle-notch fa-spin text-2xl mb-2 block"></i>Cargando...</div>
+        </div>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
      MODAL: CREAR / EDITAR CUENTA
      ════════════════════════════════════════════════════════════════ -->
 <div id="modal-cuenta" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[9990] hidden flex items-center justify-center p-4 fade-in">
@@ -568,6 +637,22 @@ function renderTarjetaBoveda(c) {
                  </p>
                </div>`
             : ''}
+
+        <!-- Botones de acción inline (Opción C) -->
+        <div class="mt-3 grid grid-cols-3 gap-1.5 relative">
+            <button onclick="abrirModalMovimiento('BOVEDA', '${c.id}', 'INGRESO', '${escapeHtml(c.nombre).replace(/'/g, "\\'")}')"
+                class="bg-green-500/30 hover:bg-green-500/50 border border-green-400/40 text-white py-1.5 rounded text-[9px] font-black uppercase tracking-wider btn-press transition flex items-center justify-center gap-1">
+                <i class="fa-solid fa-arrow-down"></i> Ingreso
+            </button>
+            <button onclick="abrirModalMovimiento('BOVEDA', '${c.id}', 'EGRESO', '${escapeHtml(c.nombre).replace(/'/g, "\\'")}')"
+                class="bg-red-500/30 hover:bg-red-500/50 border border-red-400/40 text-white py-1.5 rounded text-[9px] font-black uppercase tracking-wider btn-press transition flex items-center justify-center gap-1">
+                <i class="fa-solid fa-arrow-up"></i> Egreso
+            </button>
+            <button onclick="abrirModalHistorial('BOVEDA', '${c.id}', '${escapeHtml(c.nombre).replace(/'/g, "\\'")}')"
+                class="bg-white/10 hover:bg-white/20 border border-white/20 text-white py-1.5 rounded text-[9px] font-black uppercase tracking-wider btn-press transition flex items-center justify-center gap-1">
+                <i class="fa-solid fa-list"></i> Historial
+            </button>
+        </div>
     </div>`;
 }
 
@@ -624,6 +709,22 @@ function renderTarjetaCuenta(c) {
                        <p class="text-[9px] text-blue-700 font-black">Disp: Bs ${fmt(c.saldo_disponible_bs)}</p>`
                     : ''}
             </div>
+        </div>
+
+        <!-- Botones de acción inline (Opción C) -->
+        <div class="mt-3 grid grid-cols-3 gap-1.5">
+            <button onclick="abrirModalMovimiento('CUENTA', '${c.id}', 'INGRESO', '${escapeHtml(c.nombre).replace(/'/g, "\\'")}')"
+                class="bg-green-50 hover:bg-green-100 border border-green-200 text-green-700 py-1.5 rounded text-[9px] font-black uppercase tracking-wider btn-press transition flex items-center justify-center gap-1">
+                <i class="fa-solid fa-arrow-down"></i> Ingreso
+            </button>
+            <button onclick="abrirModalMovimiento('CUENTA', '${c.id}', 'EGRESO', '${escapeHtml(c.nombre).replace(/'/g, "\\'")}')"
+                class="bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 py-1.5 rounded text-[9px] font-black uppercase tracking-wider btn-press transition flex items-center justify-center gap-1">
+                <i class="fa-solid fa-arrow-up"></i> Egreso
+            </button>
+            <button onclick="abrirModalHistorial('CUENTA', '${c.id}', '${escapeHtml(c.nombre).replace(/'/g, "\\'")}')"
+                class="bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-700 py-1.5 rounded text-[9px] font-black uppercase tracking-wider btn-press transition flex items-center justify-center gap-1">
+                <i class="fa-solid fa-list"></i> Historial
+            </button>
         </div>
     </div>`;
 }
@@ -1093,6 +1194,228 @@ async function guardarTerminal(e) {
     } finally {
         btn.disabled = false;
     }
+}
+
+// ════════════════════════════════════════════════════════════════
+// MÓDULO DE MOVIMIENTOS (Opción C — Saint/Odoo-like)
+// ════════════════════════════════════════════════════════════════
+// Subtipos permitidos por dirección, según CHECK constraint de la BD
+const SUBTIPOS_MOV = {
+    'BOVEDA_INGRESO': [
+        { value: 'INGRESO_INICIAL',       label: 'Carga inicial (capital propio)' },
+        { value: 'INGRESO_EXTERNO',       label: 'Aporte externo posterior' },
+        { value: 'AJUSTE_POSITIVO',       label: 'Ajuste de auditoría (+)' }
+    ],
+    'BOVEDA_EGRESO': [
+        { value: 'EGRESO_MANUAL',         label: 'Retiro autorizado / Gasto' },
+        { value: 'SALIDA_DEPOSITO',       label: 'Depósito a cuenta bancaria' },
+        { value: 'AJUSTE_NEGATIVO',       label: 'Ajuste de auditoría (−)' }
+    ],
+    'CUENTA_INGRESO': [
+        { value: 'INGRESO',               label: 'Ingreso (depósito, transferencia recibida)' },
+        { value: 'AJUSTE_POSITIVO',       label: 'Ajuste de auditoría (+)' }
+    ],
+    'CUENTA_EGRESO': [
+        { value: 'EGRESO',                label: 'Egreso (retiro, transferencia enviada, comisión)' },
+        { value: 'AJUSTE_NEGATIVO',       label: 'Ajuste de auditoría (−)' }
+    ]
+};
+
+let movContextoActual = null;  // { tipoTarget, idTarget, direccion, nombreCuenta }
+
+function abrirModalMovimiento(tipoTarget, idTarget, direccion, nombreCuenta) {
+    movContextoActual = { tipoTarget, idTarget, direccion, nombreCuenta };
+
+    const header = document.getElementById('mov-header');
+    const tituloTxt = document.getElementById('mov-titulo-txt');
+    const icono = document.getElementById('mov-icono');
+    const cuentaNombre = document.getElementById('mov-cuenta-nombre');
+    const select = document.getElementById('mov-subtipo');
+
+    if (direccion === 'INGRESO') {
+        header.style.background = 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)';
+        tituloTxt.innerText = 'Registrar Ingreso';
+        icono.className = 'fa-solid fa-arrow-down';
+    } else {
+        header.style.background = 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)';
+        tituloTxt.innerText = 'Registrar Egreso';
+        icono.className = 'fa-solid fa-arrow-up';
+    }
+
+    cuentaNombre.innerText = nombreCuenta;
+    document.getElementById('mov-target-tipo').value = tipoTarget;
+    document.getElementById('mov-target-id').value = idTarget;
+    document.getElementById('mov-direccion').value = direccion;
+
+    // Poblar select de subtipos
+    const opciones = SUBTIPOS_MOV[`${tipoTarget}_${direccion}`] || [];
+    select.innerHTML = opciones.map(o => `<option value="${o.value}">${o.label}</option>`).join('');
+
+    // Reset campos
+    document.getElementById('mov-monto-usd').value = '';
+    document.getElementById('mov-monto-bs').value = '';
+    document.getElementById('mov-concepto').value = '';
+    document.getElementById('mov-referencia').value = '';
+
+    // Mostrar saldo actual
+    const cuenta = dbCuentas.find(c => c.id === idTarget);
+    if (cuenta) {
+        document.getElementById('mov-saldo-actual').classList.remove('hidden');
+        document.getElementById('mov-saldo-actual-usd').innerText = '$' + fmt(cuenta.saldo_bruto_usd);
+        document.getElementById('mov-saldo-actual-bs').innerText = 'Bs ' + fmt(cuenta.saldo_bruto_bs);
+    } else {
+        document.getElementById('mov-saldo-actual').classList.add('hidden');
+    }
+
+    document.getElementById('modal-movimiento').classList.remove('hidden');
+    document.getElementById('modal-movimiento').classList.add('flex');
+}
+
+function cerrarModalMovimiento() {
+    document.getElementById('modal-movimiento').classList.add('hidden');
+    document.getElementById('modal-movimiento').classList.remove('flex');
+    movContextoActual = null;
+}
+
+async function guardarMovimiento(e) {
+    e.preventDefault();
+    if (!movContextoActual) return;
+
+    const btn = document.getElementById('btn-guardar-mov');
+    btn.disabled = true;
+
+    const tipoTarget = movContextoActual.tipoTarget;
+    const idTarget = movContextoActual.idTarget;
+    const subtipo = document.getElementById('mov-subtipo').value;
+    const montoUsd = parseFloat(document.getElementById('mov-monto-usd').value) || 0;
+    const montoBs = parseFloat(document.getElementById('mov-monto-bs').value) || 0;
+    const concepto = document.getElementById('mov-concepto').value.trim();
+    const referencia = document.getElementById('mov-referencia').value.trim() || null;
+
+    if (montoUsd <= 0 && montoBs <= 0) {
+        btn.disabled = false;
+        return alert("⛔ Debe ingresar al menos un monto positivo (USD o Bs).");
+    }
+    if (concepto.length < 3) {
+        btn.disabled = false;
+        return alert("⛔ El concepto debe tener al menos 3 caracteres.");
+    }
+
+    mostrarCarga("Registrando movimiento...");
+    try {
+        let rpcName, payload;
+        if (tipoTarget === 'BOVEDA') {
+            rpcName = 'registrar_movimiento_boveda';
+            payload = {
+                p_id_boveda: idTarget,
+                p_tipo: subtipo,
+                p_monto_usd: montoUsd,
+                p_monto_bs: montoBs,
+                p_concepto: concepto,
+                p_referencia: referencia
+            };
+        } else {
+            rpcName = 'registrar_movimiento_cuenta';
+            payload = {
+                p_id_cuenta: idTarget,
+                p_tipo: subtipo,
+                p_monto_usd: montoUsd,
+                p_monto_bs: montoBs,
+                p_concepto: concepto,
+                p_referencia: referencia
+            };
+        }
+
+        await rpc(rpcName, payload);
+        cerrarErrorCarga();
+        cerrarModalMovimiento();
+        await cargarDatos();
+    } catch (err) {
+        cerrarErrorCarga();
+        // Mensaje limpio (filosofía Cero Soporte)
+        let msg = err.message || 'Error desconocido';
+        if (msg.length > 220) msg = msg.substring(0, 220) + '…';
+        alert("❌ " + msg);
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+// ────────────────────────────────────────────────────────────────
+// HISTORIAL DE MOVIMIENTOS
+// ────────────────────────────────────────────────────────────────
+async function abrirModalHistorial(tipoTarget, idTarget, nombreCuenta) {
+    document.getElementById('hist-cuenta-nombre').innerText = nombreCuenta;
+    const cont = document.getElementById('hist-contenido');
+    cont.innerHTML = `<div class="text-center py-10 text-gray-400 font-bold uppercase tracking-widest text-xs"><i class="fa-solid fa-circle-notch fa-spin text-2xl mb-2 block"></i>Cargando...</div>`;
+
+    document.getElementById('modal-historial').classList.remove('hidden');
+    document.getElementById('modal-historial').classList.add('flex');
+
+    try {
+        let url;
+        if (tipoTarget === 'BOVEDA') {
+            url = `boveda_movimientos?id_boveda=eq.${idTarget}&select=*&order=fecha.desc&limit=100`;
+        } else {
+            url = `fin_movimientos?id_cuenta=eq.${idTarget}&select=*&order=fecha.desc&limit=100`;
+        }
+        const res = await sb(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const movs = await res.json();
+        renderHistorial(movs, tipoTarget);
+    } catch (err) {
+        cont.innerHTML = `<div class="text-center py-10 text-red-500 font-bold text-xs"><i class="fa-solid fa-triangle-exclamation text-2xl mb-2 block"></i>Error al cargar: ${escapeHtml(err.message)}</div>`;
+    }
+}
+
+function cerrarModalHistorial() {
+    document.getElementById('modal-historial').classList.add('hidden');
+    document.getElementById('modal-historial').classList.remove('flex');
+}
+
+function renderHistorial(movs, tipoTarget) {
+    const cont = document.getElementById('hist-contenido');
+    if (!movs || movs.length === 0) {
+        cont.innerHTML = `<div class="text-center py-10 text-gray-400 font-bold uppercase tracking-widest text-xs"><i class="fa-solid fa-folder-open text-2xl mb-2 block"></i>Sin movimientos registrados</div>`;
+        return;
+    }
+
+    const tiposIngreso = ['INGRESO_INICIAL','INGRESO_EXTERNO','INGRESO_CAJA_A_BOVEDA','ENTRADA_CIERRE','AJUSTE_POSITIVO','INGRESO'];
+    let html = '<div class="space-y-1.5">';
+    movs.forEach(m => {
+        const fecha = new Date(m.fecha);
+        const fechaStr = fecha.toLocaleString('es-VE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+        const esIngreso = tiposIngreso.includes(m.tipo);
+        const colorBg = esIngreso ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200';
+        const colorTxt = esIngreso ? 'text-green-700' : 'text-red-700';
+        const signo = esIngreso ? '+' : '−';
+        const icono = esIngreso ? 'fa-arrow-down' : 'fa-arrow-up';
+        const concepto = m.concepto || m.tipo;
+        const referencia = m.referencia || m.observaciones || '';
+        const usuario = m.usuario || '';
+
+        html += `
+        <div class="${colorBg} border rounded-lg p-2.5 flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full ${colorBg} ${colorTxt} flex items-center justify-center shrink-0 border ${esIngreso?'border-green-300':'border-red-300'}">
+                <i class="fa-solid ${icono} text-[11px]"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+                <p class="text-[11px] font-black ${colorTxt} uppercase tracking-wide truncate">${escapeHtml(m.tipo)}</p>
+                <p class="text-[10px] text-gray-700 font-bold truncate">${escapeHtml(concepto)}</p>
+                ${referencia ? `<p class="text-[9px] text-gray-500 italic truncate">Ref: ${escapeHtml(referencia)}</p>` : ''}
+                <p class="text-[8px] text-gray-400 font-mono mt-0.5">${fechaStr}${usuario ? ' · ' + escapeHtml(usuario) : ''}</p>
+            </div>
+            <div class="text-right shrink-0">
+                ${parseFloat(m.monto_usd) > 0 ? `<p class="text-sm font-black ${colorTxt} font-mono">${signo}$${fmt(m.monto_usd)}</p>` : ''}
+                ${parseFloat(m.monto_bs) > 0 ? `<p class="text-[11px] font-bold ${colorTxt} font-mono">${signo}Bs ${fmt(m.monto_bs)}</p>` : ''}
+            </div>
+        </div>`;
+    });
+    html += '</div>';
+    if (movs.length === 100) {
+        html += `<p class="text-center text-[10px] text-gray-500 italic mt-3">Mostrando los últimos 100 movimientos</p>`;
+    }
+    cont.innerHTML = html;
 }
 </script>
 
