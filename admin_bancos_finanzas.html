@@ -8,19 +8,11 @@
     <link rel="icon" href="favicon.ico" type="image/x-icon">
     <script src="config.js"></script>
     <script>
-        // Variables globales de tema con fallback robusto
-        var fontFam = localStorage.getItem('pyp_fuente') || "'Inter', sans-serif";
-        var fontSiz = localStorage.getItem('pyp_tamano') || "14px";
         const cPri = localStorage.getItem('pyp_color_primario') || '#143B62';
         const cSec = localStorage.getItem('pyp_color_secundario') || '#E67E22';
         const cTer = localStorage.getItem('pyp_color_terciario') || '#64748b';
-
-        // Aplicar variables CSS de inmediato (antes del primer render) para evitar FOUC
-        document.documentElement.style.setProperty('--font-family', fontFam);
-        document.documentElement.style.setProperty('--font-size', fontSiz);
-        document.documentElement.style.setProperty('--color-primary', cPri);
-        document.documentElement.style.setProperty('--color-secondary', cSec);
-        document.documentElement.style.setProperty('--color-tertiary', cTer);
+        const fontFam = localStorage.getItem('pyp_fuente') || "'Inter', sans-serif";
+        const fontSiz = localStorage.getItem('pyp_tamano') || "14px";
     </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
@@ -57,10 +49,11 @@
         }
     </style>
 </head>
-<body class="overflow-x-hidden text-xs">
+<body class="bg-[#f4f6f8] flex h-screen overflow-hidden text-gray-800 relative" id="body-bancos-finanzas">
 
-<div class="flex h-screen bg-slate-100">
-    <main class="flex-1 flex flex-col overflow-hidden md:ml-0">
+<script src="menu.js"></script>
+
+<main class="flex-1 flex flex-col h-screen overflow-hidden w-full relative z-10">
         <header class="bg-white border-b border-gray-200 p-3 flex justify-between items-center shrink-0 shadow-sm h-16">
             <div class="flex items-center gap-3">
                 <button onclick="toggleMobileMenu()" class="md:hidden text-tertiary text-xl"><i class="fa-solid fa-bars"></i></button>
@@ -177,7 +170,6 @@
 
         </div>
     </main>
-</div>
 
 <!-- ════════════════════════════════════════════════════════════════
      LOADING OVERLAY
@@ -365,6 +357,7 @@
 <script>
 const TOKEN_JWT = localStorage.getItem('pyp_token_seguro');
 let empresaActual = null;
+let sucursalActual = null;
 let authIdActual = null;
 let rolActual = null;
 let dbCuentas = [];
@@ -432,11 +425,8 @@ async function rpc(fn, payload) {
 
 // ─── INICIALIZACIÓN ────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
-    // Validar que config.js cargó correctamente antes de cualquier fetch
-    if (typeof SUPABASE_URL === 'undefined' || typeof SUPABASE_KEY === 'undefined') {
-        mostrarErrorConexion("Error de configuración: config.js no cargó. Recarga la página.");
-        return;
-    }
+    document.documentElement.style.setProperty('--font-family', fontFam);
+    document.documentElement.style.setProperty('--font-size', fontSiz);
 
     if (!TOKEN_JWT) return forzarCierreSesion();
 
@@ -451,6 +441,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (resUser.ok) {
             const u = (await resUser.json())[0];
             if (u) { empresaActual = u.id_empresa; rolActual = u.rol; }
+        }
+
+        if (!empresaActual) {
+            throw new Error("No se pudo determinar la empresa del usuario.");
+        }
+
+        // Resolver sucursal default del usuario (FASE 9.F: requerido para INSERTs en fin_cuentas/fin_terminales_pos)
+        const resSuc = await rpc('resolver_sucursal_usuario', { p_id_empresa: empresaActual });
+        sucursalActual = resSuc;
+        if (!sucursalActual) {
+            throw new Error("Usuario sin sucursal asignada. Contacta al administrador.");
         }
 
         await cargarDatos();
@@ -486,27 +487,12 @@ async function cargarDatos() {
             sb(`usuarios?select=auth_id,nombre_completo,usuario_login,rol&estatus=eq.Activo&deleted_at=is.null&order=nombre_completo.asc`)
         ]);
 
-        // Diagnóstico explícito si alguna respuesta falla (filosofía Cero Soporte)
-        const fallidas = [
-            { nombre: 'cuentas_unificadas', res: resCuentas },
-            { nombre: 'boveda_resumen', res: resBoveda },
-            { nombre: 'transferencias_con_detalle', res: resTransf },
-            { nombre: 'configuracion_pagos_estado', res: resMapeos },
-            { nombre: 'fin_terminales_pos', res: resTerm },
-            { nombre: 'usuarios', res: resUsu }
-        ].filter(x => !x.res.ok);
-
-        if (fallidas.length > 0) {
-            const detalle = fallidas.map(f => `${f.nombre} (HTTP ${f.res.status})`).join(', ');
-            throw new Error(`Fallaron consultas: ${detalle}`);
-        }
-
-        dbCuentas = await resCuentas.json();
-        dbBoveda = (await resBoveda.json())[0] || null;
-        dbTransferencias = await resTransf.json();
-        dbMapeos = await resMapeos.json();
-        dbTerminales = await resTerm.json();
-        dbUsuarios = await resUsu.json();
+        dbCuentas = resCuentas.ok ? await resCuentas.json() : [];
+        dbBoveda = resBoveda.ok ? (await resBoveda.json())[0] : null;
+        dbTransferencias = resTransf.ok ? await resTransf.json() : [];
+        dbMapeos = resMapeos.ok ? await resMapeos.json() : [];
+        dbTerminales = resTerm.ok ? await resTerm.json() : [];
+        dbUsuarios = resUsu.ok ? await resUsu.json() : [];
 
         renderCuentas();
         renderTransferencias();
@@ -515,8 +501,6 @@ async function cargarDatos() {
         actualizarBadgeConfig();
     } catch (e) {
         console.error("Error cargando datos:", e);
-        mostrarErrorConexion("Error al cargar datos: " + e.message);
-        throw e;
     }
 }
 
@@ -983,6 +967,14 @@ async function guardarCuenta(e) {
         descripcion: document.getElementById('cta-desc').value.trim() || null,
         estatus: 'ACTIVA'
     };
+    // FASE 9.C: id_sucursal es NOT NULL en fin_cuentas. Solo se inyecta al CREAR (no al editar).
+    if (!id) {
+        if (!sucursalActual) {
+            btn.disabled = false;
+            return alert("⛔ Error de contexto: usuario sin sucursal asignada. Recarga la página.");
+        }
+        payload.id_sucursal = sucursalActual;
+    }
     mostrarCarga(id ? "Actualizando..." : "Creando...");
     try {
         const url = id ? `fin_cuentas?id=eq.${id}` : `fin_cuentas`;
@@ -1080,10 +1072,15 @@ function cerrarModalTerminal() {
 async function guardarTerminal(e) {
     e.preventDefault();
     const btn = document.getElementById('btn-guardar-term'); btn.disabled = true;
+    if (!sucursalActual) {
+        btn.disabled = false;
+        return alert("⛔ Error de contexto: usuario sin sucursal asignada. Recarga la página.");
+    }
     const payload = {
         nombre: document.getElementById('term-nombre').value.trim().toUpperCase(),
         id_cuenta_banco: document.getElementById('term-banco').value,
-        estatus: 'ACTIVO'
+        estatus: 'ACTIVO',
+        id_sucursal: sucursalActual  // FASE 9.C: NOT NULL
     };
     mostrarCarga("Registrando terminal...");
     try {
@@ -1099,6 +1096,5 @@ async function guardarTerminal(e) {
 }
 </script>
 
-<script src="menu.js"></script>
 </body>
 </html>
