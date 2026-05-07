@@ -383,21 +383,40 @@
             <div class="grid grid-cols-2 gap-3">
                 <div>
                     <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Tipo *</label>
-                    <select id="cta-tipo" required class="w-full border border-gray-300 rounded px-3 py-2 text-xs font-bold uppercase focus:border-tertiary outline-none bg-white">
+                    <select id="cta-tipo" required onchange="onChangeTipoCuenta()" class="w-full border border-gray-300 rounded px-3 py-2 text-xs font-bold uppercase focus:border-tertiary outline-none bg-white">
                         <option value="BANCO">🏦 Banco</option>
-                        <option value="CAJA_CHICA">💰 Caja Chica</option>
+                        <option value="CAJA_CHICA">💰 Caja Chica (Administrativa)</option>
+                        <option value="CAJA_REGISTRADORA">🛒 Caja Registradora (Cajero)</option>
                         <option value="WALLET_DIGITAL">📱 Wallet Digital</option>
                     </select>
                 </div>
-                <div>
-                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Banco/Titular</label>
+                <div id="cta-titular-wrap">
+                    <label id="cta-titular-label" class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Banco/Titular</label>
                     <input type="text" id="cta-banco-titular" maxlength="120" placeholder="Banesco, BBVA..." class="w-full border border-gray-300 rounded px-3 py-2 text-xs uppercase focus:border-tertiary outline-none bg-white">
                 </div>
             </div>
-            <div>
-                <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Nro. de Cuenta</label>
+
+            <!-- Cajero asignado: solo CAJA_REGISTRADORA -->
+            <div id="cta-cajero-wrap" class="hidden">
+                <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Cajero Asignado *</label>
+                <select id="cta-cajero" class="w-full border border-gray-300 rounded px-3 py-2 text-xs font-bold uppercase focus:border-tertiary outline-none bg-white">
+                    <option value="">Selecciona cajero...</option>
+                </select>
+                <p class="text-[9px] text-gray-500 mt-1">El cajero recibirá las transferencias de fondo en esta caja.</p>
+            </div>
+
+            <!-- Nro. Cuenta: solo BANCO y WALLET_DIGITAL -->
+            <div id="cta-numero-wrap">
+                <label id="cta-numero-label" class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Nro. de Cuenta</label>
                 <input type="text" id="cta-numero" maxlength="50" placeholder="0134-XXXX-XX-XXXXXXXXXX" class="w-full border border-gray-300 rounded px-3 py-2 text-xs font-mono focus:border-tertiary outline-none bg-white">
             </div>
+
+            <!-- Correo: solo WALLET_DIGITAL -->
+            <div id="cta-correo-wrap" class="hidden">
+                <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Correo Electrónico</label>
+                <input type="email" id="cta-correo" maxlength="120" placeholder="usuario@ejemplo.com" class="w-full border border-gray-300 rounded px-3 py-2 text-xs focus:border-tertiary outline-none bg-white">
+            </div>
+
             <div>
                 <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Descripción</label>
                 <input type="text" id="cta-desc" maxlength="200" placeholder="Detalles adicionales..." class="w-full border border-gray-300 rounded px-3 py-2 text-[10px] uppercase focus:border-tertiary outline-none bg-white">
@@ -725,11 +744,13 @@ function renderTarjetaCuenta(c) {
     const iconos = {
         'BANCO': 'fa-building-columns',
         'CAJA_CHICA': 'fa-cash-register',
+        'CAJA_REGISTRADORA': 'fa-shop',
         'WALLET_DIGITAL': 'fa-wallet'
     };
     const colores = {
         'BANCO': { bg: 'bg-blue-100', text: 'text-blue-600' },
-        'CAJA_CHICA': { bg: 'bg-green-100', text: 'text-green-600' },
+        'CAJA_CHICA': { bg: 'bg-amber-100', text: 'text-amber-600' },
+        'CAJA_REGISTRADORA': { bg: 'bg-green-100', text: 'text-green-600' },
         'WALLET_DIGITAL': { bg: 'bg-purple-100', text: 'text-purple-600' }
     };
     const ic = iconos[c.tipo_cuenta] || 'fa-building-columns';
@@ -1105,6 +1126,53 @@ async function procesarMotivo(e) {
 }
 
 // ─── MODAL: CUENTA (crear/editar) ──────────────────────────────────
+function onChangeTipoCuenta() {
+    const tipo = document.getElementById('cta-tipo').value;
+    const titularWrap = document.getElementById('cta-titular-wrap');
+    const titularLabel = document.getElementById('cta-titular-label');
+    const titularInput = document.getElementById('cta-banco-titular');
+    const numeroWrap = document.getElementById('cta-numero-wrap');
+    const numeroLabel = document.getElementById('cta-numero-label');
+    const numeroInput = document.getElementById('cta-numero');
+    const correoWrap = document.getElementById('cta-correo-wrap');
+    const cajeroWrap = document.getElementById('cta-cajero-wrap');
+    const cajeroSel = document.getElementById('cta-cajero');
+
+    // Reset visibilidad
+    titularWrap.classList.remove('hidden');
+    numeroWrap.classList.remove('hidden');
+    correoWrap.classList.add('hidden');
+    cajeroWrap.classList.add('hidden');
+    cajeroSel.required = false;
+
+    if (tipo === 'BANCO') {
+        titularLabel.innerText = 'Banco/Titular';
+        titularInput.placeholder = 'Banesco, BBVA...';
+        numeroLabel.innerText = 'Nro. de Cuenta';
+        numeroInput.placeholder = '0134-XXXX-XX-XXXXXXXXXX';
+    } else if (tipo === 'CAJA_CHICA') {
+        titularLabel.innerText = 'Responsable';
+        titularInput.placeholder = 'Nombre del responsable administrativo';
+        numeroWrap.classList.add('hidden');
+    } else if (tipo === 'CAJA_REGISTRADORA') {
+        titularLabel.innerText = 'Identificación';
+        titularInput.placeholder = 'Ej: Caja 1, Sucursal Norte';
+        numeroWrap.classList.add('hidden');
+        cajeroWrap.classList.remove('hidden');
+        cajeroSel.required = true;
+        // Poblar cajeros
+        const cajeros = dbUsuarios.filter(u => u.auth_id);
+        cajeroSel.innerHTML = '<option value="">Selecciona cajero...</option>' +
+            cajeros.map(u => `<option value="${u.auth_id}">${escapeHtml(u.nombre_completo)} (${escapeHtml(u.usuario_login)})</option>`).join('');
+    } else if (tipo === 'WALLET_DIGITAL') {
+        titularLabel.innerText = 'Titular';
+        titularInput.placeholder = 'Nombre del titular';
+        numeroLabel.innerText = 'Nro. Teléfono / Handle';
+        numeroInput.placeholder = '04141234567 / @usuario';
+        correoWrap.classList.remove('hidden');
+    }
+}
+
 function abrirModalCuenta(id = null) {
     if (!['SuperAdmin','Admin'].includes(rolActual)) {
         return alert("⛔ Solo SuperAdmin o Admin pueden gestionar cuentas.");
@@ -1120,10 +1188,20 @@ function abrirModalCuenta(id = null) {
             document.getElementById('cta-banco-titular').value = c.banco_titular || '';
             document.getElementById('cta-numero').value = c.numero_cuenta || '';
             document.getElementById('cta-desc').value = c.descripcion || '';
+            onChangeTipoCuenta();
+            // Si es CAJA_REGISTRADORA, poblar cajero seleccionado
+            if (c.tipo_cuenta === 'CAJA_REGISTRADORA' && c.auth_id_cajero) {
+                document.getElementById('cta-cajero').value = c.auth_id_cajero;
+            }
+            // Si es WALLET_DIGITAL, poblar correo
+            if (c.tipo_cuenta === 'WALLET_DIGITAL' && c.correo_electronico) {
+                document.getElementById('cta-correo').value = c.correo_electronico;
+            }
             document.getElementById('modal-titulo-cuenta').innerHTML = '<i class="fa-solid fa-pen mr-2 text-tertiary"></i> Editar Cuenta';
         }
     } else {
         document.getElementById('modal-titulo-cuenta').innerHTML = '<i class="fa-solid fa-vault mr-2 text-tertiary"></i> Crear Cuenta';
+        onChangeTipoCuenta();
     }
     document.getElementById('modal-cuenta').classList.remove('hidden');
     document.getElementById('modal-cuenta').classList.add('flex');
@@ -1136,14 +1214,40 @@ async function guardarCuenta(e) {
     e.preventDefault();
     const btn = document.getElementById('btn-guardar-cta'); btn.disabled = true;
     const id = document.getElementById('cta-id').value;
+    const tipo = document.getElementById('cta-tipo').value;
+
     const payload = {
         nombre: document.getElementById('cta-nombre').value.trim().toUpperCase(),
-        tipo_cuenta: document.getElementById('cta-tipo').value,
+        tipo_cuenta: tipo,
         banco_titular: document.getElementById('cta-banco-titular').value.trim() || null,
-        numero_cuenta: document.getElementById('cta-numero').value.trim() || null,
         descripcion: document.getElementById('cta-desc').value.trim() || null,
         estatus: 'ACTIVA'
     };
+
+    // Campos condicionales por tipo
+    if (tipo === 'BANCO' || tipo === 'WALLET_DIGITAL') {
+        payload.numero_cuenta = document.getElementById('cta-numero').value.trim() || null;
+    } else {
+        payload.numero_cuenta = null;
+    }
+
+    if (tipo === 'WALLET_DIGITAL') {
+        payload.correo_electronico = document.getElementById('cta-correo').value.trim() || null;
+    } else {
+        payload.correo_electronico = null;
+    }
+
+    if (tipo === 'CAJA_REGISTRADORA') {
+        const cajero = document.getElementById('cta-cajero').value;
+        if (!cajero) {
+            btn.disabled = false;
+            return alert("⛔ Debes seleccionar el cajero asignado a esta caja registradora.");
+        }
+        payload.auth_id_cajero = cajero;
+    } else {
+        payload.auth_id_cajero = null;
+    }
+
     // FASE 9.C: id_sucursal es NOT NULL en fin_cuentas. Solo se inyecta al CREAR (no al editar).
     if (!id) {
         if (!sucursalActual) {
@@ -1518,7 +1622,7 @@ function abrirModalTransferencia(tipoOrigen, idOrigen) {
     // Construir lista combinada de orígenes (bóvedas + cuentas no caja chica usualmente, pero permitimos todas)
     const opcionesOrigen = dbCuentas.filter(c => true).map(c => {
         const tipo = c.es_boveda ? 'BOVEDA' : 'CUENTA';
-        const icon = c.es_boveda ? '🏦' : (c.tipo_cuenta === 'BANCO' ? '🏛️' : (c.tipo_cuenta === 'CAJA_CHICA' ? '💰' : '💼'));
+        const icon = c.es_boveda ? '🏦' : (c.tipo_cuenta === 'BANCO' ? '🏛️' : (c.tipo_cuenta === 'CAJA_CHICA' ? '💰' : (c.tipo_cuenta === 'CAJA_REGISTRADORA' ? '🛒' : '📱')));
         return { tipo, id: c.id, label: `${icon} ${c.nombre}`, c };
     });
 
@@ -1541,7 +1645,7 @@ function rebuildTrfDestinos() {
     // Destino: cualquier cuenta/bóveda excepto el origen
     const opcionesDestino = dbCuentas.filter(c => c.id !== origenId).map(c => {
         const tipo = c.es_boveda ? 'BOVEDA' : 'CUENTA';
-        const icon = c.es_boveda ? '🏦' : (c.tipo_cuenta === 'BANCO' ? '🏛️' : (c.tipo_cuenta === 'CAJA_CHICA' ? '💰' : '💼'));
+        const icon = c.es_boveda ? '🏦' : (c.tipo_cuenta === 'BANCO' ? '🏛️' : (c.tipo_cuenta === 'CAJA_CHICA' ? '💰' : (c.tipo_cuenta === 'CAJA_REGISTRADORA' ? '🛒' : '📱')));
         const cajeroTag = c.cajero_nombre ? ` (${c.cajero_nombre})` : '';
         return { tipo, id: c.id, label: `${icon} ${c.nombre}${cajeroTag}` };
     });
