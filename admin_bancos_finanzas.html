@@ -8,11 +8,19 @@
     <link rel="icon" href="favicon.ico" type="image/x-icon">
     <script src="config.js"></script>
     <script>
+        // Variables globales de tema con fallback robusto
+        var fontFam = localStorage.getItem('pyp_fuente') || "'Inter', sans-serif";
+        var fontSiz = localStorage.getItem('pyp_tamano') || "14px";
         const cPri = localStorage.getItem('pyp_color_primario') || '#143B62';
         const cSec = localStorage.getItem('pyp_color_secundario') || '#E67E22';
         const cTer = localStorage.getItem('pyp_color_terciario') || '#64748b';
-        const fontFam = localStorage.getItem('pyp_fuente') || "'Inter', sans-serif";
-        const fontSiz = localStorage.getItem('pyp_tamano') || "14px";
+
+        // Aplicar variables CSS de inmediato (antes del primer render) para evitar FOUC
+        document.documentElement.style.setProperty('--font-family', fontFam);
+        document.documentElement.style.setProperty('--font-size', fontSiz);
+        document.documentElement.style.setProperty('--color-primary', cPri);
+        document.documentElement.style.setProperty('--color-secondary', cSec);
+        document.documentElement.style.setProperty('--color-tertiary', cTer);
     </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
@@ -424,8 +432,11 @@ async function rpc(fn, payload) {
 
 // ─── INICIALIZACIÓN ────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
-    document.documentElement.style.setProperty('--font-family', fontFam);
-    document.documentElement.style.setProperty('--font-size', fontSiz);
+    // Validar que config.js cargó correctamente antes de cualquier fetch
+    if (typeof SUPABASE_URL === 'undefined' || typeof SUPABASE_KEY === 'undefined') {
+        mostrarErrorConexion("Error de configuración: config.js no cargó. Recarga la página.");
+        return;
+    }
 
     if (!TOKEN_JWT) return forzarCierreSesion();
 
@@ -475,12 +486,27 @@ async function cargarDatos() {
             sb(`usuarios?select=auth_id,nombre_completo,usuario_login,rol&estatus=eq.Activo&deleted_at=is.null&order=nombre_completo.asc`)
         ]);
 
-        dbCuentas = resCuentas.ok ? await resCuentas.json() : [];
-        dbBoveda = resBoveda.ok ? (await resBoveda.json())[0] : null;
-        dbTransferencias = resTransf.ok ? await resTransf.json() : [];
-        dbMapeos = resMapeos.ok ? await resMapeos.json() : [];
-        dbTerminales = resTerm.ok ? await resTerm.json() : [];
-        dbUsuarios = resUsu.ok ? await resUsu.json() : [];
+        // Diagnóstico explícito si alguna respuesta falla (filosofía Cero Soporte)
+        const fallidas = [
+            { nombre: 'cuentas_unificadas', res: resCuentas },
+            { nombre: 'boveda_resumen', res: resBoveda },
+            { nombre: 'transferencias_con_detalle', res: resTransf },
+            { nombre: 'configuracion_pagos_estado', res: resMapeos },
+            { nombre: 'fin_terminales_pos', res: resTerm },
+            { nombre: 'usuarios', res: resUsu }
+        ].filter(x => !x.res.ok);
+
+        if (fallidas.length > 0) {
+            const detalle = fallidas.map(f => `${f.nombre} (HTTP ${f.res.status})`).join(', ');
+            throw new Error(`Fallaron consultas: ${detalle}`);
+        }
+
+        dbCuentas = await resCuentas.json();
+        dbBoveda = (await resBoveda.json())[0] || null;
+        dbTransferencias = await resTransf.json();
+        dbMapeos = await resMapeos.json();
+        dbTerminales = await resTerm.json();
+        dbUsuarios = await resUsu.json();
 
         renderCuentas();
         renderTransferencias();
@@ -489,6 +515,8 @@ async function cargarDatos() {
         actualizarBadgeConfig();
     } catch (e) {
         console.error("Error cargando datos:", e);
+        mostrarErrorConexion("Error al cargar datos: " + e.message);
+        throw e;
     }
 }
 

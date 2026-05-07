@@ -477,7 +477,7 @@
                 </button>
                 <!-- NUEVO: Selector de Tipo de Documento Comercial -->
                 <div class="relative hidden sm:inline-block" id="contenedor-selector-doc">
-                    <button onclick="toggleSelectorDoc()" id="btn-modo-cotizacion" title="Crear documento comercial: Cotización, Pedido, Proforma o Nota de Entrega"
+                    <button onclick="toggleSelectorDoc(event)" id="btn-modo-cotizacion" title="Crear documento comercial: Cotización, Pedido, Proforma o Nota de Entrega"
                         class="bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-700 px-3 py-2 rounded text-[10px] font-bold uppercase transition-all shadow-sm btn-press flex items-center gap-1">
                         <i class="fa-solid fa-file-pen text-amber-500"></i>
                         <span id="lbl-tipo-doc">Cotizar</span>
@@ -717,19 +717,29 @@
         // ────────────────────────────────────────────────────────────────────
         // SELECTOR DE TIPO DE DOCUMENTO COMERCIAL (dropdown)
         // ────────────────────────────────────────────────────────────────────
-        function toggleSelectorDoc() {
+        function toggleSelectorDoc(ev) {
+            // Detener propagación para evitar que el listener global del document
+            // cierre el menú en el mismo tick del click que lo está abriendo.
+            if (ev && typeof ev.stopPropagation === 'function') ev.stopPropagation();
             const menu = document.getElementById('menu-tipo-doc');
+            if (!menu) {
+                console.error('[POS] menu-tipo-doc no encontrado en el DOM');
+                return;
+            }
             menu.classList.toggle('hidden');
         }
         
-        // Cerrar dropdown si se hace click fuera
+        // Cerrar dropdown si se hace click fuera (registrado una sola vez al cargar)
+        // Se difiere a la fase de captura para garantizar consistencia entre browsers.
         document.addEventListener('click', function(e) {
             const cont = document.getElementById('contenedor-selector-doc');
             const menu = document.getElementById('menu-tipo-doc');
-            if (cont && menu && !cont.contains(e.target)) {
+            if (!cont || !menu) return;
+            if (menu.classList.contains('hidden')) return;
+            if (!cont.contains(e.target)) {
                 menu.classList.add('hidden');
             }
-        });
+        }, false);
         
         function seleccionarTipoDoc(tipo) {
             tipoDocumentoActual = tipo;
