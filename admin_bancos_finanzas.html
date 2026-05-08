@@ -1276,10 +1276,12 @@ function abrirModalMapeo(metodo) {
     if (!['SuperAdmin','Admin'].includes(rolActual)) {
         return alert("⛔ Solo SuperAdmin o Admin pueden configurar mapeos.");
     }
+    // Tipos válidos para recibir pagos electrónicos: BANCO y WALLET_DIGITAL.
+    // NUNCA cajas (CAJA_CHICA / CAJA_REGISTRADORA) porque el dinero electrónico no entra a efectivo físico.
     const meta = {
-        'ZELLE_USD': { nombre: 'Zelle USD', desc: 'Selecciona la cuenta bancaria USD donde llegan los pagos por Zelle.', tipoFiltro: 'BANCO' },
-        'PAGOMOVIL_BS': { nombre: 'Pago Móvil Bs', desc: 'Selecciona la cuenta bancaria que recibe los Pagos Móviles.', tipoFiltro: 'BANCO' },
-        'TRANSFERENCIA_BS': { nombre: 'Transferencia Bs', desc: 'Selecciona la cuenta bancaria que recibe transferencias.', tipoFiltro: 'BANCO' }
+        'ZELLE_USD':       { nombre: 'Zelle USD',       desc: 'Selecciona la cuenta bancaria o wallet USD donde llegan los pagos por Zelle.',     tiposValidos: ['BANCO','WALLET_DIGITAL'] },
+        'PAGOMOVIL_BS':    { nombre: 'Pago Móvil Bs',   desc: 'Selecciona la cuenta bancaria o wallet que recibe los Pagos Móviles.',              tiposValidos: ['BANCO','WALLET_DIGITAL'] },
+        'TRANSFERENCIA_BS':{ nombre: 'Transferencia Bs',desc: 'Selecciona la cuenta bancaria o wallet que recibe transferencias.',                 tiposValidos: ['BANCO','WALLET_DIGITAL'] }
     };
     const info = meta[metodo];
     document.getElementById('mapeo-metodo').value = metodo;
@@ -1287,17 +1289,33 @@ function abrirModalMapeo(metodo) {
     document.getElementById('mapeo-descripcion').textContent = info.desc;
     document.getElementById('mapeo-obs').value = '';
 
-    const cuentasValidas = dbCuentas.filter(c => !c.es_boveda && c.tipo_cuenta === info.tipoFiltro);
-    if (!cuentasValidas.length) {
-        return alert(`No hay cuentas tipo ${info.tipoFiltro}. Crea una primero en "Cuentas y Bóveda".`);
-    }
-    document.getElementById('mapeo-cuenta').innerHTML = '<option value="">Selecciona cuenta...</option>' +
-        cuentasValidas.map(c => `<option value="${c.id}">${escapeHtml(c.nombre)}${c.banco_titular ? ' - ' + escapeHtml(c.banco_titular) : ''}</option>`).join('');
+    // Filtrar: bóveda excluida + cuentas no eliminadas + tipo en lista válida + estatus ACTIVA
+    const cuentasValidas = dbCuentas.filter(c =>
+        !c.es_boveda &&
+        info.tiposValidos.includes(c.tipo_cuenta) &&
+        (c.estatus === 'ACTIVA' || !c.estatus)
+    );
 
-    // Pre-seleccionar si ya hay mapeo
+    const sel = document.getElementById('mapeo-cuenta');
+    if (!cuentasValidas.length) {
+        sel.innerHTML = '<option value="">⚠️ No hay cuentas disponibles</option>';
+        sel.disabled = true;
+        const tiposTxt = info.tiposValidos.map(t => t === 'BANCO' ? 'Banco' : 'Wallet Digital').join(' o ');
+        return alert(`⛔ No hay cuentas tipo ${tiposTxt} activas.\n\nCrea una primero en la pestaña "Cuentas y Bóveda".\n\nNota: Cajas Chicas y Cajas Registradoras NO pueden recibir pagos electrónicos.`);
+    }
+    sel.disabled = false;
+
+    sel.innerHTML = '<option value="">Selecciona cuenta...</option>' +
+        cuentasValidas.map(c => {
+            const icon = c.tipo_cuenta === 'WALLET_DIGITAL' ? '📱' : '🏦';
+            const titular = c.banco_titular ? ' - ' + escapeHtml(c.banco_titular) : '';
+            return `<option value="${c.id}">${icon} ${escapeHtml(c.nombre)}${titular}</option>`;
+        }).join('');
+
+    // Pre-seleccionar si ya hay mapeo (solo si la cuenta sigue siendo válida)
     const m = dbMapeos.find(x => x.metodo === metodo);
-    if (m && m.id_cuenta) {
-        document.getElementById('mapeo-cuenta').value = m.id_cuenta;
+    if (m && m.id_cuenta && cuentasValidas.find(c => c.id === m.id_cuenta)) {
+        sel.value = m.id_cuenta;
         document.getElementById('mapeo-obs').value = m.observaciones || '';
     }
 
