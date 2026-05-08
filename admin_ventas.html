@@ -1845,8 +1845,10 @@
             const montoBs = parseFloat(document.getElementById('turno-monto-bs').value) || 0;
             const concepto = document.getElementById('turno-concepto').value.trim() || 'Apertura turno';
             
-            if (montoUsd === 0 && montoBs === 0) {
-                alert('Debe asignar al menos un monto en USD o Bolívares.');
+            // FIX: Permitir apertura con $0/Bs0 — el backend valida según REQUIERE_FONDO_INICIAL_TURNO.
+            // El usuario puede abrir turno vacío y recibir fondo después vía aceptar_transferencia_fondo.
+            if (montoUsd < 0 || montoBs < 0) {
+                alert('Los montos no pueden ser negativos.');
                 return;
             }
             
