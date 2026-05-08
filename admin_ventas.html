@@ -638,12 +638,12 @@
                         <div class="flex justify-between items-center text-xs text-gray-500 font-bold uppercase mt-0.5">
                             <div class="flex items-center gap-1">
                                 <span>Desc. Gral</span>
-                                <select id="pos-type-desc-general" class="border border-gray-200 rounded text-[9px] p-0.5 outline-none bg-gray-50 font-bold text-primary focus:border-tertiary transition" onchange="onChangeDescGeneral()">
+                                <select id="pos-type-desc-general" class="border border-gray-200 rounded text-[9px] p-0.5 outline-none bg-gray-50 font-bold text-primary focus:border-tertiary transition" onchange="actualizarUI_Carrito()">
                                     <option value="MONTO_BS" selected>Bs.</option>
                                     <option value="PORCENTAJE">%</option>
                                     <option value="MONTO">$</option>
                                 </select>
-                                <input type="number" id="pos-input-desc-general" placeholder="0" class="border border-gray-200 rounded text-center w-14 py-0.5 text-[10px] font-bold text-gray-700 outline-none shadow-inner focus:border-tertiary transition" onchange="onChangeDescGeneral()">
+                                <input type="number" id="pos-input-desc-general" placeholder="0" class="border border-gray-200 rounded text-center w-14 py-0.5 text-[10px] font-bold text-gray-700 outline-none shadow-inner focus:border-tertiary transition" onchange="actualizarUI_Carrito()">
                             </div>
                             <span id="pos-descuento-general-val" class="text-red-500 font-black">- Bs. 0.00</span>
                         </div>
@@ -689,37 +689,6 @@
             </div>
         </div>
     </main>
-
-    <!-- ════════════════════════════════════════════════════════════════
-         MODAL PIN SUPERVISOR (FIX P4 — autorización de descuentos > 5%)
-         ════════════════════════════════════════════════════════════════ -->
-    <div id="modal-pin-supervisor" class="fixed inset-0 bg-slate-900/85 backdrop-blur-sm z-[9999] hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden border-4 border-amber-400">
-            <div class="bg-gradient-to-r from-amber-500 to-orange-500 p-4 text-center">
-                <i class="fa-solid fa-shield-halved text-white text-3xl mb-1"></i>
-                <h2 class="text-white font-black text-base uppercase tracking-wider">Autorización Requerida</h2>
-                <p class="text-amber-100 text-[10px] font-bold uppercase tracking-wide mt-1">Descuento mayor al 5% — PIN supervisor</p>
-            </div>
-            <div class="p-5 space-y-3">
-                <div id="pin-supervisor-detalle" class="bg-amber-50 border border-amber-200 rounded-lg p-3 text-center">
-                    <p class="text-[10px] font-bold text-amber-700 uppercase tracking-wide">Descuento intentado</p>
-                    <p id="pin-supervisor-porcentaje" class="text-3xl font-black text-amber-700 mt-1">0%</p>
-                    <p id="pin-supervisor-contexto" class="text-[10px] text-amber-600 font-bold mt-1"></p>
-                </div>
-                <div>
-                    <label class="text-[10px] font-bold text-gray-600 uppercase tracking-wide">PIN Supervisor</label>
-                    <input type="password" id="pin-supervisor-input" inputmode="numeric" autocomplete="off" maxlength="8"
-                        class="w-full border-2 border-gray-200 rounded-lg p-3 text-center text-2xl font-black tracking-[0.5em] outline-none focus:border-amber-500 transition mt-1"
-                        placeholder="••••">
-                    <p id="pin-supervisor-error" class="hidden text-red-500 text-[10px] font-bold mt-1 text-center"><i class="fa-solid fa-circle-exclamation mr-1"></i><span id="pin-supervisor-error-msg"></span></p>
-                </div>
-                <div class="flex gap-2 pt-2">
-                    <button onclick="cancelarPinSupervisor()" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2.5 rounded-lg uppercase text-[11px] tracking-wide btn-press transition">Cancelar</button>
-                    <button onclick="confirmarPinSupervisor()" id="btn-confirmar-pin" class="flex-1 bg-amber-500 hover:bg-amber-600 text-white font-black py-2.5 rounded-lg uppercase text-[11px] tracking-wide btn-press transition shadow-md"><i class="fa-solid fa-check mr-1"></i>Autorizar</button>
-                </div>
-            </div>
-        </div>
-    </div>
         <script>
         const TOKEN_JWT = localStorage.getItem('pyp_token_seguro');
 
@@ -1460,252 +1429,12 @@
             actualizarUI_Carrito();
         }
 
-        // ════════════════════════════════════════════════════════════════
-        // FIX P4 — VALIDACIÓN DE DESCUENTOS CON PIN SUPERVISOR
-        // ════════════════════════════════════════════════════════════════
-        // Reglas: 0%–5% libre, >5% requiere PIN supervisor, máximo 100%.
-        // PIN cacheado por 5 minutos en sesión para no interrumpir flujo de cajero.
-        // ════════════════════════════════════════════════════════════════
-        const PIN_DESCUENTO_UMBRAL_LIBRE = 5;       // % máximo sin PIN
-        const PIN_CACHE_DURACION_MS = 5 * 60 * 1000; // 5 minutos
-        let pinSupervisorCache = { autorizado: false, expira: 0 };
-        let pinSupervisorPromiseResolver = null;
-
-        function pinSupervisorVigente() {
-            return pinSupervisorCache.autorizado && Date.now() < pinSupervisorCache.expira;
-        }
-
-        function calcularPorcentajeDescuentoLinea(item, descTipo, descVal) {
-            // Devuelve el % equivalente que el descuento representa sobre la base de la línea.
-            if (!item || descVal <= 0) return 0;
-            const baseUsd = redondear(calcularPrecioUnitario(item, item.cantidad)) * item.cantidad;
-            const baseBs = baseUsd * tasaBCVCalculo;
-            if (baseUsd <= 0) return 0;
-            if (descTipo === 'PORCENTAJE') return descVal;
-            if (descTipo === 'MONTO')      return (descVal / baseUsd) * 100;
-            if (descTipo === 'MONTO_BS')   return (descVal / baseBs) * 100;
-            return 0;
-        }
-
-        function calcularPorcentajeDescuentoGeneral(descTipo, descVal, subtotalBaseUsd, subtotalBaseBs) {
-            if (descVal <= 0 || subtotalBaseUsd <= 0) return 0;
-            if (descTipo === 'PORCENTAJE') return descVal;
-            if (descTipo === 'MONTO')      return (descVal / subtotalBaseUsd) * 100;
-            if (descTipo === 'MONTO_BS')   return (descVal / subtotalBaseBs) * 100;
-            return 0;
-        }
-
-        function abrirModalPinSupervisor(porcentaje, contexto) {
-            const modal = document.getElementById('modal-pin-supervisor');
-            document.getElementById('pin-supervisor-porcentaje').innerText = porcentaje.toFixed(2) + '%';
-            document.getElementById('pin-supervisor-contexto').innerText = contexto || '';
-            document.getElementById('pin-supervisor-input').value = '';
-            document.getElementById('pin-supervisor-error').classList.add('hidden');
-            document.getElementById('btn-confirmar-pin').disabled = false;
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            setTimeout(() => document.getElementById('pin-supervisor-input').focus(), 100);
-        }
-
-        function cerrarModalPinSupervisor() {
-            const modal = document.getElementById('modal-pin-supervisor');
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-        }
-
-        function cancelarPinSupervisor() {
-            cerrarModalPinSupervisor();
-            if (pinSupervisorPromiseResolver) {
-                pinSupervisorPromiseResolver(false);
-                pinSupervisorPromiseResolver = null;
-            }
-        }
-
-        async function confirmarPinSupervisor() {
-            const input = document.getElementById('pin-supervisor-input');
-            const errBox = document.getElementById('pin-supervisor-error');
-            const errMsg = document.getElementById('pin-supervisor-error-msg');
-            const btn = document.getElementById('btn-confirmar-pin');
-            const pin = (input.value || '').trim();
-
-            if (!pin || pin.length < 4) {
-                errMsg.innerText = 'PIN debe tener al menos 4 dígitos';
-                errBox.classList.remove('hidden');
-                return;
-            }
-            if (!empresaActual) {
-                errMsg.innerText = 'Error: empresa no resuelta. Recarga la página.';
-                errBox.classList.remove('hidden');
-                return;
-            }
-
-            btn.disabled = true;
-            errBox.classList.add('hidden');
-
-            try {
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/validar_pin_supervisor`, {
-                    method: 'POST',
-                    headers: {
-                        'apikey': SUPABASE_KEY,
-                        'Authorization': `Bearer ${TOKEN_JWT}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ pin: pin, id_empresa: empresaActual })
-                });
-                if (!res.ok) {
-                    const txt = await res.text();
-                    throw new Error(`SQLSTATE ${res.status}: ${txt}`);
-                }
-                const valido = await res.json();
-                if (valido === true) {
-                    pinSupervisorCache = { autorizado: true, expira: Date.now() + PIN_CACHE_DURACION_MS };
-                    cerrarModalPinSupervisor();
-                    if (pinSupervisorPromiseResolver) {
-                        pinSupervisorPromiseResolver(true);
-                        pinSupervisorPromiseResolver = null;
-                    }
-                } else {
-                    errMsg.innerText = 'PIN incorrecto';
-                    errBox.classList.remove('hidden');
-                    btn.disabled = false;
-                    input.value = '';
-                    input.focus();
-                }
-            } catch (e) {
-                console.error('[PIN Supervisor]', e);
-                errMsg.innerText = 'Error de conexión, reintenta';
-                errBox.classList.remove('hidden');
-                btn.disabled = false;
-            }
-        }
-
-        function solicitarPinSupervisor(porcentaje, contexto) {
-            // Si el cache vigente cubre la operación, no pedir PIN otra vez
-            if (pinSupervisorVigente()) return Promise.resolve(true);
-            return new Promise((resolve) => {
-                pinSupervisorPromiseResolver = resolve;
-                abrirModalPinSupervisor(porcentaje, contexto);
-            });
-        }
-
-        // Permitir Enter en el input PIN para confirmar
-        document.addEventListener('DOMContentLoaded', () => {
-            const inp = document.getElementById('pin-supervisor-input');
-            if (inp) {
-                inp.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter') { e.preventDefault(); confirmarPinSupervisor(); }
-                    if (e.key === 'Escape') { e.preventDefault(); cancelarPinSupervisor(); }
-                });
-            }
-        });
-
-        async function actualizarDescItem(sku, campo, valor) {
+        function actualizarDescItem(sku, campo, valor) {
             const idx = carrito.findIndex(i => i.id_producto_sku === sku); if (idx === -1) return;
-
-            // Si solo cambia el tipo, no hay que validar (el monto puede quedar igual)
-            if (campo === 'tipo') {
-                carrito[idx].desc_tipo = valor;
-                actualizarUI_Carrito();
-                return;
-            }
-
-            // campo === 'val'
-            const valorParsed = parseFloat(valor) || 0;
-            if (valorParsed <= 0) {
-                carrito[idx].desc_val = 0;
-                actualizarUI_Carrito();
-                return;
-            }
-
-            const item = carrito[idx];
-            const descTipo = item.desc_tipo;
-            const baseUsd = redondear(calcularPrecioUnitario(item, item.cantidad)) * item.cantidad;
-            const baseBs = baseUsd * tasaBCVCalculo;
-
-            // Hard-cap 100%: el descuento nunca puede exceder la base
-            let valorFinal = valorParsed;
-            if (descTipo === 'PORCENTAJE' && valorFinal > 100) valorFinal = 100;
-            if (descTipo === 'MONTO' && valorFinal > baseUsd)  valorFinal = baseUsd;
-            if (descTipo === 'MONTO_BS' && valorFinal > baseBs) valorFinal = baseBs;
-
-            // Calcular % equivalente para validación
-            const porcentajeEquiv = calcularPorcentajeDescuentoLinea(item, descTipo, valorFinal);
-
-            if (porcentajeEquiv > PIN_DESCUENTO_UMBRAL_LIBRE) {
-                const contexto = `${item.nombre.substring(0, 32)}${item.nombre.length > 32 ? '…' : ''}`;
-                const autorizado = await solicitarPinSupervisor(porcentajeEquiv, contexto);
-                if (!autorizado) {
-                    // Cajero canceló o PIN incorrecto: revertir input y carrito
-                    item.desc_val = 0;
-                    actualizarUI_Carrito();
-                    return;
-                }
-            }
-
-            item.desc_val = valorFinal;
+            if (campo === 'tipo') carrito[idx].desc_tipo = valor;
+            if (campo === 'val') carrito[idx].desc_val = parseFloat(valor) || 0;
             actualizarUI_Carrito();
         }
-        // ════════════════════════════════════════════════════════════════
-        // FIN FIX P4 BLOQUE 1 (descuento por línea)
-        // ════════════════════════════════════════════════════════════════
-
-        // ════════════════════════════════════════════════════════════════
-        // FIX P4 BLOQUE 2 — VALIDACIÓN DEL DESCUENTO GENERAL (footer)
-        // ════════════════════════════════════════════════════════════════
-        async function onChangeDescGeneral() {
-            const inputEl = document.getElementById('pos-input-desc-general');
-            const tipoEl = document.getElementById('pos-type-desc-general');
-            const tipo = tipoEl.value;
-            let valor = parseFloat(inputEl.value) || 0;
-
-            if (valor <= 0) {
-                inputEl.value = '';
-                actualizarUI_Carrito();
-                return;
-            }
-
-            if (carrito.length === 0) {
-                // No hay productos aún: no se puede calcular % equivalente, dejar pasar y actualizarUI hará el cap
-                actualizarUI_Carrito();
-                return;
-            }
-
-            // Calcular subtotal base (suma de bases con desc por línea ya aplicado)
-            let subtotalBaseUsd = 0, subtotalBaseBs = 0;
-            carrito.forEach(it => {
-                const baseUsd = redondear(calcularPrecioUnitario(it, it.cantidad)) * it.cantidad;
-                const baseBs = baseUsd * tasaBCVCalculo;
-                let dUsd = 0, dBs = 0;
-                if (it.desc_tipo === 'PORCENTAJE') { dUsd = baseUsd * (it.desc_val / 100); dBs = baseBs * (it.desc_val / 100); }
-                else if (it.desc_tipo === 'MONTO')      { dUsd = it.desc_val; dBs = it.desc_val * tasaBCVCalculo; }
-                else if (it.desc_tipo === 'MONTO_BS')   { dBs = it.desc_val; dUsd = it.desc_val / tasaBCVCalculo; }
-                if (dBs > baseBs) { dBs = baseBs; dUsd = baseUsd; }
-                subtotalBaseUsd += (baseUsd - dUsd);
-                subtotalBaseBs += (baseBs - dBs);
-            });
-
-            // Hard-cap 100%
-            if (tipo === 'PORCENTAJE' && valor > 100) valor = 100;
-            if (tipo === 'MONTO' && valor > subtotalBaseUsd) valor = redondear(subtotalBaseUsd);
-            if (tipo === 'MONTO_BS' && valor > subtotalBaseBs) valor = redondear(subtotalBaseBs);
-
-            const porcentajeEquiv = calcularPorcentajeDescuentoGeneral(tipo, valor, subtotalBaseUsd, subtotalBaseBs);
-
-            if (porcentajeEquiv > PIN_DESCUENTO_UMBRAL_LIBRE) {
-                const autorizado = await solicitarPinSupervisor(porcentajeEquiv, 'Descuento general (toda la venta)');
-                if (!autorizado) {
-                    inputEl.value = '';
-                    actualizarUI_Carrito();
-                    return;
-                }
-            }
-
-            inputEl.value = valor;
-            actualizarUI_Carrito();
-        }
-        // ════════════════════════════════════════════════════════════════
-        // FIN FIX P4 BLOQUE 2
-        // ════════════════════════════════════════════════════════════════
 
         let sumSubtotalBasePuroUsd = 0, descGeneralTotalUsd = 0, granTotalUsd = 0;
         let sumSubtotalBasePuroBs = 0, descGeneralTotalBs = 0, granTotalBs = 0;
@@ -2525,18 +2254,53 @@
                         id_documento_origen: window.__id_documento_origen_importado || null
                     };
 
+                    // ════════════════════════════════════════════════════════════════
+                    // CONSTRUIR PAGOS: array mono-moneda por método (Filtro Profit/Saint)
+                    // Cada movimiento tiene SOLO USD o SOLO Bs según el método real.
+                    // Esto evita el doble-conteo en cierre de caja.
+                    // ════════════════════════════════════════════════════════════════
                     let payloadCaja = null;
                     if (metodo !== 'POR_PAGAR') {
-                        payloadCaja = {
-                            fecha: new Date().toISOString(),
-                            tipo: 'INGRESO',
-                            concepto: `COBRO FACTURA NRO: ${nroFactura} - CLIENTE: ${document.getElementById('txt-cli-nom').innerText}`,
-                            monto_usd: totalUsdFinal,
-                            monto_bs: totalBsFinal,
-                            metodo_pago: metodoPagoFinal,
-                            usuario: usuario,
-                            id_cierre: window.__id_cierre_activo || null  // Vincular movimiento con turno activo
-                        };
+                        const fechaPago = new Date().toISOString();
+                        const conceptoBase = `COBRO FACTURA NRO: ${nroFactura} - CLIENTE: ${document.getElementById('txt-cli-nom').innerText}`;
+                        const idCierre = window.__id_cierre_activo || null;
+                        const pagos = [];
+
+                        if (lineasPagoMixto.length > 0) {
+                            // Pago mixto: cada línea es un movimiento separado.
+                            // Las líneas mixtas vienen en Bs siempre (por la UI actual).
+                            // Métodos USD-puros (EFECTIVO_USD, ZELLE) se separan a monto_usd.
+                            lineasPagoMixto.forEach(l => {
+                                const montoBs = parseFloat(l.monto) || 0;
+                                if (montoBs <= 0) return;
+                                const esMonedaUsd = (l.metodo === 'EFECTIVO_USD' || l.metodo === 'ZELLE');
+                                pagos.push({
+                                    fecha: fechaPago,
+                                    tipo: 'INGRESO',
+                                    concepto: conceptoBase + ' [' + l.metodo + ']',
+                                    monto_usd: esMonedaUsd ? redondear(montoBs / tasaBCVCalculo) : 0,
+                                    monto_bs: esMonedaUsd ? 0 : redondear(montoBs),
+                                    metodo_pago: l.metodo,
+                                    usuario: usuario,
+                                    id_cierre: idCierre
+                                });
+                            });
+                        } else {
+                            // Pago único: separar moneda según método elegido
+                            const esMonedaUsd = (metodo === 'EFECTIVO_USD' || metodo === 'ZELLE');
+                            pagos.push({
+                                fecha: fechaPago,
+                                tipo: 'INGRESO',
+                                concepto: conceptoBase,
+                                monto_usd: esMonedaUsd ? redondear(totalUsdFinal) : 0,
+                                monto_bs: esMonedaUsd ? 0 : redondear(totalBsFinal),
+                                metodo_pago: metodoPagoFinal,
+                                usuario: usuario,
+                                id_cierre: idCierre
+                            });
+                        }
+
+                        payloadCaja = pagos;
                     }
 
                     mostrarCarga("Procesando venta...", "Guardando factura, detalles y stock...");
