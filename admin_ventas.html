@@ -1815,11 +1815,40 @@
                 const limpio = String(valor).replace(/[^0-9.,]/g, '').replace(',', '.');
                 const num = parseFloat(limpio);
                 lineasPagoMixto[idx].monto = isNaN(num) ? 0 : num;
+                // FIX: NO re-render completo (destruiría el input que está escribiendo).
+                // Solo recalcular el saldo asistente sin tocar el DOM de inputs.
+                actualizarSaldoMixto();
             } else {
                 lineasPagoMixto[idx][campo] = valor;
             }
-            // Solo re-render completo si cambió el monto (afecta saldo). Para los demás, no re-render para no perder foco.
-            if (campo === 'monto') renderizarLineasPago();
+        }
+
+        // Recalcula y actualiza solo el indicador de saldo del pago mixto.
+        // No toca los inputs (preserva foco al escribir).
+        function actualizarSaldoMixto() {
+            const el = document.getElementById('val-saldo-restante');
+            if (!el) return;
+            let totalPagadoBs = 0;
+            lineasPagoMixto.forEach(l => {
+                const m = parseFloat(l.monto) || 0;
+                if (l.metodo === 'EFECTIVO_USD' || l.metodo === 'ZELLE') {
+                    totalPagadoBs += m * tasaBCVCalculo;
+                } else {
+                    totalPagadoBs += m;
+                }
+            });
+            const saldoBs = redondear(granTotalBs - totalPagadoBs);
+            const saldoUsd = redondear(saldoBs / tasaBCVCalculo);
+            if (saldoBs > 0.01) {
+                el.innerHTML = `Faltan <b>Bs. ${fmt(saldoBs)}</b> <span class="text-[9px] text-gray-400">(US$ ${fmt(saldoUsd)})</span>`;
+                el.className = 'text-red-600 font-bold text-[11px]';
+            } else if (saldoBs < -0.01) {
+                el.innerHTML = `Sobran <b>Bs. ${fmt(Math.abs(saldoBs))}</b> <span class="text-[9px] text-gray-400">(devolver vuelto)</span>`;
+                el.className = 'text-amber-600 font-bold text-[11px]';
+            } else {
+                el.innerHTML = `<i class="fa-solid fa-check-circle mr-1"></i>Pago completo`;
+                el.className = 'text-green-600 font-bold text-[11px]';
+            }
         }
 
         function eliminarLineaPago(id) {
