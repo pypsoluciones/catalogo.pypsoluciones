@@ -383,7 +383,7 @@
 
     <!-- MODAL: VENTAS PAUSADAS -->
     <div id="modal-ventas-pausadas" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[9990] hidden flex items-center justify-center p-4 fade-in" onclick="cerrarModalVentasPausadas()">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col border border-gray-200" onclick="event.stopPropagation()">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col border border-gray-200" onclick="event.stopPropagation()">
             <div class="bg-primary text-white px-4 py-3 flex justify-between items-center shrink-0">
                 <h3 class="font-bold text-[12px] tracking-wide uppercase"><i class="fa-solid fa-list-check mr-2 text-tertiary"></i> Ventas en Espera (Pausadas)</h3>
                 <button onclick="cerrarModalVentasPausadas()" class="text-gray-300 hover:text-white text-lg transition"><i class="fa-solid fa-times"></i></button>
@@ -1650,24 +1650,197 @@
         // PAGO MIXTO Y VUELTO
         // ================================================================
         let lineasPagoMixto = [];
-        function agregarLineaPago() { const id = Date.now(); lineasPagoMixto.push({ id, metodo: 'PAGO_MOVIL', monto: 0 }); renderizarLineasPago(); }
-
-        function renderizarLineasPago() {
-            const contenedor = document.getElementById('lista-pagos-mixtos'); const saldoEl = document.getElementById('saldo-restante-pago');
-            if (lineasPagoMixto.length === 0) { contenedor.innerHTML = ''; saldoEl.classList.add('hidden'); return; }
-            saldoEl.classList.remove('hidden'); let html = '';
-            lineasPagoMixto.forEach(l => {
-                html += `<div class="flex gap-1 items-center"><select onchange="actualizarLineaPago(${l.id}, 'metodo', this.value)" class="flex-1 border border-gray-300 rounded px-1 py-0.5 text-[9px] font-bold text-primary outline-none bg-white"><option value="EFECTIVO_BS" ${l.metodo === 'EFECTIVO_BS' ? 'selected' : ''}>Efectivo Bs.</option><option value="PAGO_MOVIL" ${l.metodo === 'PAGO_MOVIL' ? 'selected' : ''}>Pago Móvil</option><option value="PUNTO_VENTA" ${l.metodo === 'PUNTO_VENTA' ? 'selected' : ''}>Punto de Venta</option><option value="EFECTIVO_USD" ${l.metodo === 'EFECTIVO_USD' ? 'selected' : ''}>Divisas USD</option><option value="ZELLE" ${l.metodo === 'ZELLE' ? 'selected' : ''}>Zelle</option></select><input type="number" step="0.01" min="0" placeholder="Bs." value="${l.monto || ''}" onchange="actualizarLineaPago(${l.id}, 'monto', this.value)" class="w-20 border border-gray-300 rounded px-1 py-0.5 text-[10px] font-bold text-center outline-none"><button onclick="eliminarLineaPago(${l.id})" class="text-red-400 hover:text-red-600 text-xs px-1 transition"><i class="fa-solid fa-times"></i></button></div>`;
-            });
-            contenedor.innerHTML = html;
-            const totalPagado = lineasPagoMixto.reduce((acc, l) => acc + (parseFloat(l.monto) || 0), 0);
-            const saldo = redondear(granTotalBs - totalPagado);
-            document.getElementById('val-saldo-restante').innerText = `Bs. ${fmt(Math.max(saldo, 0))}`;
-            document.getElementById('val-saldo-restante').className = saldo <= 0 ? 'text-green-600' : 'text-red-600';
+        function agregarLineaPago() {
+            const id = Date.now();
+            // Default a Efectivo Bs (siempre disponible). Cajero cambia si necesita.
+            lineasPagoMixto.push({ id, metodo: 'EFECTIVO_BS', id_instrumento: null, monto: 0 });
+            renderizarLineasPago();
         }
 
-        function actualizarLineaPago(id, campo, valor) { const idx = lineasPagoMixto.findIndex(l => l.id === id); if (idx === -1) return; if (campo === 'metodo') lineasPagoMixto[idx].metodo = valor; if (campo === 'monto') lineasPagoMixto[idx].monto = parseFloat(valor) || 0; renderizarLineasPago(); }
-        function eliminarLineaPago(id) { lineasPagoMixto = lineasPagoMixto.filter(l => l.id !== id); renderizarLineasPago(); }
+        // Devuelve TODOS los métodos disponibles según instrumentos cargados + base
+        function obtenerMetodosMixtoDisponibles() {
+            const base = [
+                { value: 'EFECTIVO_BS',     label: '🇻🇪 Efectivo Bs',     moneda: 'BS' },
+                { value: 'EFECTIVO_USD',    label: '💵 Divisas USD',      moneda: 'USD' }
+            ];
+            // Agregar uno por instrumento creado, separados por tipo
+            const desdeIns = (instrumentosCargados || []).map(i => ({
+                value: i.tipo_metodo + '|' + i.id_instrumento,
+                label: ({
+                    'PAGO_MOVIL': '📱', 'TRANSFERENCIA': '🏦',
+                    'PUNTO_VENTA': '💳', 'ZELLE': '💵', 'OTRO': '🔧'
+                }[i.tipo_metodo] || '💰') + ' ' + i.nombre,
+                moneda: i.moneda || (i.tipo_metodo === 'ZELLE' ? 'USD' : 'BS'),
+                tipo_metodo: i.tipo_metodo,
+                id_instrumento: i.id_instrumento
+            }));
+            return [...base, ...desdeIns];
+        }
+
+        function renderizarLineasPago() {
+            const contenedor = document.getElementById('lista-pagos-mixtos');
+            const saldoEl = document.getElementById('saldo-restante-pago');
+            if (lineasPagoMixto.length === 0) {
+                contenedor.innerHTML = '';
+                saldoEl.classList.add('hidden');
+                return;
+            }
+            saldoEl.classList.remove('hidden');
+
+            const opciones = obtenerMetodosMixtoDisponibles();
+
+            // Total a liquidar en Bs (las líneas USD se convierten a Bs para sumar)
+            const totalEsperadoBs = granTotalBs;
+
+            let html = '';
+            lineasPagoMixto.forEach((l) => {
+                // Determinar moneda de la línea desde método/instrumento
+                let monedaLinea = 'BS';
+                let labelMoneda = 'Bs.';
+                if (l.metodo === 'EFECTIVO_USD') { monedaLinea = 'USD'; labelMoneda = 'US$'; }
+                else if (l.id_instrumento) {
+                    const ins = (instrumentosCargados || []).find(i => i.id_instrumento === l.id_instrumento);
+                    if (ins) {
+                        monedaLinea = ins.moneda || (ins.tipo_metodo === 'ZELLE' ? 'USD' : 'BS');
+                        labelMoneda = monedaLinea === 'USD' ? 'US$' : 'Bs.';
+                    }
+                }
+
+                // Valor del select: combinación metodo|id_instrumento (o solo método base)
+                const selValue = l.id_instrumento ? (l.metodo + '|' + l.id_instrumento) : l.metodo;
+
+                // Campos extra capturables solo para PUNTO_VENTA (terminal/lote/trace/referencia)
+                let extraInputs = '';
+                if (l.metodo === 'PUNTO_VENTA') {
+                    extraInputs = `
+                        <div class="grid grid-cols-4 gap-1 mt-1">
+                            <input type="text" maxlength="15" placeholder="Terminal" value="${l.terminal || ''}" oninput="actualizarLineaPago(${l.id}, 'terminal', this.value)" class="border border-gray-200 rounded px-2 py-1 text-[9px] outline-none focus:border-tertiary">
+                            <input type="text" maxlength="10" placeholder="Lote" value="${l.lote || ''}" oninput="actualizarLineaPago(${l.id}, 'lote', this.value)" class="border border-gray-200 rounded px-2 py-1 text-[9px] outline-none focus:border-tertiary">
+                            <input type="text" maxlength="10" placeholder="Trace" value="${l.trace || ''}" oninput="actualizarLineaPago(${l.id}, 'trace', this.value)" class="border border-gray-200 rounded px-2 py-1 text-[9px] outline-none focus:border-tertiary">
+                            <input type="text" maxlength="20" placeholder="Referencia" value="${l.referencia || ''}" oninput="actualizarLineaPago(${l.id}, 'referencia', this.value)" class="border border-gray-200 rounded px-2 py-1 text-[9px] outline-none focus:border-tertiary">
+                        </div>`;
+                } else if (l.metodo === 'PAGO_MOVIL' || l.metodo === 'TRANSFERENCIA') {
+                    extraInputs = `
+                        <div class="grid grid-cols-3 gap-1 mt-1">
+                            <input type="tel" inputmode="numeric" maxlength="20" placeholder="Referencia" value="${l.referencia || ''}" oninput="this.value=this.value.replace(/[^0-9]/g,'');actualizarLineaPago(${l.id}, 'referencia', this.value)" class="border border-gray-200 rounded px-2 py-1 text-[9px] outline-none focus:border-tertiary">
+                            <input type="text" maxlength="40" placeholder="Banco origen cliente" value="${l.banco_origen || ''}" oninput="actualizarLineaPago(${l.id}, 'banco_origen', this.value)" class="border border-gray-200 rounded px-2 py-1 text-[9px] outline-none focus:border-tertiary">
+                            <input type="date" value="${l.fecha_op || ''}" onchange="actualizarLineaPago(${l.id}, 'fecha_op', this.value)" class="border border-gray-200 rounded px-2 py-1 text-[9px] outline-none focus:border-tertiary">
+                        </div>`;
+                } else if (l.metodo === 'ZELLE') {
+                    extraInputs = `
+                        <div class="grid grid-cols-3 gap-1 mt-1">
+                            <input type="text" maxlength="40" placeholder="Confirmación" value="${l.referencia || ''}" oninput="actualizarLineaPago(${l.id}, 'referencia', this.value)" class="border border-gray-200 rounded px-2 py-1 text-[9px] outline-none focus:border-tertiary">
+                            <input type="email" maxlength="80" placeholder="Email cliente" value="${l.email_origen || ''}" oninput="actualizarLineaPago(${l.id}, 'email_origen', this.value)" class="border border-gray-200 rounded px-2 py-1 text-[9px] outline-none focus:border-tertiary">
+                            <input type="date" value="${l.fecha_op || ''}" onchange="actualizarLineaPago(${l.id}, 'fecha_op', this.value)" class="border border-gray-200 rounded px-2 py-1 text-[9px] outline-none focus:border-tertiary">
+                        </div>`;
+                }
+
+                html += `
+                <div class="bg-white border border-gray-200 rounded-lg p-2 space-y-1">
+                    <div class="flex gap-1 items-center">
+                        <select onchange="cambiarMetodoLineaMixto(${l.id}, this.value)" class="flex-1 border border-gray-300 rounded px-2 py-1 text-[10px] font-bold text-primary outline-none bg-white">
+                            ${opciones.map(o => `<option value="${o.value}" ${selValue === o.value ? 'selected' : ''}>${o.label}</option>`).join('')}
+                        </select>
+                        <div class="relative">
+                            <input type="number" step="0.01" min="0" placeholder="0.00" value="${l.monto || ''}" oninput="actualizarLineaPago(${l.id}, 'monto', this.value)" class="w-28 border border-gray-300 rounded pl-7 pr-1 py-1 text-[11px] font-bold text-right outline-none">
+                            <span class="absolute left-2 top-1/2 -translate-y-1/2 text-[9px] font-bold text-gray-500">${labelMoneda}</span>
+                        </div>
+                        <button onclick="autoCompletarMontoLinea(${l.id})" title="Autocompletar al saldo restante" class="text-blue-400 hover:text-blue-600 text-xs px-1.5 py-0.5 transition" type="button">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        </button>
+                        <button onclick="eliminarLineaPago(${l.id})" title="Eliminar línea" class="text-red-400 hover:text-red-600 text-xs px-1 transition" type="button">
+                            <i class="fa-solid fa-times"></i>
+                        </button>
+                    </div>
+                    ${extraInputs}
+                </div>`;
+            });
+            contenedor.innerHTML = html;
+
+            // Cálculo asistente: convertir todas las líneas a Bs para totalizar
+            let totalPagadoBs = 0;
+            lineasPagoMixto.forEach(l => {
+                const m = parseFloat(l.monto) || 0;
+                if (l.metodo === 'EFECTIVO_USD' || l.metodo === 'ZELLE') {
+                    totalPagadoBs += m * tasaBCVCalculo;
+                } else {
+                    totalPagadoBs += m;
+                }
+            });
+            const saldoBs = redondear(totalEsperadoBs - totalPagadoBs);
+            const saldoUsd = redondear(saldoBs / tasaBCVCalculo);
+            const el = document.getElementById('val-saldo-restante');
+            if (saldoBs > 0.01) {
+                el.innerHTML = `Faltan <b>Bs. ${fmt(saldoBs)}</b> <span class="text-[9px] text-gray-400">(US$ ${fmt(saldoUsd)})</span>`;
+                el.className = 'text-red-600 font-bold text-[11px]';
+            } else if (saldoBs < -0.01) {
+                el.innerHTML = `Sobran <b>Bs. ${fmt(Math.abs(saldoBs))}</b> <span class="text-[9px] text-gray-400">(devolver vuelto)</span>`;
+                el.className = 'text-amber-600 font-bold text-[11px]';
+            } else {
+                el.innerHTML = `<i class="fa-solid fa-check-circle mr-1"></i>Pago completo`;
+                el.className = 'text-green-600 font-bold text-[11px]';
+            }
+        }
+
+        // Cambio combinado de método + instrumento desde el select
+        function cambiarMetodoLineaMixto(id, value) {
+            const idx = lineasPagoMixto.findIndex(l => l.id === id);
+            if (idx === -1) return;
+            // value puede ser solo el método base (EFECTIVO_BS / EFECTIVO_USD) o "TIPO|UUID_INSTRUMENTO"
+            if (value.includes('|')) {
+                const [tipo, idInstr] = value.split('|');
+                lineasPagoMixto[idx].metodo = tipo;
+                lineasPagoMixto[idx].id_instrumento = idInstr;
+            } else {
+                lineasPagoMixto[idx].metodo = value;
+                lineasPagoMixto[idx].id_instrumento = null;
+            }
+            // Reset de campos extra al cambiar método
+            ['terminal','lote','trace','referencia','banco_origen','email_origen','fecha_op'].forEach(k => {
+                lineasPagoMixto[idx][k] = '';
+            });
+            renderizarLineasPago();
+        }
+
+        function actualizarLineaPago(id, campo, valor) {
+            const idx = lineasPagoMixto.findIndex(l => l.id === id);
+            if (idx === -1) return;
+            if (campo === 'monto') lineasPagoMixto[idx].monto = parseFloat(valor) || 0;
+            else lineasPagoMixto[idx][campo] = valor;
+            // Solo re-render completo si cambió el monto (afecta saldo). Para los demás, no re-render para no perder foco.
+            if (campo === 'monto') renderizarLineasPago();
+        }
+
+        function eliminarLineaPago(id) {
+            lineasPagoMixto = lineasPagoMixto.filter(l => l.id !== id);
+            renderizarLineasPago();
+        }
+
+        // Autocompletar el saldo restante en esta línea (en moneda nativa)
+        function autoCompletarMontoLinea(id) {
+            const idx = lineasPagoMixto.findIndex(l => l.id === id);
+            if (idx === -1) return;
+            // Calcular total pagado de las OTRAS líneas en Bs
+            let pagadoOtrasBs = 0;
+            lineasPagoMixto.forEach(l => {
+                if (l.id === id) return;
+                const m = parseFloat(l.monto) || 0;
+                if (l.metodo === 'EFECTIVO_USD' || l.metodo === 'ZELLE') {
+                    pagadoOtrasBs += m * tasaBCVCalculo;
+                } else {
+                    pagadoOtrasBs += m;
+                }
+            });
+            const saldoFaltanteBs = Math.max(redondear(granTotalBs - pagadoOtrasBs), 0);
+            // Convertir a moneda de la línea actual
+            const l = lineasPagoMixto[idx];
+            if (l.metodo === 'EFECTIVO_USD' || l.metodo === 'ZELLE') {
+                l.monto = redondear(saldoFaltanteBs / tasaBCVCalculo);
+            } else {
+                l.monto = saldoFaltanteBs;
+            }
+            renderizarLineasPago();
+        }
 
         // ════════════════════════════════════════════════════════════════
         // SPRINT 1.0 LOTE 1 — FILTRADO INTELIGENTE DE MÉTODOS DE PAGO
@@ -2491,21 +2664,28 @@
 
                         if (lineasPagoMixto.length > 0) {
                             // Pago mixto: cada línea es un movimiento separado.
-                            // Las líneas mixtas vienen en Bs siempre (por la UI actual).
-                            // Métodos USD-puros (EFECTIVO_USD, ZELLE) se separan a monto_usd.
+                            // El monto se ingresa en la moneda nativa de la línea.
+                            // EFECTIVO_USD/ZELLE → monto está en USD → monto_usd directo
+                            // EFECTIVO_BS/PAGO_MOVIL/TRANSFERENCIA/PUNTO_VENTA → monto está en Bs → monto_bs directo
                             lineasPagoMixto.forEach(l => {
-                                const montoBs = parseFloat(l.monto) || 0;
-                                if (montoBs <= 0) return;
+                                const monto = parseFloat(l.monto) || 0;
+                                if (monto <= 0) return;
                                 const esMonedaUsd = (l.metodo === 'EFECTIVO_USD' || l.metodo === 'ZELLE');
+                                const datosLinea = {};
+                                ['terminal','lote','trace','referencia','banco_origen','email_origen','fecha_op'].forEach(k => {
+                                    if (l[k]) datosLinea[k] = l[k];
+                                });
                                 pagos.push({
                                     fecha: fechaPago,
                                     tipo: 'INGRESO',
                                     concepto: conceptoBase + ' [' + l.metodo + ']',
-                                    monto_usd: esMonedaUsd ? redondear(montoBs / tasaBCVCalculo) : 0,
-                                    monto_bs: esMonedaUsd ? 0 : redondear(montoBs),
+                                    monto_usd: esMonedaUsd ? redondear(monto) : 0,
+                                    monto_bs: esMonedaUsd ? 0 : redondear(monto),
                                     metodo_pago: l.metodo,
+                                    id_instrumento: l.id_instrumento || null,
                                     usuario: usuario,
-                                    id_cierre: idCierre
+                                    id_cierre: idCierre,
+                                    datos_extra: Object.keys(datosLinea).length ? datosLinea : null
                                 });
                             });
                         } else {
