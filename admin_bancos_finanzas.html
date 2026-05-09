@@ -72,7 +72,7 @@
                     <i class="fa-solid fa-vault mr-1"></i> Cuentas y Bóveda
                 </button>
                 <button onclick="cambiarTab('config')" id="tab-config" class="py-2 px-4 text-sm font-bold border-b-2 border-transparent text-gray-400 hover:text-gray-600 transition uppercase tracking-wider">
-                    <i class="fa-solid fa-sliders mr-1"></i> Configuración Pagos
+                    <i class="fa-solid fa-credit-card mr-1"></i> Instrumentos de Pago
                     <span id="badge-config-pendiente" class="hidden ml-1 bg-orange-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full">!</span>
                 </button>
                 <button onclick="cambiarTab('terminales')" id="tab-terminales" class="py-2 px-4 text-sm font-bold border-b-2 border-transparent text-gray-400 hover:text-gray-600 transition uppercase tracking-wider">
@@ -127,17 +127,62 @@
                     <div class="flex gap-3">
                         <i class="fa-solid fa-circle-info text-blue-500 text-xl mt-1"></i>
                         <div>
-                            <h3 class="font-black text-blue-900 text-sm uppercase tracking-wide">¿Por qué configurar mapeos?</h3>
+                            <h3 class="font-black text-blue-900 text-sm uppercase tracking-wide">¿Qué son los instrumentos de pago?</h3>
                             <p class="text-[11px] text-blue-700 mt-1 leading-relaxed">
-                                Cuando un cliente paga con Zelle, Pago Móvil o Transferencia, el dinero NO llega a la bóveda física: llega a una cuenta bancaria específica. Aquí defines a qué cuenta va cada método. Sin esta configuración, el sistema bloqueará los cierres con esos métodos.
+                                Un instrumento es un canal de cobro (Pago Móvil, Zelle, Transferencia, Punto de Venta) que CAE EN una cuenta bancaria existente. Por ejemplo: "Pago Móvil Banesco" cae en la cuenta Banesco Bs. Crea aquí los canales que tu negocio acepta.
                             </p>
                         </div>
                     </div>
                 </div>
 
-                <div>
-                    <h2 class="text-lg font-black text-primary tracking-wide uppercase mb-3">Mapeo de Métodos de Pago</h2>
-                    <div id="grid-mapeos" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+                <div class="flex justify-between items-center">
+                    <h2 class="text-lg font-black text-primary tracking-wide uppercase">Instrumentos de Pago</h2>
+                    <button onclick="abrirModalInstrumento()" class="bg-secondary hover:opacity-90 text-white px-4 py-2 rounded-lg font-bold shadow-sm transition btn-press text-[10px] uppercase tracking-wider flex items-center gap-2">
+                        <i class="fa-solid fa-plus"></i> Nuevo Instrumento
+                    </button>
+                </div>
+                <div id="grid-instrumentos" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+            </div>
+
+            <!-- MODAL: Crear/Editar Instrumento de Pago -->
+            <div id="modal-instrumento" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[9990] hidden flex items-center justify-center p-4 fade-in">
+                <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col border border-gray-200">
+                    <div class="bg-primary text-white p-3 flex justify-between items-center shrink-0">
+                        <h3 id="modal-titulo-instrumento" class="font-bold text-[12px] tracking-wide uppercase"><i class="fa-solid fa-credit-card mr-2 text-tertiary"></i> Crear Instrumento de Pago</h3>
+                        <button onclick="cerrarModalInstrumento()" class="text-gray-300 hover:text-white transition"><i class="fa-solid fa-times"></i></button>
+                    </div>
+                    <form id="form-instrumento" onsubmit="guardarInstrumento(event)" class="p-5 bg-gray-50 space-y-3">
+                        <input type="hidden" id="ins-id">
+
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Tipo de Instrumento *</label>
+                            <select id="ins-tipo" required onchange="onChangeTipoInstrumento()" class="w-full border border-gray-300 rounded px-3 py-2 text-xs font-bold uppercase focus:border-tertiary outline-none bg-white">
+                                <option value="">Selecciona tipo...</option>
+                                <option value="PAGO_MOVIL">📱 Pago Móvil (Bs)</option>
+                                <option value="TRANSFERENCIA">🏦 Transferencia (Bs)</option>
+                                <option value="PUNTO_VENTA">💳 Punto de Venta (Bs)</option>
+                                <option value="ZELLE">💵 Zelle (USD)</option>
+                                <option value="OTRO">🔧 Otro</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Nombre del Instrumento *</label>
+                            <input type="text" id="ins-nombre" required maxlength="120" placeholder="Ej: Pago Móvil Banesco / Zelle Mercantil USA" class="w-full border border-gray-300 rounded px-3 py-2 text-xs font-bold uppercase focus:border-tertiary outline-none bg-white">
+                        </div>
+
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Cuenta Destino *</label>
+                            <select id="ins-cuenta" required class="w-full border border-gray-300 rounded px-3 py-2 text-xs font-bold focus:border-tertiary outline-none bg-white">
+                                <option value="">Primero selecciona el tipo...</option>
+                            </select>
+                            <p class="text-[9px] text-gray-500 mt-1">El dinero recibido por este instrumento se acreditará a esta cuenta.</p>
+                        </div>
+
+                        <div id="ins-datos-extra" class="bg-purple-50 border border-purple-200 rounded p-2 hidden"></div>
+
+                        <button type="submit" id="btn-guardar-ins" class="w-full bg-secondary hover:opacity-90 text-white font-bold py-2.5 rounded shadow btn-press uppercase text-[11px] tracking-wider transition">Guardar Instrumento</button>
+                    </form>
                 </div>
             </div>
 
@@ -399,13 +444,11 @@
                 </div>
             </div>
 
-            <!-- Plataforma Wallet: solo WALLET_DIGITAL -->
+            <!-- Plataforma Wallet: solo WALLET_DIGITAL con saldo propio -->
             <div id="cta-plataforma-wrap" class="hidden">
                 <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Plataforma *</label>
                 <select id="cta-plataforma" onchange="onChangePlataformaWallet()" class="w-full border border-gray-300 rounded px-3 py-2 text-xs font-bold uppercase focus:border-tertiary outline-none bg-white">
                     <option value="">Selecciona plataforma...</option>
-                    <option value="PAGO_MOVIL">📱 Pago Móvil (Bs)</option>
-                    <option value="ZELLE">💵 Zelle (USD)</option>
                     <option value="BANESCO_PANAMA">🏦 Banesco Panamá (USD)</option>
                     <option value="MERCANTIL_PANAMA">🏦 Mercantil Panamá (USD)</option>
                     <option value="ZINLI">📱 Zinli (USD)</option>
@@ -415,6 +458,7 @@
                     <option value="CASHEA">🛍️ Cashea (Bs)</option>
                     <option value="OTRO">🔧 Otro</option>
                 </select>
+                <p class="text-[9px] text-gray-500 mt-1 italic">Solo wallets con saldo propio. Para Pago Móvil/Zelle/Transferencias usa la pestaña "Instrumentos de Pago".</p>
             </div>
 
             <div id="cta-titular-wrap">
@@ -455,35 +499,6 @@
 <!-- ════════════════════════════════════════════════════════════════
      MODAL: CONFIGURAR MAPEO DE MÉTODO
      ════════════════════════════════════════════════════════════════ -->
-<div id="modal-mapeo" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[9990] hidden flex items-center justify-center p-4 fade-in">
-    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col border border-gray-200">
-        <div class="bg-primary text-white p-3 flex justify-between items-center shrink-0">
-            <h3 class="font-bold text-[12px] tracking-wide uppercase"><i class="fa-solid fa-link mr-2 text-tertiary"></i> Configurar Mapeo</h3>
-            <button onclick="cerrarModalMapeo()" class="text-gray-300 hover:text-white transition"><i class="fa-solid fa-times"></i></button>
-        </div>
-        <form id="form-mapeo" onsubmit="guardarMapeo(event)" class="p-5 bg-gray-50 space-y-4">
-            <input type="hidden" id="mapeo-metodo">
-            <div class="bg-blue-50 p-3 rounded border border-blue-200">
-                <p class="text-[10px] text-blue-800">
-                    <i class="fa-solid fa-circle-info mr-1"></i>
-                    Estás configurando: <span id="mapeo-titulo" class="font-black uppercase tracking-wide">...</span>
-                </p>
-                <p class="text-[10px] text-blue-700 mt-1" id="mapeo-descripcion"></p>
-            </div>
-            <div>
-                <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Cuenta destino *</label>
-                <select id="mapeo-cuenta" required class="w-full border border-gray-300 rounded px-3 py-2 text-xs font-bold uppercase focus:border-secondary outline-none bg-white"></select>
-                <p class="text-[10px] text-gray-500 mt-1">Solo cuentas tipo BANCO o WALLET_DIGITAL son válidas según el método.</p>
-            </div>
-            <div>
-                <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Observaciones (opcional)</label>
-                <input type="text" id="mapeo-obs" maxlength="200" placeholder="Notas adicionales..." class="w-full border border-gray-300 rounded px-3 py-2 text-xs focus:border-secondary outline-none bg-white">
-            </div>
-            <button type="submit" class="w-full bg-secondary hover:opacity-90 text-white font-bold py-2.5 rounded shadow btn-press uppercase text-[11px] tracking-wider transition">Guardar Mapeo</button>
-        </form>
-    </div>
-</div>
-
 <!-- ════════════════════════════════════════════════════════════════
      MODAL: TERMINAL POS
      ════════════════════════════════════════════════════════════════ -->
@@ -538,7 +553,7 @@ let rolActual = null;
 let dbCuentas = [];
 let dbBoveda = null;
 let dbTransferencias = [];
-let dbMapeos = [];
+let dbInstrumentos = [];
 let dbTerminales = [];
 let dbUsuarios = [];
 
@@ -646,18 +661,18 @@ function cambiarTab(tab) {
             btn.className = 'py-2 px-4 text-sm font-bold border-b-2 border-transparent text-gray-400 hover:text-gray-600 transition uppercase tracking-wider';
         }
     });
-    if (tab === 'config') renderMapeos();
+    if (tab === 'config') renderInstrumentos();
     if (tab === 'terminales') renderTerminales();
 }
 
 // ─── CARGA DE DATOS ────────────────────────────────────────────────
 async function cargarDatos() {
     try {
-        const [resCuentas, resBoveda, resTransf, resMapeos, resTerm, resUsu] = await Promise.all([
+        const [resCuentas, resBoveda, resTransf, resInstr, resTerm, resUsu] = await Promise.all([
             sb(`cuentas_unificadas?select=*&order=orden_tipo.asc,nombre.asc`),
             sb(`boveda_resumen?select=*`),
             sb(`transferencias_con_detalle?estado=eq.PENDIENTE&order=fecha_emision.desc`),
-            sb(`configuracion_pagos_estado?select=*`),
+            sb(`instrumentos_pago_completa?select=*&order=tipo_metodo.asc,nombre.asc`),
             sb(`fin_terminales_pos?select=*,fin_cuentas(nombre,tipo_cuenta)&order=nombre.asc`),
             sb(`usuarios?select=auth_id,nombre_completo,usuario_login,rol&estatus=eq.Activo&deleted_at=is.null&order=nombre_completo.asc`)
         ]);
@@ -665,14 +680,14 @@ async function cargarDatos() {
         dbCuentas = resCuentas.ok ? await resCuentas.json() : [];
         dbBoveda = resBoveda.ok ? (await resBoveda.json())[0] : null;
         dbTransferencias = resTransf.ok ? await resTransf.json() : [];
-        dbMapeos = resMapeos.ok ? await resMapeos.json() : [];
+        dbInstrumentos = resInstr.ok ? await resInstr.json() : [];
         dbTerminales = resTerm.ok ? await resTerm.json() : [];
         dbUsuarios = resUsu.ok ? await resUsu.json() : [];
 
         renderCuentas();
         renderTransferencias();
         renderTerminales();
-        renderMapeos();
+        renderInstrumentos();
         actualizarBadgeConfig();
     } catch (e) {
         console.error("Error cargando datos:", e);
@@ -924,56 +939,76 @@ function renderTransferencias() {
 }
 
 // ─── RENDER: MAPEOS ────────────────────────────────────────────────
-function renderMapeos() {
-    const grid = document.getElementById('grid-mapeos');
+function renderInstrumentos() {
+    const grid = document.getElementById('grid-instrumentos');
+    if (!grid) return;
+
+    if (!dbInstrumentos.length) {
+        grid.innerHTML = `
+            <div class="col-span-full bg-orange-50 border-2 border-dashed border-orange-300 rounded-xl p-8 text-center">
+                <i class="fa-solid fa-circle-info text-orange-500 text-3xl mb-2"></i>
+                <p class="text-orange-700 font-bold uppercase tracking-wide text-sm">No hay instrumentos creados</p>
+                <p class="text-[10px] text-orange-600 mt-2">Crea tu primer instrumento de cobro: Pago Móvil, Zelle, Transferencia, Punto de Venta...</p>
+            </div>`;
+        return;
+    }
+
     const meta = {
-        'ZELLE_USD': { nombre: 'Zelle USD', icono: '💸', desc: 'Pagos en Zelle (USD electrónicos)', tipoEsperado: 'BANCO' },
-        'PAGOMOVIL_BS': { nombre: 'Pago Móvil Bs', icono: '📱', desc: 'Pago Móvil C2P en bolívares', tipoEsperado: 'BANCO' },
-        'TRANSFERENCIA_BS': { nombre: 'Transferencia Bs', icono: '🏦', desc: 'Transferencias bancarias en bolívares', tipoEsperado: 'BANCO' }
+        'PAGO_MOVIL':    { icono: '📱', label: 'Pago Móvil',     color: 'blue' },
+        'TRANSFERENCIA': { icono: '🏦', label: 'Transferencia',  color: 'indigo' },
+        'PUNTO_VENTA':   { icono: '💳', label: 'Punto de Venta', color: 'purple' },
+        'ZELLE':         { icono: '💵', label: 'Zelle',          color: 'green' },
+        'OTRO':          { icono: '🔧', label: 'Otro',           color: 'gray' }
     };
-    let html = '';
-    for (const m of dbMapeos) {
-        const info = meta[m.metodo] || { nombre: m.metodo, icono: '💰', desc: '' };
-        const configurado = m.estado === 'CONFIGURADO';
-        html += `
-        <div class="bg-white rounded-xl shadow-sm border-2 ${configurado ? 'border-green-200' : 'border-orange-200'} p-4">
-            <div class="flex items-center justify-between mb-3">
+
+    grid.innerHTML = dbInstrumentos.map(ins => {
+        const m = meta[ins.tipo_metodo] || meta.OTRO;
+        const monedaTxt = ins.moneda === 'USD' ? 'US$' : 'Bs';
+        const datos = ins.datos_identificadores || {};
+        const datosTxt = Object.keys(datos).length
+            ? Object.entries(datos).filter(([k,v]) => v).map(([k,v]) => `<span class="text-[9px] text-gray-500"><b>${escapeHtml(k)}:</b> ${escapeHtml(String(v))}</span>`).join(' · ')
+            : '<span class="text-[9px] text-gray-400 italic">Sin datos adicionales</span>';
+        const inactivo = ins.estatus !== 'ACTIVO';
+
+        return `
+        <div class="bg-white rounded-xl shadow-sm border-2 ${inactivo ? 'border-gray-200 opacity-60' : 'border-' + m.color + '-200'} p-4">
+            <div class="flex items-start justify-between mb-2">
                 <div class="flex items-center gap-2">
-                    <div class="text-2xl">${info.icono}</div>
+                    <div class="text-2xl">${m.icono}</div>
                     <div>
-                        <h3 class="text-sm font-black text-gray-800 uppercase">${info.nombre}</h3>
-                        <p class="text-[10px] text-gray-500">${info.desc}</p>
+                        <h3 class="text-sm font-black text-gray-800 uppercase leading-tight">${escapeHtml(ins.nombre)}</h3>
+                        <p class="text-[9px] text-gray-500 uppercase tracking-wide">${m.label} · ${monedaTxt}</p>
                     </div>
                 </div>
-                ${configurado
-                    ? `<span class="bg-green-100 text-green-700 text-[9px] font-black px-2 py-0.5 rounded uppercase">✓ OK</span>`
-                    : `<span class="bg-orange-100 text-orange-700 text-[9px] font-black px-2 py-0.5 rounded uppercase">! Pendiente</span>`}
+                ${inactivo ? '<span class="bg-gray-100 text-gray-500 text-[8px] font-black px-2 py-0.5 rounded uppercase">Inactivo</span>' : ''}
             </div>
-            <div class="bg-gray-50 rounded p-3 mb-3 min-h-[60px]">
-                ${configurado
-                    ? `<p class="text-[10px] text-gray-500 uppercase font-bold">Cuenta destino:</p>
-                       <p class="text-sm font-black text-primary">${escapeHtml(m.nombre_cuenta)}</p>
-                       ${m.banco_titular ? `<p class="text-[10px] text-gray-600">${escapeHtml(m.banco_titular)}</p>` : ''}
-                       ${m.observaciones ? `<p class="text-[9px] text-gray-500 italic mt-1">"${escapeHtml(m.observaciones)}"</p>` : ''}`
-                    : `<p class="text-[10px] text-orange-700 font-bold flex items-center gap-2">
-                         <i class="fa-solid fa-triangle-exclamation"></i> Sin configurar
-                       </p>
-                       <p class="text-[9px] text-gray-600 mt-1">El sistema bloqueará cierres con este método hasta configurarlo.</p>`}
+
+            <div class="bg-gray-50 rounded p-2 mb-3 min-h-[55px]">
+                <p class="text-[9px] text-gray-500 uppercase font-bold mb-0.5">Cuenta destino:</p>
+                <p class="text-[11px] font-bold text-primary truncate">${escapeHtml(ins.cuenta_destino_nombre || '—')}</p>
+                ${ins.cuenta_destino_banco ? `<p class="text-[9px] text-gray-500 truncate">${escapeHtml(ins.cuenta_destino_banco)}</p>` : ''}
             </div>
-            <button onclick="abrirModalMapeo('${m.metodo}')" class="w-full bg-${configurado ? 'gray' : 'secondary'} ${configurado ? 'bg-gray-200 text-gray-700 hover:bg-gray-300' : 'bg-secondary text-white hover:opacity-90'} font-black py-2 rounded uppercase text-[10px] tracking-wider btn-press transition">
-                ${configurado ? '✏️ Cambiar Cuenta' : '🔗 Configurar Ahora'}
-            </button>
+
+            <div class="border-t border-gray-100 pt-2 mb-3">${datosTxt}</div>
+
+            <div class="flex gap-2">
+                <button onclick="abrirModalInstrumento('${ins.id_instrumento}')" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-1.5 rounded uppercase text-[9px] tracking-wider transition">
+                    <i class="fa-solid fa-pen mr-1"></i>Editar
+                </button>
+                <button onclick="eliminarInstrumento('${ins.id_instrumento}','${escapeHtml(ins.nombre)}')" class="flex-1 bg-red-50 hover:bg-red-100 text-red-700 font-bold py-1.5 rounded uppercase text-[9px] tracking-wider transition">
+                    <i class="fa-solid fa-trash mr-1"></i>Eliminar
+                </button>
+            </div>
         </div>`;
-    }
-    grid.innerHTML = html;
+    }).join('');
 }
 
 function actualizarBadgeConfig() {
-    const pendientes = dbMapeos.filter(m => m.estado === 'PENDIENTE').length;
     const badge = document.getElementById('badge-config-pendiente');
-    if (pendientes > 0) {
+    if (!badge) return;
+    if (!dbInstrumentos.length) {
         badge.classList.remove('hidden');
-        badge.textContent = pendientes;
+        badge.textContent = '!';
     } else {
         badge.classList.add('hidden');
     }
@@ -1223,8 +1258,6 @@ function onChangePlataformaWallet() {
 
     // Auto-set moneda según plataforma + ajustar campos visibles
     const config = {
-        'PAGO_MOVIL':       { moneda: 'BS',  titular: 'Banco receptor',     numero: 'Teléfono asociado',    numLabel: 'Teléfono', placeholderNum: '04141234567', mostrarCorreo: false, correoLabel: '' },
-        'ZELLE':            { moneda: 'USD', titular: 'Banco USA receptor', numero: '',                     numLabel: '',         placeholderNum: '',           mostrarCorreo: true,  correoLabel: 'Email Zelle' },
         'BANESCO_PANAMA':   { moneda: 'USD', titular: 'Titular',            numero: 'Nro. Cuenta Panamá',   numLabel: 'Cuenta',   placeholderNum: '',           mostrarCorreo: true,  correoLabel: 'Email asociado (opcional)' },
         'MERCANTIL_PANAMA': { moneda: 'USD', titular: 'Titular',            numero: 'Nro. Cuenta Panamá',   numLabel: 'Cuenta',   placeholderNum: '',           mostrarCorreo: true,  correoLabel: 'Email asociado (opcional)' },
         'ZINLI':            { moneda: 'USD', titular: 'Titular',            numero: 'Tag/Usuario Zinli',    numLabel: 'Usuario',  placeholderNum: '@usuario',   mostrarCorreo: true,  correoLabel: 'Email Zinli' },
@@ -1247,8 +1280,8 @@ function onChangePlataformaWallet() {
         numeroWrap.classList.remove('hidden');
         numeroLabel.innerText = cfg.numLabel;
         numeroInput.placeholder = cfg.placeholderNum;
-        // Solo dígitos para teléfono (Pago Móvil) y cédula (Cashea)
-        if (plat === 'PAGO_MOVIL' || plat === 'CASHEA') {
+        // Solo dígitos para cédula (Cashea)
+        if (plat === 'CASHEA') {
             numeroInput.setAttribute('inputmode', 'numeric');
             numeroInput.setAttribute('pattern', '[0-9]*');
             numeroInput.oninput = function() { this.value = this.value.replace(/[^0-9]/g, ''); };
@@ -1388,81 +1421,195 @@ async function guardarCuenta(e) {
     }
 }
 
-// ─── MODAL: MAPEO ──────────────────────────────────────────────────
-function abrirModalMapeo(metodo) {
+// ─── MODAL: INSTRUMENTO DE PAGO ────────────────────────────────────
+function abrirModalInstrumento(idIns = null) {
     if (!['SuperAdmin','Admin'].includes(rolActual)) {
-        return alert("⛔ Solo SuperAdmin o Admin pueden configurar mapeos.");
+        return alert("⛔ Solo SuperAdmin o Admin pueden gestionar instrumentos de pago.");
     }
-    // Tipos válidos para recibir pagos electrónicos: BANCO y WALLET_DIGITAL.
-    // NUNCA cajas (CAJA_CHICA / CAJA_REGISTRADORA) porque el dinero electrónico no entra a efectivo físico.
-    const meta = {
-        'ZELLE_USD':       { nombre: 'Zelle USD',       desc: 'Selecciona la cuenta bancaria o wallet USD donde llegan los pagos por Zelle.',     tiposValidos: ['BANCO','WALLET_DIGITAL'] },
-        'PAGOMOVIL_BS':    { nombre: 'Pago Móvil Bs',   desc: 'Selecciona la cuenta bancaria o wallet que recibe los Pagos Móviles.',              tiposValidos: ['BANCO','WALLET_DIGITAL'] },
-        'TRANSFERENCIA_BS':{ nombre: 'Transferencia Bs',desc: 'Selecciona la cuenta bancaria o wallet que recibe transferencias.',                 tiposValidos: ['BANCO','WALLET_DIGITAL'] }
-    };
-    const info = meta[metodo];
-    document.getElementById('mapeo-metodo').value = metodo;
-    document.getElementById('mapeo-titulo').textContent = info.nombre;
-    document.getElementById('mapeo-descripcion').textContent = info.desc;
-    document.getElementById('mapeo-obs').value = '';
+    const form = document.getElementById('form-instrumento');
+    form.reset();
+    document.getElementById('ins-id').value = '';
+    document.getElementById('ins-datos-extra').classList.add('hidden');
+    document.getElementById('ins-datos-extra').innerHTML = '';
+    document.getElementById('ins-cuenta').innerHTML = '<option value="">Primero selecciona el tipo...</option>';
 
-    // Filtrar: bóveda excluida + cuentas no eliminadas + tipo en lista válida + estatus ACTIVA
-    const cuentasValidas = dbCuentas.filter(c =>
+    if (idIns) {
+        const ins = dbInstrumentos.find(x => x.id_instrumento === idIns);
+        if (ins) {
+            document.getElementById('ins-id').value = ins.id_instrumento;
+            document.getElementById('ins-tipo').value = ins.tipo_metodo;
+            document.getElementById('ins-nombre').value = ins.nombre;
+            onChangeTipoInstrumento();
+            document.getElementById('ins-cuenta').value = ins.id_cuenta_destino;
+            // Poblar datos extra
+            const datos = ins.datos_identificadores || {};
+            for (const k of Object.keys(datos)) {
+                const el = document.getElementById('ins-extra-' + k);
+                if (el) el.value = datos[k] || '';
+            }
+            document.getElementById('modal-titulo-instrumento').innerHTML = '<i class="fa-solid fa-pen mr-2 text-tertiary"></i> Editar Instrumento de Pago';
+        }
+    } else {
+        document.getElementById('modal-titulo-instrumento').innerHTML = '<i class="fa-solid fa-credit-card mr-2 text-tertiary"></i> Crear Instrumento de Pago';
+    }
+
+    document.getElementById('modal-instrumento').classList.remove('hidden');
+    document.getElementById('modal-instrumento').classList.add('flex');
+}
+
+function cerrarModalInstrumento() {
+    document.getElementById('modal-instrumento').classList.add('hidden');
+    document.getElementById('modal-instrumento').classList.remove('flex');
+}
+
+function onChangeTipoInstrumento() {
+    const tipo = document.getElementById('ins-tipo').value;
+    const sel = document.getElementById('ins-cuenta');
+    const extraDiv = document.getElementById('ins-datos-extra');
+
+    // Cuentas válidas según tipo. Cajas NUNCA reciben pagos electrónicos.
+    // Tipos electrónicos requieren BANCO o WALLET_DIGITAL.
+    let cuentasValidas = dbCuentas.filter(c =>
         !c.es_boveda &&
-        info.tiposValidos.includes(c.tipo_cuenta) &&
+        ['BANCO','WALLET_DIGITAL'].includes(c.tipo_cuenta) &&
         (c.estatus === 'ACTIVA' || !c.estatus)
     );
 
-    const sel = document.getElementById('mapeo-cuenta');
-    if (!cuentasValidas.length) {
+    // Filtrar por moneda esperada
+    if (tipo === 'PAGO_MOVIL' || tipo === 'TRANSFERENCIA' || tipo === 'PUNTO_VENTA') {
+        cuentasValidas = cuentasValidas.filter(c => (c.moneda || 'BS') === 'BS');
+    } else if (tipo === 'ZELLE') {
+        cuentasValidas = cuentasValidas.filter(c => (c.moneda || 'BS') === 'USD');
+    }
+
+    if (!cuentasValidas.length && tipo) {
         sel.innerHTML = '<option value="">⚠️ No hay cuentas disponibles</option>';
         sel.disabled = true;
-        const tiposTxt = info.tiposValidos.map(t => t === 'BANCO' ? 'Banco' : 'Wallet Digital').join(' o ');
-        return alert(`⛔ No hay cuentas tipo ${tiposTxt} activas.\n\nCrea una primero en la pestaña "Cuentas y Bóveda".\n\nNota: Cajas Chicas y Cajas Registradoras NO pueden recibir pagos electrónicos.`);
-    }
-    sel.disabled = false;
-
-    sel.innerHTML = '<option value="">Selecciona cuenta...</option>' +
-        cuentasValidas.map(c => {
-            const icon = c.tipo_cuenta === 'WALLET_DIGITAL' ? '📱' : '🏦';
-            const titular = c.banco_titular ? ' - ' + escapeHtml(c.banco_titular) : '';
-            return `<option value="${c.id}">${icon} ${escapeHtml(c.nombre)}${titular}</option>`;
-        }).join('');
-
-    // Pre-seleccionar si ya hay mapeo (solo si la cuenta sigue siendo válida)
-    const m = dbMapeos.find(x => x.metodo === metodo);
-    if (m && m.id_cuenta && cuentasValidas.find(c => c.id === m.id_cuenta)) {
-        sel.value = m.id_cuenta;
-        document.getElementById('mapeo-obs').value = m.observaciones || '';
+    } else {
+        sel.disabled = false;
+        sel.innerHTML = '<option value="">Selecciona cuenta destino...</option>' +
+            cuentasValidas.map(c => {
+                const icon = c.tipo_cuenta === 'WALLET_DIGITAL' ? '📱' : '🏦';
+                const moneda = (c.moneda || 'BS') === 'USD' ? 'US$' : 'Bs';
+                const titular = c.banco_titular ? ' - ' + escapeHtml(c.banco_titular) : '';
+                return `<option value="${c.id}">${icon} ${escapeHtml(c.nombre)} (${moneda})${titular}</option>`;
+            }).join('');
     }
 
-    document.getElementById('modal-mapeo').classList.remove('hidden');
-    document.getElementById('modal-mapeo').classList.add('flex');
+    // Campos extra según tipo
+    let extraHTML = '';
+    if (tipo === 'PAGO_MOVIL') {
+        extraHTML = `
+            <p class="text-[9px] font-bold text-primary uppercase mb-1">Datos del receptor (opcional)</p>
+            <div class="grid grid-cols-2 gap-1.5">
+                <input id="ins-extra-banco" type="text" maxlength="40" placeholder="Banco receptor" class="border border-gray-300 rounded px-2 py-1 text-[10px] outline-none focus:border-tertiary">
+                <input id="ins-extra-telefono" type="tel" inputmode="numeric" pattern="[0-9]*" maxlength="15" placeholder="Teléfono receptor" oninput="this.value=this.value.replace(/[^0-9]/g,'')" class="border border-gray-300 rounded px-2 py-1 text-[10px] outline-none focus:border-tertiary">
+                <input id="ins-extra-cedula" type="tel" inputmode="numeric" pattern="[0-9]*" maxlength="15" placeholder="Cédula receptor" oninput="this.value=this.value.replace(/[^0-9]/g,'')" class="border border-gray-300 rounded px-2 py-1 text-[10px] outline-none focus:border-tertiary">
+            </div>`;
+    } else if (tipo === 'TRANSFERENCIA') {
+        extraHTML = `
+            <p class="text-[9px] font-bold text-primary uppercase mb-1">Datos cuenta receptora (opcional)</p>
+            <div class="grid grid-cols-2 gap-1.5">
+                <input id="ins-extra-banco" type="text" maxlength="40" placeholder="Banco" class="border border-gray-300 rounded px-2 py-1 text-[10px] outline-none focus:border-tertiary">
+                <input id="ins-extra-cuenta" type="text" maxlength="30" placeholder="Nro. cuenta receptora" class="border border-gray-300 rounded px-2 py-1 text-[10px] outline-none focus:border-tertiary">
+                <input id="ins-extra-titular" type="text" maxlength="80" placeholder="Titular" class="border border-gray-300 rounded px-2 py-1 text-[10px] outline-none focus:border-tertiary col-span-2">
+            </div>`;
+    } else if (tipo === 'PUNTO_VENTA') {
+        extraHTML = `
+            <p class="text-[9px] font-bold text-primary uppercase mb-1">Datos del terminal (opcional)</p>
+            <div class="grid grid-cols-2 gap-1.5">
+                <input id="ins-extra-banco" type="text" maxlength="40" placeholder="Banco emisor terminal" class="border border-gray-300 rounded px-2 py-1 text-[10px] outline-none focus:border-tertiary">
+                <input id="ins-extra-terminal" type="text" maxlength="20" placeholder="Nro. terminal" class="border border-gray-300 rounded px-2 py-1 text-[10px] outline-none focus:border-tertiary">
+                <input id="ins-extra-modelo" type="text" maxlength="40" placeholder="Modelo POS" class="border border-gray-300 rounded px-2 py-1 text-[10px] outline-none focus:border-tertiary col-span-2">
+            </div>`;
+    } else if (tipo === 'ZELLE') {
+        extraHTML = `
+            <p class="text-[9px] font-bold text-primary uppercase mb-1">Datos Zelle receptor (opcional)</p>
+            <div class="grid grid-cols-1 gap-1.5">
+                <input id="ins-extra-email" type="email" maxlength="80" placeholder="Email Zelle receptor" class="border border-gray-300 rounded px-2 py-1 text-[10px] outline-none focus:border-tertiary">
+                <input id="ins-extra-titular" type="text" maxlength="80" placeholder="Titular USA" class="border border-gray-300 rounded px-2 py-1 text-[10px] outline-none focus:border-tertiary">
+                <input id="ins-extra-banco" type="text" maxlength="40" placeholder="Banco USA" class="border border-gray-300 rounded px-2 py-1 text-[10px] outline-none focus:border-tertiary">
+            </div>`;
+    } else if (tipo === 'OTRO') {
+        extraHTML = `
+            <p class="text-[9px] font-bold text-primary uppercase mb-1">Datos adicionales (opcional)</p>
+            <input id="ins-extra-detalle" type="text" maxlength="200" placeholder="Detalle / referencia" class="w-full border border-gray-300 rounded px-2 py-1 text-[10px] outline-none focus:border-tertiary">`;
+    }
+
+    if (extraHTML) {
+        extraDiv.innerHTML = extraHTML;
+        extraDiv.classList.remove('hidden');
+    } else {
+        extraDiv.classList.add('hidden');
+        extraDiv.innerHTML = '';
+    }
 }
-function cerrarModalMapeo() {
-    document.getElementById('modal-mapeo').classList.add('hidden');
-    document.getElementById('modal-mapeo').classList.remove('flex');
-}
-async function guardarMapeo(e) {
+
+async function guardarInstrumento(e) {
     e.preventDefault();
-    const metodo = document.getElementById('mapeo-metodo').value;
-    const id_cuenta = document.getElementById('mapeo-cuenta').value;
-    const obs = document.getElementById('mapeo-obs').value.trim() || null;
+    const btn = document.getElementById('btn-guardar-ins');
+    btn.disabled = true;
 
-    mostrarCarga("Configurando mapeo...");
+    const idIns = document.getElementById('ins-id').value;
+    const tipo = document.getElementById('ins-tipo').value;
+    const nombre = document.getElementById('ins-nombre').value.trim();
+    const idCuenta = document.getElementById('ins-cuenta').value;
+
+    if (!tipo || !nombre || !idCuenta) {
+        btn.disabled = false;
+        return alert("⛔ Tipo, Nombre y Cuenta destino son obligatorios.");
+    }
+
+    // Recolectar datos extra
+    const datos = {};
+    document.querySelectorAll('#ins-datos-extra [id^="ins-extra-"]').forEach(el => {
+        const key = el.id.replace('ins-extra-', '');
+        const v = (el.value || '').trim();
+        if (v) datos[key] = v;
+    });
+
+    mostrarCarga(idIns ? "Actualizando instrumento..." : "Creando instrumento...");
     try {
-        const r = await rpc('configurar_mapeo_metodo', {
-            p_metodo: metodo,
-            p_id_cuenta: id_cuenta,
-            p_observaciones: obs
-        });
+        if (idIns) {
+            await rpc('actualizar_instrumento_pago', {
+                p_id_instrumento: idIns,
+                p_nombre: nombre,
+                p_id_cuenta_destino: idCuenta,
+                p_datos_identificadores: datos,
+                p_estatus: 'ACTIVO'
+            });
+        } else {
+            await rpc('crear_instrumento_pago', {
+                p_nombre: nombre,
+                p_tipo_metodo: tipo,
+                p_id_cuenta_destino: idCuenta,
+                p_datos_identificadores: datos
+            });
+        }
         cerrarErrorCarga();
-        cerrarModalMapeo();
-        alert(`✅ ${r.mensaje}`);
+        cerrarModalInstrumento();
         await cargarDatos();
     } catch (err) {
         cerrarErrorCarga();
-        alert("❌ " + err.message);
+        alert("❌ " + (err.message || 'Error al guardar instrumento'));
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+async function eliminarInstrumento(idIns, nombre) {
+    if (!['SuperAdmin','Admin'].includes(rolActual)) {
+        return alert("⛔ Solo SuperAdmin o Admin pueden eliminar instrumentos.");
+    }
+    if (!confirm(`¿Eliminar el instrumento "${nombre}"?\n\nNo se podrán recibir pagos por este canal hasta que se cree de nuevo.`)) return;
+    mostrarCarga("Eliminando instrumento...");
+    try {
+        await rpc('eliminar_instrumento_pago', { p_id_instrumento: idIns });
+        cerrarErrorCarga();
+        await cargarDatos();
+    } catch (err) {
+        cerrarErrorCarga();
+        alert("❌ " + (err.message || 'Error al eliminar'));
     }
 }
 

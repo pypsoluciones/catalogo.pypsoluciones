@@ -1825,41 +1825,49 @@
                 if (inputRecibido) inputRecibido.placeholder = esUsd ? '0.00 USD' : '0.00 Bs';
 
                 const recibido = parseFloat(inputRecibido?.value) || 0;
-                let vueltoBs;
-                if (esUsd) {
-                    // El cajero recibe en USD físicos. Convertimos a Bs para comparar contra total.
-                    const recibidoBs = recibido * tasaBCVCalculo;
-                    vueltoBs = redondear(recibidoBs - totalFinalBs);
-                } else {
-                    vueltoBs = redondear(recibido - totalFinalBs);
-                }
+
+                // ════════════════════════════════════════════════════════════════
+                // FILTRO PROFIT/SAINT — Mono-moneda: validar SOLO en moneda nativa.
+                // La conversión a la otra moneda es REFERENCIAL (gris), nunca descuadre.
+                // Para mezcla de monedas → usar Pago Mixto (lineasPagoMixto).
+                // ════════════════════════════════════════════════════════════════
+                const elBs = document.getElementById('val-vuelto-bs');
+                const elUsd = document.getElementById('val-vuelto-usd');
 
                 if (recibido > 0) {
                     resCal.classList.remove('hidden');
-                    const vueltoMostrarBs = Math.max(vueltoBs, 0);
-                    const vueltoUsd = redondear(vueltoMostrarBs / tasaBCVCalculo);
-                    const elBs = document.getElementById('val-vuelto-bs');
-                    const elUsd = document.getElementById('val-vuelto-usd');
 
                     if (esUsd) {
-                        // USD grande, Bs pequeño
-                        elBs.innerText = `US$ ${fmt(vueltoUsd)}`;
-                        elUsd.innerText = `Bs. ${fmt(vueltoMostrarBs)}`;
-                    } else {
-                        elBs.innerText = `Bs. ${fmt(vueltoMostrarBs)}`;
-                        elUsd.innerText = `US$ ${fmt(vueltoUsd)}`;
-                    }
-                    elBs.className = vueltoBs < 0 ? 'text-lg font-black text-red-600' : 'text-lg font-black text-green-700';
+                        // Validación en USD nativo
+                        const vueltoUsd = redondear(recibido - totalFinalUsd);
+                        const vueltoBsRef = redondear(Math.max(vueltoUsd, 0) * tasaBCVCalculo);
+                        const faltaUsd = Math.abs(vueltoUsd);
+                        const faltaBsRef = redondear(faltaUsd * tasaBCVCalculo);
 
-                    if (vueltoBs < 0) {
-                        const faltaBs = Math.abs(vueltoBs);
-                        const faltaUsd = redondear(faltaBs / tasaBCVCalculo);
-                        if (esUsd) {
+                        if (vueltoUsd >= 0) {
+                            elBs.innerText = `US$ ${fmt(vueltoUsd)}`;
+                            elBs.className = 'text-lg font-black text-green-700';
+                            elUsd.innerHTML = `<span class="text-gray-400 italic">ref. Bs. ${fmt(vueltoBsRef)}</span>`;
+                        } else {
                             elBs.innerText = `Falta US$ ${fmt(faltaUsd)}`;
-                            elUsd.innerText = `Falta Bs. ${fmt(faltaBs)}`;
+                            elBs.className = 'text-lg font-black text-red-600';
+                            elUsd.innerHTML = `<span class="text-gray-400 italic">ref. Bs. ${fmt(faltaBsRef)}</span>`;
+                        }
+                    } else {
+                        // Validación en Bs nativo
+                        const vueltoBs = redondear(recibido - totalFinalBs);
+                        const vueltoUsdRef = redondear(Math.max(vueltoBs, 0) / tasaBCVCalculo);
+                        const faltaBs = Math.abs(vueltoBs);
+                        const faltaUsdRef = redondear(faltaBs / tasaBCVCalculo);
+
+                        if (vueltoBs >= 0) {
+                            elBs.innerText = `Bs. ${fmt(vueltoBs)}`;
+                            elBs.className = 'text-lg font-black text-green-700';
+                            elUsd.innerHTML = `<span class="text-gray-400 italic">ref. US$ ${fmt(vueltoUsdRef)}</span>`;
                         } else {
                             elBs.innerText = `Falta Bs. ${fmt(faltaBs)}`;
-                            elUsd.innerText = `Falta US$ ${fmt(faltaUsd)}`;
+                            elBs.className = 'text-lg font-black text-red-600';
+                            elUsd.innerHTML = `<span class="text-gray-400 italic">ref. US$ ${fmt(faltaUsdRef)}</span>`;
                         }
                     }
                 } else {
