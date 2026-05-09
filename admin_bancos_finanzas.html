@@ -390,10 +390,36 @@
                         <option value="WALLET_DIGITAL">📱 Wallet Digital</option>
                     </select>
                 </div>
-                <div id="cta-titular-wrap">
-                    <label id="cta-titular-label" class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Banco/Titular</label>
-                    <input type="text" id="cta-banco-titular" maxlength="120" placeholder="Banesco, BBVA..." class="w-full border border-gray-300 rounded px-3 py-2 text-xs uppercase focus:border-tertiary outline-none bg-white">
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Moneda *</label>
+                    <select id="cta-moneda" required class="w-full border border-gray-300 rounded px-3 py-2 text-xs font-bold uppercase focus:border-tertiary outline-none bg-white">
+                        <option value="BS">🇻🇪 Bolívares (Bs)</option>
+                        <option value="USD">💵 Dólares (USD)</option>
+                    </select>
                 </div>
+            </div>
+
+            <!-- Plataforma Wallet: solo WALLET_DIGITAL -->
+            <div id="cta-plataforma-wrap" class="hidden">
+                <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Plataforma *</label>
+                <select id="cta-plataforma" onchange="onChangePlataformaWallet()" class="w-full border border-gray-300 rounded px-3 py-2 text-xs font-bold uppercase focus:border-tertiary outline-none bg-white">
+                    <option value="">Selecciona plataforma...</option>
+                    <option value="PAGO_MOVIL">📱 Pago Móvil (Bs)</option>
+                    <option value="ZELLE">💵 Zelle (USD)</option>
+                    <option value="BANESCO_PANAMA">🏦 Banesco Panamá (USD)</option>
+                    <option value="MERCANTIL_PANAMA">🏦 Mercantil Panamá (USD)</option>
+                    <option value="ZINLI">📱 Zinli (USD)</option>
+                    <option value="WALLY">📱 Wally (USD)</option>
+                    <option value="BINANCE_PAY">🟡 Binance Pay (USD)</option>
+                    <option value="PAYPAL">🅿️ PayPal (USD)</option>
+                    <option value="CASHEA">🛍️ Cashea (Bs)</option>
+                    <option value="OTRO">🔧 Otro</option>
+                </select>
+            </div>
+
+            <div id="cta-titular-wrap">
+                <label id="cta-titular-label" class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Banco/Titular</label>
+                <input type="text" id="cta-banco-titular" maxlength="120" placeholder="Banesco, BBVA..." class="w-full border border-gray-300 rounded px-3 py-2 text-xs uppercase focus:border-tertiary outline-none bg-white">
             </div>
 
             <!-- Cajero asignado: solo CAJA_REGISTRADORA -->
@@ -405,7 +431,7 @@
                 <p class="text-[9px] text-gray-500 mt-1">El cajero recibirá las transferencias de fondo en esta caja.</p>
             </div>
 
-            <!-- Nro. Cuenta: solo BANCO y WALLET_DIGITAL -->
+            <!-- Nro. Cuenta / Identificador: solo BANCO y WALLET_DIGITAL -->
             <div id="cta-numero-wrap">
                 <label id="cta-numero-label" class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Nro. de Cuenta</label>
                 <input type="text" id="cta-numero" maxlength="50" placeholder="0134-XXXX-XX-XXXXXXXXXX" class="w-full border border-gray-300 rounded px-3 py-2 text-xs font-mono focus:border-tertiary outline-none bg-white">
@@ -413,7 +439,7 @@
 
             <!-- Correo: solo WALLET_DIGITAL -->
             <div id="cta-correo-wrap" class="hidden">
-                <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Correo Electrónico</label>
+                <label id="cta-correo-label" class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Correo Electrónico</label>
                 <input type="email" id="cta-correo" maxlength="120" placeholder="usuario@ejemplo.com" class="w-full border border-gray-300 rounded px-3 py-2 text-xs focus:border-tertiary outline-none bg-white">
             </div>
 
@@ -1135,15 +1161,22 @@ function onChangeTipoCuenta() {
     const numeroLabel = document.getElementById('cta-numero-label');
     const numeroInput = document.getElementById('cta-numero');
     const correoWrap = document.getElementById('cta-correo-wrap');
+    const correoLabel = document.getElementById('cta-correo-label');
+    const correoInput = document.getElementById('cta-correo');
     const cajeroWrap = document.getElementById('cta-cajero-wrap');
     const cajeroSel = document.getElementById('cta-cajero');
+    const plataformaWrap = document.getElementById('cta-plataforma-wrap');
+    const plataformaSel = document.getElementById('cta-plataforma');
+    const monedaSel = document.getElementById('cta-moneda');
 
     // Reset visibilidad
     titularWrap.classList.remove('hidden');
     numeroWrap.classList.remove('hidden');
     correoWrap.classList.add('hidden');
     cajeroWrap.classList.add('hidden');
+    plataformaWrap.classList.add('hidden');
     cajeroSel.required = false;
+    plataformaSel.required = false;
 
     if (tipo === 'BANCO') {
         titularLabel.innerText = 'Banco/Titular';
@@ -1165,11 +1198,64 @@ function onChangeTipoCuenta() {
         cajeroSel.innerHTML = '<option value="">Selecciona cajero...</option>' +
             cajeros.map(u => `<option value="${u.auth_id}">${escapeHtml(u.nombre_completo)} (${escapeHtml(u.usuario_login)})</option>`).join('');
     } else if (tipo === 'WALLET_DIGITAL') {
-        titularLabel.innerText = 'Titular';
-        titularInput.placeholder = 'Nombre del titular';
-        numeroLabel.innerText = 'Nro. Teléfono / Handle';
-        numeroInput.placeholder = '04141234567 / @usuario';
+        plataformaWrap.classList.remove('hidden');
+        plataformaSel.required = true;
+        // Los demás campos se ajustan según plataforma elegida
+        onChangePlataformaWallet();
+    }
+}
+
+function onChangePlataformaWallet() {
+    const plat = document.getElementById('cta-plataforma').value;
+    const titularLabel = document.getElementById('cta-titular-label');
+    const titularInput = document.getElementById('cta-banco-titular');
+    const numeroWrap = document.getElementById('cta-numero-wrap');
+    const numeroLabel = document.getElementById('cta-numero-label');
+    const numeroInput = document.getElementById('cta-numero');
+    const correoWrap = document.getElementById('cta-correo-wrap');
+    const correoLabel = document.getElementById('cta-correo-label');
+    const correoInput = document.getElementById('cta-correo');
+    const monedaSel = document.getElementById('cta-moneda');
+
+    // Reset
+    correoWrap.classList.add('hidden');
+    numeroWrap.classList.remove('hidden');
+
+    // Auto-set moneda según plataforma + ajustar campos visibles
+    const config = {
+        'PAGO_MOVIL':       { moneda: 'BS',  titular: 'Banco receptor',     numero: 'Teléfono asociado',    numLabel: 'Teléfono', placeholderNum: '04141234567', mostrarCorreo: false, correoLabel: '' },
+        'ZELLE':            { moneda: 'USD', titular: 'Banco USA receptor', numero: '',                     numLabel: '',         placeholderNum: '',           mostrarCorreo: true,  correoLabel: 'Email Zelle' },
+        'BANESCO_PANAMA':   { moneda: 'USD', titular: 'Titular',            numero: 'Nro. Cuenta Panamá',   numLabel: 'Cuenta',   placeholderNum: '',           mostrarCorreo: true,  correoLabel: 'Email asociado (opcional)' },
+        'MERCANTIL_PANAMA': { moneda: 'USD', titular: 'Titular',            numero: 'Nro. Cuenta Panamá',   numLabel: 'Cuenta',   placeholderNum: '',           mostrarCorreo: true,  correoLabel: 'Email asociado (opcional)' },
+        'ZINLI':            { moneda: 'USD', titular: 'Titular',            numero: 'Tag/Usuario Zinli',    numLabel: 'Usuario',  placeholderNum: '@usuario',   mostrarCorreo: true,  correoLabel: 'Email Zinli' },
+        'WALLY':            { moneda: 'USD', titular: 'Titular',            numero: 'Tag/Usuario Wally',    numLabel: 'Usuario',  placeholderNum: '@usuario',   mostrarCorreo: true,  correoLabel: 'Email Wally' },
+        'BINANCE_PAY':      { moneda: 'USD', titular: 'Titular',            numero: 'Pay ID Binance',       numLabel: 'Pay ID',   placeholderNum: '12345678',   mostrarCorreo: true,  correoLabel: 'Email Binance' },
+        'PAYPAL':           { moneda: 'USD', titular: 'Titular',            numero: '',                     numLabel: '',         placeholderNum: '',           mostrarCorreo: true,  correoLabel: 'Email PayPal' },
+        'CASHEA':           { moneda: 'BS',  titular: 'Titular',            numero: 'Cédula/Doc',           numLabel: 'Doc.',     placeholderNum: 'V-XXXXXXXX', mostrarCorreo: true,  correoLabel: 'Email Cashea' },
+        'OTRO':             { moneda: 'BS',  titular: 'Titular',            numero: 'Identificador',        numLabel: 'ID',       placeholderNum: '',           mostrarCorreo: true,  correoLabel: 'Email (opcional)' }
+    };
+
+    if (!plat || !config[plat]) {
+        return;
+    }
+    const cfg = config[plat];
+    monedaSel.value = cfg.moneda;
+    titularLabel.innerText = cfg.titular;
+    titularInput.placeholder = cfg.titular;
+
+    if (cfg.numero) {
+        numeroWrap.classList.remove('hidden');
+        numeroLabel.innerText = cfg.numLabel;
+        numeroInput.placeholder = cfg.placeholderNum;
+    } else {
+        numeroWrap.classList.add('hidden');
+    }
+
+    if (cfg.mostrarCorreo) {
         correoWrap.classList.remove('hidden');
+        correoLabel.innerText = cfg.correoLabel;
+    } else {
+        correoWrap.classList.add('hidden');
     }
 }
 
@@ -1185,10 +1271,17 @@ function abrirModalCuenta(id = null) {
             document.getElementById('cta-id').value = c.id;
             document.getElementById('cta-nombre').value = c.nombre;
             document.getElementById('cta-tipo').value = c.tipo_cuenta;
+            document.getElementById('cta-moneda').value = c.moneda || 'BS';
             document.getElementById('cta-banco-titular').value = c.banco_titular || '';
             document.getElementById('cta-numero').value = c.numero_cuenta || '';
             document.getElementById('cta-desc').value = c.descripcion || '';
             onChangeTipoCuenta();
+            // Si es WALLET_DIGITAL, poblar plataforma y refrescar campos
+            if (c.tipo_cuenta === 'WALLET_DIGITAL' && c.subtipo_wallet) {
+                document.getElementById('cta-plataforma').value = c.subtipo_wallet;
+                onChangePlataformaWallet();
+                document.getElementById('cta-moneda').value = c.moneda || 'BS';  // Restaurar después del auto-set
+            }
             // Si es CAJA_REGISTRADORA, poblar cajero seleccionado
             if (c.tipo_cuenta === 'CAJA_REGISTRADORA' && c.auth_id_cajero) {
                 document.getElementById('cta-cajero').value = c.auth_id_cajero;
@@ -1201,6 +1294,7 @@ function abrirModalCuenta(id = null) {
         }
     } else {
         document.getElementById('modal-titulo-cuenta').innerHTML = '<i class="fa-solid fa-vault mr-2 text-tertiary"></i> Crear Cuenta';
+        document.getElementById('cta-moneda').value = 'BS';
         onChangeTipoCuenta();
     }
     document.getElementById('modal-cuenta').classList.remove('hidden');
@@ -1219,10 +1313,23 @@ async function guardarCuenta(e) {
     const payload = {
         nombre: document.getElementById('cta-nombre').value.trim().toUpperCase(),
         tipo_cuenta: tipo,
+        moneda: document.getElementById('cta-moneda').value,
         banco_titular: document.getElementById('cta-banco-titular').value.trim() || null,
         descripcion: document.getElementById('cta-desc').value.trim() || null,
         estatus: 'ACTIVA'
     };
+
+    // Subtipo wallet (solo aplica a WALLET_DIGITAL)
+    if (tipo === 'WALLET_DIGITAL') {
+        const plat = document.getElementById('cta-plataforma').value;
+        if (!plat) {
+            btn.disabled = false;
+            return alert("⛔ Debes seleccionar la plataforma del wallet.");
+        }
+        payload.subtipo_wallet = plat;
+    } else {
+        payload.subtipo_wallet = null;
+    }
 
     // Campos condicionales por tipo
     if (tipo === 'BANCO' || tipo === 'WALLET_DIGITAL') {

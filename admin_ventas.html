@@ -1827,14 +1827,31 @@
 
                 if (recibido > 0) {
                     resCal.classList.remove('hidden');
-                    const vueltoMostrar = Math.max(vueltoBs, 0);
-                    const vueltoUsd = redondear(vueltoMostrar / tasaBCVCalculo);
-                    document.getElementById('val-vuelto-bs').innerText = `Bs. ${fmt(vueltoMostrar)}`;
-                    document.getElementById('val-vuelto-usd').innerText = `US$ ${fmt(vueltoUsd)}`;
-                    document.getElementById('val-vuelto-bs').className = vueltoBs < 0 ? 'text-lg font-black text-red-600' : 'text-lg font-black text-green-700';
+                    const vueltoMostrarBs = Math.max(vueltoBs, 0);
+                    const vueltoUsd = redondear(vueltoMostrarBs / tasaBCVCalculo);
+                    const elBs = document.getElementById('val-vuelto-bs');
+                    const elUsd = document.getElementById('val-vuelto-usd');
+
+                    if (esUsd) {
+                        // USD grande, Bs pequeño
+                        elBs.innerText = `US$ ${fmt(vueltoUsd)}`;
+                        elUsd.innerText = `Bs. ${fmt(vueltoMostrarBs)}`;
+                    } else {
+                        elBs.innerText = `Bs. ${fmt(vueltoMostrarBs)}`;
+                        elUsd.innerText = `US$ ${fmt(vueltoUsd)}`;
+                    }
+                    elBs.className = vueltoBs < 0 ? 'text-lg font-black text-red-600' : 'text-lg font-black text-green-700';
+
                     if (vueltoBs < 0) {
-                        document.getElementById('val-vuelto-bs').innerText = `Falta Bs. ${fmt(Math.abs(vueltoBs))}`;
-                        document.getElementById('val-vuelto-usd').innerText = `Falta US$ ${fmt(redondear(Math.abs(vueltoBs) / tasaBCVCalculo))}`;
+                        const faltaBs = Math.abs(vueltoBs);
+                        const faltaUsd = redondear(faltaBs / tasaBCVCalculo);
+                        if (esUsd) {
+                            elBs.innerText = `Falta US$ ${fmt(faltaUsd)}`;
+                            elUsd.innerText = `Falta Bs. ${fmt(faltaBs)}`;
+                        } else {
+                            elBs.innerText = `Falta Bs. ${fmt(faltaBs)}`;
+                            elUsd.innerText = `Falta US$ ${fmt(faltaUsd)}`;
+                        }
                     }
                 } else {
                     resCal.classList.add('hidden');
@@ -1845,10 +1862,32 @@
         }
 
         function verificarIGTF() {
-            const metodo = document.getElementById('cobro-metodo').value; const aplica = (metodo === 'EFECTIVO_USD' || metodo === 'ZELLE');
+            const metodo = document.getElementById('cobro-metodo').value;
+            const aplica = (metodo === 'EFECTIVO_USD' || metodo === 'ZELLE');
+            const esMonedaUsd = aplica;  // Métodos USD muestran USD primero
             document.getElementById('caja-igtf').classList.toggle('hidden', !aplica);
-            const tBs = granTotalBs; const igtfBs = aplica ? redondear(tBs * pypIgtf) : 0;
-            document.getElementById('modal-total-bs-final').innerText = `Bs. ${fmt(tBs + igtfBs)}`; document.getElementById('modal-total-usd-final').innerText = `US$ ${fmt(redondear((tBs + igtfBs) / tasaBCVCalculo))}`;
+
+            const tBs = granTotalBs;
+            const igtfBs = aplica ? redondear(tBs * pypIgtf) : 0;
+            const totalConIgtfBs = tBs + igtfBs;
+            const totalConIgtfUsd = redondear(totalConIgtfBs / tasaBCVCalculo);
+
+            const elBs = document.getElementById('modal-total-bs-final');
+            const elUsd = document.getElementById('modal-total-usd-final');
+
+            if (esMonedaUsd) {
+                // USD grande arriba, Bs pequeño abajo
+                elBs.innerText = `US$ ${fmt(totalConIgtfUsd)}`;
+                elBs.className = 'text-3xl font-black text-primary leading-none mb-1 z-10 relative';
+                elUsd.innerText = `Bs. ${fmt(totalConIgtfBs)}`;
+                elUsd.className = 'text-secondary font-black text-[10px] z-10 relative';
+            } else {
+                // Bs grande arriba, USD pequeño abajo (default histórico)
+                elBs.innerText = `Bs. ${fmt(totalConIgtfBs)}`;
+                elBs.className = 'text-3xl font-black text-primary leading-none mb-1 z-10 relative';
+                elUsd.innerText = `US$ ${fmt(totalConIgtfUsd)}`;
+                elUsd.className = 'text-secondary font-black text-[10px] z-10 relative';
+            }
         }
 
         // ════════════════════════════════════════════════════════════════════
