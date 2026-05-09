@@ -397,6 +397,20 @@
         .skeleton-card { min-height: 280px; }
         /* Eliminar transiciones de altura que puedan causar reflow visible del footer */
         footer.footer-pro { contain: layout; }
+        
+        /* === PAGINACIÓN ESTILO MERCADO LIBRE === */
+        .paginacion { display:flex; align-items:center; justify-content:center; gap:6px; margin:32px 0 16px; flex-wrap:wrap; }
+        .pag-info { width:100%; text-align:center; font-size:13px; color:#6b7280; margin-bottom:14px; }
+        .pag-info strong { color:#111827; }
+        .pag-btn { min-width:36px; height:36px; padding:0 10px; border:1px solid #d1d5db; background:#fff; color:#374151; border-radius:6px; font-size:13px; font-weight:600; cursor:pointer; transition:all .15s; display:inline-flex; align-items:center; justify-content:center; gap:4px; }
+        .pag-btn:hover:not(:disabled):not(.activa) { border-color:var(--color-primary); color:var(--color-primary); background:#f8fafc; }
+        .pag-btn.activa { background:var(--color-primary); color:#fff; border-color:var(--color-primary); cursor:default; }
+        .pag-btn:disabled { opacity:.4; cursor:not-allowed; }
+        .pag-puntos { color:#9ca3af; padding:0 4px; user-select:none; }
+        @media (max-width: 640px) {
+            .pag-btn { min-width:32px; height:32px; padding:0 8px; font-size:12px; }
+            .pag-btn .lbl-largo { display:none; }
+        }
     </style>
 </head>
 <body class="bg-slate-100 font-sans overflow-x-hidden text-gray-800 flex flex-col min-h-screen">
@@ -561,7 +575,7 @@
         <div class="max-w-[1600px] mx-auto px-4 mb-8">
             <h3 class="text-xl font-bold text-gray-800 mb-4 border-l-4 border-secondary pl-3">Más Productos para Ti</h3>
             <div id="grilla-bloque-2" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4"></div>
-            <div class="flex justify-center mt-10" id="observador-scroll"><button onclick="cargarSiguientePaginaHome()" id="btn-cargar-mas" class="bg-white border-2 border-primary text-primary hover:bg-primary hover:text-white font-bold py-3 px-12 rounded-full transition shadow-sm text-lg flex items-center gap-2"><i class="fa-solid fa-rotate-right"></i> Mostrar Más Productos</button></div>
+            <div id="paginacion-home" class="paginacion"></div>
         </div>
     </div>
 
@@ -627,7 +641,7 @@
                 
                 <div>
                     <div id="grilla-busqueda" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4"></div>
-                    <div class="flex justify-center mt-10"><button onclick="cargarSiguientePaginaBusqueda()" id="btn-cargar-mas-busqueda" class="bg-white border-2 border-primary text-primary hover:bg-primary hover:text-white font-bold py-3 px-12 rounded-full transition shadow-sm text-lg">Mostrar Más</button></div>
+                    <div id="paginacion-busqueda" class="paginacion"></div>
                 </div>
             </div>
         </main>
@@ -867,8 +881,9 @@
             logo_sidebar: ''
         };
 
-        let indices = { bloque1: 0, bloque2: 0, busqueda: 0 };
-        const LIMITES = { carrusel: 10, bloque1: 14, bloque2: 14, busqueda: 28 };
+        let indices = { bloque1: 0, bloque2: 0, busqueda: 0, paginaHome: 1, paginaBusqueda: 1 };
+        const LIMITES = { carrusel: 10, bloque1: 14, bloque2: 28, busqueda: 28 };
+        const POR_PAGINA = 28;
         let arrayBusquedaActual = [];
         let arrayBusquedaOriginal = [];
         let filtrosActivos = { precioMin: null, precioMax: null, marcas: [], categorias: [], colores: [], soloOfertas: false, soloStock: false };
@@ -974,8 +989,6 @@
                 
                 if(skuParaAbrir) { const prod = todosLosProductos.find(p => p.id_producto_sku === skuParaAbrir); if(prod) abrirPDP(prod, false); else irAInicio(false); } 
                 else { irAInicio(false); }
-
-                new IntersectionObserver(e => { if(e[0].isIntersecting) cargarSiguientePaginaHome(); }).observe(document.getElementById('observador-scroll'));
             } catch (error) { 
                 console.error('Error al cargar:', error);
                 document.getElementById('grilla-bloque-1').innerHTML = `<div class="col-span-full text-center py-10">
@@ -1196,23 +1209,102 @@
         }
 
         function renderLayoutInicio(resetearIndices = false) {
-            if(resetearIndices) { indices.bloque1 = 0; indices.bloque2 = 0; }
+            if(resetearIndices) { indices.bloque1 = 0; indices.paginaHome = 1; }
             document.getElementById('carrusel-1').innerHTML = todosLosProductos.slice(-10).map(generarTarjetaHTML).join('');
             const papeleria = todosLosProductos.filter(p => p.categoria_del_producto === 'PAPELERÍA');
             document.getElementById('carrusel-2').innerHTML = (papeleria.length > 0 ? papeleria : todosLosProductos).slice(0, 10).map(generarTarjetaHTML).join('');
             if(resetearIndices) indices.bloque1 = LIMITES.bloque1;
             const grilla1 = document.getElementById('grilla-bloque-1');
             grilla1.innerHTML = todosLosProductos.slice(0, indices.bloque1).map(generarTarjetaHTML).join('');
-            if(resetearIndices) indices.bloque2 = LIMITES.bloque1 + LIMITES.bloque2;
-            document.getElementById('grilla-bloque-2').innerHTML = todosLosProductos.slice(LIMITES.bloque1, indices.bloque2).map(generarTarjetaHTML).join('');
+            // Bloque 2 ahora con paginación
+            cargarPaginaHome(indices.paginaHome);
             renderVistosRecientes();
             actualizarContadorFavoritos();
             // Animar solo la primera grilla visible (que es la que más impacto da)
             if (resetearIndices) aplicarStagger(grilla1);
-            evaluarBotonCargarMasInicio();
         }
-        function cargarSiguientePaginaHome() { indices.bloque2 += LIMITES.bloque2; document.getElementById('grilla-bloque-2').innerHTML = todosLosProductos.slice(LIMITES.bloque1, indices.bloque2).map(generarTarjetaHTML).join(''); evaluarBotonCargarMasInicio(); }
-        function evaluarBotonCargarMasInicio() { const btn = document.getElementById('btn-cargar-mas'); if (indices.bloque2 >= todosLosProductos.length) btn.classList.add('hidden'); else btn.classList.remove('hidden'); }
+        function cargarPaginaHome(numeroPagina) { 
+            const productosBloque2 = todosLosProductos.slice(LIMITES.bloque1);
+            const totalPag = Math.max(1, Math.ceil(productosBloque2.length / POR_PAGINA));
+            numeroPagina = Math.max(1, Math.min(numeroPagina, totalPag));
+            indices.paginaHome = numeroPagina;
+            const inicio = (numeroPagina - 1) * POR_PAGINA;
+            const fin = inicio + POR_PAGINA;
+            const grilla = document.getElementById('grilla-bloque-2');
+            grilla.innerHTML = productosBloque2.slice(inicio, fin).map(generarTarjetaHTML).join('');
+            aplicarStagger(grilla);
+            renderPaginacion('paginacion-home', numeroPagina, totalPag, productosBloque2.length, cargarPaginaHome, grilla);
+            // Scroll suave al inicio del bloque
+            const titulo = grilla.previousElementSibling;
+            if (titulo) titulo.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        
+        function cargarPaginaBusqueda(numeroPagina) {
+            const totalPag = Math.max(1, Math.ceil(arrayBusquedaActual.length / POR_PAGINA));
+            numeroPagina = Math.max(1, Math.min(numeroPagina, totalPag));
+            indices.paginaBusqueda = numeroPagina;
+            const inicio = (numeroPagina - 1) * POR_PAGINA;
+            const fin = inicio + POR_PAGINA;
+            const grilla = document.getElementById('grilla-busqueda');
+            if (arrayBusquedaActual.length === 0) {
+                document.getElementById('paginacion-busqueda').innerHTML = '';
+                return;
+            }
+            grilla.innerHTML = arrayBusquedaActual.slice(inicio, fin).map(generarTarjetaHTML).join('');
+            aplicarStagger(grilla);
+            renderPaginacion('paginacion-busqueda', numeroPagina, totalPag, arrayBusquedaActual.length, cargarPaginaBusqueda, grilla);
+            const tit = document.getElementById('titulo-busqueda');
+            if (tit) tit.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        
+        // Genera el HTML de paginación inteligente: 1 ... 4 5 [6] 7 8 ... 20
+        function renderPaginacion(contenedorId, paginaActual, totalPaginas, totalItems, callback, grillaRef) {
+            const cont = document.getElementById(contenedorId);
+            if (!cont) return;
+            
+            // Si hay 1 sola página o ninguna, no mostrar paginación
+            if (totalPaginas <= 1) {
+                cont.innerHTML = totalItems > 0 ? `<div class="pag-info">Mostrando <strong>${totalItems}</strong> producto${totalItems !== 1 ? 's' : ''}</div>` : '';
+                return;
+            }
+            
+            const inicio = (paginaActual - 1) * POR_PAGINA + 1;
+            const fin = Math.min(paginaActual * POR_PAGINA, totalItems);
+            
+            // Calcular qué números mostrar (estilo Mercado Libre)
+            const paginas = [];
+            const rango = 1; // cuántas páginas mostrar a cada lado de la actual
+            
+            paginas.push(1);
+            if (paginaActual - rango > 2) paginas.push('...');
+            for (let i = Math.max(2, paginaActual - rango); i <= Math.min(totalPaginas - 1, paginaActual + rango); i++) {
+                paginas.push(i);
+            }
+            if (paginaActual + rango < totalPaginas - 1) paginas.push('...');
+            if (totalPaginas > 1) paginas.push(totalPaginas);
+            
+            // Construir el callback nominal para usar en HTML
+            const fnName = callback === cargarPaginaHome ? 'cargarPaginaHome' : 'cargarPaginaBusqueda';
+            
+            let html = `<div class="pag-info">Mostrando <strong>${inicio} - ${fin}</strong> de <strong>${totalItems}</strong> productos · Página <strong>${paginaActual}</strong> de <strong>${totalPaginas}</strong></div>`;
+            
+            // Botón "Anterior"
+            html += `<button class="pag-btn" ${paginaActual === 1 ? 'disabled' : ''} onclick="${fnName}(${paginaActual - 1})" aria-label="Página anterior"><i class="fa-solid fa-chevron-left"></i><span class="lbl-largo">Anterior</span></button>`;
+            
+            // Números de página
+            paginas.forEach(p => {
+                if (p === '...') {
+                    html += `<span class="pag-puntos">…</span>`;
+                } else {
+                    html += `<button class="pag-btn ${p === paginaActual ? 'activa' : ''}" onclick="${fnName}(${p})" aria-label="Ir a página ${p}" ${p === paginaActual ? 'aria-current="page"' : ''}>${p}</button>`;
+                }
+            });
+            
+            // Botón "Siguiente"
+            html += `<button class="pag-btn" ${paginaActual === totalPaginas ? 'disabled' : ''} onclick="${fnName}(${paginaActual + 1})" aria-label="Página siguiente"><span class="lbl-largo">Siguiente</span><i class="fa-solid fa-chevron-right"></i></button>`;
+            
+            cont.innerHTML = html;
+        }
 
         function renderBusquedaLimpia(productos, titulo, resetearIndices = true, categoria = null) {
             arrayBusquedaOriginal = productos.slice();
@@ -1275,7 +1367,6 @@
             else if (orden === 'nombre') filtrados.sort((a, b) => (a.nombre || '').localeCompare(b.nombre || ''));
             
             arrayBusquedaActual = filtrados;
-            if (resetearIndices) indices.busqueda = LIMITES.busqueda;
             
             const grid = document.getElementById('grilla-busqueda');
             if(filtrados.length === 0) { 
@@ -1285,11 +1376,11 @@
                     <p class="text-gray-500 text-sm">Prueba quitando algunos filtros o cambiando los criterios</p>
                     <button onclick="limpiarTodosFiltros()" class="mt-4 bg-primary text-white px-6 py-2 rounded font-bold hover:opacity-90">Limpiar filtros</button>
                 </div>`; 
-                document.getElementById('btn-cargar-mas-busqueda').classList.add('hidden');
+                document.getElementById('paginacion-busqueda').innerHTML = '';
             } else {
-                grid.innerHTML = filtrados.slice(0, indices.busqueda).map(generarTarjetaHTML).join('');
-                evaluarBotonCargarMasBusqueda();
-                if (resetearIndices) aplicarStagger(grid);
+                // Si reseteamos (nueva búsqueda o filtro aplicado), volvemos a página 1
+                if (resetearIndices) indices.paginaBusqueda = 1;
+                cargarPaginaBusqueda(indices.paginaBusqueda);
             }
             
             renderChipsFiltros();
@@ -1445,9 +1536,6 @@
             document.getElementById('filtros-panel').classList.toggle('mobile-open');
         }
         
-        function cargarSiguientePaginaBusqueda() { indices.busqueda += LIMITES.busqueda; document.getElementById('grilla-busqueda').innerHTML = arrayBusquedaActual.slice(0, indices.busqueda).map(generarTarjetaHTML).join(''); evaluarBotonCargarMasBusqueda(); }
-        function evaluarBotonCargarMasBusqueda() { const btn = document.getElementById('btn-cargar-mas-busqueda'); if (indices.busqueda >= arrayBusquedaActual.length) btn.classList.add('hidden'); else btn.classList.remove('hidden'); }
-
         function buscarPredictivo() {
             const texto = document.getElementById('buscador').value; const dropdown = document.getElementById('dropdown-busqueda');
             if (texto.trim() === '') { dropdown.classList.add('hidden'); return; }
