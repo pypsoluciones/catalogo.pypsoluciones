@@ -386,6 +386,17 @@
         .input-error { border-color:#dc2626 !important; box-shadow:0 0 0 3px rgba(220,38,38,.12) !important; animation: shake .3s; }
         @keyframes shake { 0%,100% { transform:translateX(0); } 25% { transform:translateX(-4px); } 75% { transform:translateX(4px); } }
         .input-success { border-color:#10b981 !important; }
+        
+        /* === FIX FOOTER FLASH === */
+        /* Reservar espacio mínimo para evitar que el footer "salte" durante carga inicial 
+           o cuando se cambia entre vistas (inicio, catálogo, PDP) */
+        body { min-height: 100vh; }
+        #contenido-principal { min-height: calc(100vh - 60px); display: flex; flex-direction: column; }
+        #vista-inicio-compleja, #vista-catalogo-limpio, #vista-pdp { min-height: 50vh; }
+        /* Cuando los skeletons están activos, asegurar espacio mínimo */
+        .skeleton-card { min-height: 280px; }
+        /* Eliminar transiciones de altura que puedan causar reflow visible del footer */
+        footer.footer-pro { contain: layout; }
     </style>
 </head>
 <body class="bg-slate-100 font-sans overflow-x-hidden text-gray-800 flex flex-col min-h-screen">
@@ -467,7 +478,7 @@
             </div>
         </div>
     </header>
-    <main id="contenido-principal" role="main" class="flex flex-col flex-1">
+    <main id="contenido-principal" role="main" class="flex flex-col flex-1" style="min-height: 70vh;">
     <div id="vista-inicio-compleja" class="fade-in flex-1 pb-10">
         <div class="max-w-[1600px] mx-auto px-4 pt-6 pb-2">
             <div id="banner-hero" class="w-full h-48 md:h-80 bg-primary rounded overflow-hidden shadow-sm mb-6 cursor-pointer relative group">
