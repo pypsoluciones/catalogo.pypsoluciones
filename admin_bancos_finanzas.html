@@ -431,9 +431,15 @@
                 <p class="text-[9px] text-gray-500 mt-1 italic">Solo wallets con saldo propio. Para Pago Móvil/Zelle/Transferencias usa la pestaña "Instrumentos de Pago".</p>
             </div>
 
-            <div id="cta-titular-wrap">
-                <label id="cta-titular-label" class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Banco/Titular</label>
-                <input type="text" id="cta-banco-titular" maxlength="120" placeholder="Banesco, BBVA..." class="w-full border border-gray-300 rounded px-3 py-2 text-xs uppercase focus:border-tertiary outline-none bg-white">
+            <div id="cta-titular-wrap" class="grid grid-cols-2 gap-3">
+                <div>
+                    <label id="cta-banco-label" class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Banco</label>
+                    <input type="text" id="cta-banco-titular" maxlength="120" placeholder="Banesco, BBVA..." class="w-full border border-gray-300 rounded px-3 py-2 text-xs uppercase focus:border-tertiary outline-none bg-white">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Titular</label>
+                    <input type="text" id="cta-titular-nombre" maxlength="120" placeholder="Nombre del titular" class="w-full border border-gray-300 rounded px-3 py-2 text-xs uppercase focus:border-tertiary outline-none bg-white">
+                </div>
             </div>
 
             <!-- Cajero asignado: solo CAJA_REGISTRADORA -->
@@ -983,9 +989,15 @@ function abrirModalAsignarFondo() {
     document.querySelector('input[name="asig-moneda"][value="USD"]').checked = true;
 
     // Origen: bóveda + cuentas tipo BANCO
-    const origenes = dbCuentas.filter(c => c.es_boveda || c.tipo_cuenta === 'BANCO');
+    // ARQUITECTURA FILTRO PROFIT/SAINT: solo BÓVEDA puede asignar fondos a cajas/cajeros.
+    // Banco no es origen de efectivo físico. Caja no envía a otra caja directamente.
+    const origenes = dbCuentas.filter(c => c.es_boveda);
+    if (!origenes.length) {
+        cerrarModalAsignarFondo();
+        return alert("⛔ No hay bóveda registrada. Solo desde la bóveda se pueden asignar fondos.");
+    }
     document.getElementById('asig-origen').innerHTML = '<option value="">Selecciona origen...</option>' +
-        origenes.map(c => `<option value="${c.id}|${c.es_boveda ? 'BOVEDA' : 'CUENTA'}">${c.es_boveda ? '🏦 ' : '🏛️ '}${escapeHtml(c.nombre)}</option>`).join('');
+        origenes.map(c => `<option value="${c.id}|BOVEDA" data-saldo-usd="${c.saldo_bruto_usd || c.saldo_usd || 0}" data-saldo-bs="${c.saldo_bruto_bs || c.saldo_bs || 0}">🏦 ${escapeHtml(c.nombre)}</option>`).join('');
 
     // Cajero (obligatorio, sin opción "cualquier cajero")
     const cajeros = dbUsuarios.filter(u => u.auth_id);
@@ -1133,8 +1145,9 @@ async function procesarMotivo(e) {
 function onChangeTipoCuenta() {
     const tipo = document.getElementById('cta-tipo').value;
     const titularWrap = document.getElementById('cta-titular-wrap');
-    const titularLabel = document.getElementById('cta-titular-label');
-    const titularInput = document.getElementById('cta-banco-titular');
+    const bancoLabel = document.getElementById('cta-banco-label');
+    const bancoInput = document.getElementById('cta-banco-titular');
+    const titularInput = document.getElementById('cta-titular-nombre');
     const numeroWrap = document.getElementById('cta-numero-wrap');
     const numeroLabel = document.getElementById('cta-numero-label');
     const numeroInput = document.getElementById('cta-numero');
@@ -1156,15 +1169,17 @@ function onChangeTipoCuenta() {
     cajeroSel.required = false;
     plataformaSel.required = false;
 
+    // Default: 2 columnas Banco+Titular
+    titularWrap.className = 'grid grid-cols-2 gap-3';
+    bancoLabel.innerText = 'Banco';
+    bancoInput.placeholder = 'Banesco, BBVA...';
+
     if (tipo === 'BANCO') {
-        titularLabel.innerText = 'Banco/Titular';
-        titularInput.placeholder = 'Banesco, BBVA...';
         numeroLabel.innerText = 'Nro. de Cuenta (formato BBBB-OOOO-CC-NNNNNNNNNN)';
         numeroInput.placeholder = '0134-0001-23-1234567890';
-        numeroInput.maxLength = 23;  // 20 dígitos + 3 guiones
+        numeroInput.maxLength = 23;
         numeroInput.setAttribute('inputmode', 'numeric');
         numeroInput.oninput = function() {
-            // Solo dígitos, formato 4-4-2-10
             let v = this.value.replace(/\D/g, '').substring(0, 20);
             let f = '';
             if (v.length <= 4) f = v;
@@ -1174,31 +1189,29 @@ function onChangeTipoCuenta() {
             this.value = f;
         };
     } else if (tipo === 'CAJA_CHICA') {
-        titularLabel.innerText = 'Responsable';
-        titularInput.placeholder = 'Nombre del responsable administrativo';
+        bancoLabel.innerText = 'Identificación';
+        bancoInput.placeholder = 'Caja Chica Admin';
         numeroWrap.classList.add('hidden');
     } else if (tipo === 'CAJA_REGISTRADORA') {
-        titularLabel.innerText = 'Identificación';
-        titularInput.placeholder = 'Ej: Caja 1, Sucursal Norte';
+        bancoLabel.innerText = 'Identificación';
+        bancoInput.placeholder = 'Ej: Caja 1, Sucursal Norte';
         numeroWrap.classList.add('hidden');
         cajeroWrap.classList.remove('hidden');
         cajeroSel.required = true;
-        // Poblar cajeros
         const cajeros = dbUsuarios.filter(u => u.auth_id);
         cajeroSel.innerHTML = '<option value="">Selecciona cajero...</option>' +
             cajeros.map(u => `<option value="${u.auth_id}">${escapeHtml(u.nombre_completo)} (${escapeHtml(u.usuario_login)})</option>`).join('');
     } else if (tipo === 'WALLET_DIGITAL') {
         plataformaWrap.classList.remove('hidden');
         plataformaSel.required = true;
-        // Los demás campos se ajustan según plataforma elegida
         onChangePlataformaWallet();
     }
 }
 
 function onChangePlataformaWallet() {
     const plat = document.getElementById('cta-plataforma').value;
-    const titularLabel = document.getElementById('cta-titular-label');
-    const titularInput = document.getElementById('cta-banco-titular');
+    const bancoLabel = document.getElementById('cta-banco-label');
+    const bancoInput = document.getElementById('cta-banco-titular');
     const numeroWrap = document.getElementById('cta-numero-wrap');
     const numeroLabel = document.getElementById('cta-numero-label');
     const numeroInput = document.getElementById('cta-numero');
@@ -1207,35 +1220,30 @@ function onChangePlataformaWallet() {
     const correoInput = document.getElementById('cta-correo');
     const monedaSel = document.getElementById('cta-moneda');
 
-    // Reset
     correoWrap.classList.add('hidden');
     numeroWrap.classList.remove('hidden');
 
-    // Auto-set moneda según plataforma + ajustar campos visibles
     const config = {
-        'BANESCO_PANAMA':   { moneda: 'USD', titular: 'Titular',            numero: 'Nro. Cuenta Panamá',   numLabel: 'Cuenta',   placeholderNum: '',           mostrarCorreo: true,  correoLabel: 'Email asociado (opcional)' },
-        'MERCANTIL_PANAMA': { moneda: 'USD', titular: 'Titular',            numero: 'Nro. Cuenta Panamá',   numLabel: 'Cuenta',   placeholderNum: '',           mostrarCorreo: true,  correoLabel: 'Email asociado (opcional)' },
-        'ZINLI':            { moneda: 'USD', titular: 'Titular',            numero: 'Tag/Usuario Zinli',    numLabel: 'Usuario',  placeholderNum: '@usuario',   mostrarCorreo: true,  correoLabel: 'Email Zinli' },
-        'WALLY':            { moneda: 'USD', titular: 'Titular',            numero: 'Tag/Usuario Wally',    numLabel: 'Usuario',  placeholderNum: '@usuario',   mostrarCorreo: true,  correoLabel: 'Email Wally' },
-        'BINANCE_PAY':      { moneda: 'USD', titular: 'Titular',            numero: 'Pay ID Binance',       numLabel: 'Pay ID',   placeholderNum: '12345678',   mostrarCorreo: true,  correoLabel: 'Email Binance' },
-        'PAYPAL':           { moneda: 'USD', titular: 'Titular',            numero: '',                     numLabel: '',         placeholderNum: '',           mostrarCorreo: true,  correoLabel: 'Email PayPal' },
-        'CASHEA':           { moneda: 'BS',  titular: 'Titular',            numero: 'Cédula/Doc',           numLabel: 'Doc.',     placeholderNum: 'V-XXXXXXXX', mostrarCorreo: true,  correoLabel: 'Email Cashea' },
-        'OTRO':             { moneda: 'BS',  titular: 'Titular',            numero: 'Identificador',        numLabel: 'ID',       placeholderNum: '',           mostrarCorreo: true,  correoLabel: 'Email (opcional)' }
+        'BANESCO_PANAMA':   { moneda: 'USD', bancoLabel: 'Banco',     numero: 'Nro. Cuenta Panamá',   numLabel: 'Cuenta',   placeholderNum: '',           mostrarCorreo: true,  correoLabel: 'Email asociado (opcional)' },
+        'MERCANTIL_PANAMA': { moneda: 'USD', bancoLabel: 'Banco',     numero: 'Nro. Cuenta Panamá',   numLabel: 'Cuenta',   placeholderNum: '',           mostrarCorreo: true,  correoLabel: 'Email asociado (opcional)' },
+        'ZINLI':            { moneda: 'USD', bancoLabel: 'Plataforma',numero: 'Tag/Usuario Zinli',    numLabel: 'Usuario',  placeholderNum: '@usuario',   mostrarCorreo: true,  correoLabel: 'Email Zinli' },
+        'WALLY':            { moneda: 'USD', bancoLabel: 'Plataforma',numero: 'Tag/Usuario Wally',    numLabel: 'Usuario',  placeholderNum: '@usuario',   mostrarCorreo: true,  correoLabel: 'Email Wally' },
+        'BINANCE_PAY':      { moneda: 'USD', bancoLabel: 'Plataforma',numero: 'Pay ID Binance',       numLabel: 'Pay ID',   placeholderNum: '12345678',   mostrarCorreo: true,  correoLabel: 'Email Binance' },
+        'PAYPAL':           { moneda: 'USD', bancoLabel: 'Plataforma',numero: '',                     numLabel: '',         placeholderNum: '',           mostrarCorreo: true,  correoLabel: 'Email PayPal' },
+        'CASHEA':           { moneda: 'BS',  bancoLabel: 'Plataforma',numero: 'Cédula/Doc',           numLabel: 'Doc.',     placeholderNum: 'V12345678',  mostrarCorreo: true,  correoLabel: 'Email Cashea' },
+        'OTRO':             { moneda: 'BS',  bancoLabel: 'Origen',    numero: 'Identificador',        numLabel: 'ID',       placeholderNum: '',           mostrarCorreo: true,  correoLabel: 'Email (opcional)' }
     };
 
-    if (!plat || !config[plat]) {
-        return;
-    }
+    if (!plat || !config[plat]) return;
     const cfg = config[plat];
     monedaSel.value = cfg.moneda;
-    titularLabel.innerText = cfg.titular;
-    titularInput.placeholder = cfg.titular;
+    bancoLabel.innerText = cfg.bancoLabel;
+    bancoInput.placeholder = cfg.bancoLabel;
 
     if (cfg.numero) {
         numeroWrap.classList.remove('hidden');
         numeroLabel.innerText = cfg.numLabel;
         numeroInput.placeholder = cfg.placeholderNum;
-        // Solo dígitos para cédula (Cashea)
         if (plat === 'CASHEA') {
             numeroInput.setAttribute('inputmode', 'numeric');
             numeroInput.setAttribute('pattern', '[0-9]*');
@@ -1271,20 +1279,18 @@ function abrirModalCuenta(id = null) {
             document.getElementById('cta-tipo').value = c.tipo_cuenta;
             document.getElementById('cta-moneda').value = c.moneda || 'BS';
             document.getElementById('cta-banco-titular').value = c.banco_titular || '';
+            document.getElementById('cta-titular-nombre').value = c.titular_nombre || '';
             document.getElementById('cta-numero').value = c.numero_cuenta || '';
             document.getElementById('cta-desc').value = c.descripcion || '';
             onChangeTipoCuenta();
-            // Si es WALLET_DIGITAL, poblar plataforma y refrescar campos
             if (c.tipo_cuenta === 'WALLET_DIGITAL' && c.subtipo_wallet) {
                 document.getElementById('cta-plataforma').value = c.subtipo_wallet;
                 onChangePlataformaWallet();
-                document.getElementById('cta-moneda').value = c.moneda || 'BS';  // Restaurar después del auto-set
+                document.getElementById('cta-moneda').value = c.moneda || 'BS';
             }
-            // Si es CAJA_REGISTRADORA, poblar cajero seleccionado
             if (c.tipo_cuenta === 'CAJA_REGISTRADORA' && c.auth_id_cajero) {
                 document.getElementById('cta-cajero').value = c.auth_id_cajero;
             }
-            // Si es WALLET_DIGITAL, poblar correo
             if (c.tipo_cuenta === 'WALLET_DIGITAL' && c.correo_electronico) {
                 document.getElementById('cta-correo').value = c.correo_electronico;
             }
@@ -1313,6 +1319,7 @@ async function guardarCuenta(e) {
         tipo_cuenta: tipo,
         moneda: document.getElementById('cta-moneda').value,
         banco_titular: document.getElementById('cta-banco-titular').value.trim() || null,
+        titular_nombre: document.getElementById('cta-titular-nombre').value.trim() || null,
         descripcion: document.getElementById('cta-desc').value.trim() || null,
         estatus: 'ACTIVA'
     };
@@ -1484,44 +1491,24 @@ function onChangeTipoInstrumento() {
     }
 
     // Campos extra según tipo
+    // FILTRO PROFIT/SAINT: la info bancaria del receptor (banco, número, titular, email) se guarda
+    // en la cuenta destino. NO se duplica aquí. Solo PUNTO_VENTA mantiene datos del dispositivo
+    // físico (terminal/modelo) porque son del POS, no de la cuenta.
     let extraHTML = '';
-    if (tipo === 'PAGO_MOVIL') {
+    if (tipo === 'PUNTO_VENTA') {
         extraHTML = `
-            <p class="text-[9px] font-bold text-primary uppercase mb-1">Datos del receptor (opcional)</p>
+            <p class="text-[9px] font-bold text-primary uppercase mb-1">Datos del terminal físico (opcional)</p>
             <div class="grid grid-cols-2 gap-1.5">
-                <input id="ins-extra-banco" type="text" maxlength="40" placeholder="Banco receptor" class="border border-gray-300 rounded px-2 py-1 text-[10px] outline-none focus:border-tertiary">
-                <input id="ins-extra-telefono" type="tel" inputmode="numeric" pattern="[0-9]*" maxlength="15" placeholder="Teléfono receptor" oninput="this.value=this.value.replace(/[^0-9]/g,'')" class="border border-gray-300 rounded px-2 py-1 text-[10px] outline-none focus:border-tertiary">
-                <input id="ins-extra-cedula" type="tel" inputmode="numeric" pattern="[0-9]*" maxlength="15" placeholder="Cédula receptor" oninput="this.value=this.value.replace(/[^0-9]/g,'')" class="border border-gray-300 rounded px-2 py-1 text-[10px] outline-none focus:border-tertiary">
-            </div>`;
-    } else if (tipo === 'TRANSFERENCIA') {
-        extraHTML = `
-            <p class="text-[9px] font-bold text-primary uppercase mb-1">Datos cuenta receptora (opcional)</p>
-            <div class="grid grid-cols-2 gap-1.5">
-                <input id="ins-extra-banco" type="text" maxlength="40" placeholder="Banco" class="border border-gray-300 rounded px-2 py-1 text-[10px] outline-none focus:border-tertiary">
-                <input id="ins-extra-cuenta" type="tel" inputmode="numeric" maxlength="23" placeholder="0134-0001-23-1234567890" oninput="formatearCuentaVE(this)" class="border border-gray-300 rounded px-2 py-1 text-[10px] outline-none focus:border-tertiary font-mono">
-                <input id="ins-extra-titular" type="text" maxlength="80" placeholder="Titular" class="border border-gray-300 rounded px-2 py-1 text-[10px] outline-none focus:border-tertiary col-span-2">
-            </div>`;
-    } else if (tipo === 'PUNTO_VENTA') {
-        extraHTML = `
-            <p class="text-[9px] font-bold text-primary uppercase mb-1">Datos del terminal (opcional)</p>
-            <div class="grid grid-cols-2 gap-1.5">
-                <input id="ins-extra-banco" type="text" maxlength="40" placeholder="Banco emisor terminal" class="border border-gray-300 rounded px-2 py-1 text-[10px] outline-none focus:border-tertiary">
                 <input id="ins-extra-terminal" type="text" maxlength="20" placeholder="Nro. terminal" class="border border-gray-300 rounded px-2 py-1 text-[10px] outline-none focus:border-tertiary">
-                <input id="ins-extra-modelo" type="text" maxlength="40" placeholder="Modelo POS" class="border border-gray-300 rounded px-2 py-1 text-[10px] outline-none focus:border-tertiary col-span-2">
-            </div>`;
-    } else if (tipo === 'ZELLE') {
-        extraHTML = `
-            <p class="text-[9px] font-bold text-primary uppercase mb-1">Datos Zelle receptor (opcional)</p>
-            <div class="grid grid-cols-1 gap-1.5">
-                <input id="ins-extra-email" type="email" maxlength="80" placeholder="Email Zelle receptor" class="border border-gray-300 rounded px-2 py-1 text-[10px] outline-none focus:border-tertiary">
-                <input id="ins-extra-titular" type="text" maxlength="80" placeholder="Titular USA" class="border border-gray-300 rounded px-2 py-1 text-[10px] outline-none focus:border-tertiary">
-                <input id="ins-extra-banco" type="text" maxlength="40" placeholder="Banco USA" class="border border-gray-300 rounded px-2 py-1 text-[10px] outline-none focus:border-tertiary">
-            </div>`;
+                <input id="ins-extra-modelo" type="text" maxlength="40" placeholder="Modelo POS" class="border border-gray-300 rounded px-2 py-1 text-[10px] outline-none focus:border-tertiary">
+            </div>
+            <p class="text-[8px] text-gray-500 italic mt-1">El banco emisor del terminal se toma de la cuenta destino seleccionada arriba.</p>`;
     } else if (tipo === 'OTRO') {
         extraHTML = `
-            <p class="text-[9px] font-bold text-primary uppercase mb-1">Datos adicionales (opcional)</p>
-            <input id="ins-extra-detalle" type="text" maxlength="200" placeholder="Detalle / referencia" class="w-full border border-gray-300 rounded px-2 py-1 text-[10px] outline-none focus:border-tertiary">`;
+            <p class="text-[9px] font-bold text-primary uppercase mb-1">Notas adicionales (opcional)</p>
+            <input id="ins-extra-detalle" type="text" maxlength="200" placeholder="Detalle / referencia interna" class="w-full border border-gray-300 rounded px-2 py-1 text-[10px] outline-none focus:border-tertiary">`;
     }
+    // PAGO_MOVIL, TRANSFERENCIA, ZELLE: NO requieren datos extra. Toda la info está en la cuenta destino.
 
     if (extraHTML) {
         extraDiv.innerHTML = extraHTML;

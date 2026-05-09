@@ -1839,10 +1839,13 @@
             });
             const saldoBs = redondear(granTotalBs - totalPagadoBs);
             const saldoUsd = redondear(saldoBs / tasaBCVCalculo);
-            if (saldoBs > 0.01) {
+            // FILTRO PROFIT/SAINT: tolerancia ±0.50 Bs por descuadre de conversión BCV.
+            // Si está dentro de la tolerancia, se considera Pago Completo.
+            const TOLERANCIA_BS = 0.50;
+            if (saldoBs > TOLERANCIA_BS) {
                 el.innerHTML = `Faltan <b>Bs. ${fmt(saldoBs)}</b> <span class="text-[9px] text-gray-400">(US$ ${fmt(saldoUsd)})</span>`;
                 el.className = 'text-red-600 font-bold text-[11px]';
-            } else if (saldoBs < -0.01) {
+            } else if (saldoBs < -TOLERANCIA_BS) {
                 el.innerHTML = `Sobran <b>Bs. ${fmt(Math.abs(saldoBs))}</b> <span class="text-[9px] text-gray-400">(devolver vuelto)</span>`;
                 el.className = 'text-amber-600 font-bold text-[11px]';
             } else {
@@ -2200,120 +2203,38 @@
         
         async function renderizarModalAperturaTurno() {
             const body = document.getElementById('modal-turno-body');
-            
-            // Obtener saldo actual de bóveda
-            let saldoBoveda = { saldo_usd: 0, saldo_bs: 0 };
-            try {
-                const filtroEmpresa = empresaActual ? `id_empresa=eq.${empresaActual}&` : '';
-                const r = await fetch(`${SUPABASE_URL}/rest/v1/boveda?${filtroEmpresa}select=saldo_usd,saldo_bs&limit=1`, {
-                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` }
-                });
-                if (r.ok) {
-                    const d = await r.json();
-                    if (d.length > 0) saldoBoveda = d[0];
-                }
-            } catch (e) { console.warn('Error leyendo bóveda:', e); }
-            
+            // ARQUITECTURA FILTRO PROFIT/SAINT:
+            // El POS NO debe tener su propio flujo de apertura de turno. La apertura DEBE pasar
+            // por Control de Caja (admin_caja.html) que es el módulo oficial de gestión de caja.
+            // Esto garantiza que la bóveda quede correctamente sincronizada.
             body.innerHTML = `
-                <div class="bg-blue-50 border border-blue-200 rounded p-3 text-center">
-                    <p class="text-[8px] text-blue-700 font-bold uppercase tracking-widest mb-1">Saldo Disponible en Bóveda</p>
-                    <div class="grid grid-cols-2 gap-2">
-                        <div>
-                            <p class="text-[9px] text-blue-600">USD</p>
-                            <p class="text-base font-black text-blue-900">$${parseFloat(saldoBoveda.saldo_usd).toFixed(2)}</p>
-                        </div>
-                        <div>
-                            <p class="text-[9px] text-blue-600">Bolívares</p>
-                            <p class="text-base font-black text-blue-900">Bs. ${parseFloat(saldoBoveda.saldo_bs).toFixed(2)}</p>
-                        </div>
-                    </div>
+                <div class="bg-amber-50 border-2 border-amber-300 rounded-lg p-4 text-center">
+                    <i class="fa-solid fa-clock-rotate-left text-amber-500 text-3xl mb-2"></i>
+                    <p class="text-sm font-black text-amber-900 uppercase tracking-wide">Turno No Iniciado</p>
+                    <p class="text-[11px] text-amber-700 mt-2 leading-relaxed">
+                        Para facturar a contado debes abrir tu turno desde <b>Control de Caja</b>.
+                        Allí podrás recibir el fondo desde bóveda y registrar correctamente el inicio del turno.
+                    </p>
                 </div>
-                
-                <div class="border-t border-gray-200 pt-3">
-                    <p class="text-[10px] font-bold text-gray-700 uppercase mb-2">Asignar Fondo Inicial al Turno:</p>
-                    
-                    <label class="block text-[9px] font-medium text-gray-500 uppercase mb-1">Monto USD a retirar</label>
-                    <div class="flex items-center gap-2 mb-3">
-                        <span class="text-secondary font-black text-sm">$</span>
-                        <input type="number" id="turno-monto-usd" step="0.01" min="0" max="${saldoBoveda.saldo_usd}" placeholder="0.00" value="0.00"
-                            class="flex-1 border border-gray-300 rounded px-2 py-2 text-sm font-black text-gray-800 outline-none focus:border-tertiary text-right">
-                    </div>
-                    
-                    <label class="block text-[9px] font-medium text-gray-500 uppercase mb-1">Monto Bolívares a retirar</label>
-                    <div class="flex items-center gap-2 mb-3">
-                        <span class="text-secondary font-black text-sm">Bs.</span>
-                        <input type="number" id="turno-monto-bs" step="0.01" min="0" max="${saldoBoveda.saldo_bs}" placeholder="0.00" value="0.00"
-                            class="flex-1 border border-gray-300 rounded px-2 py-2 text-sm font-black text-gray-800 outline-none focus:border-tertiary text-right">
-                    </div>
-                    
-                    <label class="block text-[9px] font-medium text-gray-500 uppercase mb-1">Concepto / Observaciones</label>
-                    <input type="text" id="turno-concepto" placeholder="Apertura turno de la mañana"
-                        class="w-full border border-gray-300 rounded px-2 py-2 text-[11px] outline-none focus:border-tertiary mb-3">
+                <div class="bg-blue-50 border border-blue-200 rounded p-2 text-[10px] text-blue-700">
+                    <i class="fa-solid fa-circle-info mr-1"></i>
+                    Solo desde Control de Caja se garantiza la trazabilidad del dinero entre bóveda y caja registradora.
                 </div>
-                
-                <div class="bg-amber-50 border border-amber-200 rounded p-2 text-[9px] text-amber-800">
-                    <i class="fa-solid fa-info-circle mr-1"></i>
-                    El monto saldrá de la bóveda y quedará registrado en tu turno como fondo inicial.
-                </div>
-                
                 <div class="grid grid-cols-2 gap-2 pt-2">
                     <button onclick="cerrarModalTurno()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 rounded text-[10px] uppercase transition">
                         Cancelar
                     </button>
-                    <button onclick="ejecutarAperturaTurno()" id="btn-ejec-apertura" class="bg-secondary hover:opacity-90 text-white font-black py-2 rounded text-[10px] uppercase transition shadow">
-                        <i class="fa-solid fa-key mr-1"></i>Abrir Turno
+                    <button onclick="window.location.href='admin_caja.html'" class="bg-secondary hover:opacity-90 text-white font-black py-2 rounded text-[10px] uppercase transition shadow">
+                        <i class="fa-solid fa-arrow-right mr-1"></i>Ir a Control de Caja
                     </button>
                 </div>
             `;
         }
         
+        // STUB: ejecutarAperturaTurno ya no se usa, el flujo va por admin_caja.html.
+        // Lo dejamos como fallback en caso de que algún botón legacy lo invoque.
         async function ejecutarAperturaTurno() {
-            const btn = document.getElementById('btn-ejec-apertura');
-            const montoUsd = parseFloat(document.getElementById('turno-monto-usd').value) || 0;
-            const montoBs = parseFloat(document.getElementById('turno-monto-bs').value) || 0;
-            const concepto = document.getElementById('turno-concepto').value.trim() || 'Apertura turno';
-            
-            // FIX: Permitir apertura con $0/Bs0 — el backend valida según REQUIERE_FONDO_INICIAL_TURNO.
-            // El usuario puede abrir turno vacío y recibir fondo después vía aceptar_transferencia_fondo.
-            if (montoUsd < 0 || montoBs < 0) {
-                alert('Los montos no pueden ser negativos.');
-                return;
-            }
-            
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i>Abriendo...';
-            
-            try {
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/abrir_turno_caja`, {
-                    method: 'POST',
-                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        p_monto_usd: montoUsd,
-                        p_monto_bs: montoBs,
-                        p_concepto: concepto
-                    })
-                });
-                const data = await res.json();
-                
-                if (!res.ok || data.code) {
-                    throw new Error(data.message || data.hint || 'Error al abrir el turno');
-                }
-                
-                // Éxito: refrescar UI
-                cerrarModalTurno();
-                actualizarUI_Carrito();
-                
-                // Notificación visual
-                if (typeof mostrarNotif === 'function') {
-                    mostrarNotif('Turno abierto exitosamente. Ya puedes facturar a contado.', 'success');
-                } else {
-                    alert('Turno abierto exitosamente. Ya puedes facturar a contado.');
-                }
-            } catch (e) {
-                alert('Error al abrir turno:\n\n' + e.message);
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fa-solid fa-key mr-1"></i>Abrir Turno';
-            }
+            window.location.href = 'admin_caja.html';
         }
         
         function renderizarModalTurnoAbierto(data) {
