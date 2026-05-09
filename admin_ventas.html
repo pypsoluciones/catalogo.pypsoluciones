@@ -1742,7 +1742,7 @@
                             ${opciones.map(o => `<option value="${o.value}" ${selValue === o.value ? 'selected' : ''}>${o.label}</option>`).join('')}
                         </select>
                         <div class="relative">
-                            <input type="number" step="0.01" min="0" placeholder="0.00" value="${l.monto || ''}" oninput="actualizarLineaPago(${l.id}, 'monto', this.value)" class="w-28 border border-gray-300 rounded pl-7 pr-1 py-1 text-[11px] font-bold text-right outline-none">
+                            <input type="text" inputmode="decimal" placeholder="0.00" value="${l.monto || ''}" oninput="actualizarLineaPago(${l.id}, 'monto', this.value)" class="w-32 border border-gray-300 rounded pl-7 pr-1 py-1 text-[11px] font-bold text-right outline-none">
                             <span class="absolute left-2 top-1/2 -translate-y-1/2 text-[9px] font-bold text-gray-500">${labelMoneda}</span>
                         </div>
                         <button onclick="autoCompletarMontoLinea(${l.id})" title="Autocompletar al saldo restante" class="text-blue-400 hover:text-blue-600 text-xs px-1.5 py-0.5 transition" type="button">
@@ -1780,6 +1780,11 @@
                 el.innerHTML = `<i class="fa-solid fa-check-circle mr-1"></i>Pago completo`;
                 el.className = 'text-green-600 font-bold text-[11px]';
             }
+
+            // Si hay líneas mixtas, ocultar la calculadora de vuelto del cuadro principal
+            // (el control de saldo está aquí mismo, en cada línea + asistente).
+            const cajaVuelto = document.getElementById('caja-calculadora-vuelto');
+            if (cajaVuelto) cajaVuelto.classList.add('hidden');
         }
 
         // Cambio combinado de método + instrumento desde el select
@@ -1805,8 +1810,14 @@
         function actualizarLineaPago(id, campo, valor) {
             const idx = lineasPagoMixto.findIndex(l => l.id === id);
             if (idx === -1) return;
-            if (campo === 'monto') lineasPagoMixto[idx].monto = parseFloat(valor) || 0;
-            else lineasPagoMixto[idx][campo] = valor;
+            if (campo === 'monto') {
+                // Parser tolerante: acepta "1,5" y "1.5". Filtra caracteres no numéricos excepto coma/punto.
+                const limpio = String(valor).replace(/[^0-9.,]/g, '').replace(',', '.');
+                const num = parseFloat(limpio);
+                lineasPagoMixto[idx].monto = isNaN(num) ? 0 : num;
+            } else {
+                lineasPagoMixto[idx][campo] = valor;
+            }
             // Solo re-render completo si cambió el monto (afecta saldo). Para los demás, no re-render para no perder foco.
             if (campo === 'monto') renderizarLineasPago();
         }
@@ -1814,6 +1825,10 @@
         function eliminarLineaPago(id) {
             lineasPagoMixto = lineasPagoMixto.filter(l => l.id !== id);
             renderizarLineasPago();
+            // Si ya no quedan líneas mixtas, restaurar la calculadora de vuelto
+            if (lineasPagoMixto.length === 0) {
+                calcularVuelto();  // Re-evalúa visibilidad según método actual
+            }
         }
 
         // Autocompletar el saldo restante en esta línea (en moneda nativa)
