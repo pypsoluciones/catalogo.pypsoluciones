@@ -1671,46 +1671,47 @@
 
         // ════════════════════════════════════════════════════════════════
         // SPRINT 1.0 LOTE 1 — FILTRADO INTELIGENTE DE MÉTODOS DE PAGO
-        // Filtra según mapeos existentes (configuracion_pagos) y cuentas activas.
-        // Solo muestra métodos que tienen cuenta destino mapeada.
+        // Lee instrumentos_pago_completa (Lote 2.B) y filtra métodos según
+        // los instrumentos creados por el SuperAdmin/Admin.
         // ════════════════════════════════════════════════════════════════
-        let mapeosPagoDisponibles = {};  // { ZELLE_USD: {id_cuenta, ...}, PAGOMOVIL_BS: {...} }
+        let mapeosPagoDisponibles = {};  // { PAGO_MOVIL: true, ZELLE: true, ... }
+        let instrumentosCargados = [];   // Array completo de instrumentos para debug/futuro
 
         async function cargarMapeosPagos() {
             try {
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/configuracion_pagos_estado?select=*`, {
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/instrumentos_pago_completa?select=*&estatus=eq.ACTIVO`, {
                     headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` }
                 });
                 if (!res.ok) {
-                    poblarMetodosPago();  // Falla silenciosa: poblar con defaults
+                    poblarMetodosPago();
                     return;
                 }
-                const mapeos = await res.json();
+                instrumentosCargados = await res.json();
                 mapeosPagoDisponibles = {};
-                mapeos.forEach(m => {
-                    if (m.id_cuenta) mapeosPagoDisponibles[m.metodo] = m;
+                instrumentosCargados.forEach(i => {
+                    if (i.tipo_metodo) mapeosPagoDisponibles[i.tipo_metodo] = true;
                 });
                 poblarMetodosPago();
             } catch (e) {
-                console.warn('[POS] No se pudieron cargar mapeos de pago, usando defaults', e);
+                console.warn('[POS] No se pudieron cargar instrumentos de pago, usando defaults', e);
                 poblarMetodosPago();
             }
         }
 
         function poblarMetodosPago() {
             // EFECTIVO_BS y EFECTIVO_USD son siempre disponibles (van directo a caja registradora del cajero).
-            // POR_PAGAR siempre disponible (no requiere cuenta).
-            // PAGO_MOVIL, TRANSFERENCIA_BS, ZELLE, PUNTO_VENTA solo si tienen mapeo configurado.
+            // POR_PAGAR siempre disponible (no requiere instrumento).
+            // PAGO_MOVIL, TRANSFERENCIA, ZELLE, PUNTO_VENTA solo si hay al menos 1 instrumento creado.
             const todos = [
-                { value: 'EFECTIVO_BS',     label: '🇻🇪 Efectivo Bolívares',  requiereMapeo: null },
-                { value: 'EFECTIVO_USD',    label: '💵 Divisas USD (Aplica IGTF)', requiereMapeo: null },
-                { value: 'PAGO_MOVIL',      label: '📱 Pago Móvil',          requiereMapeo: 'PAGOMOVIL_BS' },
-                { value: 'PUNTO_VENTA',     label: '💳 Punto de Venta',      requiereMapeo: 'PAGOMOVIL_BS' },
-                { value: 'TRANSFERENCIA_BS',label: '🏦 Transferencia Bs',    requiereMapeo: 'TRANSFERENCIA_BS' },
-                { value: 'ZELLE',           label: '🟣 Zelle (Aplica IGTF)', requiereMapeo: 'ZELLE_USD' },
-                { value: 'POR_PAGAR',       label: '⏳ Dejar Por Pagar',     requiereMapeo: null }
+                { value: 'EFECTIVO_BS',     label: '🇻🇪 Efectivo Bolívares',  requiereInstrumento: null },
+                { value: 'EFECTIVO_USD',    label: '💵 Divisas USD (Aplica IGTF)', requiereInstrumento: null },
+                { value: 'PAGO_MOVIL',      label: '📱 Pago Móvil',          requiereInstrumento: 'PAGO_MOVIL' },
+                { value: 'PUNTO_VENTA',     label: '💳 Punto de Venta',      requiereInstrumento: 'PUNTO_VENTA' },
+                { value: 'TRANSFERENCIA_BS',label: '🏦 Transferencia Bs',    requiereInstrumento: 'TRANSFERENCIA' },
+                { value: 'ZELLE',           label: '🟣 Zelle (Aplica IGTF)', requiereInstrumento: 'ZELLE' },
+                { value: 'POR_PAGAR',       label: '⏳ Dejar Por Pagar',     requiereInstrumento: null }
             ];
-            const disponibles = todos.filter(m => !m.requiereMapeo || mapeosPagoDisponibles[m.requiereMapeo]);
+            const disponibles = todos.filter(m => !m.requiereInstrumento || mapeosPagoDisponibles[m.requiereInstrumento]);
             const sel = document.getElementById('cobro-metodo');
             if (!sel) return;
             sel.innerHTML = disponibles.map(m => `<option value="${m.value}">${m.label}</option>`).join('');
@@ -2360,9 +2361,14 @@
                 const exentoUsd = parseFloat(document.getElementById('contenedor-totales-fiscales').dataset.exentoTotalUsd) || 0;
                 let metodoPagoFinal = metodo;
                 if (lineasPagoMixto.length > 0) { metodoPagoFinal = lineasPagoMixto.map(l => `${l.metodo}(${fmt(l.monto)}Bs)`).join('+'); }
+                if (metodo === 'POR_PAGAR') metodoPagoFinal = 'POR_PAGAR';
 
                 // Mapeo de condición de pago a UPPER_SNAKE_CASE
-                const condicionUpper = condicion.toUpperCase().includes('CONTADO') ? 'CONTADO' : 'CREDITO';
+                // FIX: si el método es POR_PAGAR, forzar CREDITO (no requiere turno).
+                let condicionUpper = condicion.toUpperCase().includes('CONTADO') ? 'CONTADO' : 'CREDITO';
+                if (metodo === 'POR_PAGAR') {
+                    condicionUpper = 'CREDITO';
+                }
 
                 // ─────────────────────────────────────────────────────────────
                 // ENRUTADOR DOCUMENT_CONFIG: PRESUPUESTO vs FACTURA

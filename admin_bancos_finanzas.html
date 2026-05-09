@@ -75,9 +75,6 @@
                     <i class="fa-solid fa-credit-card mr-1"></i> Instrumentos de Pago
                     <span id="badge-config-pendiente" class="hidden ml-1 bg-orange-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full">!</span>
                 </button>
-                <button onclick="cambiarTab('terminales')" id="tab-terminales" class="py-2 px-4 text-sm font-bold border-b-2 border-transparent text-gray-400 hover:text-gray-600 transition uppercase tracking-wider">
-                    <i class="fa-solid fa-credit-card mr-1"></i> Terminales POS
-                </button>
             </div>
 
             <!-- ════════════════════════════════════════════════════════════
@@ -183,33 +180,6 @@
 
                         <button type="submit" id="btn-guardar-ins" class="w-full bg-secondary hover:opacity-90 text-white font-bold py-2.5 rounded shadow btn-press uppercase text-[11px] tracking-wider transition">Guardar Instrumento</button>
                     </form>
-                </div>
-            </div>
-
-            <!-- ════════════════════════════════════════════════════════════
-                 VISTA: TERMINALES POS
-                 ════════════════════════════════════════════════════════════ -->
-            <div id="vista-terminales" class="hidden fade-in space-y-6">
-                <div class="flex items-center justify-between mb-3">
-                    <div>
-                        <h2 class="text-lg font-black text-primary tracking-wide uppercase">Terminales POS</h2>
-                        <p class="text-[11px] text-gray-500 font-medium">Cada terminal está vinculado a una cuenta bancaria que recibe los pagos POS</p>
-                    </div>
-                    <button onclick="abrirModalTerminal()" class="bg-secondary hover:opacity-90 text-white px-4 py-2 rounded-lg font-bold shadow-sm transition btn-press text-[10px] uppercase tracking-wider flex items-center gap-2">
-                        <i class="fa-solid fa-plus"></i> Nuevo Terminal
-                    </button>
-                </div>
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <table class="w-full">
-                        <thead class="bg-gray-50 border-b border-gray-200">
-                            <tr>
-                                <th class="text-left p-3 text-[10px] font-black text-gray-500 uppercase tracking-wider">Terminal</th>
-                                <th class="text-left p-3 text-[10px] font-black text-gray-500 uppercase tracking-wider">Cuenta de Depósito</th>
-                                <th class="text-center p-3 text-[10px] font-black text-gray-500 uppercase tracking-wider">Estatus</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tabla-terminales" class="divide-y divide-gray-100"></tbody>
-                    </table>
                 </div>
             </div>
 
@@ -502,27 +472,6 @@
 <!-- ════════════════════════════════════════════════════════════════
      MODAL: TERMINAL POS
      ════════════════════════════════════════════════════════════════ -->
-<div id="modal-terminal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[9990] hidden flex items-center justify-center p-4 fade-in">
-    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col border border-gray-200">
-        <div class="bg-primary text-white p-3 flex justify-between items-center shrink-0">
-            <h3 class="font-bold text-[12px] tracking-wide uppercase"><i class="fa-solid fa-credit-card mr-2 text-tertiary"></i> Nuevo Terminal POS</h3>
-            <button onclick="cerrarModalTerminal()" class="text-gray-300 hover:text-white transition"><i class="fa-solid fa-times"></i></button>
-        </div>
-        <form id="form-terminal" onsubmit="guardarTerminal(event)" class="p-5 bg-gray-50 space-y-3">
-            <div>
-                <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Nombre *</label>
-                <input type="text" id="term-nombre" required maxlength="120" placeholder="Punto Banesco Inalámbrico" class="w-full border border-gray-300 rounded px-3 py-2 text-xs font-bold uppercase focus:border-tertiary outline-none bg-white">
-            </div>
-            <div>
-                <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Cuenta destinataria *</label>
-                <select id="term-banco" required class="w-full border border-gray-300 rounded px-3 py-2 text-xs font-bold uppercase focus:border-tertiary outline-none bg-white"></select>
-                <p class="text-[10px] text-gray-500 mt-1">Solo cuentas tipo BANCO. Aquí llega el dinero al cerrar lote.</p>
-            </div>
-            <button type="submit" id="btn-guardar-term" class="w-full bg-primary hover:opacity-90 text-white font-bold py-2.5 rounded shadow btn-press uppercase text-[11px] tracking-wider transition">Guardar Terminal</button>
-        </form>
-    </div>
-</div>
-
 <!-- ════════════════════════════════════════════════════════════════
      MODAL: RECHAZAR / ANULAR TRANSFERENCIA
      ════════════════════════════════════════════════════════════════ -->
@@ -554,7 +503,6 @@ let dbCuentas = [];
 let dbBoveda = null;
 let dbTransferencias = [];
 let dbInstrumentos = [];
-let dbTerminales = [];
 let dbUsuarios = [];
 
 // ─── HELPERS ───────────────────────────────────────────────────────
@@ -568,6 +516,17 @@ function fechaRelativa(iso) {
     return `hace ${Math.floor(seg/86400)} d`;
 }
 function escapeHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+// Formato cuenta venezolana 4-4-2-10 (BBBB-OOOO-CC-NNNNNNNNNN)
+function formatearCuentaVE(el) {
+    let v = el.value.replace(/\D/g, '').substring(0, 20);
+    let f = '';
+    if (v.length <= 4) f = v;
+    else if (v.length <= 8) f = v.substring(0,4) + '-' + v.substring(4);
+    else if (v.length <= 10) f = v.substring(0,4) + '-' + v.substring(4,8) + '-' + v.substring(8);
+    else f = v.substring(0,4) + '-' + v.substring(4,8) + '-' + v.substring(8,10) + '-' + v.substring(10);
+    el.value = f;
+}
 
 function mostrarCarga(t, sub="") {
     const ol = document.getElementById('loading-overlay');
@@ -662,18 +621,16 @@ function cambiarTab(tab) {
         }
     });
     if (tab === 'config') renderInstrumentos();
-    if (tab === 'terminales') renderTerminales();
 }
 
 // ─── CARGA DE DATOS ────────────────────────────────────────────────
 async function cargarDatos() {
     try {
-        const [resCuentas, resBoveda, resTransf, resInstr, resTerm, resUsu] = await Promise.all([
+        const [resCuentas, resBoveda, resTransf, resInstr, resUsu] = await Promise.all([
             sb(`cuentas_unificadas?select=*&order=orden_tipo.asc,nombre.asc`),
             sb(`boveda_resumen?select=*`),
             sb(`transferencias_con_detalle?estado=eq.PENDIENTE&order=fecha_emision.desc`),
             sb(`instrumentos_pago_completa?select=*&order=tipo_metodo.asc,nombre.asc`),
-            sb(`fin_terminales_pos?select=*,fin_cuentas(nombre,tipo_cuenta)&order=nombre.asc`),
             sb(`usuarios?select=auth_id,nombre_completo,usuario_login,rol&estatus=eq.Activo&deleted_at=is.null&order=nombre_completo.asc`)
         ]);
 
@@ -681,12 +638,10 @@ async function cargarDatos() {
         dbBoveda = resBoveda.ok ? (await resBoveda.json())[0] : null;
         dbTransferencias = resTransf.ok ? await resTransf.json() : [];
         dbInstrumentos = resInstr.ok ? await resInstr.json() : [];
-        dbTerminales = resTerm.ok ? await resTerm.json() : [];
         dbUsuarios = resUsu.ok ? await resUsu.json() : [];
 
         renderCuentas();
         renderTransferencias();
-        renderTerminales();
         renderInstrumentos();
         actualizarBadgeConfig();
     } catch (e) {
@@ -814,9 +769,14 @@ function renderTarjetaCuenta(c) {
                     ${cajeroLabel}
                 </div>
             </div>
-            <button onclick="abrirModalCuenta('${c.id}')" class="absolute top-3 right-3 text-gray-300 hover:text-secondary transition w-6 h-6 rounded flex items-center justify-center">
-                <i class="fa-solid fa-pen text-[10px]"></i>
-            </button>
+            <div class="absolute top-3 right-3 flex gap-1">
+                <button onclick="abrirModalCuenta('${c.id}')" class="bg-blue-100 hover:bg-blue-200 text-blue-700 transition w-7 h-7 rounded-full flex items-center justify-center" title="Editar">
+                    <i class="fa-solid fa-pen text-[11px]"></i>
+                </button>
+                <button onclick="eliminarCuenta('${c.id}','${escapeHtml(c.nombre)}')" class="bg-red-100 hover:bg-red-200 text-red-700 transition w-7 h-7 rounded-full flex items-center justify-center" title="Eliminar">
+                    <i class="fa-solid fa-trash text-[11px]"></i>
+                </button>
+            </div>
         </div>
 
         <div class="border-t border-gray-100 pt-3 grid grid-cols-2 gap-2">
@@ -1014,23 +974,6 @@ function actualizarBadgeConfig() {
     }
 }
 
-// ─── RENDER: TERMINALES ────────────────────────────────────────────
-function renderTerminales() {
-    const tbody = document.getElementById('tabla-terminales');
-    if (!dbTerminales.length) {
-        tbody.innerHTML = `<tr><td colspan="3" class="p-6 text-center text-gray-400 font-bold uppercase tracking-widest text-[10px]">No hay terminales registrados.</td></tr>`;
-        return;
-    }
-    tbody.innerHTML = dbTerminales.map(t => {
-        const cuenta = t.fin_cuentas ? `${escapeHtml(t.fin_cuentas.nombre)} (${t.fin_cuentas.tipo_cuenta})` : 'No asignada';
-        return `<tr class="hover:bg-blue-50 transition">
-            <td class="py-3 px-4 font-black text-primary text-xs uppercase"><i class="fa-solid fa-credit-card text-gray-400 mr-2"></i>${escapeHtml(t.nombre)}</td>
-            <td class="py-3 px-4 text-gray-600 font-bold text-[11px] uppercase">${cuenta}</td>
-            <td class="py-3 px-4 text-center"><span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-[9px] font-bold uppercase">${escapeHtml(t.estatus || 'ACTIVO')}</span></td>
-        </tr>`;
-    }).join('');
-}
-
 // ─── MODAL: ASIGNAR FONDO ──────────────────────────────────────────
 function abrirModalAsignarFondo() {
     if (!['SuperAdmin','Admin','Supervisor'].includes(rolActual)) {
@@ -1216,8 +1159,20 @@ function onChangeTipoCuenta() {
     if (tipo === 'BANCO') {
         titularLabel.innerText = 'Banco/Titular';
         titularInput.placeholder = 'Banesco, BBVA...';
-        numeroLabel.innerText = 'Nro. de Cuenta';
-        numeroInput.placeholder = '0134-XXXX-XX-XXXXXXXXXX';
+        numeroLabel.innerText = 'Nro. de Cuenta (formato BBBB-OOOO-CC-NNNNNNNNNN)';
+        numeroInput.placeholder = '0134-0001-23-1234567890';
+        numeroInput.maxLength = 23;  // 20 dígitos + 3 guiones
+        numeroInput.setAttribute('inputmode', 'numeric');
+        numeroInput.oninput = function() {
+            // Solo dígitos, formato 4-4-2-10
+            let v = this.value.replace(/\D/g, '').substring(0, 20);
+            let f = '';
+            if (v.length <= 4) f = v;
+            else if (v.length <= 8) f = v.substring(0,4) + '-' + v.substring(4);
+            else if (v.length <= 10) f = v.substring(0,4) + '-' + v.substring(4,8) + '-' + v.substring(8);
+            else f = v.substring(0,4) + '-' + v.substring(4,8) + '-' + v.substring(8,10) + '-' + v.substring(10);
+            this.value = f;
+        };
     } else if (tipo === 'CAJA_CHICA') {
         titularLabel.innerText = 'Responsable';
         titularInput.placeholder = 'Nombre del responsable administrativo';
@@ -1421,6 +1376,38 @@ async function guardarCuenta(e) {
     }
 }
 
+async function eliminarCuenta(id, nombre) {
+    if (!['SuperAdmin','Admin'].includes(rolActual)) {
+        return alert("⛔ Solo SuperAdmin o Admin pueden eliminar cuentas.");
+    }
+    const c = dbCuentas.find(x => x.id === id);
+    if (!c) return;
+    // Validación: no permitir eliminar cuenta con saldo
+    const saldoUsd = parseFloat(c.saldo_bruto_usd) || 0;
+    const saldoBs = parseFloat(c.saldo_bruto_bs) || 0;
+    if (saldoUsd > 0 || saldoBs > 0) {
+        return alert(`⛔ No puedes eliminar la cuenta "${nombre}" porque tiene saldo:\n\n• USD: $${fmt(saldoUsd)}\n• Bs: ${fmt(saldoBs)}\n\nTransfiere el saldo a otra cuenta antes de eliminarla.`);
+    }
+    if (c.es_boveda) {
+        return alert("⛔ La bóveda no se puede eliminar.");
+    }
+    if (!confirm(`¿Eliminar la cuenta "${nombre}"?\n\nLos movimientos históricos se conservarán pero la cuenta quedará oculta.`)) return;
+
+    mostrarCarga("Eliminando cuenta...");
+    try {
+        const res = await sb(`fin_cuentas?id=eq.${id}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ deleted_at: new Date().toISOString(), estatus: 'INACTIVA' })
+        });
+        if (!res.ok) throw new Error(await res.text());
+        cerrarErrorCarga();
+        await cargarDatos();
+    } catch (err) {
+        cerrarErrorCarga();
+        alert("❌ " + (err.message || 'Error al eliminar'));
+    }
+}
+
 // ─── MODAL: INSTRUMENTO DE PAGO ────────────────────────────────────
 function abrirModalInstrumento(idIns = null) {
     if (!['SuperAdmin','Admin'].includes(rolActual)) {
@@ -1511,7 +1498,7 @@ function onChangeTipoInstrumento() {
             <p class="text-[9px] font-bold text-primary uppercase mb-1">Datos cuenta receptora (opcional)</p>
             <div class="grid grid-cols-2 gap-1.5">
                 <input id="ins-extra-banco" type="text" maxlength="40" placeholder="Banco" class="border border-gray-300 rounded px-2 py-1 text-[10px] outline-none focus:border-tertiary">
-                <input id="ins-extra-cuenta" type="text" maxlength="30" placeholder="Nro. cuenta receptora" class="border border-gray-300 rounded px-2 py-1 text-[10px] outline-none focus:border-tertiary">
+                <input id="ins-extra-cuenta" type="tel" inputmode="numeric" maxlength="23" placeholder="0134-0001-23-1234567890" oninput="formatearCuentaVE(this)" class="border border-gray-300 rounded px-2 py-1 text-[10px] outline-none focus:border-tertiary font-mono">
                 <input id="ins-extra-titular" type="text" maxlength="80" placeholder="Titular" class="border border-gray-300 rounded px-2 py-1 text-[10px] outline-none focus:border-tertiary col-span-2">
             </div>`;
     } else if (tipo === 'PUNTO_VENTA') {
@@ -1610,51 +1597,6 @@ async function eliminarInstrumento(idIns, nombre) {
     } catch (err) {
         cerrarErrorCarga();
         alert("❌ " + (err.message || 'Error al eliminar'));
-    }
-}
-
-// ─── MODAL: TERMINAL ───────────────────────────────────────────────
-function abrirModalTerminal() {
-    if (!['SuperAdmin','Admin'].includes(rolActual)) {
-        return alert("⛔ Solo SuperAdmin o Admin pueden gestionar terminales.");
-    }
-    document.getElementById('form-terminal').reset();
-    const cuentasBanco = dbCuentas.filter(c => c.tipo_cuenta === 'BANCO');
-    if (!cuentasBanco.length) {
-        return alert("Debes crear al menos una cuenta tipo BANCO antes de registrar terminales.");
-    }
-    document.getElementById('term-banco').innerHTML = '<option value="">Selecciona cuenta destino...</option>' +
-        cuentasBanco.map(c => `<option value="${c.id}">${escapeHtml(c.nombre)} (${escapeHtml(c.banco_titular || c.tipo_cuenta)})</option>`).join('');
-    document.getElementById('modal-terminal').classList.remove('hidden');
-    document.getElementById('modal-terminal').classList.add('flex');
-}
-function cerrarModalTerminal() {
-    document.getElementById('modal-terminal').classList.add('hidden');
-    document.getElementById('modal-terminal').classList.remove('flex');
-}
-async function guardarTerminal(e) {
-    e.preventDefault();
-    const btn = document.getElementById('btn-guardar-term'); btn.disabled = true;
-    if (!sucursalActual) {
-        btn.disabled = false;
-        return alert("⛔ Error de contexto: usuario sin sucursal asignada. Recarga la página.");
-    }
-    const payload = {
-        nombre: document.getElementById('term-nombre').value.trim().toUpperCase(),
-        id_cuenta_banco: document.getElementById('term-banco').value,
-        estatus: 'ACTIVO',
-        id_sucursal: sucursalActual  // FASE 9.C: NOT NULL
-    };
-    mostrarCarga("Registrando terminal...");
-    try {
-        const res = await sb('fin_terminales_pos', { method: 'POST', body: JSON.stringify(payload) });
-        if (!res.ok) throw new Error(await res.text());
-        cerrarErrorCarga(); cerrarModalTerminal(); await cargarDatos();
-    } catch (err) {
-        cerrarErrorCarga();
-        alert("❌ " + err.message);
-    } finally {
-        btn.disabled = false;
     }
 }
 
