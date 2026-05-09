@@ -465,10 +465,9 @@
                 </div>
 
                 <div class="flex items-center gap-5 shrink-0">
-                    <button onclick="abrirMiCuenta()" class="hidden lg:flex flex-col items-start hover:text-gray-200 transition text-left">
-                        <span class="text-[10px] text-gray-300">Hola, ingresa</span>
-                        <span class="text-xs font-bold flex items-center gap-1">Mi Cuenta <i class="fa-solid fa-chevron-down text-[8px]"></i></span>
-                    </button>
+                    <a id="header-link-whatsapp" href="https://wa.me/584140285806" target="_blank" rel="noopener" class="hidden md:flex flex-col items-center hover:text-gray-200 transition text-xs font-semibold" aria-label="Contactar por WhatsApp">
+                        <i class="fa-brands fa-whatsapp text-xl mb-0.5 text-[#25D366]"></i> WhatsApp
+                    </a>
                     <button onclick="mostrarFavoritos()" class="hidden md:flex flex-col items-center hover:text-gray-200 transition text-xs font-semibold relative">
                         <i class="fa-regular fa-heart text-xl mb-0.5 text-secondary"></i> Favoritos
                         <span id="contador-favoritos" class="absolute -top-2 -right-3 bg-red-500 text-white text-[10px] font-bold h-4 min-w-[16px] px-1 flex items-center justify-center rounded-full hidden">0</span>
@@ -784,35 +783,7 @@
         </div>
     </div>
 
-    <!-- Modal Mi Cuenta -->
-    <div id="modal-cuenta" role="dialog" aria-modal="true" aria-labelledby="modal-cuenta-titulo" class="fixed inset-0 bg-black bg-opacity-60 z-[110] hidden flex items-center justify-center p-4" onclick="if(event.target===this) cerrarMiCuenta()">
-        <div class="bg-white w-full max-w-md rounded-lg shadow-2xl overflow-hidden">
-            <div class="bg-primary text-white px-5 py-4 flex justify-between items-center">
-                <h3 class="font-bold text-base"><i class="fa-solid fa-user mr-2 text-secondary"></i> Mi Cuenta</h3>
-                <button onclick="cerrarMiCuenta()" class="text-gray-300 hover:text-white text-xl"><i class="fa-solid fa-times"></i></button>
-            </div>
-            <div class="p-5">
-                <p class="text-sm text-gray-600 mb-5 text-center">Ingresa tu cédula o RIF para ver tu historial y datos guardados.</p>
-                <div class="grid grid-cols-1 gap-3">
-                    <button onclick="mostrarFavoritos(); cerrarMiCuenta();" class="border border-gray-200 rounded-lg p-3 text-left hover:bg-gray-50 transition flex items-center gap-3">
-                        <i class="fa-solid fa-heart text-red-500 w-6"></i>
-                        <div class="flex-1"><div class="text-sm font-bold text-gray-800">Mis Favoritos</div><div class="text-xs text-gray-500"><span id="cuenta-fav-count">0</span> productos guardados</div></div>
-                        <i class="fa-solid fa-chevron-right text-gray-400"></i>
-                    </button>
-                    <button onclick="toggleCarrito(); cerrarMiCuenta();" class="border border-gray-200 rounded-lg p-3 text-left hover:bg-gray-50 transition flex items-center gap-3">
-                        <i class="fa-solid fa-cart-shopping text-secondary w-6"></i>
-                        <div class="flex-1"><div class="text-sm font-bold text-gray-800">Mi Carrito</div><div class="text-xs text-gray-500"><span id="cuenta-cart-count">0</span> productos en el carrito</div></div>
-                        <i class="fa-solid fa-chevron-right text-gray-400"></i>
-                    </button>
-                    <a id="cuenta-link-wa" href="https://wa.me/584140285806" target="_blank" rel="noopener" class="border border-gray-200 rounded-lg p-3 text-left hover:bg-gray-50 transition flex items-center gap-3">
-                        <i class="fa-brands fa-whatsapp text-green-500 w-6"></i>
-                        <div class="flex-1"><div class="text-sm font-bold text-gray-800">Contactar a la tienda</div><div class="text-xs text-gray-500">Atención por WhatsApp</div></div>
-                        <i class="fa-solid fa-chevron-right text-gray-400"></i>
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- Modal Mi Cuenta eliminado: reemplazado por icono WhatsApp directo en header -->
 
     <div id="overlay-carrito" onclick="toggleCarrito()" class="fixed inset-0 bg-black bg-opacity-50 z-[80] hidden transition-opacity"></div>
     <div id="sidebar-carrito" role="dialog" aria-modal="true" aria-label="Carrito de compras" class="fixed top-0 right-0 h-full w-full sm:w-[450px] bg-white shadow-2xl z-[90] transform translate-x-full transition-transform duration-300 flex flex-col">
@@ -964,7 +935,15 @@
                 });
 
                 todosLosProductos = dataFusionada.filter(p => {
-                    const tieneStock = parseFloat(p.stock_actual) > 0;
+                    const tipo = (p.tipo_producto || '').toUpperCase().trim();
+                    
+                    // Los CONSUMIBLES son para uso interno, NUNCA aparecen en el catálogo público
+                    if (tipo === 'CONSUMIBLE') return false;
+                    
+                    // Los SERVICIOS y FABRICACIÓN se muestran siempre (no dependen del stock)
+                    const ignorarStock = (tipo === 'SERVICIO' || tipo === 'FABRICACION');
+                    const tieneStock = ignorarStock || parseFloat(p.stock_actual) > 0;
+                    
                     const estaActivo = p.estado_producto === 'ACTIVO';
                     const tieneImagen = p.imagen_principal && p.imagen_principal.trim() !== '';
                     const noEsDefecto = p.imagen_principal !== imagenGlobalDefecto;
@@ -1086,14 +1065,18 @@
             const tieneDescuento = precioOferta > 0 && precioOferta < pUsd && !esFijoBs;
             const porcDescuento = tieneDescuento ? Math.round(((pUsd - precioOferta) / pUsd) * 100) : 0;
             const tTiers = prod.requerido_precio_1 != null && prod.requerido_precio_1 > 0;
-            const esServicio = (prod.tipo_producto || "").toLowerCase().includes('servicio');
+            const esServicio = esTipoServicio(prod);
+            const esFabricacion = esTipoFabricacion(prod);
+            const sinStock = esTipoSinStock(prod); // Cualquiera que no dependa del stock
             
-            // Tag (descuento > servicio > nuevo)
+            // Tag (descuento > servicio > fabricación > tiers/oferta)
             let tag = '';
             if (tieneDescuento && porcDescuento > 0) {
                 tag = `<div class="tag-discount">-${porcDescuento}%</div>`;
             } else if (esServicio) {
                 tag = `<div class="tag-service">SERVICIO</div>`;
+            } else if (esFabricacion) {
+                tag = `<div class="tag-service" style="background:#0891b2;">BAJO PEDIDO</div>`;
             } else if (tTiers) {
                 tag = `<div class="tag-discount">OFERTA</div>`;
             }
@@ -1114,11 +1097,18 @@
             const ratingData = generarRatingFicticio(prod.id_producto_sku);
             const estrellasHTML = renderEstrellas(ratingData.rating);
             
-            // Stock bajo
-            const stockBajoHTML = (stock > 0 && stock <= 5) ? `<div class="pcard-stock-low"><i class="fa-solid fa-fire"></i> ¡Solo quedan ${Math.floor(stock)}!</div>` : '';
+            // Stock bajo (solo aplica a productos físicos, NO a servicios ni fabricación)
+            const stockBajoHTML = (!sinStock && stock > 0 && stock <= 5) ? `<div class="pcard-stock-low"><i class="fa-solid fa-fire"></i> ¡Solo quedan ${Math.floor(stock)}!</div>` : '';
             
-            // Indicador envío (solo si no es servicio)
-            const envioHTML = !esServicio ? `<div class="pcard-shipping"><i class="fa-solid fa-truck-fast"></i> Envío disponible</div>` : '';
+            // Indicador apropiado por tipo
+            let envioHTML = '';
+            if (esServicio) {
+                envioHTML = `<div class="pcard-shipping" style="color:#1d4ed8;"><i class="fa-solid fa-screwdriver-wrench"></i> Servicio disponible</div>`;
+            } else if (esFabricacion) {
+                envioHTML = `<div class="pcard-shipping" style="color:#0891b2;"><i class="fa-solid fa-hammer"></i> Bajo pedido</div>`;
+            } else {
+                envioHTML = `<div class="pcard-shipping"><i class="fa-solid fa-truck-fast"></i> Envío disponible</div>`;
+            }
 
             return `
                 <div class="pcard carrusel-item" onclick="abrirPDPPorSku('${prod.id_producto_sku}')">
@@ -1157,6 +1147,22 @@
         // Helpers nuevos
         function imagenDefecto() {
             return 'data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22150%22%20height%3D%22150%22%20viewBox%3D%220%200%20150%20150%22%3E%3Crect%20width%3D%22150%22%20height%3D%22150%22%20fill%3D%22%23f8fafc%22/%3E%3Ctext%20x%3D%2250%25%22%20y%3D%2250%25%22%20font-family%3D%22Arial%2Csans-serif%22%20font-size%3D%2214%22%20fill%3D%22%2394a3b8%22%20text-anchor%3D%22middle%22%20dy%3D%22.3em%22%3ESIN%20FOTO%3C/text%3E%3C/svg%3E';
+        }
+        
+        // Helper: ¿el producto es de tipo que NO depende del stock? (servicio o fabricación)
+        function esTipoSinStock(prod) {
+            const tipo = (prod && prod.tipo_producto || '').toUpperCase().trim();
+            return tipo === 'SERVICIO' || tipo === 'FABRICACION';
+        }
+        
+        // Helper: ¿el producto es específicamente un servicio? (para textos diferenciados)
+        function esTipoServicio(prod) {
+            return (prod && prod.tipo_producto || '').toUpperCase().trim() === 'SERVICIO';
+        }
+        
+        // Helper: ¿el producto es de fabricación bajo pedido?
+        function esTipoFabricacion(prod) {
+            return (prod && prod.tipo_producto || '').toUpperCase().trim() === 'FABRICACION';
         }
         
         function escaparHTML(str) {
@@ -1691,7 +1697,9 @@
             const pDetalUsd = Number(prod.precio_general_usd) || 0; 
             const pBsFijo = Number(prod.precio_fijo_bs) || 0;
             const esFijoBs = prod.es_precio_fijo_bs === true;
-            const esServicio = (prod.tipo_producto || "").toLowerCase().includes('servicio');
+            const esServicio = esTipoServicio(prod);
+            const esFabricacion = esTipoFabricacion(prod);
+            const sinStock = esTipoSinStock(prod);
             
             let pPrinc, pSec, simbPrinc;
             if (esFijoBs) {
@@ -1705,7 +1713,7 @@
             }
 
             let htmlTiers = '';
-            if(!esServicio && prod.requerido_precio_1 > 0) {
+            if(!sinStock && prod.requerido_precio_1 > 0) {
                 htmlTiers += `<p class="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-2 mt-4">Ofertas Mayoristas</p>`;
                 if(prod.requerido_precio_1 > 0) htmlTiers += `<div class="border border-green-200 bg-green-50 text-green-800 text-xs px-3 py-2.5 rounded mb-2 flex justify-between items-center"><span class="font-semibold"><i class="fa-solid fa-tag mr-1"></i> A partir de ${prod.requerido_precio_1} unds</span> <span>${formatearPrecio(Number(prod.precio_1_usd))} c/u</span></div>`;
                 if(prod.requerido_precio_2 > 0) htmlTiers += `<div class="border border-green-200 bg-green-50 text-green-800 text-xs px-3 py-2.5 rounded mb-2 flex justify-between items-center"><span class="font-semibold"><i class="fa-solid fa-tag mr-1"></i> A partir de ${prod.requerido_precio_2} unds</span> <span>${formatearPrecio(Number(prod.precio_2_usd))} c/u</span></div>`;
@@ -1738,7 +1746,8 @@
             
             // Stock visual
             let stockBadge = '';
-            if (esServicio) stockBadge = '<span class="inline-flex items-center gap-1 text-blue-700 bg-blue-50 border border-blue-200 px-2 py-1 rounded text-xs font-bold"><i class="fa-solid fa-circle-check"></i> Servicio Disponible</span>';
+            if (esServicio) stockBadge = '<span class="inline-flex items-center gap-1 text-blue-700 bg-blue-50 border border-blue-200 px-2 py-1 rounded text-xs font-bold"><i class="fa-solid fa-screwdriver-wrench"></i> Servicio Disponible</span>';
+            else if (esFabricacion) stockBadge = '<span class="inline-flex items-center gap-1 text-cyan-700 bg-cyan-50 border border-cyan-200 px-2 py-1 rounded text-xs font-bold"><i class="fa-solid fa-hammer"></i> Bajo Pedido (Fabricación)</span>';
             else if (stock > 5) stockBadge = `<span class="inline-flex items-center gap-1 text-green-700 bg-green-50 border border-green-200 px-2 py-1 rounded text-xs font-bold"><i class="fa-solid fa-circle-check"></i> Disponible</span>`;
             else if (stock > 0) stockBadge = `<span class="inline-flex items-center gap-1 text-orange-700 bg-orange-50 border border-orange-200 px-2 py-1 rounded text-xs font-bold"><i class="fa-solid fa-fire"></i> ¡Solo quedan ${Math.floor(stock)}!</span>`;
 
@@ -1789,10 +1798,19 @@
                                     </div>
                                     <div class="text-sm text-gray-500 mt-1 font-bold">${pSec}</div>
                                 </div>
+                                ${esServicio ? `
+                                <div class="bg-blue-50 border border-blue-200 text-blue-800 rounded p-3 mb-4 flex items-center gap-2 text-xs">
+                                    <i class="fa-solid fa-screwdriver-wrench text-blue-500"></i>
+                                    <div><span class="font-bold">Servicio:</span> Coordina la atención por WhatsApp</div>
+                                </div>` : esFabricacion ? `
+                                <div class="bg-cyan-50 border border-cyan-200 text-cyan-800 rounded p-3 mb-4 flex items-center gap-2 text-xs">
+                                    <i class="fa-solid fa-hammer text-cyan-500"></i>
+                                    <div><span class="font-bold">Fabricación bajo pedido.</span> Tiempo de entrega a coordinar.</div>
+                                </div>` : `
                                 <div class="bg-blue-50 border border-blue-200 text-blue-800 rounded p-3 mb-4 flex items-center gap-2 text-xs">
                                     <i class="fa-solid fa-truck-fast text-blue-500"></i>
                                     <div><span class="font-bold">Envío disponible</span> a ${escaparHTML(ubicacionEnvio)} • <button onclick="abrirModalUbicacion()" class="text-blue-700 underline font-bold">Cambiar</button></div>
-                                </div>
+                                </div>`}
                                 <div class="mb-6">${htmlTiers}</div>
                                 <div class="space-y-3 mb-6 mt-auto">
                                     <div class="flex gap-2">
@@ -1968,7 +1986,6 @@
             if (!c) return;
             if (favoritos.length === 0) c.classList.add('hidden');
             else { c.classList.remove('hidden'); c.innerText = favoritos.length; }
-            const c2 = document.getElementById('cuenta-fav-count'); if (c2) c2.innerText = favoritos.length;
             const c3 = document.getElementById('mm-fav-count'); if (c3) c3.innerText = favoritos.length;
         }
         function mostrarFavoritos() { 
@@ -2133,17 +2150,6 @@
             mostrarToast(`Ubicación actualizada: ${val}`, 'success');
         }
         
-        // Modal mi cuenta
-        function abrirMiCuenta() {
-            actualizarContadorFavoritos();
-            const c2 = document.getElementById('cuenta-cart-count');
-            if (c2) c2.innerText = carrito.reduce((a, b) => a + b.cantidad, 0);
-            document.getElementById('modal-cuenta').classList.remove('hidden');
-        }
-        function cerrarMiCuenta() {
-            document.getElementById('modal-cuenta').classList.add('hidden');
-        }
-        
         // ============================================
         // CONFIGURACIÓN DE EMPRESA (cargada desde Supabase)
         // ============================================
@@ -2258,12 +2264,9 @@
             const waFlot = document.getElementById('whatsapp-flotante');
             if (waFlot) waFlot.href = `https://wa.me/${configEmpresa.whatsapp}`;
             
-            // Botón mi cuenta -> link de contacto
-            const cuentaWa = document.getElementById('cuenta-link-wa');
-            if (cuentaWa) cuentaWa.href = `https://wa.me/${configEmpresa.whatsapp}`;
-            
-            // Footer: trust bar mensajes (atención por WhatsApp)
-            // Este se queda hardcoded por ser texto motivacional
+            // Link WhatsApp del header (reemplazó al modal Mi Cuenta)
+            const headerWa = document.getElementById('header-link-whatsapp');
+            if (headerWa) headerWa.href = `https://wa.me/${configEmpresa.whatsapp}`;
             
             // Actualizar SEO inicial con nombre real de empresa
             actualizarSEOInicio();
@@ -2412,7 +2415,8 @@
             const tieneDescuento = precioOferta > 0 && precioOferta < pUsd && !esFijoBs;
             const porcDescuento = tieneDescuento ? Math.round(((pUsd - precioOferta) / pUsd) * 100) : 0;
             const stock = parseFloat(prod.stock_actual) || 0;
-            const esServicio = (prod.tipo_producto || "").toLowerCase().includes('servicio');
+            const esServicio = esTipoServicio(prod);
+            const esFabricacion = esTipoFabricacion(prod);
             
             let pPrinc, pTachado = '';
             if (esFijoBs) {
@@ -2430,7 +2434,8 @@
             const imgUrl = prod.imagen_principal || imagenDefecto();
             
             let stockTxt = '';
-            if (esServicio) stockTxt = '<span class="text-blue-700 font-semibold text-xs"><i class="fa-solid fa-circle-check mr-1"></i> Servicio disponible</span>';
+            if (esServicio) stockTxt = '<span class="text-blue-700 font-semibold text-xs"><i class="fa-solid fa-screwdriver-wrench mr-1"></i> Servicio disponible</span>';
+            else if (esFabricacion) stockTxt = '<span class="text-cyan-700 font-semibold text-xs"><i class="fa-solid fa-hammer mr-1"></i> Bajo pedido (fabricación)</span>';
             else if (stock > 5) stockTxt = `<span class="text-green-700 font-semibold text-xs"><i class="fa-solid fa-circle-check mr-1"></i> Disponible</span>`;
             else if (stock > 0) stockTxt = `<span class="text-orange-600 font-semibold text-xs"><i class="fa-solid fa-fire mr-1"></i> ¡Solo quedan ${Math.floor(stock)}!</span>`;
             else stockTxt = '<span class="text-gray-500 font-semibold text-xs">Sin stock</span>';
@@ -2537,7 +2542,6 @@
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 cerrarModalUbicacion();
-                cerrarMiCuenta();
                 cerrarCheckout();
                 cerrarMegaMenu();
                 cerrarQuickView();
