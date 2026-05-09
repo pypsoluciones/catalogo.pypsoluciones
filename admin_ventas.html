@@ -1718,8 +1718,17 @@
 
         function onChangeMetodoPago() {
             verificarIGTF();
-            calcularVuelto();
             renderCamposExtraMetodo();
+            // Re-pre-llenar monto recibido en la moneda del nuevo método
+            const metodo = document.getElementById('cobro-metodo').value;
+            const aplicaIgtf = (metodo === 'EFECTIVO_USD' || metodo === 'ZELLE');
+            const totalConIgtfBs = redondear(granTotalBs + (aplicaIgtf ? redondear(granTotalBs * pypIgtf) : 0));
+            const totalConIgtfUsd = redondear(totalConIgtfBs / tasaBCVCalculo);
+            const inputMonto = document.getElementById('monto-recibido');
+            if (inputMonto && (metodo === 'EFECTIVO_BS' || metodo === 'EFECTIVO_USD')) {
+                inputMonto.value = aplicaIgtf ? totalConIgtfUsd.toFixed(2) : totalConIgtfBs.toFixed(2);
+            }
+            calcularVuelto();
         }
 
         function renderCamposExtraMetodo() {
@@ -1754,7 +1763,7 @@
                     <p class="text-[9px] font-bold text-primary uppercase mb-1">Datos del Pago Móvil (opcional)</p>
                     <div class="grid grid-cols-2 gap-1.5">
                         <input id="ext-pm-banco" type="text" maxlength="40" placeholder="Banco origen" class="border border-gray-300 rounded px-2 py-1 text-[10px] outline-none focus:border-tertiary">
-                        <input id="ext-pm-telefono" type="text" maxlength="15" placeholder="Teléfono" class="border border-gray-300 rounded px-2 py-1 text-[10px] outline-none focus:border-tertiary">
+                        <input id="ext-pm-telefono" type="tel" inputmode="numeric" pattern="[0-9]*" maxlength="15" placeholder="04141234567" oninput="this.value=this.value.replace(/[^0-9]/g,'')" class="border border-gray-300 rounded px-2 py-1 text-[10px] outline-none focus:border-tertiary">
                         <input id="ext-pm-referencia" type="text" maxlength="40" placeholder="Nro. Referencia" class="border border-gray-300 rounded px-2 py-1 text-[10px] outline-none focus:border-tertiary">
                         <input id="ext-pm-fecha" type="date" class="border border-gray-300 rounded px-2 py-1 text-[10px] outline-none focus:border-tertiary">
                     </div>
@@ -2173,15 +2182,20 @@
             // Calcular total a pagar incluyendo IGTF si aplica
             const metodoInicial = document.getElementById('cobro-metodo').value;
             const aplicaIgtfInicial = (metodoInicial === 'EFECTIVO_USD' || metodoInicial === 'ZELLE');
-            const totalConIgtf = redondear(granTotalBs + (aplicaIgtfInicial ? redondear(granTotalBs * pypIgtf) : 0));
+            const totalConIgtfBs = redondear(granTotalBs + (aplicaIgtfInicial ? redondear(granTotalBs * pypIgtf) : 0));
+            const totalConIgtfUsd = redondear(totalConIgtfBs / tasaBCVCalculo);
             
-            // Pre-llenar monto recibido con el total exacto
+            // Pre-llenar monto recibido en la MONEDA del método de pago
+            // Bs para EFECTIVO_BS / PAGO_MOVIL / TRANSFERENCIA / PUNTO_VENTA
+            // USD para EFECTIVO_USD / ZELLE
             const inputMonto = document.getElementById('monto-recibido');
-            inputMonto.value = totalConIgtf.toFixed(2);
-            inputMonto.select(); // Seleccionar para que el cajero pueda sobrescribir fácil
+            const esMonedaUsd = aplicaIgtfInicial;
+            inputMonto.value = esMonedaUsd ? totalConIgtfUsd.toFixed(2) : totalConIgtfBs.toFixed(2);
+            inputMonto.select();
             
             document.getElementById('resultado-vuelto').classList.add('hidden'); 
             verificarIGTF(); 
+            renderCamposExtraMetodo();  // Mostrar campos extra del método inicial
             calcularVuelto();
             document.getElementById('modal-cobro').classList.remove('hidden'); 
             document.getElementById('modal-cobro').classList.add('flex');

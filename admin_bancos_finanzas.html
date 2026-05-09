@@ -1247,6 +1247,16 @@ function onChangePlataformaWallet() {
         numeroWrap.classList.remove('hidden');
         numeroLabel.innerText = cfg.numLabel;
         numeroInput.placeholder = cfg.placeholderNum;
+        // Solo dígitos para teléfono (Pago Móvil) y cédula (Cashea)
+        if (plat === 'PAGO_MOVIL' || plat === 'CASHEA') {
+            numeroInput.setAttribute('inputmode', 'numeric');
+            numeroInput.setAttribute('pattern', '[0-9]*');
+            numeroInput.oninput = function() { this.value = this.value.replace(/[^0-9]/g, ''); };
+        } else {
+            numeroInput.removeAttribute('inputmode');
+            numeroInput.removeAttribute('pattern');
+            numeroInput.oninput = null;
+        }
     } else {
         numeroWrap.classList.add('hidden');
     }
