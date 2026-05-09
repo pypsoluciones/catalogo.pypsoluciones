@@ -308,24 +308,25 @@
         
         /* === ANIMACIÓN EN CASCADA AL CARGAR === */
         @keyframes cardAppear { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
-        .pcard { opacity: 0; animation: cardAppear .4s ease-out forwards; }
-        /* Stagger: cada tarjeta aparece 50ms después de la anterior, hasta la 14ª */
-        .pcard:nth-child(1) { animation-delay: 0ms; }
-        .pcard:nth-child(2) { animation-delay: 40ms; }
-        .pcard:nth-child(3) { animation-delay: 80ms; }
-        .pcard:nth-child(4) { animation-delay: 120ms; }
-        .pcard:nth-child(5) { animation-delay: 160ms; }
-        .pcard:nth-child(6) { animation-delay: 200ms; }
-        .pcard:nth-child(7) { animation-delay: 240ms; }
-        .pcard:nth-child(8) { animation-delay: 280ms; }
-        .pcard:nth-child(9) { animation-delay: 320ms; }
-        .pcard:nth-child(10) { animation-delay: 360ms; }
-        .pcard:nth-child(11) { animation-delay: 400ms; }
-        .pcard:nth-child(12) { animation-delay: 440ms; }
-        .pcard:nth-child(13) { animation-delay: 480ms; }
-        .pcard:nth-child(14) { animation-delay: 520ms; }
+        /* Solo se anima cuando tiene la clase .stagger-in (primer render). 
+           Después se mantiene visible con opacity:1 fija para evitar flicker en scroll/relayout. */
+        .pcard.stagger-in { opacity: 0; animation: cardAppear .4s ease-out forwards; }
+        .pcard.stagger-in:nth-child(1) { animation-delay: 0ms; }
+        .pcard.stagger-in:nth-child(2) { animation-delay: 40ms; }
+        .pcard.stagger-in:nth-child(3) { animation-delay: 80ms; }
+        .pcard.stagger-in:nth-child(4) { animation-delay: 120ms; }
+        .pcard.stagger-in:nth-child(5) { animation-delay: 160ms; }
+        .pcard.stagger-in:nth-child(6) { animation-delay: 200ms; }
+        .pcard.stagger-in:nth-child(7) { animation-delay: 240ms; }
+        .pcard.stagger-in:nth-child(8) { animation-delay: 280ms; }
+        .pcard.stagger-in:nth-child(9) { animation-delay: 320ms; }
+        .pcard.stagger-in:nth-child(10) { animation-delay: 360ms; }
+        .pcard.stagger-in:nth-child(11) { animation-delay: 400ms; }
+        .pcard.stagger-in:nth-child(12) { animation-delay: 440ms; }
+        .pcard.stagger-in:nth-child(13) { animation-delay: 480ms; }
+        .pcard.stagger-in:nth-child(14) { animation-delay: 520ms; }
         @media (prefers-reduced-motion: reduce) {
-            .pcard { animation: none; opacity: 1; }
+            .pcard.stagger-in { animation: none; opacity: 1; }
         }
         
         /* === BOTÓN VISTA RÁPIDA === */
@@ -418,9 +419,10 @@
             <div class="max-w-[1600px] mx-auto px-4 py-3 flex items-center justify-between gap-4">
                 <button class="btn-menu-mobile" onclick="abrirMenuMobile()" aria-label="Abrir menú"><i class="fa-solid fa-bars"></i></button>
                 <div class="flex items-center gap-2 cursor-pointer shrink-0" onclick="irAInicio()">
-                    <i class="fa-solid fa-layer-group text-secondary text-3xl hover:scale-110 transition"></i>
+                    <i id="header-logo-icon" class="fa-solid fa-layer-group text-secondary text-3xl hover:scale-110 transition"></i>
+                    <img id="header-logo-img" src="" alt="Logo" style="display:none; max-height:40px; max-width:140px;" class="hover:scale-105 transition">
                     <div class="hidden sm:block leading-tight text-left">
-                        <span class="font-bold text-xl tracking-wide block">Catálogo en Línea</span>
+                        <span id="header-empresa-nombre" class="font-bold text-xl tracking-wide block">Catálogo Oficial</span>
                         <span class="text-[9px] text-gray-200 tracking-widest uppercase">Tienda Oficial</span>
                     </div>
                 </div>
@@ -629,14 +631,14 @@
             <div class="footer-col">
                 <div class="flex items-center gap-2 mb-4">
                     <i class="fa-solid fa-layer-group text-secondary text-2xl"></i>
-                    <h4 class="text-white font-bold uppercase tracking-wider !mb-0">Catálogo Oficial</h4>
+                    <h4 id="footer-empresa-nombre" class="text-white font-bold uppercase tracking-wider !mb-0">Catálogo Oficial</h4>
                 </div>
-                <p class="mb-3">Soluciones Integrales para tu Oficina y Hogar. Papelería, Centro de Copiado y Servicio Técnico Especializado.</p>
+                <p id="footer-empresa-descripcion" class="mb-3">Soluciones Integrales para tu Oficina y Hogar. Papelería, Centro de Copiado y Servicio Técnico Especializado.</p>
                 <div class="footer-social">
-                    <a href="#" target="_blank" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
-                    <a href="#" target="_blank" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
-                    <a href="https://wa.me/584140285806" target="_blank" aria-label="WhatsApp"><i class="fa-brands fa-whatsapp"></i></a>
-                    <a href="#" target="_blank" aria-label="TikTok"><i class="fa-brands fa-tiktok"></i></a>
+                    <a id="footer-red-instagram" href="#" target="_blank" rel="noopener" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                    <a id="footer-red-facebook" href="#" target="_blank" rel="noopener" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
+                    <a id="footer-red-whatsapp" href="https://wa.me/584140285806" target="_blank" rel="noopener" aria-label="WhatsApp"><i class="fa-brands fa-whatsapp"></i></a>
+                    <a id="footer-red-tiktok" href="#" target="_blank" rel="noopener" aria-label="TikTok"><i class="fa-brands fa-tiktok"></i></a>
                 </div>
             </div>
             <div class="footer-col">
@@ -652,11 +654,10 @@
             <div class="footer-col">
                 <h4>Atención</h4>
                 <ul>
-                    <li><a href="https://wa.me/584140285806" target="_blank"><i class="fa-brands fa-whatsapp mr-1"></i> WhatsApp</a></li>
-                    <li><a href="tel:+584140285806"><i class="fa-solid fa-phone mr-1"></i> +58 414 028 5806</a></li>
-                    <li><a href="mailto:ventas@pypsoluciones.com"><i class="fa-solid fa-envelope mr-1"></i> ventas@pypsoluciones.com</a></li>
-                    <li class="!mt-3"><i class="fa-regular fa-clock mr-1"></i> Lun-Vie: 8:30am - 12:00pm</li>
-                    <li>1:00pm - 5:00pm</li>
+                    <li><a id="footer-link-whatsapp" href="https://wa.me/584140285806" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp mr-1"></i> WhatsApp</a></li>
+                    <li><a id="footer-link-telefono" href="tel:+584140285806"><i class="fa-solid fa-phone mr-1"></i> <span>+58 414 028 5806</span></a></li>
+                    <li><a id="footer-link-email" href="mailto:ventas@pypsoluciones.com"><i class="fa-solid fa-envelope mr-1"></i> <span>ventas@pypsoluciones.com</span></a></li>
+                    <li class="!mt-3"><i class="fa-regular fa-clock mr-1"></i> <span id="footer-horario">Lun-Vie: 8:30am - 12:00pm<br>1:00pm - 5:00pm</span></li>
                 </ul>
             </div>
             <div class="footer-col">
@@ -671,7 +672,7 @@
             </div>
             <div class="footer-col">
                 <h4>Pago y Envío</h4>
-                <p class="!mb-2"><i class="fa-solid fa-location-dot mr-1 text-secondary"></i> Calle 9, Mini C.C. Vecinal, Local 40, Urb. Juan Pablo II, Montalbán, Caracas.</p>
+                <p id="footer-direccion" class="!mb-2"><i class="fa-solid fa-location-dot mr-1 text-secondary"></i> Calle 9, Mini C.C. Vecinal, Local 40, Urb. Juan Pablo II, Montalbán, Caracas.</p>
                 <div class="footer-pago">
                     <span>Pago Móvil</span>
                     <span>Zelle</span>
@@ -683,7 +684,7 @@
         </div>
         <div class="footer-bottom">
             <div class="footer-bottom-inner">
-                <span>© <span id="footer-year"></span> Catálogo Oficial · Todos los derechos reservados</span>
+                <span>© <span id="footer-year"></span> <span id="footer-bottom-empresa">Catálogo Oficial</span> · Todos los derechos reservados</span>
                 <span>Hecho con <i class="fa-solid fa-heart text-red-500 mx-1"></i> para servirte mejor</span>
             </div>
         </div>
@@ -730,7 +731,7 @@
         </div>
     </nav>
 
-    <a href="https://wa.me/584140285806" target="_blank" class="fixed bottom-6 right-6 bg-[#25D366] text-white w-14 h-14 rounded-full flex items-center justify-center text-3xl shadow-lg hover:bg-[#1ebd5c] hover:scale-110 transition z-40"><i class="fa-brands fa-whatsapp"></i></a>
+    <a id="whatsapp-flotante" href="https://wa.me/584140285806" target="_blank" rel="noopener" aria-label="Contactar por WhatsApp" class="fixed bottom-6 right-6 bg-[#25D366] text-white w-14 h-14 rounded-full flex items-center justify-center text-3xl shadow-lg hover:bg-[#1ebd5c] hover:scale-110 transition z-40"><i class="fa-brands fa-whatsapp"></i></a>
 
     <!-- Toast notificaciones (reemplaza alert) -->
     <div id="toast" role="alert" aria-live="assertive" aria-atomic="true"><i id="toast-icon" class="fa-solid fa-circle-check" aria-hidden="true"></i><span id="toast-msg"></span></div>
@@ -778,7 +779,7 @@
                         <div class="flex-1"><div class="text-sm font-bold text-gray-800">Mi Carrito</div><div class="text-xs text-gray-500"><span id="cuenta-cart-count">0</span> productos en el carrito</div></div>
                         <i class="fa-solid fa-chevron-right text-gray-400"></i>
                     </button>
-                    <a href="https://wa.me/584140285806" target="_blank" class="border border-gray-200 rounded-lg p-3 text-left hover:bg-gray-50 transition flex items-center gap-3">
+                    <a id="cuenta-link-wa" href="https://wa.me/584140285806" target="_blank" rel="noopener" class="border border-gray-200 rounded-lg p-3 text-left hover:bg-gray-50 transition flex items-center gap-3">
                         <i class="fa-brands fa-whatsapp text-green-500 w-6"></i>
                         <div class="flex-1"><div class="text-sm font-bold text-gray-800">Contactar a la tienda</div><div class="text-xs text-gray-500">Atención por WhatsApp</div></div>
                         <i class="fa-solid fa-chevron-right text-gray-400"></i>
@@ -838,6 +839,22 @@
         let mostrarEnBs = false; let productoAbiertoActual = null; 
         let categoriaActualBusqueda = null;
         let ubicacionEnvio = localStorage.getItem('pyp_ubicacion') || 'Caracas';
+        
+        // Configuración de empresa cargada desde Supabase (parámetros con prefijo público)
+        let configEmpresa = {
+            nombre: 'Catálogo Oficial',
+            descripcion: 'Soluciones Integrales para tu Oficina y Hogar.',
+            email: 'ventas@pypsoluciones.com',
+            telefono: '+58 414 028 5806',
+            whatsapp: '584140285806',
+            direccion: 'Calle 9 Mini C.C. Vecinal Local 40 Urb. Juan Pablo II, Montalbán, Caracas.',
+            horario: 'Lun-Vie: 8:30am - 12:00pm | 1:00pm - 5:00pm',
+            instagram: '',
+            facebook: '',
+            tiktok: '',
+            logo_login: '',
+            logo_sidebar: ''
+        };
 
         let indices = { bloque1: 0, bloque2: 0, busqueda: 0 };
         const LIMITES = { carrusel: 10, bloque1: 14, bloque2: 14, busqueda: 28 };
@@ -857,6 +874,16 @@
         async function cargarDatos(skuParaAbrir = null) {
             mostrarSkeletons();
             try {
+                // Cargar configuración pública desde Supabase (colores, fuente, datos empresa)
+                // Solo lee parámetros con prefijo PUB_ (públicos) para no exponer config interna
+                try {
+                    const resConfig = await fetch(`${SUPABASE_URL}/rest/v1/configuracion_publica?select=parametro,valor`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } });
+                    if (resConfig.ok) {
+                        const params = await resConfig.json();
+                        aplicarConfiguracionEmpresa(params);
+                    }
+                } catch(e) { console.warn('No se pudo cargar configuración pública:', e); }
+
                 try {
                     const resTasa = await fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?select=tasa&order=fecha_actualizacion.desc&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } });
                     const dataTasa = await resTasa.json(); if(dataTasa.length > 0) { tasaBcvGlobal = dataTasa[0].tasa; document.getElementById('tasa-bcv-display').innerText = `${tasaBcvGlobal.toFixed(2)}`; }
@@ -1134,6 +1161,16 @@
             const prod = todosLosProductos.find(p => p.id_producto_sku === sku);
             if (prod) abrirPDP(prod, true);
         }
+        
+        // Aplica animación de cascade solo al primer render. La clase se quita 
+        // después de 700ms para evitar que se re-anime cuando el navegador 
+        // recompone el layout (causaba el "flash" del footer).
+        function aplicarStagger(contenedor) {
+            if (!contenedor) return;
+            const cards = contenedor.querySelectorAll('.pcard');
+            cards.forEach(c => c.classList.add('stagger-in'));
+            setTimeout(() => cards.forEach(c => c.classList.remove('stagger-in')), 700);
+        }
 
         function ocultarTodasLasVistas() { document.getElementById('vista-inicio-compleja').classList.add('hidden'); document.getElementById('vista-catalogo-limpio').classList.add('hidden'); document.getElementById('vista-pdp').classList.add('hidden'); productoAbiertoActual = null; }
         function irAInicio(pushHistory = true) { 
@@ -1153,11 +1190,14 @@
             const papeleria = todosLosProductos.filter(p => p.categoria_del_producto === 'PAPELERÍA');
             document.getElementById('carrusel-2').innerHTML = (papeleria.length > 0 ? papeleria : todosLosProductos).slice(0, 10).map(generarTarjetaHTML).join('');
             if(resetearIndices) indices.bloque1 = LIMITES.bloque1;
-            document.getElementById('grilla-bloque-1').innerHTML = todosLosProductos.slice(0, indices.bloque1).map(generarTarjetaHTML).join('');
+            const grilla1 = document.getElementById('grilla-bloque-1');
+            grilla1.innerHTML = todosLosProductos.slice(0, indices.bloque1).map(generarTarjetaHTML).join('');
             if(resetearIndices) indices.bloque2 = LIMITES.bloque1 + LIMITES.bloque2;
             document.getElementById('grilla-bloque-2').innerHTML = todosLosProductos.slice(LIMITES.bloque1, indices.bloque2).map(generarTarjetaHTML).join('');
             renderVistosRecientes();
             actualizarContadorFavoritos();
+            // Animar solo la primera grilla visible (que es la que más impacto da)
+            if (resetearIndices) aplicarStagger(grilla1);
             evaluarBotonCargarMasInicio();
         }
         function cargarSiguientePaginaHome() { indices.bloque2 += LIMITES.bloque2; document.getElementById('grilla-bloque-2').innerHTML = todosLosProductos.slice(LIMITES.bloque1, indices.bloque2).map(generarTarjetaHTML).join(''); evaluarBotonCargarMasInicio(); }
@@ -1238,6 +1278,7 @@
             } else {
                 grid.innerHTML = filtrados.slice(0, indices.busqueda).map(generarTarjetaHTML).join('');
                 evaluarBotonCargarMasBusqueda();
+                if (resetearIndices) aplicarStagger(grid);
             }
             
             renderChipsFiltros();
@@ -1666,7 +1707,7 @@
                                         </button>
                                     </div>
                                     <div class="grid grid-cols-2 gap-2">
-                                        <a href="https://wa.me/${NUMERO_WHATSAPP}?text=${encodeURIComponent(`Hola, quiero info de:\n*${prod.nombre}*\nLink: ${window.location.href}`)}" target="_blank" class="border-2 border-[#25D366] text-[#25D366] hover:bg-[#25D366] hover:text-white font-bold py-2.5 rounded shadow-sm transition flex items-center justify-center gap-2">
+                                        <a href="https://wa.me/${configEmpresa.whatsapp || NUMERO_WHATSAPP}?text=${encodeURIComponent(`Hola, quiero info de:\n*${prod.nombre}*\nLink: ${window.location.href}`)}" target="_blank" rel="noopener" class="border-2 border-[#25D366] text-[#25D366] hover:bg-[#25D366] hover:text-white font-bold py-2.5 rounded shadow-sm transition flex items-center justify-center gap-2">
                                             <i class="fa-brands fa-whatsapp"></i> Consultar
                                         </a>
                                         <button onclick="compartirProductoWA('${prod.id_producto_sku}')" class="border-2 border-primary text-primary hover:bg-primary hover:text-white font-bold py-2.5 rounded shadow-sm transition flex items-center justify-center gap-2">
@@ -1922,7 +1963,7 @@
             t += `*Ubicación:* ${ubicacionEnvio}\n-----------------------------------\n`;
             carrito.forEach(i => { t += `▪️ *${i.cantidad}x* ${i.nombre} (US $${calcularPrecioUnitario(i, i.cantidad).toFixed(2)})\n`; }); 
             t += `-----------------------------------\n*Total USD:* US $${totalUsdGlobal.toFixed(2)}\n*Total Bs:* Bs. ${(totalUsdGlobal * tasaBcvGlobal).toFixed(2)}`;
-            window.open(`https://wa.me/${NUMERO_WHATSAPP}?text=${encodeURIComponent(t)}`, '_blank'); 
+            window.open(`https://wa.me/${configEmpresa.whatsapp || NUMERO_WHATSAPP}?text=${encodeURIComponent(t)}`, '_blank'); 
             cerrarCheckout(); 
             carrito = []; 
             persistirCarrito();
@@ -2002,6 +2043,131 @@
         }
         function cerrarMiCuenta() {
             document.getElementById('modal-cuenta').classList.add('hidden');
+        }
+        
+        // ============================================
+        // CONFIGURACIÓN DE EMPRESA (cargada desde Supabase)
+        // ============================================
+        function aplicarConfiguracionEmpresa(params) {
+            if (!Array.isArray(params)) return;
+            
+            // Convertir array de {parametro, valor} a un objeto plano
+            const map = {};
+            params.forEach(p => { if (p.parametro) map[p.parametro] = p.valor; });
+            
+            // === Colores y tipografía (marca blanca) ===
+            // Si vienen del admin, anulamos cualquier valor previo de localStorage
+            // Los colores se aplican solo si llegan de la empresa
+            if (map.COLOR_PRIMARIO) {
+                document.documentElement.style.setProperty('--color-primary', map.COLOR_PRIMARIO);
+                localStorage.setItem('pyp_color_primario', map.COLOR_PRIMARIO);
+            }
+            if (map.COLOR_SECUNDARIO) {
+                document.documentElement.style.setProperty('--color-secondary', map.COLOR_SECUNDARIO);
+                localStorage.setItem('pyp_color_secundario', map.COLOR_SECUNDARIO);
+                // Actualizar theme-color del navegador
+                const tc = document.querySelector('meta[name="theme-color"]');
+                if (tc) tc.setAttribute('content', map.COLOR_PRIMARIO || '#143B62');
+            }
+            if (map.COLOR_TERCIARIO) {
+                document.documentElement.style.setProperty('--color-tertiary', map.COLOR_TERCIARIO);
+                localStorage.setItem('pyp_color_terciario', map.COLOR_TERCIARIO);
+            }
+            if (map.FUENTE_FAMILIA) {
+                document.documentElement.style.setProperty('--font-global', map.FUENTE_FAMILIA);
+                localStorage.setItem('pyp_fuente', map.FUENTE_FAMILIA);
+            }
+            if (map['FUENTE_TAMAÑO']) {
+                document.documentElement.style.setProperty('--size-global', map['FUENTE_TAMAÑO']);
+                localStorage.setItem('pyp_tamano', map['FUENTE_TAMAÑO']);
+            }
+            
+            // === Datos de la empresa (footer, contacto, SEO) ===
+            // Estos parámetros son nuevos: los agregaremos al panel admin
+            if (map.EMPRESA_NOMBRE) configEmpresa.nombre = map.EMPRESA_NOMBRE;
+            if (map.EMPRESA_DESCRIPCION) configEmpresa.descripcion = map.EMPRESA_DESCRIPCION;
+            if (map.EMPRESA_EMAIL) configEmpresa.email = map.EMPRESA_EMAIL;
+            if (map.EMPRESA_TELEFONO) configEmpresa.telefono = map.EMPRESA_TELEFONO;
+            if (map.EMPRESA_WHATSAPP) configEmpresa.whatsapp = map.EMPRESA_WHATSAPP.replace(/[^0-9]/g, '');
+            if (map.EMPRESA_DIRECCION) configEmpresa.direccion = map.EMPRESA_DIRECCION;
+            if (map.EMPRESA_HORARIO) configEmpresa.horario = map.EMPRESA_HORARIO;
+            if (map.EMPRESA_INSTAGRAM) configEmpresa.instagram = map.EMPRESA_INSTAGRAM;
+            if (map.EMPRESA_FACEBOOK) configEmpresa.facebook = map.EMPRESA_FACEBOOK;
+            if (map.EMPRESA_TIKTOK) configEmpresa.tiktok = map.EMPRESA_TIKTOK;
+            if (map.LOGO_LOGIN) configEmpresa.logo_login = map.LOGO_LOGIN;
+            if (map.LOGO_SIDEBAR) configEmpresa.logo_sidebar = map.LOGO_SIDEBAR;
+            
+            // Pintar todos los elementos que dependen de estos datos
+            renderConfigEmpresaEnDOM();
+        }
+        
+        function renderConfigEmpresaEnDOM() {
+            // Footer: nombre y descripción
+            const footName = document.getElementById('footer-empresa-nombre');
+            if (footName) footName.textContent = configEmpresa.nombre.toUpperCase();
+            const footBotEmp = document.getElementById('footer-bottom-empresa');
+            if (footBotEmp) footBotEmp.textContent = configEmpresa.nombre;
+            const footDesc = document.getElementById('footer-empresa-descripcion');
+            if (footDesc) footDesc.textContent = configEmpresa.descripcion;
+            
+            // Footer: contacto
+            const footWa = document.getElementById('footer-link-whatsapp');
+            if (footWa) footWa.href = `https://wa.me/${configEmpresa.whatsapp}`;
+            const footTel = document.getElementById('footer-link-telefono');
+            if (footTel) {
+                const telLimpio = configEmpresa.telefono.replace(/\s/g, '');
+                footTel.href = `tel:${telLimpio}`;
+                footTel.querySelector('span').textContent = configEmpresa.telefono;
+            }
+            const footEm = document.getElementById('footer-link-email');
+            if (footEm) {
+                footEm.href = `mailto:${configEmpresa.email}`;
+                footEm.querySelector('span').textContent = configEmpresa.email;
+            }
+            const footDir = document.getElementById('footer-direccion');
+            if (footDir) footDir.innerHTML = `<i class="fa-solid fa-location-dot mr-1 text-secondary"></i> ${escaparHTML(configEmpresa.direccion)}`;
+            const footHor = document.getElementById('footer-horario');
+            if (footHor) footHor.innerHTML = configEmpresa.horario.replace(/\|/g, '<br>');
+            
+            // Footer: redes sociales (mostrar solo las que tengan URL)
+            const setRedSocial = (id, url) => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                if (url && url.trim() !== '') { el.href = url; el.classList.remove('hidden'); el.style.display = ''; }
+                else el.style.display = 'none';
+            };
+            setRedSocial('footer-red-instagram', configEmpresa.instagram);
+            setRedSocial('footer-red-facebook', configEmpresa.facebook);
+            setRedSocial('footer-red-tiktok', configEmpresa.tiktok);
+            const wsRed = document.getElementById('footer-red-whatsapp');
+            if (wsRed) wsRed.href = `https://wa.me/${configEmpresa.whatsapp}`;
+            
+            // Header: nombre del catálogo
+            const headerNombre = document.getElementById('header-empresa-nombre');
+            if (headerNombre) headerNombre.textContent = configEmpresa.nombre;
+            
+            // Logo del header (si hay logo_sidebar lo usamos en lugar del icono)
+            const headerLogoIcon = document.getElementById('header-logo-icon');
+            const headerLogoImg = document.getElementById('header-logo-img');
+            if (headerLogoIcon && headerLogoImg && configEmpresa.logo_sidebar && configEmpresa.logo_sidebar.trim()) {
+                headerLogoIcon.style.display = 'none';
+                headerLogoImg.src = configEmpresa.logo_sidebar;
+                headerLogoImg.style.display = 'block';
+            }
+            
+            // WhatsApp flotante
+            const waFlot = document.getElementById('whatsapp-flotante');
+            if (waFlot) waFlot.href = `https://wa.me/${configEmpresa.whatsapp}`;
+            
+            // Botón mi cuenta -> link de contacto
+            const cuentaWa = document.getElementById('cuenta-link-wa');
+            if (cuentaWa) cuentaWa.href = `https://wa.me/${configEmpresa.whatsapp}`;
+            
+            // Footer: trust bar mensajes (atención por WhatsApp)
+            // Este se queda hardcoded por ser texto motivacional
+            
+            // Actualizar SEO inicial con nombre real de empresa
+            actualizarSEOInicio();
         }
         
         // ============================================
