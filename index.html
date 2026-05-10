@@ -427,11 +427,11 @@
                 <div class="flex gap-4 items-center flex-wrap">
                     <button onclick="irAInicio()" class="hover:text-white transition flex items-center gap-1 font-bold text-sm text-yellow-400"><i class="fa-solid fa-home"></i> INICIO</button>
                     <span class="font-semibold text-gray-200 ml-2 hidden sm:inline">Tasa BCV: <span id="tasa-bcv-display" class="text-white">0.00</span></span>
-                    <span class="hidden md:inline-flex items-center gap-1 text-gray-300 ml-2"><i class="fa-solid fa-truck-fast"></i> Envíos a todo el país</span>
+                    <span id="topbar-envios" class="hidden md:inline-flex items-center gap-1 text-gray-300 ml-2"><i class="fa-solid fa-truck-fast"></i> Envíos a todo el país</span>
                     <span class="hidden md:inline-flex items-center gap-1 text-gray-300"><i class="fa-solid fa-shield-halved"></i> Compra protegida</span>
                 </div>
                 <div class="flex gap-3 items-center">
-                    <button onclick="abrirModalUbicacion()" class="hidden sm:inline-flex items-center gap-1 hover:text-white transition" title="Cambiar ubicación de envío">
+                    <button id="topbar-enviar-a" onclick="abrirModalUbicacion()" class="hidden sm:inline-flex items-center gap-1 hover:text-white transition" title="Cambiar ubicación de envío">
                         <i class="fa-solid fa-location-dot text-secondary"></i>
                         <span>Enviar a <span id="ubicacion-actual" class="font-semibold text-white">Caracas</span></span>
                     </button>
@@ -445,8 +445,8 @@
                 <button class="btn-menu-mobile" onclick="abrirMenuMobile()" aria-label="Abrir menú"><i class="fa-solid fa-bars"></i></button>
                 <div class="flex items-center gap-2 cursor-pointer shrink-0" onclick="irAInicio()">
                     <i id="header-logo-icon" class="fa-solid fa-layer-group text-secondary text-3xl hover:scale-110 transition"></i>
-                    <img id="header-logo-img" src="" alt="Logo" style="display:none; max-height:40px; max-width:140px;" class="hover:scale-105 transition">
-                    <div class="hidden sm:block leading-tight text-left">
+                    <img id="header-logo-img" src="" alt="Logo" style="display:none; max-height:50px; max-width:160px;" class="hover:scale-105 transition">
+                    <div id="header-nombre-container" class="hidden sm:block leading-tight text-left">
                         <span id="header-empresa-nombre" class="font-bold text-xl tracking-wide block">Catálogo Oficial</span>
                         <span class="text-[9px] text-gray-200 tracking-widest uppercase">Tienda Oficial</span>
                     </div>
@@ -504,13 +504,13 @@
             
             <!-- Beneficios rápidos (estilo Amazon trust bar) -->
             <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-                <div class="bg-white border border-gray-200 rounded-lg p-3 flex items-center gap-3 hover:shadow-md transition">
+                <div id="trust-envios" class="bg-white border border-gray-200 rounded-lg p-3 flex items-center gap-3 hover:shadow-md transition">
                     <div class="bg-green-100 text-green-700 rounded-full w-10 h-10 flex items-center justify-center shrink-0"><i class="fa-solid fa-truck-fast"></i></div>
                     <div class="leading-tight"><div class="text-xs font-bold text-gray-800">Envíos a todo el país</div><div class="text-[10px] text-gray-500">Despacho 24-48h</div></div>
                 </div>
                 <div class="bg-white border border-gray-200 rounded-lg p-3 flex items-center gap-3 hover:shadow-md transition">
                     <div class="bg-blue-100 text-blue-700 rounded-full w-10 h-10 flex items-center justify-center shrink-0"><i class="fa-solid fa-mobile-screen"></i></div>
-                    <div class="leading-tight"><div class="text-xs font-bold text-gray-800">Pago Móvil</div><div class="text-[10px] text-gray-500">Bs, USD, Zelle</div></div>
+                    <div class="leading-tight"><div class="text-xs font-bold text-gray-800">Múltiples métodos de pago</div><div class="text-[10px] text-gray-500" id="trust-pagos-detalle">Bs, USD, Pago Móvil</div></div>
                 </div>
                 <div class="bg-white border border-gray-200 rounded-lg p-3 flex items-center gap-3 hover:shadow-md transition">
                     <div class="bg-orange-100 text-orange-700 rounded-full w-10 h-10 flex items-center justify-center shrink-0"><i class="fa-solid fa-shield-halved"></i></div>
@@ -654,7 +654,8 @@
         <div class="footer-grid">
             <div class="footer-col">
                 <div class="flex items-center gap-2 mb-4">
-                    <i class="fa-solid fa-layer-group text-secondary text-2xl"></i>
+                    <i id="footer-logo-icon" class="fa-solid fa-layer-group text-secondary text-2xl"></i>
+                    <img id="footer-logo-img" src="" alt="Logo" style="display:none; max-height:40px; max-width:160px;">
                     <h4 id="footer-empresa-nombre" class="text-white font-bold uppercase tracking-wider !mb-0">Catálogo Oficial</h4>
                 </div>
                 <p id="footer-empresa-descripcion" class="mb-3">Soluciones Integrales para tu Oficina y Hogar. Papelería, Centro de Copiado y Servicio Técnico Especializado.</p>
@@ -698,11 +699,13 @@
                 <h4>Pago y Envío</h4>
                 <p id="footer-direccion" class="!mb-2"><i class="fa-solid fa-location-dot mr-1 text-secondary"></i> Calle 9, Mini C.C. Vecinal, Local 40, Urb. Juan Pablo II, Montalbán, Caracas.</p>
                 <div class="footer-pago">
-                    <span>Pago Móvil</span>
-                    <span>Zelle</span>
-                    <span>USD</span>
-                    <span>Bs.</span>
-                    <span>Transferencia</span>
+                    <span id="pago-movil">Pago Móvil</span>
+                    <span id="pago-zelle">Zelle</span>
+                    <span id="pago-usd">USD</span>
+                    <span id="pago-bs">Bs.</span>
+                    <span id="pago-transferencia">Transferencia</span>
+                    <span id="pago-biopago" style="display:none;">Biopago</span>
+                    <span id="pago-tarjeta" style="display:none;">Tarjeta</span>
                 </div>
             </div>
         </div>
@@ -849,7 +852,21 @@
             facebook: '',
             tiktok: '',
             logo_login: '',
-            logo_sidebar: ''
+            logo_sidebar: '',
+            logo_footer: '',
+            // Toggles (todos visibles por defecto si no están definidos)
+            mostrarNombreHeader: true,
+            mostrarEnvios: true,
+            mostrarUbicacion: true,
+            pagos: { 
+                movil: true, 
+                zelle: false, // por defecto OFF para que el usuario lo active si lo tiene
+                usd: true, 
+                bs: true, 
+                transferencia: true, 
+                biopago: false, 
+                tarjeta: false 
+            }
         };
 
         let indices = { bloque1: 0, bloque2: 0, busqueda: 0, paginaHome: 1, paginaBusqueda: 1 };
@@ -945,15 +962,27 @@
                     const tieneStock = ignorarStock || parseFloat(p.stock_actual) > 0;
                     
                     const estaActivo = p.estado_producto === 'ACTIVO';
-                    const tieneImagen = p.imagen_principal && p.imagen_principal.trim() !== '';
-                    const noEsDefecto = p.imagen_principal !== imagenGlobalDefecto;
+                    
+                    // Imagen: para PRODUCTOS físicos es obligatoria, para servicios/fabricación es opcional
+                    const tieneImagen = p.imagen_principal && p.imagen_principal.trim() !== '' && p.imagen_principal !== imagenGlobalDefecto;
+                    const imagenOk = ignorarStock || tieneImagen;
                     
                     const tienePrecioUsd = Number(p.precio_general_usd) > 0;
                     const tienePrecioBsFijo = p.es_precio_fijo_bs === true && Number(p.precio_fijo_bs) > 0;
                     const precioValido = tienePrecioUsd || tienePrecioBsFijo;
                     
-                    return tieneStock && estaActivo && tieneImagen && noEsDefecto && precioValido;
+                    return tieneStock && estaActivo && imagenOk && precioValido;
                 });
+                
+                // Diagnóstico (consola): qué categorías están en BD pero no aparecieron en catálogo
+                try {
+                    const catsTotal = new Set(dataFusionada.map(p => p.categoria_del_producto).filter(Boolean));
+                    const catsVisibles = new Set(todosLosProductos.map(p => p.categoria_del_producto).filter(Boolean));
+                    const ocultas = [...catsTotal].filter(c => !catsVisibles.has(c));
+                    if (ocultas.length > 0) {
+                        console.info(`[Catálogo] Categorías ocultas (productos no cumplen filtro):`, ocultas);
+                    }
+                } catch(e) {}
 
                 fuse = new Fuse(todosLosProductos, { 
                     keys: ['nombre', 'categoria_del_producto', 'id_producto_sku', 'marca'], 
@@ -1051,47 +1080,36 @@
         }
 
         function generarTarjetaHTML(prod) {
-            const pUsd = Number(prod.precio_general_usd) || 0; 
-            const pBsFijo = Number(prod.precio_fijo_bs) || 0;
-            const esFijoBs = prod.es_precio_fijo_bs === true;
             const stock = parseFloat(prod.stock_actual) || 0;
 
             const img = prod.imagen_principal || imagenDefecto();
             const esFav = favoritos.includes(prod.id_producto_sku); 
             const cCorazon = esFav ? 'fa-solid text-red-500' : 'fa-regular text-gray-400';
             
-            // Calcular descuento (compara precio general vs precio_1)
-            const precioOferta = Number(prod.precio_1_usd) || 0;
-            const tieneDescuento = precioOferta > 0 && precioOferta < pUsd && !esFijoBs;
-            const porcDescuento = tieneDescuento ? Math.round(((pUsd - precioOferta) / pUsd) * 100) : 0;
             const tTiers = prod.requerido_precio_1 != null && prod.requerido_precio_1 > 0;
             const esServicio = esTipoServicio(prod);
             const esFabricacion = esTipoFabricacion(prod);
-            const sinStock = esTipoSinStock(prod); // Cualquiera que no dependa del stock
+            const sinStock = esTipoSinStock(prod);
             
-            // Tag (descuento > servicio > fabricación > tiers/oferta)
+            // Datos de precio centralizados (oferta real, tachado, %)
+            const datosPrecio = calcularDatosPrecio(prod);
+            const tieneDescuento = datosPrecio.esOferta;
+            const porcDescuento = datosPrecio.porcentaje;
+            const pPrinc = datosPrecio.precioBase;
+            const pTachado = datosPrecio.precioTachado;
+            
+            // Tag (oferta real > servicio > fabricación)
             let tag = '';
-            if (tieneDescuento && porcDescuento > 0) {
+            if (tieneDescuento) {
                 tag = `<div class="tag-discount">-${porcDescuento}%</div>`;
             } else if (esServicio) {
                 tag = `<div class="tag-service">SERVICIO</div>`;
             } else if (esFabricacion) {
                 tag = `<div class="tag-service" style="background:#0891b2;">BAJO PEDIDO</div>`;
-            } else if (tTiers) {
-                tag = `<div class="tag-discount">OFERTA</div>`;
             }
             
-            // Precios formateados
-            let pPrinc, pTachado = '';
-            if (esFijoBs) {
-                pPrinc = mostrarEnBs ? `Bs. ${pBsFijo.toFixed(2)}` : `US$ ${(pBsFijo / tasaBcvGlobal).toFixed(2)}`;
-            } else {
-                const precioFinal = tieneDescuento ? precioOferta : pUsd;
-                pPrinc = mostrarEnBs ? `Bs. ${(precioFinal * tasaBcvGlobal).toFixed(2)}` : `US$ ${precioFinal.toFixed(2)}`;
-                if (tieneDescuento) {
-                    pTachado = mostrarEnBs ? `Bs. ${(pUsd * tasaBcvGlobal).toFixed(2)}` : `US$ ${pUsd.toFixed(2)}`;
-                }
-            }
+            // "Desde" SOLO para servicios (precios pueden variar según el caso)
+            const prefijoDesde = esServicio ? '<span class="text-xs text-gray-500 mr-1 font-normal">Desde</span>' : '';
             
             // Rating "ficticio pero estable" - genera 4.0-5.0 según hash del SKU para consistencia
             const ratingData = generarRatingFicticio(prod.id_producto_sku);
@@ -1106,7 +1124,7 @@
                 envioHTML = `<div class="pcard-shipping" style="color:#1d4ed8;"><i class="fa-solid fa-screwdriver-wrench"></i> Servicio disponible</div>`;
             } else if (esFabricacion) {
                 envioHTML = `<div class="pcard-shipping" style="color:#0891b2;"><i class="fa-solid fa-hammer"></i> Bajo pedido</div>`;
-            } else {
+            } else if (configEmpresa.mostrarEnvios) {
                 envioHTML = `<div class="pcard-shipping"><i class="fa-solid fa-truck-fast"></i> Envío disponible</div>`;
             }
 
@@ -1134,7 +1152,7 @@
                         <div class="mt-auto">
                             <div class="pcard-price-old">${pTachado}</div>
                             <div class="pcard-price-row">
-                                <span class="pcard-price">${pPrinc}</span>
+                                <span class="pcard-price">${prefijoDesde}${pPrinc}</span>
                                 ${tieneDescuento ? `<span class="pcard-discount">${porcDescuento}% OFF</span>` : ''}
                             </div>
                             ${envioHTML}
@@ -1163,6 +1181,41 @@
         // Helper: ¿el producto es de fabricación bajo pedido?
         function esTipoFabricacion(prod) {
             return (prod && prod.tipo_producto || '').toUpperCase().trim() === 'FABRICACION';
+        }
+        
+        // Helper: ¿el producto tiene una OFERTA REAL? (categoria_venta = 'OFERTA' y precio_1 < precio_general)
+        // Solo entonces se justifica tachar el precio_general y mostrar % de descuento.
+        function esOfertaReal(prod) {
+            if (!prod) return false;
+            const categoriaVenta = (prod.categoria_venta || '').toUpperCase().trim();
+            if (categoriaVenta !== 'OFERTA') return false;
+            const pUsd = Number(prod.precio_general_usd) || 0;
+            const pOferta = Number(prod.precio_1_usd) || 0;
+            return pOferta > 0 && pOferta < pUsd && !prod.es_precio_fijo_bs;
+        }
+        
+        // Helper: calcula los datos de precio "finales" para mostrar en cualquier lado
+        // Devuelve { precioMostrar, precioTachado, porcentajeDescuento, esOferta }
+        function calcularDatosPrecio(prod) {
+            const pUsd = Number(prod.precio_general_usd) || 0;
+            const pBsFijo = Number(prod.precio_fijo_bs) || 0;
+            const esFijoBs = prod.es_precio_fijo_bs === true;
+            const esOferta = esOfertaReal(prod);
+            const pOferta = Number(prod.precio_1_usd) || 0;
+            
+            let precioBase, precioTachado = '', porcentaje = 0;
+            
+            if (esFijoBs) {
+                precioBase = mostrarEnBs ? `Bs. ${pBsFijo.toFixed(2)}` : `US$ ${(pBsFijo / tasaBcvGlobal).toFixed(2)}`;
+            } else if (esOferta) {
+                precioBase = mostrarEnBs ? `Bs. ${(pOferta * tasaBcvGlobal).toFixed(2)}` : `US$ ${pOferta.toFixed(2)}`;
+                precioTachado = mostrarEnBs ? `Bs. ${(pUsd * tasaBcvGlobal).toFixed(2)}` : `US$ ${pUsd.toFixed(2)}`;
+                porcentaje = Math.round(((pUsd - pOferta) / pUsd) * 100);
+            } else {
+                precioBase = mostrarEnBs ? `Bs. ${(pUsd * tasaBcvGlobal).toFixed(2)}` : `US$ ${pUsd.toFixed(2)}`;
+            }
+            
+            return { precioBase, precioTachado, porcentaje, esOferta };
         }
         
         function escaparHTML(str) {
@@ -1349,14 +1402,14 @@
             let filtrados = arrayBusquedaOriginal.filter(p => {
                 const pUsd = Number(p.precio_general_usd) || 0;
                 const pOferta = Number(p.precio_1_usd) || 0;
-                const precioReal = (pOferta > 0 && pOferta < pUsd && !p.es_precio_fijo_bs) ? pOferta : pUsd;
+                const precioReal = esOfertaReal(p) ? pOferta : pUsd;
                 
                 if (filtrosActivos.precioMin != null && precioReal < filtrosActivos.precioMin) return false;
                 if (filtrosActivos.precioMax != null && precioReal > filtrosActivos.precioMax) return false;
                 if (filtrosActivos.marcas.length && !filtrosActivos.marcas.includes(p.marca || '')) return false;
                 if (filtrosActivos.categorias.length && !filtrosActivos.categorias.includes(p.categoria_del_producto || '')) return false;
                 if (filtrosActivos.colores.length && !filtrosActivos.colores.includes(p.color || '')) return false;
-                if (filtrosActivos.soloOfertas && !(pOferta > 0 && pOferta < pUsd && !p.es_precio_fijo_bs)) return false;
+                if (filtrosActivos.soloOfertas && !esOfertaReal(p)) return false;
                 if (filtrosActivos.soloStock && parseFloat(p.stock_actual) <= 0) return false;
                 return true;
             });
@@ -1366,7 +1419,7 @@
             const precioOf = p => {
                 const o = Number(p.precio_1_usd) || 0;
                 const g = Number(p.precio_general_usd) || 0;
-                return (o > 0 && o < g) ? o : g;
+                return esOfertaReal(p) ? o : g;
             };
             if (orden === 'precio-asc') filtrados.sort((a, b) => precioOf(a) - precioOf(b));
             else if (orden === 'precio-desc') filtrados.sort((a, b) => precioOf(b) - precioOf(a));
@@ -1519,7 +1572,7 @@
             const precios = productos.map(p => {
                 const pUsd = Number(p.precio_general_usd) || 0;
                 const pOferta = Number(p.precio_1_usd) || 0;
-                return (pOferta > 0 && pOferta < pUsd && !p.es_precio_fijo_bs) ? pOferta : pUsd;
+                return esOfertaReal(p) ? pOferta : pUsd;
             }).filter(x => x > 0);
             const cRangos = document.getElementById('filtro-precios-rangos');
             if (cRangos && precios.length > 0) {
@@ -1551,9 +1604,10 @@
                 const p = res.item; 
                 const pUsd = Number(p.precio_general_usd) || 0;
                 const pOferta = Number(p.precio_1_usd) || 0;
-                const tieneDesc = pOferta > 0 && pOferta < pUsd && !p.es_precio_fijo_bs;
-                const precioMostrar = tieneDesc ? pOferta : pUsd;
-                dropdown.innerHTML += `<div class="flex items-center gap-3 p-3 border-b hover:bg-gray-50 cursor-pointer transition" onclick="abrirPDPPorSku('${p.id_producto_sku}'); cerrarDropdown();"><img src="${p.imagen_principal || imagenDefecto()}" onerror="this.src='${imagenDefecto()}'" class="w-10 h-10 object-contain rounded border border-gray-100"><div class="flex-1 min-w-0"><h4 class="text-xs font-normal line-clamp-1 text-gray-800">${escaparHTML(p.nombre)}</h4><div class="flex items-center gap-2 mt-0.5"><span class="text-xs font-bold text-primary">${formatearPrecio(precioMostrar, Number(p.precio_fijo_bs), p.es_precio_fijo_bs)}</span>${tieneDesc ? '<span class="text-[9px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-bold">OFERTA</span>' : ''}</div></div></div>`; 
+                const esOferta = esOfertaReal(p);
+                const precioMostrar = esOferta ? pOferta : pUsd;
+                const prefijoServicio = esTipoServicio(p) ? '<span class="text-[10px] text-gray-500 mr-0.5">Desde</span>' : '';
+                dropdown.innerHTML += `<div class="flex items-center gap-3 p-3 border-b hover:bg-gray-50 cursor-pointer transition" onclick="abrirPDPPorSku('${p.id_producto_sku}'); cerrarDropdown();"><img src="${p.imagen_principal || imagenDefecto()}" onerror="this.src='${imagenDefecto()}'" class="w-10 h-10 object-contain rounded border border-gray-100"><div class="flex-1 min-w-0"><h4 class="text-xs font-normal line-clamp-1 text-gray-800">${escaparHTML(p.nombre)}</h4><div class="flex items-center gap-2 mt-0.5"><span class="text-xs font-bold text-primary">${prefijoServicio}${formatearPrecio(precioMostrar, Number(p.precio_fijo_bs), p.es_precio_fijo_bs)}</span>${esOferta ? '<span class="text-[9px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-bold">OFERTA</span>' : ''}</div></div></div>`; 
             });
             dropdown.classList.remove('hidden');
         }
@@ -1737,12 +1791,14 @@
             const estrellasHTML = renderEstrellas(ratingData.rating);
             const stock = parseFloat(prod.stock_actual) || 0;
             
-            // Detectar descuento para tachar precio en PDP
-            const pUsd = Number(prod.precio_general_usd) || 0;
-            const precioOferta = Number(prod.precio_1_usd) || 0;
-            const tieneDescuentoPDP = !esServicio && !esFijoBs && precioOferta > 0 && precioOferta < pUsd;
-            const porcDescPDP = tieneDescuentoPDP ? Math.round(((pUsd - precioOferta) / pUsd) * 100) : 0;
-            const precioTachadoPDP = tieneDescuentoPDP ? (mostrarEnBs ? `Bs. ${(pUsd * tasaBcvGlobal).toFixed(2)}` : `US$ ${pUsd.toFixed(2)}`) : '';
+            // Datos de precio centralizados (oferta real basada en categoria_venta='OFERTA')
+            const datosPrecioPDP = calcularDatosPrecio(prod);
+            const tieneDescuentoPDP = datosPrecioPDP.esOferta;
+            const porcDescPDP = datosPrecioPDP.porcentaje;
+            const precioTachadoPDP = datosPrecioPDP.precioTachado;
+            
+            // "Desde" SOLO para servicios
+            const prefijoDesdePDP = esServicio ? '<span class="text-base text-gray-500 mr-2 font-normal">Desde</span>' : '';
             
             // Stock visual
             let stockBadge = '';
@@ -1790,7 +1846,8 @@
                                 <div class="mb-6">
                                     ${precioTachadoPDP ? `<div class="text-sm text-gray-400 line-through mb-1">${precioTachadoPDP}</div>` : ''}
                                     <div class="flex items-baseline gap-3 flex-wrap">
-                                        <div class="flex items-start gap-1">
+                                        <div class="flex items-baseline gap-1">
+                                            ${prefijoDesdePDP}
                                             <span class="text-xl text-gray-900 mt-2 font-bold">${simbPrinc}</span>
                                             <span class="text-5xl font-light text-gray-900">${pPrinc}</span>
                                         </div>
@@ -2160,6 +2217,15 @@
             const map = {};
             params.forEach(p => { if (p.parametro) map[p.parametro] = p.valor; });
             
+            // Helper: parsear bool de string ("true", "1", "SI", "ON" -> true)
+            const parseBool = v => {
+                if (v === null || v === undefined) return null;
+                const s = String(v).toLowerCase().trim();
+                if (['true','1','si','sí','yes','on','activo'].includes(s)) return true;
+                if (['false','0','no','off','inactivo'].includes(s)) return false;
+                return null;
+            };
+            
             // === Colores y tipografía (marca blanca) ===
             // Si vienen del admin, anulamos cualquier valor previo de localStorage
             // Los colores se aplican solo si llegan de la empresa
@@ -2201,6 +2267,22 @@
             if (map.EMPRESA_TIKTOK) configEmpresa.tiktok = map.EMPRESA_TIKTOK;
             if (map.LOGO_LOGIN) configEmpresa.logo_login = map.LOGO_LOGIN;
             if (map.LOGO_SIDEBAR) configEmpresa.logo_sidebar = map.LOGO_SIDEBAR;
+            if (map.LOGO_FOOTER) configEmpresa.logo_footer = map.LOGO_FOOTER;
+            
+            // Toggles (interruptores configurables desde admin)
+            const b = parseBool;
+            if (b(map.MOSTRAR_NOMBRE_HEADER) !== null) configEmpresa.mostrarNombreHeader = b(map.MOSTRAR_NOMBRE_HEADER);
+            if (b(map.MOSTRAR_ENVIOS_TODO_PAIS) !== null) configEmpresa.mostrarEnvios = b(map.MOSTRAR_ENVIOS_TODO_PAIS);
+            if (b(map.MOSTRAR_ENVIAR_A_UBICACION) !== null) configEmpresa.mostrarUbicacion = b(map.MOSTRAR_ENVIAR_A_UBICACION);
+            
+            // Métodos de pago activables
+            if (b(map.PAGO_MOVIL_ACTIVO) !== null) configEmpresa.pagos.movil = b(map.PAGO_MOVIL_ACTIVO);
+            if (b(map.PAGO_ZELLE_ACTIVO) !== null) configEmpresa.pagos.zelle = b(map.PAGO_ZELLE_ACTIVO);
+            if (b(map.PAGO_USD_ACTIVO) !== null) configEmpresa.pagos.usd = b(map.PAGO_USD_ACTIVO);
+            if (b(map.PAGO_BS_ACTIVO) !== null) configEmpresa.pagos.bs = b(map.PAGO_BS_ACTIVO);
+            if (b(map.PAGO_TRANSFERENCIA_ACTIVO) !== null) configEmpresa.pagos.transferencia = b(map.PAGO_TRANSFERENCIA_ACTIVO);
+            if (b(map.PAGO_BIOPAGO_ACTIVO) !== null) configEmpresa.pagos.biopago = b(map.PAGO_BIOPAGO_ACTIVO);
+            if (b(map.PAGO_TARJETA_ACTIVO) !== null) configEmpresa.pagos.tarjeta = b(map.PAGO_TARJETA_ACTIVO);
             
             // Pintar todos los elementos que dependen de estos datos
             renderConfigEmpresaEnDOM();
@@ -2251,6 +2333,12 @@
             const headerNombre = document.getElementById('header-empresa-nombre');
             if (headerNombre) headerNombre.textContent = configEmpresa.nombre;
             
+            // Toggle: mostrar/ocultar el nombre completo en header (cuando el logo ya lo incluye)
+            const headerNombreContainer = document.getElementById('header-nombre-container');
+            if (headerNombreContainer) {
+                headerNombreContainer.style.display = configEmpresa.mostrarNombreHeader ? '' : 'none';
+            }
+            
             // Logo del header (si hay logo_sidebar lo usamos en lugar del icono)
             const headerLogoIcon = document.getElementById('header-logo-icon');
             const headerLogoImg = document.getElementById('header-logo-img');
@@ -2258,6 +2346,52 @@
                 headerLogoIcon.style.display = 'none';
                 headerLogoImg.src = configEmpresa.logo_sidebar;
                 headerLogoImg.style.display = 'block';
+            }
+            
+            // Logo del footer (si está configurado, reemplaza el icono naranja por una imagen)
+            const footerLogoIcon = document.getElementById('footer-logo-icon');
+            const footerLogoImg = document.getElementById('footer-logo-img');
+            if (footerLogoIcon && footerLogoImg && configEmpresa.logo_footer && configEmpresa.logo_footer.trim()) {
+                footerLogoIcon.style.display = 'none';
+                footerLogoImg.src = configEmpresa.logo_footer;
+                footerLogoImg.style.display = 'block';
+            }
+            
+            // Toggle "Envíos a todo el país" en top bar
+            const enviosTopBar = document.getElementById('topbar-envios');
+            if (enviosTopBar) enviosTopBar.style.display = configEmpresa.mostrarEnvios ? '' : 'none';
+            
+            // Toggle "Enviar a [ubicación]"
+            const enviarUbic = document.getElementById('topbar-enviar-a');
+            if (enviarUbic) enviarUbic.style.display = configEmpresa.mostrarUbicacion ? '' : 'none';
+            
+            // Trust bar de envíos en home
+            const trustEnvios = document.getElementById('trust-envios');
+            if (trustEnvios) trustEnvios.style.display = configEmpresa.mostrarEnvios ? '' : 'none';
+            
+            // Métodos de pago en footer
+            const setPago = (id, activo) => {
+                const el = document.getElementById(id);
+                if (el) el.style.display = activo ? '' : 'none';
+            };
+            setPago('pago-movil', configEmpresa.pagos.movil);
+            setPago('pago-zelle', configEmpresa.pagos.zelle);
+            setPago('pago-usd', configEmpresa.pagos.usd);
+            setPago('pago-bs', configEmpresa.pagos.bs);
+            setPago('pago-transferencia', configEmpresa.pagos.transferencia);
+            setPago('pago-biopago', configEmpresa.pagos.biopago);
+            setPago('pago-tarjeta', configEmpresa.pagos.tarjeta);
+            
+            // Trust bar pagos: actualizar texto de "Pago Móvil" según métodos activos
+            const trustPagos = document.getElementById('trust-pagos-detalle');
+            if (trustPagos) {
+                const activos = [];
+                if (configEmpresa.pagos.bs) activos.push('Bs');
+                if (configEmpresa.pagos.usd) activos.push('USD');
+                if (configEmpresa.pagos.zelle) activos.push('Zelle');
+                if (configEmpresa.pagos.movil) activos.push('Pago Móvil');
+                if (configEmpresa.pagos.tarjeta) activos.push('Tarjeta');
+                trustPagos.textContent = activos.length > 0 ? activos.join(', ') : 'Múltiples opciones';
             }
             
             // WhatsApp flotante
@@ -2396,8 +2530,9 @@
             const linkProducto = url.toString();
             const pUsd = Number(prod.precio_general_usd) || 0;
             const pOferta = Number(prod.precio_1_usd) || 0;
-            const precio = (pOferta > 0 && pOferta < pUsd && !prod.es_precio_fijo_bs) ? pOferta : pUsd;
-            const precioStr = prod.es_precio_fijo_bs ? `Bs. ${Number(prod.precio_fijo_bs).toFixed(2)}` : `US$ ${precio.toFixed(2)}`;
+            const precio = esOfertaReal(prod) ? pOferta : pUsd;
+            const prefijo = esTipoServicio(prod) ? 'Desde ' : '';
+            const precioStr = prod.es_precio_fijo_bs ? `Bs. ${Number(prod.precio_fijo_bs).toFixed(2)}` : `${prefijo}US$ ${precio.toFixed(2)}`;
             const texto = `¡Mira este producto! 👀\n\n*${prod.nombre}*\n💰 ${precioStr}\n\n${linkProducto}`;
             const waUrl = `https://wa.me/?text=${encodeURIComponent(texto)}`;
             window.open(waUrl, '_blank');
@@ -2408,26 +2543,17 @@
             const prod = todosLosProductos.find(p => p.id_producto_sku === sku);
             if (!prod) return;
             
-            const pUsd = Number(prod.precio_general_usd) || 0;
-            const pBsFijo = Number(prod.precio_fijo_bs) || 0;
-            const esFijoBs = prod.es_precio_fijo_bs === true;
-            const precioOferta = Number(prod.precio_1_usd) || 0;
-            const tieneDescuento = precioOferta > 0 && precioOferta < pUsd && !esFijoBs;
-            const porcDescuento = tieneDescuento ? Math.round(((pUsd - precioOferta) / pUsd) * 100) : 0;
             const stock = parseFloat(prod.stock_actual) || 0;
             const esServicio = esTipoServicio(prod);
             const esFabricacion = esTipoFabricacion(prod);
             
-            let pPrinc, pTachado = '';
-            if (esFijoBs) {
-                pPrinc = mostrarEnBs ? `Bs. ${pBsFijo.toFixed(2)}` : `US$ ${(pBsFijo / tasaBcvGlobal).toFixed(2)}`;
-            } else {
-                const precioFinal = tieneDescuento ? precioOferta : pUsd;
-                pPrinc = mostrarEnBs ? `Bs. ${(precioFinal * tasaBcvGlobal).toFixed(2)}` : `US$ ${precioFinal.toFixed(2)}`;
-                if (tieneDescuento) {
-                    pTachado = mostrarEnBs ? `Bs. ${(pUsd * tasaBcvGlobal).toFixed(2)}` : `US$ ${pUsd.toFixed(2)}`;
-                }
-            }
+            // Datos de precio centralizados
+            const datosPrecioQV = calcularDatosPrecio(prod);
+            const tieneDescuento = datosPrecioQV.esOferta;
+            const porcDescuento = datosPrecioQV.porcentaje;
+            const pPrinc = datosPrecioQV.precioBase;
+            const pTachado = datosPrecioQV.precioTachado;
+            const prefijoDesdeQV = esServicio ? '<span class="text-base text-gray-500 mr-2 font-normal">Desde</span>' : '';
             
             const ratingData = generarRatingFicticio(prod.id_producto_sku);
             const estrellasHTML = renderEstrellas(ratingData.rating);
@@ -2459,7 +2585,7 @@
                     <div class="mb-5">
                         ${pTachado ? `<div class="text-sm text-gray-400 line-through">${pTachado}</div>` : ''}
                         <div class="flex items-baseline gap-3">
-                            <span class="text-3xl font-bold text-gray-900">${pPrinc}</span>
+                            <span class="text-3xl font-bold text-gray-900">${prefijoDesdeQV}${pPrinc}</span>
                             ${tieneDescuento ? `<span class="text-base text-green-600 font-bold">${porcDescuento}% OFF</span>` : ''}
                         </div>
                     </div>
