@@ -69,6 +69,39 @@
 
         /* Badge de última actualización */
         .badge-fecha { font-size: 9px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 4px; }
+        
+        /* === UPLOADER DE IMÁGENES (URL o desde equipo + compresión WebP) === */
+        .img-uploader { display: flex; gap: 8px; align-items: stretch; }
+        .img-uploader input[type="url"] { flex: 1; }
+        .img-uploader-btn {
+            display: flex; align-items: center; gap: 6px;
+            padding: 0 14px; border: 1px solid #d1d5db; border-radius: 6px;
+            background: #f8fafc; color: #374151; font-weight: 600; font-size: 12px;
+            cursor: pointer; transition: all .15s; white-space: nowrap;
+        }
+        .img-uploader-btn:hover { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
+        .img-uploader-btn:disabled { opacity: .5; cursor: not-allowed; }
+        .img-uploader-preview {
+            display: flex; align-items: center; gap: 10px;
+            margin-top: 8px; padding: 8px;
+            background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 6px;
+        }
+        .img-uploader-preview.empty { display: none; }
+        .img-uploader-preview img {
+            max-height: 50px; max-width: 80px; object-fit: contain;
+            border-radius: 4px; background: #fff;
+        }
+        .img-uploader-preview .info { flex: 1; font-size: 10px; color: #64748b; line-height: 1.3; }
+        .img-uploader-preview .info strong { color: #1f2937; font-size: 11px; }
+        .img-uploader-progress {
+            height: 4px; background: #e5e7eb; border-radius: 2px; overflow: hidden;
+            margin-top: 6px; display: none;
+        }
+        .img-uploader-progress.active { display: block; }
+        .img-uploader-progress-bar {
+            height: 100%; background: var(--color-secondary);
+            transition: width .2s ease-out;
+        }
     </style>
 </head>
 <body class="bg-[#f4f6f8] flex h-screen overflow-hidden text-gray-800">
@@ -216,16 +249,16 @@
 
                         <!-- Logo Footer (nuevo) -->
                         <div class="mb-5">
-                            <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1"><i class="fa-solid fa-image mr-1"></i> Logo del Footer (URL de imagen)</label>
-                            <input type="url" id="conf-logo-footer" placeholder="Dejar vacío para usar el icono naranja por defecto" class="w-full border border-gray-300 rounded px-3 py-2 text-sm font-semibold text-primary focus:border-secondary outline-none transition bg-white">
-                            <p class="text-[8px] text-gray-400 mt-1">Si dejas el campo vacío, se mostrará el icono predeterminado. Logo de fondo oscuro recomendado (footer es negro).</p>
+                            <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1"><i class="fa-solid fa-image mr-1"></i> Logo del Footer</label>
+                            <input type="url" id="conf-logo-footer" data-image-uploader="conf-logo-footer" placeholder="Pega URL o sube desde tu equipo" class="w-full border border-gray-300 rounded px-3 py-2 text-sm font-semibold text-primary focus:border-secondary outline-none transition bg-white">
+                            <p class="text-[8px] text-gray-400 mt-1">Si dejas el campo vacío, se mostrará el icono predeterminado. Logo de fondo oscuro recomendado.</p>
                         </div>
                         
                         <!-- Logo Móvil (nuevo) -->
                         <div class="mb-5">
-                            <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1"><i class="fa-solid fa-mobile-screen mr-1"></i> Logo del Header en Móvil (URL de imagen)</label>
-                            <input type="url" id="conf-logo-mobile" placeholder="Dejar vacío para usar el logo desktop" class="w-full border border-gray-300 rounded px-3 py-2 text-sm font-semibold text-primary focus:border-secondary outline-none transition bg-white">
-                            <p class="text-[8px] text-gray-400 mt-1">Versión cuadrada o ícono compacto del logo. Si dejas vacío, se usará el logo desktop. Recomendado: 60x60px o transparente.</p>
+                            <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1"><i class="fa-solid fa-mobile-screen mr-1"></i> Logo del Header en Móvil</label>
+                            <input type="url" id="conf-logo-mobile" data-image-uploader="conf-logo-mobile" placeholder="Pega URL o sube desde tu equipo" class="w-full border border-gray-300 rounded px-3 py-2 text-sm font-semibold text-primary focus:border-secondary outline-none transition bg-white">
+                            <p class="text-[8px] text-gray-400 mt-1">Versión cuadrada o ícono compacto. Si está vacío, se usará el logo desktop. Recomendado: 60x60px transparente.</p>
                         </div>
 
                         <!-- Placeholder buscador -->
@@ -343,12 +376,12 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 border-b border-gray-100 pb-8">
                             <div>
                                 <label class="block text-[10px] font-bold text-gray-500 uppercase mb-2 tracking-widest">Logo Principal (Pantalla Login)</label>
-                                <input type="url" id="conf-logo-login" placeholder="Ej: https://ejemplo.com/logo.png" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm font-bold text-primary outline-none focus:border-tertiary transition bg-white">
+                                <input type="url" id="conf-logo-login" data-image-uploader="conf-logo-login" placeholder="Pega URL o sube desde tu equipo" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm font-bold text-primary outline-none focus:border-tertiary transition bg-white">
                                 <p class="text-[8px] text-gray-400 font-bold leading-tight mt-1">Aparecerá en el Login. (Recomendado: Cuadrado PNG)</p>
                             </div>
                             <div>
                                 <label class="block text-[10px] font-bold text-gray-500 uppercase mb-2 tracking-widest">Logo Menú Lateral (PC)</label>
-                                <input type="url" id="conf-logo-sidebar" placeholder="Ej: https://ejemplo.com/logo-horizontal.png" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm font-bold text-primary outline-none focus:border-tertiary transition bg-white">
+                                <input type="url" id="conf-logo-sidebar" data-image-uploader="conf-logo-sidebar" placeholder="Pega URL o sube desde tu equipo" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm font-bold text-primary outline-none focus:border-tertiary transition bg-white">
                                 <p class="text-[8px] text-gray-400 font-bold leading-tight mt-1">Aparecerá arriba a la izquierda en todo el sistema. (Recomendado: Horizontal PNG transparente)</p>
                             </div>
                         </div>
@@ -436,8 +469,211 @@
                 if (!resUser.ok) throw new Error("Fallo token");
                 const users = await resUser.json(); if(users.length > 0) empId = users[0].id_empresa;
                 await cargarConfig(); 
+                inicializarImageUploaders(); // Convertir inputs marcados en uploaders
             } catch(e) { alert("Error de conexión. Presiona F5."); }
         };
+        
+        // ============================================
+        // SISTEMA DE SUBIDA DE IMÁGENES (URL o desde equipo + compresión WebP)
+        // ============================================
+        // Convierte cada <input data-image-uploader="id"> en un componente con:
+        // - Input URL editable manualmente
+        // - Botón "Subir desde equipo" que abre selector de archivos
+        // - Compresión automática a WebP (calidad 0.85, max 1200px de ancho)
+        // - Subida a Supabase Storage en bucket "branding"
+        // - Preview con tamaño y formato de la imagen subida
+        function inicializarImageUploaders() {
+            document.querySelectorAll('[data-image-uploader]').forEach(input => {
+                if (input.dataset.uploaderInicializado) return;
+                input.dataset.uploaderInicializado = '1';
+                
+                const inputId = input.id;
+                const fileInputId = `file-${inputId}`;
+                const previewId = `preview-${inputId}`;
+                const progId = `prog-${inputId}`;
+                
+                // Envolver el input en un div uploader
+                const wrapper = document.createElement('div');
+                wrapper.className = 'img-uploader';
+                input.parentNode.insertBefore(wrapper, input);
+                wrapper.appendChild(input);
+                
+                // Botón de subir + input file oculto
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'img-uploader-btn';
+                btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Subir';
+                btn.onclick = () => document.getElementById(fileInputId).click();
+                wrapper.appendChild(btn);
+                
+                const fileInput = document.createElement('input');
+                fileInput.type = 'file';
+                fileInput.id = fileInputId;
+                fileInput.accept = 'image/*';
+                fileInput.style.display = 'none';
+                fileInput.onchange = (e) => subirImagenWebP(e, inputId, previewId, progId, btn);
+                wrapper.parentNode.appendChild(fileInput);
+                
+                // Barra de progreso
+                const prog = document.createElement('div');
+                prog.id = progId;
+                prog.className = 'img-uploader-progress';
+                prog.innerHTML = '<div class="img-uploader-progress-bar" style="width:0%"></div>';
+                wrapper.parentNode.appendChild(prog);
+                
+                // Preview
+                const preview = document.createElement('div');
+                preview.id = previewId;
+                preview.className = 'img-uploader-preview empty';
+                preview.innerHTML = `
+                    <img src="" alt="">
+                    <div class="info"><strong>Imagen actual</strong><div class="info-detalle">URL externa</div></div>
+                    <button type="button" onclick="limpiarUploaderImagen('${inputId}')" class="text-red-500 hover:text-red-700 text-xs font-bold" title="Quitar imagen"><i class="fa-solid fa-times"></i></button>`;
+                wrapper.parentNode.appendChild(preview);
+                
+                // Sincronizar preview con el input (al pegar URL manualmente)
+                input.addEventListener('input', () => actualizarPreviewUploader(inputId));
+                actualizarPreviewUploader(inputId);
+            });
+        }
+        
+        function actualizarPreviewUploader(inputId) {
+            const input = document.getElementById(inputId);
+            const preview = document.getElementById(`preview-${inputId}`);
+            if (!input || !preview) return;
+            const url = input.value.trim();
+            if (url) {
+                preview.classList.remove('empty');
+                preview.querySelector('img').src = url;
+                preview.querySelector('img').onerror = function() { this.style.opacity = '0.3'; };
+                preview.querySelector('img').onload = function() { this.style.opacity = '1'; };
+            } else {
+                preview.classList.add('empty');
+            }
+        }
+        
+        function limpiarUploaderImagen(inputId) {
+            const input = document.getElementById(inputId);
+            if (input) {
+                input.value = '';
+                actualizarPreviewUploader(inputId);
+            }
+        }
+        
+        async function subirImagenWebP(event, inputId, previewId, progId, btn) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            // Validaciones
+            if (!file.type.startsWith('image/')) {
+                alert('Por favor selecciona un archivo de imagen.');
+                return;
+            }
+            if (file.size > 10 * 1024 * 1024) {
+                alert('La imagen es demasiado grande. Máximo 10 MB.');
+                return;
+            }
+            
+            const input = document.getElementById(inputId);
+            const prog = document.getElementById(progId);
+            const progBar = prog.querySelector('.img-uploader-progress-bar');
+            const preview = document.getElementById(previewId);
+            
+            const btnOriginal = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Procesando...';
+            prog.classList.add('active');
+            progBar.style.width = '15%';
+            
+            try {
+                // 1. Convertir a WebP comprimido (máx 1200px de ancho, calidad 0.85)
+                const blobWebP = await comprimirAWebP(file, 1200, 0.85);
+                progBar.style.width = '40%';
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Subiendo...';
+                
+                // 2. Subir a Supabase Storage (bucket "branding")
+                const nombreArchivo = `${inputId}_${Date.now()}.webp`;
+                const path = `branding/${nombreArchivo}`;
+                
+                const uploadRes = await fetch(`${SUPABASE_URL}/storage/v1/object/${path}`, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': `Bearer ${TOKEN_JWT}`,
+                        'Content-Type': 'image/webp',
+                        'x-upsert': 'true'
+                    },
+                    body: blobWebP
+                });
+                
+                progBar.style.width = '85%';
+                
+                if (!uploadRes.ok) {
+                    const errText = await uploadRes.text();
+                    throw new Error(`Error al subir: ${uploadRes.status} - ${errText.substring(0, 100)}`);
+                }
+                
+                // 3. Construir URL pública
+                const urlPublica = `${SUPABASE_URL}/storage/v1/object/public/${path}`;
+                
+                // 4. Actualizar el input y preview
+                input.value = urlPublica;
+                actualizarPreviewUploader(inputId);
+                
+                // Mostrar tamaño en preview
+                const detalle = preview.querySelector('.info-detalle');
+                if (detalle) {
+                    const kbOriginal = (file.size / 1024).toFixed(1);
+                    const kbWebP = (blobWebP.size / 1024).toFixed(1);
+                    const reduccion = ((1 - blobWebP.size / file.size) * 100).toFixed(0);
+                    detalle.innerHTML = `WebP · ${kbWebP} KB <span style="color:#10b981">(${reduccion}% más liviana)</span>`;
+                }
+                
+                progBar.style.width = '100%';
+                setTimeout(() => { prog.classList.remove('active'); progBar.style.width = '0%'; }, 800);
+                
+            } catch (err) {
+                console.error('Error subida:', err);
+                alert('Error al subir la imagen: ' + err.message);
+                prog.classList.remove('active');
+                progBar.style.width = '0%';
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = btnOriginal;
+                event.target.value = ''; // Limpiar input file para permitir re-subir el mismo archivo
+            }
+        }
+        
+        // Convierte un File de imagen a Blob WebP comprimido
+        function comprimirAWebP(file, maxWidth = 1200, quality = 0.85) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let { width, height } = img;
+                        // Reducir si excede maxWidth
+                        if (width > maxWidth) {
+                            height = Math.round(height * (maxWidth / width));
+                            width = maxWidth;
+                        }
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        canvas.toBlob(blob => {
+                            if (blob) resolve(blob);
+                            else reject(new Error('No se pudo generar el blob WebP'));
+                        }, 'image/webp', quality);
+                    };
+                    img.onerror = () => reject(new Error('Imagen inválida'));
+                    img.src = e.target.result;
+                };
+                reader.onerror = () => reject(new Error('No se pudo leer el archivo'));
+                reader.readAsDataURL(file);
+            });
+        }
 
         function sincronizarColorALabel(tipo, valor) {
             document.getElementById(`hex-${tipo}`).value = valor.replace('#', '').toUpperCase();
@@ -608,6 +844,11 @@
             fillBool('conf-pago-credito', 'PAGO_CREDITO_ACTIVO', false);
 
             sincronizarColorALabel('pri', cP); sincronizarColorALabel('sec', cS); sincronizarColorALabel('ter', cT);
+            
+            // Refrescar previews de uploaders después de poblar los inputs
+            ['conf-logo-login','conf-logo-sidebar','conf-logo-footer','conf-logo-mobile'].forEach(id => {
+                if (typeof actualizarPreviewUploader === 'function') actualizarPreviewUploader(id);
+            });
         }
 
         // ✅ CORREGIDO: guardarTasaManual ahora recibe la moneda como parámetro
