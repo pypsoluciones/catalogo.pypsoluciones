@@ -301,23 +301,71 @@
         /* === BANNERS PROMOCIONALES === */
         .promo-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
         @media (min-width: 768px) { .promo-grid { grid-template-columns:repeat(4, 1fr); } }
-        .promo-card { background:#fff; border:1px solid #e5e7eb; border-radius:8px; overflow:hidden; cursor:pointer; transition:transform .2s, box-shadow .2s; display:flex; flex-direction:column; max-width:100%; min-width:0; }
-        .promo-card:hover { transform:translateY(-2px); box-shadow:0 8px 20px rgba(0,0,0,.08); }
+        .promo-card { background:#fff; border:1px solid #e5e7eb; border-radius:12px; overflow:hidden; cursor:pointer; transition:transform .2s, box-shadow .2s; display:flex; flex-direction:column; max-width:100%; min-width:0; }
+        .promo-card:hover { transform:translateY(-3px); box-shadow:0 12px 28px rgba(0,0,0,.12); }
         .promo-card .promo-img { aspect-ratio:1.4; background:#f3f4f6; overflow:hidden; max-width:100%; }
-        .promo-card .promo-img img { width:100%; height:100%; object-fit:cover; max-width:100%; }
-        .promo-card .promo-body { padding:12px; }
-        .promo-card h3 { font-size:14px; font-weight:600; color:#111827; margin-bottom:4px; line-height:1.3; }
-        .promo-card .amazon-link { font-size:12px; color:var(--color-secondary); font-weight:600; }
+        .promo-card .promo-img img { width:100%; height:100%; object-fit:cover; max-width:100%; transition:transform .4s; }
+        .promo-card:hover .promo-img img { transform:scale(1.06); }
+        .promo-card .promo-body { padding:14px 16px; }
+        .promo-card h3 { font-size:15px; font-weight:700; color:#111827; margin-bottom:4px; line-height:1.3; }
+        .promo-card .amazon-link { font-size:13px; color:var(--color-secondary); font-weight:600; }
         
         /* Banner mini destacados */
-        .destacado-principal { background:#fff; border:1px solid #e5e7eb; border-radius:8px; overflow:hidden; cursor:pointer; transition:transform .2s, box-shadow .2s; max-width:100%; min-width:0; }
-        .destacado-principal:hover { transform:translateY(-2px); box-shadow:0 8px 20px rgba(0,0,0,.08); }
-        .destacado-principal img { width:100%; height:auto; display:block; aspect-ratio:2.5; object-fit:cover; max-width:100%; }
+        /* === LAYOUT BENTO GRID PARA BANNERS === */
+        /* Destacado principal: cuadrado y grande (acepta cualquier imagen sin espacios blancos).
+           4 mini-banners alrededor en grid 2x2. */
+        .destacado-principal { background:#fff; border:1px solid #e5e7eb; border-radius:12px; overflow:hidden; cursor:pointer; transition:transform .2s, box-shadow .2s; max-width:100%; min-width:0; position:relative; }
+        .destacado-principal:hover { transform:translateY(-2px); box-shadow:0 12px 28px rgba(0,0,0,.12); }
+        /* Aspect-ratio 1:1 acepta bien tanto imágenes cuadradas como las panorámicas con cover */
+        .destacado-principal img { width:100%; height:100%; display:block; object-fit:cover; max-width:100%; transition:transform .4s; }
+        .destacado-principal:hover img { transform:scale(1.04); }
         
-        .destacado-mini { background:#fff; border:1px solid #e5e7eb; border-radius:8px; overflow:hidden; cursor:pointer; transition:transform .2s, box-shadow .2s; position:relative; max-width:100%; min-width:0; }
-        .destacado-mini:hover { transform:translateY(-2px); box-shadow:0 8px 20px rgba(0,0,0,.08); }
-        .destacado-mini img { width:100%; aspect-ratio:1.2; object-fit:cover; display:block; max-width:100%; }
-        .destacado-mini span { position:absolute; bottom:0; left:0; right:0; background:linear-gradient(to top, rgba(0,0,0,.7), transparent); color:white; padding:18px 12px 10px; font-size:12px; font-weight:600; }
+        .destacado-mini { background:#fff; border:1px solid #e5e7eb; border-radius:12px; overflow:hidden; cursor:pointer; transition:transform .2s, box-shadow .2s; position:relative; max-width:100%; min-width:0; }
+        .destacado-mini:hover { transform:translateY(-2px); box-shadow:0 12px 28px rgba(0,0,0,.12); }
+        .destacado-mini img { width:100%; height:100%; object-fit:cover; display:block; max-width:100%; transition:transform .4s; }
+        .destacado-mini:hover img { transform:scale(1.06); }
+        .destacado-mini span { position:absolute; bottom:0; left:0; right:0; background:linear-gradient(to top, rgba(0,0,0,.85) 0%, rgba(0,0,0,.4) 60%, transparent 100%); color:white; padding:30px 14px 12px; font-size:13px; font-weight:700; letter-spacing:.02em; }
+        
+        /* GRID BENTO: en desktop el destacado ocupa 2x2 y los mini se reparten alrededor */
+        .bento-destacados {
+            display: grid;
+            gap: 12px;
+            /* Móvil: 2 columnas, destacado arriba ocupa ambas */
+            grid-template-columns: 1fr 1fr;
+            grid-auto-rows: auto;
+        }
+        /* En móvil: destacado ocupa 2 cols arriba, los 4 mini en grid 2x2 abajo */
+        .bento-destacados .destacado-principal {
+            grid-column: span 2;
+            aspect-ratio: 16 / 9; /* En móvil: panorámico para no ocupar mucho alto */
+        }
+        .bento-destacados .destacado-mini {
+            aspect-ratio: 1 / 1; /* Cuadrados, se ven bien con cualquier imagen */
+        }
+        
+        /* En tablet (640px+): empezamos a hacer el bento real */
+        @media (min-width: 640px) {
+            .bento-destacados { 
+                grid-template-columns: repeat(4, 1fr);
+                grid-template-rows: repeat(2, 1fr);
+            }
+            .bento-destacados .destacado-principal {
+                grid-column: 1 / 3;
+                grid-row: 1 / 3;
+                aspect-ratio: auto; /* deja que el grid maneje el tamaño */
+            }
+            .bento-destacados .destacado-mini { 
+                aspect-ratio: auto;
+            }
+        }
+        
+        /* En desktop (1024px+): igual pero con mejor proporción */
+        @media (min-width: 1024px) {
+            .bento-destacados { 
+                gap: 16px;
+                min-height: 420px;
+            }
+        }
         
         /* === ANIMACIÓN EN CASCADA AL CARGAR === */
         @keyframes cardAppear { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
@@ -449,7 +497,11 @@
         
         /* === FOOTER MÓVIL COMPACTO (estilo Mercado Libre) === */
         /* En móvil, las columnas 2-5 se vuelven secciones colapsables (accordions).
-           La columna 1 (marca + redes sociales) sigue visible siempre. */
+           La columna 1 (marca + redes sociales) sigue visible siempre.
+           La columna "Comprar" se oculta porque toda esa info ya está en la barra inferior. */
+        @media (max-width: 767px) {
+            .footer-col-comprar { display: none !important; }
+        }
         @media (max-width: 767px) {
             .footer-pro { padding-top:24px; }
             .footer-grid { gap:0; padding-bottom:16px; }
@@ -829,8 +881,9 @@
             <div id="zona-banners-promo" class="hidden mb-6">
                 <!-- Fila 1 móvil: destacado principal full-width arriba, mini en grid 2x2 abajo -->
                 <!-- Fila 1 desktop: destacado grande (2 cols) + 4 mini en 2x2 a la derecha -->
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4" id="zona-destacados">
-                    <div id="banner-destacado_principal" class="destacado-principal col-span-2 md:row-span-2 hidden">
+                <!-- Bento grid: destacado principal grande (2x2) + 4 mini alrededor -->
+                <div class="bento-destacados mb-4" id="zona-destacados">
+                    <div id="banner-destacado_principal" class="destacado-principal hidden">
                         <img alt="Promoción destacada">
                     </div>
                     <div id="banner-destacado_mini_1" class="destacado-mini hidden">
@@ -985,7 +1038,7 @@
                     <a id="footer-red-tiktok" href="#" target="_blank" rel="noopener" aria-label="TikTok"><i class="fa-brands fa-tiktok"></i></a>
                 </div>
             </div>
-            <div class="footer-col">
+            <div class="footer-col footer-col-comprar">
                 <h4>Comprar</h4>
                 <ul>
                     <li><button onclick="irAInicio()">Catálogo</button></li>
