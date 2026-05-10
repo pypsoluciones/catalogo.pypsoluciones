@@ -153,11 +153,24 @@
         /* === TARJETA DE PRODUCTO MODERNA (estilo ML/Amazon) === */
         .pcard { background:#fff; border-radius:8px; border:1px solid #e5e7eb; transition:transform .2s, box-shadow .2s, border-color .2s; cursor:pointer; display:flex; flex-direction:column; position:relative; overflow:hidden; }
         .pcard:hover { transform: translateY(-2px); box-shadow:0 8px 20px rgba(0,0,0,.08); border-color:#d1d5db; }
-        .pcard-img-wrap { height:11rem; padding:1rem; display:flex; align-items:center; justify-content:center; background:#fff; position:relative; }
+        .pcard-img-wrap { height:11rem; padding:1rem; display:flex; align-items:center; justify-content:center; background:#fff; position:relative; flex-shrink:0; }
         .pcard-img-wrap img { max-height:100%; max-width:100%; object-fit:contain; transition:transform .3s; }
         .pcard:hover .pcard-img-wrap img { transform:scale(1.05); }
-        .pcard-body { padding:.65rem .75rem .85rem; display:flex; flex-direction:column; flex:1; }
-        .pcard-title { font-size:13px; font-weight:400; color:#1f2937; line-height:1.35; margin-bottom:6px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; min-height:36px; }
+        .pcard-body { padding:.65rem .75rem .85rem; display:flex; flex-direction:column; flex:1; min-width:0; }
+        /* Título: máximo 2 líneas con elipsis. Altura fija para que no estire la tarjeta */
+        .pcard-title { 
+            font-size:13px; font-weight:400; color:#1f2937; line-height:1.35; 
+            margin-bottom:6px; 
+            display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; 
+            overflow:hidden; text-overflow:ellipsis;
+            min-height:36px; max-height:36px; /* Fijo: 2 líneas exactas */
+            word-break: break-word; /* Cortar palabras muy largas */
+            min-width: 0; /* Permite que el contenedor padre flex/grid no se expanda */
+            width: 100%;
+        }
+        /* El cuerpo de la tarjeta no debe permitir que su contenido la expanda */
+        .pcard-body { min-width: 0; width: 100%; overflow: hidden; }
+        .pcard-body > * { max-width: 100%; }
         .pcard-rating { display:flex; align-items:center; gap:4px; margin-bottom:4px; font-size:11px; }
         .pcard-rating .stars { color:#f59e0b; letter-spacing:-1px; }
         .pcard-rating .count { color:#6b7280; }
@@ -370,6 +383,114 @@
         .footer-col p, .footer-col a, .footer-col button { color:#b0b0b0; font-size:13px; line-height:1.7; display:block; transition:color .15s; cursor:pointer; background:none; border:none; padding:0; text-align:left; font-family:inherit; }
         .footer-col a:hover, .footer-col button:hover { color:white; }
         .footer-col ul { list-style:none; padding:0; margin:0; }
+        
+        /* === MODAL CATEGORÍAS MÓVIL (acceso rápido desde tabbar) === */
+        .modal-cat-mobile { 
+            position: fixed; inset: 0; z-index: 120; 
+            display: flex; flex-direction: column; justify-content: flex-end;
+            opacity: 0; visibility: hidden; transition: opacity .25s, visibility .25s;
+            pointer-events: none;
+        }
+        .modal-cat-mobile.open { opacity: 1; visibility: visible; pointer-events: auto; }
+        .modal-cat-overlay { 
+            position: absolute; inset: 0; background: rgba(0,0,0,0.5); 
+            cursor: pointer; 
+        }
+        .modal-cat-panel { 
+            position: relative; background: #fff; 
+            border-radius: 16px 16px 0 0; max-height: 75vh; 
+            display: flex; flex-direction: column;
+            transform: translateY(100%); transition: transform .3s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 -8px 24px rgba(0,0,0,0.15);
+        }
+        .modal-cat-mobile.open .modal-cat-panel { transform: translateY(0); }
+        .modal-cat-header { 
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 16px 20px; border-bottom: 1px solid #e5e7eb;
+            position: sticky; top: 0; background: #fff; border-radius: 16px 16px 0 0;
+        }
+        .modal-cat-header h3 { 
+            font-size: 16px; font-weight: 700; color: #1f2937;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .modal-cat-header button {
+            width: 32px; height: 32px; border-radius: 50%; 
+            background: #f3f4f6; border: none; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            color: #6b7280; transition: background .15s;
+        }
+        .modal-cat-header button:hover { background: #e5e7eb; color: #1f2937; }
+        .modal-cat-body { 
+            overflow-y: auto; padding: 8px 12px 24px; flex: 1;
+            -webkit-overflow-scrolling: touch;
+        }
+        .cat-mobile-item {
+            width: 100%; display: flex; align-items: center; gap: 14px;
+            padding: 14px 12px; background: none; border: none; 
+            border-bottom: 1px solid #f1f5f9; 
+            font-size: 14px; font-weight: 500; color: #1f2937; text-align: left;
+            cursor: pointer; transition: background .15s;
+        }
+        .cat-mobile-item:hover, .cat-mobile-item:active { background: #f8fafc; }
+        .cat-mobile-item i:first-child { 
+            font-size: 16px; color: var(--color-primary); 
+            width: 24px; text-align: center; flex-shrink: 0;
+        }
+        .cat-mobile-item.destacada { 
+            background: #f0f9ff; border-bottom: 2px solid #e0e7ff;
+            font-weight: 700;
+        }
+        .cat-mobile-item.destacada i:first-child { color: var(--color-secondary); }
+        .cat-mobile-count {
+            font-size: 11px; font-weight: 600; color: #6b7280;
+            background: #f3f4f6; padding: 2px 8px; border-radius: 10px;
+            margin-left: auto;
+        }
+        
+        /* === FOOTER MÓVIL COMPACTO (estilo Mercado Libre) === */
+        /* En móvil, las columnas 2-5 se vuelven secciones colapsables (accordions).
+           La columna 1 (marca + redes sociales) sigue visible siempre. */
+        @media (max-width: 767px) {
+            .footer-pro { padding-top:24px; }
+            .footer-grid { gap:0; padding-bottom:16px; }
+            .footer-col { border-bottom:1px solid rgba(255,255,255,.08); padding:0; }
+            .footer-col:first-child { border-bottom:1px solid rgba(255,255,255,.08); padding:0 0 20px; margin-bottom:8px; }
+            .footer-col:first-child h4 { margin-bottom:8px; }
+            /* Convertir las columnas 2-5 en accordions */
+            .footer-col:not(:first-child) > h4 {
+                cursor: pointer;
+                padding: 14px 4px;
+                margin-bottom: 0;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                font-size: 12px;
+                user-select: none;
+            }
+            .footer-col:not(:first-child) > h4::after {
+                content: "\f078"; /* chevron-down de Font Awesome */
+                font-family: "Font Awesome 6 Free";
+                font-weight: 900;
+                font-size: 10px;
+                transition: transform .25s;
+            }
+            .footer-col.open > h4::after { transform: rotate(180deg); }
+            .footer-col:not(:first-child) > ul,
+            .footer-col:not(:first-child) > p,
+            .footer-col:not(:first-child) > .footer-pago {
+                max-height: 0;
+                overflow: hidden;
+                transition: max-height .3s ease, padding .3s ease;
+                padding-top: 0;
+                padding-bottom: 0;
+            }
+            .footer-col.open > ul,
+            .footer-col.open > p,
+            .footer-col.open > .footer-pago {
+                max-height: 500px;
+                padding-bottom: 14px;
+            }
+        }
         .footer-col ul li { margin-bottom:8px; }
         .footer-social { display:flex; gap:10px; margin-top:14px; }
         .footer-social a { width:36px; height:36px; border-radius:50%; background:#2a2a2a; display:flex; align-items:center; justify-content:center; color:#b0b0b0; font-size:14px; transition:background .2s, color .2s; }
@@ -942,7 +1063,7 @@
             <button class="mm-link" onclick="cerrarMenuMobile(); abrirModalUbicacion();"><i class="fa-solid fa-location-dot"></i> Enviar a: <span class="text-xs text-gray-500 ml-1" id="mm-ubicacion">Caracas</span></button>
             <button class="mm-link" onclick="toggleMonedaGlobal(); cerrarMenuMobile();"><i class="fa-solid fa-money-bill-transfer"></i> <span id="mm-moneda-label">Ver en Bs</span></button>
         </div>
-        <div class="mm-section" id="mm-categorias">
+        <div class="mm-section" id="mm-categorias" data-seccion="categorias">
             <h4>Categorías</h4>
             <!-- Se llenan dinámicamente -->
         </div>
@@ -1105,62 +1226,112 @@
         let arrayBusquedaOriginal = [];
         let filtrosActivos = { precioMin: null, precioMax: null, marcas: [], categorias: [], colores: [], soloOfertas: false, soloStock: false };
 
-        // Manejo del botón "atrás" del navegador / celular
-        // Cuando el usuario está en una vista interna (PDP, búsqueda, modal) 
-        // el botón "atrás" lo regresa a inicio en lugar de cerrar la app.
+        // ============================================
+        // ============================================
+        // MANEJO DEL BOTÓN ATRÁS (navegador / celular)
+        // ============================================
+        // Estrategia: empujamos un estado "buffer" al iniciar. Al volver del buffer
+        // (cuando el usuario presiona atrás), si hay un modal abierto lo cerramos.
+        // Si está navegando en una vista interna, volvemos a home. Solo en home y
+        // tras 2 pulsaciones consecutivas dejamos que la app cierre.
+        let _atrasContador = 0;
+        let _atrasTimer = null;
+        let _bufferActivo = false;
+        
+        function empujarBufferHistorial() {
+            try {
+                window.history.pushState({ buffer: true, ts: Date.now() }, '', window.location.href);
+                _bufferActivo = true;
+            } catch(e) { console.warn('pushState falló:', e); }
+        }
+        
         window.addEventListener('popstate', (event) => {
-            // Si hay un modal abierto, primero cerrarlo
-            const modalUbic = document.getElementById('modal-ubicacion');
-            const modalQV = document.getElementById('modal-quickview');
-            const sidebarCarrito = document.getElementById('sidebar-carrito');
-            const megaMenu = document.getElementById('megamenu-panel');
-            const menuMobile = document.getElementById('menu-mobile');
-            
-            // Cerrar overlays/modales si están abiertos (sin retroceder de verdad)
-            if (modalUbic && !modalUbic.classList.contains('hidden')) {
-                cerrarModalUbicacion();
-                window.history.pushState({inicio: true}, '', window.location.href);
-                return;
-            }
-            if (modalQV && !modalQV.classList.contains('hidden')) {
-                cerrarQuickView();
-                window.history.pushState({inicio: true}, '', window.location.href);
-                return;
-            }
-            if (sidebarCarrito && !sidebarCarrito.classList.contains('translate-x-full')) {
-                toggleCarrito();
-                window.history.pushState({inicio: true}, '', window.location.href);
-                return;
-            }
-            if (megaMenu && megaMenu.classList.contains('open')) {
-                cerrarMegaMenu();
-                window.history.pushState({inicio: true}, '', window.location.href);
-                return;
-            }
-            if (menuMobile && menuMobile.classList.contains('open')) {
-                cerrarMenuMobile();
-                window.history.pushState({inicio: true}, '', window.location.href);
-                return;
-            }
-            
-            // Manejar navegación entre vistas según URL
-            const skuUrl = new URLSearchParams(window.location.search).get('producto');
-            if (skuUrl) {
-                const prod = todosLosProductos.find(p => p.id_producto_sku === skuUrl);
-                if(prod) abrirPDP(prod, false);
-            } else {
-                irAInicio(false);
+            try {
+                // 1. Cerrar cualquier overlay abierto (prioridad)
+                const lightbox = document.querySelector('.lightbox');
+                if (lightbox) { lightbox.remove(); empujarBufferHistorial(); return; }
+                
+                const modalCheck = document.getElementById('modal-checkout');
+                if (modalCheck && !modalCheck.classList.contains('hidden')) {
+                    if (typeof cerrarCheckout === 'function') cerrarCheckout();
+                    empujarBufferHistorial(); return;
+                }
+                
+                const modalUbic = document.getElementById('modal-ubicacion');
+                if (modalUbic && !modalUbic.classList.contains('hidden')) {
+                    if (typeof cerrarModalUbicacion === 'function') cerrarModalUbicacion();
+                    empujarBufferHistorial(); return;
+                }
+                
+                const modalQV = document.getElementById('modal-quickview');
+                if (modalQV && !modalQV.classList.contains('hidden')) {
+                    if (typeof cerrarQuickView === 'function') cerrarQuickView();
+                    empujarBufferHistorial(); return;
+                }
+                
+                const modalCat = document.getElementById('modal-categorias-mobile');
+                if (modalCat && modalCat.classList.contains('open')) {
+                    if (typeof cerrarModalCategoriasMobile === 'function') cerrarModalCategoriasMobile();
+                    empujarBufferHistorial(); return;
+                }
+                
+                const sidebarCarrito = document.getElementById('sidebar-carrito');
+                if (sidebarCarrito && !sidebarCarrito.classList.contains('translate-x-full')) {
+                    toggleCarrito();
+                    empujarBufferHistorial(); return;
+                }
+                
+                const menuMobile = document.getElementById('menu-mobile');
+                if (menuMobile && menuMobile.classList.contains('open')) {
+                    if (typeof cerrarMenuMobile === 'function') cerrarMenuMobile();
+                    empujarBufferHistorial(); return;
+                }
+                
+                // 2. Si está en PDP o búsqueda, regresar a home
+                const vistaInicio = document.getElementById('vista-inicio-compleja');
+                const vistaPDP = document.getElementById('vista-pdp');
+                const vistaBusq = document.getElementById('vista-catalogo-limpio');
+                const enHome = vistaInicio && !vistaInicio.classList.contains('hidden');
+                const enPDP = vistaPDP && !vistaPDP.classList.contains('hidden');
+                const enBusqueda = vistaBusq && !vistaBusq.classList.contains('hidden');
+                
+                if (enPDP || enBusqueda) {
+                    irAInicio(false);
+                    empujarBufferHistorial();
+                    return;
+                }
+                
+                // 3. En home: contador de pulsaciones para no cerrar accidentalmente
+                if (enHome) {
+                    _atrasContador++;
+                    if (_atrasContador === 1) {
+                        // Avisar al usuario
+                        if (typeof mostrarToast === 'function') {
+                            mostrarToast('Presiona atrás de nuevo para salir', 'info');
+                        }
+                        empujarBufferHistorial();
+                        clearTimeout(_atrasTimer);
+                        _atrasTimer = setTimeout(() => { _atrasContador = 0; }, 2000);
+                        return;
+                    }
+                    // 2da pulsación: NO empujamos buffer → el navegador procesa atrás normal
+                    _atrasContador = 0;
+                    // Dejamos que el evento siga naturalmente (no hacemos nada)
+                    return;
+                }
+                
+                // Fallback: empujar buffer para no perder el control
+                empujarBufferHistorial();
+            } catch (err) {
+                console.error('Error en popstate:', err);
+                // Por seguridad, empujar buffer para que no cierre
+                try { empujarBufferHistorial(); } catch(e) {}
             }
         });
         
-        // Empujar un estado inicial al historial cuando carga la página
-        // Esto permite que el primer "atrás" no cierre la pestaña/app
+        // Empujar estado inicial al historial al cargar
         window.addEventListener('load', () => {
-            // Solo empujar si no hay un parámetro de producto (estamos en home)
-            const skuUrl = new URLSearchParams(window.location.search).get('producto');
-            if (!skuUrl) {
-                window.history.pushState({inicio: true}, '', window.location.href);
-            }
+            empujarBufferHistorial();
         });
         window.addEventListener('load', () => { 
             const skuUrl = new URLSearchParams(window.location.search).get('producto'); 
@@ -1579,8 +1750,8 @@
                     irAInicio();
                     break;
                 case 'categorias':
-                    // Abrir el mega-menú con todas las categorías
-                    toggleMegaMenu();
+                    // Modal dedicado solo con la lista de categorías (más directo que el menú lateral)
+                    abrirModalCategoriasMobile();
                     break;
                 case 'compras':
                     toggleCarrito();
@@ -1592,6 +1763,52 @@
                     abrirMenuMobile();
                     break;
             }
+        }
+        
+        // Modal compacto solo con la lista de categorías (botón "Categorías" de la tabbar)
+        function abrirModalCategoriasMobile() {
+            let modal = document.getElementById('modal-categorias-mobile');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'modal-categorias-mobile';
+                modal.className = 'modal-cat-mobile';
+                modal.innerHTML = `
+                    <div class="modal-cat-overlay" onclick="cerrarModalCategoriasMobile()"></div>
+                    <div class="modal-cat-panel">
+                        <div class="modal-cat-header">
+                            <h3><i class="fa-solid fa-shapes text-secondary"></i> Todas las Categorías</h3>
+                            <button onclick="cerrarModalCategoriasMobile()" aria-label="Cerrar"><i class="fa-solid fa-times"></i></button>
+                        </div>
+                        <div class="modal-cat-body" id="modal-cat-lista"></div>
+                    </div>`;
+                document.body.appendChild(modal);
+            }
+            
+            const lista = document.getElementById('modal-cat-lista');
+            const cats = [...new Set(todosLosProductos.map(p => p.categoria_del_producto).filter(c => c))].sort();
+            let html = `<button class="cat-mobile-item destacada" onclick="cerrarModalCategoriasMobile(); filtrarPorCategoria('Todas');">
+                <i class="fa-solid fa-th-large text-secondary"></i>
+                <span>Ver todas las categorías</span>
+                <i class="fa-solid fa-chevron-right text-gray-400 text-xs ml-auto"></i>
+            </button>`;
+            cats.forEach(cat => {
+                const count = todosLosProductos.filter(p => p.categoria_del_producto === cat).length;
+                html += `<button class="cat-mobile-item" onclick="cerrarModalCategoriasMobile(); filtrarPorCategoria('${escaparHTML(cat)}');">
+                    <i class="fa-solid ${iconoParaCategoria(cat)}"></i>
+                    <span>${escaparHTML(cat)}</span>
+                    <span class="cat-mobile-count">${count}</span>
+                </button>`;
+            });
+            lista.innerHTML = html;
+            
+            modal.classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function cerrarModalCategoriasMobile() {
+            const modal = document.getElementById('modal-categorias-mobile');
+            if (modal) modal.classList.remove('open');
+            document.body.style.overflow = '';
         }
         
         // Actualiza los badges de la tabbar (carrito y favoritos)
@@ -3132,6 +3349,17 @@
         // Año del footer dinámico
         const yearEl = document.getElementById('footer-year');
         if (yearEl) yearEl.innerText = new Date().getFullYear();
+        
+        // Footer móvil: hacer las columnas 2-5 colapsables en móvil
+        // (la columna 1 con marca + redes siempre se queda visible)
+        document.querySelectorAll('footer.footer-pro .footer-col:not(:first-child) > h4').forEach(h4 => {
+            h4.addEventListener('click', () => {
+                // Solo activar el toggle si estamos en móvil
+                if (window.matchMedia('(max-width: 767px)').matches) {
+                    h4.parentElement.classList.toggle('open');
+                }
+            });
+        });
         
         // Cerrar modales con tecla Escape
         document.addEventListener('keydown', (e) => {
