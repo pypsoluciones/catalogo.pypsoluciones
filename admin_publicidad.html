@@ -85,8 +85,18 @@
                 </div>
 
                 <div>
-                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">URL de la Imagen</label>
-                    <input type="text" id="ban-img" oninput="document.getElementById('preview-img').src=this.value" class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-[#E67E22]">
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">URL de la Imagen (pega URL o sube desde tu equipo)</label>
+                    <div style="display:flex; gap:8px; align-items:stretch;">
+                        <input type="text" id="ban-img" oninput="document.getElementById('preview-img').src=this.value" class="flex-1 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-[#E67E22]">
+                        <button type="button" id="btn-subir-banner" onclick="document.getElementById('file-banner-img').click()" class="px-4 py-2 bg-[#143B62] text-white font-bold rounded text-xs flex items-center gap-1.5 hover:bg-[#0f2d4a] transition shrink-0 whitespace-nowrap">
+                            <i class="fa-solid fa-cloud-arrow-up"></i> Subir
+                        </button>
+                        <input type="file" id="file-banner-img" accept="image/*" style="display:none;" onchange="subirBannerWebP(event)">
+                    </div>
+                    <div id="prog-banner" style="height:4px; background:#e5e7eb; border-radius:2px; overflow:hidden; margin-top:6px; display:none;">
+                        <div id="prog-banner-bar" style="height:100%; background:#E67E22; width:0%; transition:width .2s;"></div>
+                    </div>
+                    <p id="prog-banner-info" style="font-size:10px; color:#10b981; margin-top:4px; display:none;"></p>
                 </div>
                 <div>
                     <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Título (Texto Principal)</label>
@@ -180,6 +190,12 @@
             document.getElementById('ban-titulo').value = ban.titulo || '';
             document.getElementById('ban-subtitulo').value = ban.subtitulo || '';
             document.getElementById('ban-link').value = ban.link_url || '';
+            
+            // Limpiar estado del progress (por si quedó de un upload anterior)
+            const prog = document.getElementById('prog-banner');
+            const progInfo = document.getElementById('prog-banner-info');
+            if (prog) prog.style.display = 'none';
+            if (progInfo) progInfo.style.display = 'none';
 
             document.getElementById('modal-banner').classList.remove('hidden');
             setTimeout(() => document.getElementById('modal-content').classList.replace('scale-95', 'scale-100'), 10);
@@ -216,7 +232,130 @@
                 btn.innerHTML = `Guardar Cambios`;
             }
         }
-      
+        
+        // ============================================
+        // SUBIDA DE IMÁGENES CON COMPRESIÓN WEBP
+        // ============================================
+        // Convierte un File de imagen a Blob WebP comprimido
+        function comprimirAWebP(file, maxWidth = 1600, quality = 0.85) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let { width, height } = img;
+                        // Reducir si excede maxWidth
+                        if (width > maxWidth) {
+                            height = Math.round(height * (maxWidth / width));
+                            width = maxWidth;
+                        }
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        canvas.toBlob(blob => {
+                            if (blob) resolve(blob);
+                            else reject(new Error('No se pudo generar el blob WebP'));
+                        }, 'image/webp', quality);
+                    };
+                    img.onerror = () => reject(new Error('Imagen inválida'));
+                    img.src = e.target.result;
+                };
+                reader.onerror = () => reject(new Error('No se pudo leer el archivo'));
+                reader.readAsDataURL(file);
+            });
+        }
+        
+        async function subirBannerWebP(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            // Validaciones
+            if (!file.type.startsWith('image/')) {
+                alert('Por favor selecciona un archivo de imagen.');
+                return;
+            }
+            if (file.size > 10 * 1024 * 1024) {
+                alert('La imagen es demasiado grande. Máximo 10 MB.');
+                return;
+            }
+            
+            const btn = document.getElementById('btn-subir-banner');
+            const prog = document.getElementById('prog-banner');
+            const progBar = document.getElementById('prog-banner-bar');
+            const progInfo = document.getElementById('prog-banner-info');
+            const inputUrl = document.getElementById('ban-img');
+            const previewImg = document.getElementById('preview-img');
+            const seccion = document.getElementById('edit-seccion').value || 'banner';
+            
+            const btnOriginal = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Procesando...';
+            prog.style.display = 'block';
+            progBar.style.width = '15%';
+            progInfo.style.display = 'none';
+            
+            try {
+                // 1. Convertir a WebP comprimido (banners pueden ser más grandes: 1600px y mejor calidad)
+                const blobWebP = await comprimirAWebP(file, 1600, 0.85);
+                progBar.style.width = '40%';
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Subiendo...';
+                
+                // 2. Subir a Supabase Storage (bucket "inventario")
+                const nombreArchivo = `banner_${seccion}_${Date.now()}.webp`;
+                const path = `inventario/${nombreArchivo}`;
+                
+                const TOKEN = localStorage.getItem('pyp_token_seguro');
+                const uploadRes = await fetch(`${SUPABASE_URL}/storage/v1/object/${path}`, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': `Bearer ${TOKEN}`,
+                        'Content-Type': 'image/webp',
+                        'x-upsert': 'true'
+                    },
+                    body: blobWebP
+                });
+                
+                progBar.style.width = '85%';
+                
+                if (!uploadRes.ok) {
+                    const errText = await uploadRes.text();
+                    throw new Error(`Error al subir: ${uploadRes.status} - ${errText.substring(0, 100)}`);
+                }
+                
+                // 3. Construir URL pública y poner en el input
+                const urlPublica = `${SUPABASE_URL}/storage/v1/object/public/${path}`;
+                inputUrl.value = urlPublica;
+                previewImg.src = urlPublica;
+                
+                // Mostrar info de la compresión
+                const kbOriginal = (file.size / 1024).toFixed(1);
+                const kbWebP = (blobWebP.size / 1024).toFixed(1);
+                const reduccion = ((1 - blobWebP.size / file.size) * 100).toFixed(0);
+                progInfo.innerHTML = `<i class="fa-solid fa-check-circle"></i> Subido: ${kbWebP} KB · ${reduccion}% más liviana que el original (${kbOriginal} KB)`;
+                progInfo.style.display = 'block';
+                
+                progBar.style.width = '100%';
+                setTimeout(() => { prog.style.display = 'none'; progBar.style.width = '0%'; }, 800);
+                
+            } catch (err) {
+                console.error('Error subida banner:', err);
+                alert('Error al subir la imagen: ' + err.message);
+                prog.style.display = 'none';
+                progBar.style.width = '0%';
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = btnOriginal;
+                event.target.value = ''; // Limpiar input file para permitir re-subir el mismo archivo
+            }
+        }
+        
+        // Limpiar info de progreso al abrir modal
+        const _editarOriginal = window.editar;
+        // No sobreescribimos editar(), solo aseguramos que se limpie en cerrarModal
+        const _cerrarModalOrig = window.cerrarModal;
     </script>
     <script src="menu.js"></script>
 </body>
