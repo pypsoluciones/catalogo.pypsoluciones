@@ -818,7 +818,7 @@
     <div id="vista-inicio-compleja" class="fade-in flex-1 pb-10">
         <div class="max-w-[1600px] mx-auto px-4 pt-6 pb-2">
             <div id="banner-hero" class="w-full h-48 md:h-80 bg-primary rounded overflow-hidden shadow-sm mb-6 cursor-pointer relative group">
-                <img src="" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-80">
+                <img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-80" alt="Banner principal">
                 <div class="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent flex flex-col justify-center p-8 md:p-16">
                     <h2 class="text-white text-3xl md:text-5xl font-black drop-shadow-lg mb-2">Cargando...</h2>
                     <p class="text-white text-lg md:text-2xl font-medium drop-shadow-md text-yellow-400"></p>
@@ -831,22 +831,22 @@
                 <!-- Fila 1 desktop: destacado grande (2 cols) + 4 mini en 2x2 a la derecha -->
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4" id="zona-destacados">
                     <div id="banner-destacado_principal" class="destacado-principal col-span-2 md:row-span-2 hidden">
-                        <img src="" alt="Promoción destacada" onerror="this.style.display='none'">
+                        <img alt="Promoción destacada">
                     </div>
                     <div id="banner-destacado_mini_1" class="destacado-mini hidden">
-                        <img src="" alt="" onerror="this.style.display='none'">
+                        <img alt="">
                         <span></span>
                     </div>
                     <div id="banner-destacado_mini_2" class="destacado-mini hidden">
-                        <img src="" alt="" onerror="this.style.display='none'">
+                        <img alt="">
                         <span></span>
                     </div>
                     <div id="banner-destacado_mini_3" class="destacado-mini hidden">
-                        <img src="" alt="" onerror="this.style.display='none'">
+                        <img alt="">
                         <span></span>
                     </div>
                     <div id="banner-destacado_mini_4" class="destacado-mini hidden">
-                        <img src="" alt="" onerror="this.style.display='none'">
+                        <img alt="">
                         <span></span>
                     </div>
                 </div>
@@ -854,15 +854,15 @@
                 <!-- Fila 2 móvil: 1 col por banner. Desktop: 3 cols -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="zona-amazon-banners">
                     <div id="banner-amazon_1" class="promo-card hidden">
-                        <div class="promo-img"><img src="" alt="" onerror="this.style.display='none'"></div>
+                        <div class="promo-img"><img alt=""></div>
                         <div class="promo-body"><h3></h3><span class="amazon-link"></span></div>
                     </div>
                     <div id="banner-amazon_2" class="promo-card hidden">
-                        <div class="promo-img"><img src="" alt="" onerror="this.style.display='none'"></div>
+                        <div class="promo-img"><img alt=""></div>
                         <div class="promo-body"><h3></h3><span class="amazon-link"></span></div>
                     </div>
                     <div id="banner-amazon_3" class="promo-card hidden">
-                        <div class="promo-img"><img src="" alt="" onerror="this.style.display='none'"></div>
+                        <div class="promo-img"><img alt=""></div>
                         <div class="promo-body"><h3></h3><span class="amazon-link"></span></div>
                     </div>
                 </div>
@@ -1491,12 +1491,22 @@
                 if (!b.seccion) return;
                 if (!urlValida(b.imagen_url)) return; // ignorar banners con URL inválida
                 
+                // Helper: prepara una imagen para mostrar (resetea cualquier display:none previo)
+                const prepararImg = (img, url) => {
+                    if (!img) return;
+                    img.style.display = ''; // limpiar display:none que pudo haber quedado
+                    img.style.visibility = 'visible';
+                    img.style.opacity = '';
+                    // Asignar src DESPUÉS de limpiar estilos
+                    img.src = url;
+                };
+                
                 if (b.seccion === 'hero') { 
                     const el = document.getElementById('banner-hero'); 
                     if (el) { 
                         const img = el.querySelector('img');
-                        img.src = b.imagen_url;
                         img.onerror = () => { el.style.display = 'none'; };
+                        prepararImg(img, b.imagen_url);
                         el.querySelector('h2').innerText = b.titulo || ''; 
                         el.querySelector('p').innerText = b.subtitulo || ''; 
                         if (urlValida(b.link_url)) el.onclick = () => window.location.href = b.link_url; 
@@ -1506,8 +1516,8 @@
                     const el = document.getElementById('banner-destacado_principal'); 
                     if (el) { 
                         const img = el.querySelector('img');
-                        img.src = b.imagen_url;
                         img.onerror = () => { el.classList.add('hidden'); };
+                        prepararImg(img, b.imagen_url);
                         el.classList.remove('hidden');
                         if (urlValida(b.link_url)) el.onclick = () => window.location.href = b.link_url; 
                         mostrarDestacados = true;
@@ -1517,8 +1527,8 @@
                     const el = document.getElementById('banner-' + b.seccion); 
                     if (el) { 
                         const img = el.querySelector('img');
-                        img.src = b.imagen_url;
                         img.onerror = () => { el.classList.add('hidden'); };
+                        prepararImg(img, b.imagen_url);
                         el.querySelector('span').innerText = b.titulo || ''; 
                         el.classList.remove('hidden');
                         if (urlValida(b.link_url)) el.onclick = () => window.location.href = b.link_url; 
@@ -1529,8 +1539,8 @@
                     const el = document.getElementById('banner-' + b.seccion); 
                     if (el) { 
                         const img = el.querySelector('img');
-                        img.src = b.imagen_url;
                         img.onerror = () => { el.classList.add('hidden'); };
+                        prepararImg(img, b.imagen_url);
                         el.querySelector('h3').innerText = b.titulo || ''; 
                         el.querySelector('.amazon-link').innerHTML = `${b.subtitulo || 'Ver más'} <i class="fa-solid fa-angle-right ml-1"></i>`; 
                         el.classList.remove('hidden');
