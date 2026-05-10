@@ -347,11 +347,8 @@
         .qv-close:hover { background:#e5e7eb; }
         
         /* === MENÚ MÓVIL HAMBURGUESA === */
-        .btn-menu-mobile { display:none; }
-        @media (max-width: 768px) {
-            .btn-menu-mobile { display:flex; align-items:center; justify-content:center; width:38px; height:38px; background:rgba(255,255,255,.1); border:none; border-radius:6px; color:white; cursor:pointer; font-size:18px; }
-            .btn-menu-mobile:hover { background:rgba(255,255,255,.18); }
-        }
+        /* Oculto siempre porque ahora el menú "Más" está en la barra inferior móvil */
+        .btn-menu-mobile { display:none !important; }
         #menu-mobile-overlay { position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:110; opacity:0; visibility:hidden; transition:opacity .25s; }
         #menu-mobile-overlay.open { opacity:1; visibility:visible; }
         #menu-mobile { position:fixed; top:0; left:0; bottom:0; width:85%; max-width:340px; background:#fff; z-index:115; transform:translateX(-100%); transition:transform .3s cubic-bezier(0.16, 1, 0.3, 1); overflow-y:auto; box-shadow:4px 0 25px rgba(0,0,0,.15); display:flex; flex-direction:column; }
@@ -388,17 +385,24 @@
         .input-success { border-color:#10b981 !important; }
         
         /* === ANTI-OVERFLOW HORIZONTAL (móvil) === */
-        /* Garantiza que NADA pueda desbordar el ancho de la pantalla en móvil. */
+        /* Garantiza que NADA pueda desbordar el ancho de la pantalla en móvil.
+           Aplicamos a contenedores comunes pero NO a "*" porque rompe carruseles
+           horizontales (sus hijos necesitan poder sumar ancho > parent para hacer scroll). */
         html, body { overflow-x: hidden; max-width: 100vw; }
-        * { max-width: 100%; box-sizing: border-box; }
-        /* Excepción: elementos que SÍ deben poder desbordar (carruseles con scroll, modales) */
-        .carrusel-container, .cat-carrusel, .modal-overlay, .lightbox,
-        #sidebar-carrito, #overlay-carrito, #megamenu-panel,
-        .footer-pro, header { max-width: none; }
-        /* Imágenes nunca deben desbordar */
-        img { max-width: 100%; height: auto; }
-        /* Inputs y textareas tampoco */
-        input, textarea, select { max-width: 100%; }
+        body { box-sizing: border-box; }
+        body > * { max-width: 100vw; }
+        /* Imágenes y multimedia: nunca desbordar */
+        img, video, iframe, embed, object { max-width: 100%; height: auto; }
+        /* Inputs/textareas: nunca desbordar */
+        input, textarea, select { max-width: 100%; box-sizing: border-box; }
+        /* Tablas largas con scroll interno */
+        table { max-width: 100%; }
+        /* Los hijos de un carrusel SÍ pueden tener ancho fijo (no aplicar max-width) */
+        .carrusel-container > *, .cat-carrusel > * { max-width: none; }
+        
+        /* Refuerzo extra: las grids deben ser min-width:0 para no desbordar en flex/grid */
+        #grilla-bloque-1, #grilla-bloque-2, #grilla-busqueda { min-width: 0; }
+        .pcard { min-width: 0; }
         
         /* === BARRA INFERIOR MÓVIL (estilo app) === */
         /* Solo visible en pantallas <= 768px. Fija en la parte inferior. */
@@ -613,16 +617,17 @@
     <div id="aria-live-region" role="status" aria-live="polite" aria-atomic="true" class="sr-only"></div>
 
     <header class="sticky top-0 z-[60] w-full shadow-md flex flex-col">
-        <div class="bg-primary-dark text-gray-200 text-xs py-1.5 w-full">
+        <!-- Top bar: oculta en móvil para ahorrar espacio (INICIO y Ver en Bs ya están en la barra inferior) -->
+        <div class="bg-primary-dark text-gray-200 text-xs py-1.5 w-full hidden md:block">
             <div class="max-w-[1600px] mx-auto px-4 flex justify-between items-center">
                 <div class="flex gap-4 items-center flex-wrap">
                     <button onclick="irAInicio()" class="hover:text-white transition flex items-center gap-1 font-bold text-sm text-yellow-400"><i class="fa-solid fa-home"></i> INICIO</button>
-                    <span class="font-semibold text-gray-200 ml-2 hidden sm:inline">Tasa BCV: <span id="tasa-bcv-display" class="text-white">0.00</span></span>
-                    <span id="topbar-envios" class="hidden md:inline-flex items-center gap-1 text-gray-300 ml-2"><i class="fa-solid fa-truck-fast"></i> Envíos a todo el país</span>
-                    <span class="hidden md:inline-flex items-center gap-1 text-gray-300"><i class="fa-solid fa-shield-halved"></i> Compra protegida</span>
+                    <span class="font-semibold text-gray-200 ml-2">Tasa BCV: <span id="tasa-bcv-display" class="text-white">0.00</span></span>
+                    <span id="topbar-envios" class="inline-flex items-center gap-1 text-gray-300 ml-2"><i class="fa-solid fa-truck-fast"></i> Envíos a todo el país</span>
+                    <span class="inline-flex items-center gap-1 text-gray-300"><i class="fa-solid fa-shield-halved"></i> Compra protegida</span>
                 </div>
                 <div class="flex gap-3 items-center">
-                    <button id="topbar-enviar-a" onclick="abrirModalUbicacion()" class="hidden sm:inline-flex items-center gap-1 hover:text-white transition" title="Cambiar ubicación de envío">
+                    <button id="topbar-enviar-a" onclick="abrirModalUbicacion()" class="inline-flex items-center gap-1 hover:text-white transition" title="Cambiar ubicación de envío">
                         <i class="fa-solid fa-location-dot text-secondary"></i>
                         <span>Enviar a <span id="ubicacion-actual" class="font-semibold text-white">Caracas</span></span>
                     </button>
@@ -656,6 +661,11 @@
                 </div>
 
                 <div class="flex items-center gap-5 shrink-0">
+                    <!-- Botón compacto Bs/USD solo móvil (la top bar está oculta) -->
+                    <button onclick="toggleMonedaGlobal()" id="btn-moneda-mobile" class="md:hidden bg-secondary text-white px-2.5 py-1 rounded text-[11px] font-bold flex items-center gap-1 shadow-sm shrink-0" title="Cambiar moneda" aria-label="Cambiar moneda">
+                        <i class="fa-solid fa-arrow-right-arrow-left text-[10px]"></i>
+                        <span id="texto-moneda-mobile">Bs</span>
+                    </button>
                     <a id="header-link-whatsapp" href="https://wa.me/584140285806" target="_blank" rel="noopener" class="hidden md:flex flex-col items-center hover:text-gray-200 transition text-xs font-semibold" aria-label="Contactar por WhatsApp">
                         <i class="fa-brands fa-whatsapp text-xl mb-0.5 text-[#25D366]"></i> WhatsApp
                     </a>
@@ -664,14 +674,15 @@
                         <span id="contador-favoritos" class="absolute -top-2 -right-3 bg-red-500 text-white text-[10px] font-bold h-4 min-w-[16px] px-1 flex items-center justify-center rounded-full hidden">0</span>
                     </button>
                     <button onclick="toggleCarrito()" class="relative flex flex-col items-center hover:text-gray-200 transition text-xs font-semibold">
-                        <i class="fa-solid fa-cart-shopping text-xl mb-0.5 text-secondary"></i> Mi Carrito
+                        <i class="fa-solid fa-cart-shopping text-xl mb-0.5 text-secondary"></i> <span class="hidden md:inline">Mi Carrito</span>
                         <span id="contador-carrito" class="absolute -top-2 -right-2 bg-secondary text-white text-[10px] font-bold h-4 w-4 flex items-center justify-center rounded-full hidden shadow-sm">0</span>
                     </button>
                 </div>
             </div>
         </div>
         
-        <div class="bg-primary-dark border-t border-white/10 shadow-inner w-full">
+        <!-- Barra de categorías del header: oculta en móvil (ya está "Categorías" en la barra inferior) -->
+        <div class="bg-primary-dark border-t border-white/10 shadow-inner w-full hidden md:block">
             <div class="max-w-[1600px] mx-auto px-4 py-1.5 flex gap-1 items-center justify-center overflow-x-auto no-scrollbar" id="contenedor-categorias">
                 <div class="megamenu-wrap">
                     <button class="megamenu-trigger" onclick="toggleMegaMenu(event)">
@@ -693,7 +704,7 @@
                 </div>
             </div>
             
-            <!-- Banners promocionales (se llenan desde Supabase: vitrinas_publicidad) -->
+            <!-- Banners promocionales (se llenan desde Supabase: vista vitrinas_publicas, filtra de la tabla vitrinas_publicidad) -->
             <div id="zona-banners-promo" class="hidden mb-6">
                 <!-- Fila 1 móvil: destacado principal full-width arriba, mini en grid 2x2 abajo -->
                 <!-- Fila 1 desktop: destacado grande (2 cols) + 4 mini en 2x2 a la derecha -->
@@ -1094,7 +1105,63 @@
         let arrayBusquedaOriginal = [];
         let filtrosActivos = { precioMin: null, precioMax: null, marcas: [], categorias: [], colores: [], soloOfertas: false, soloStock: false };
 
-        window.addEventListener('popstate', (event) => { const skuUrl = new URLSearchParams(window.location.search).get('producto'); if (skuUrl) { const prod = todosLosProductos.find(p => p.id_producto_sku === skuUrl); if(prod) abrirPDP(prod, false); } else { irAInicio(false); } });
+        // Manejo del botón "atrás" del navegador / celular
+        // Cuando el usuario está en una vista interna (PDP, búsqueda, modal) 
+        // el botón "atrás" lo regresa a inicio en lugar de cerrar la app.
+        window.addEventListener('popstate', (event) => {
+            // Si hay un modal abierto, primero cerrarlo
+            const modalUbic = document.getElementById('modal-ubicacion');
+            const modalQV = document.getElementById('modal-quickview');
+            const sidebarCarrito = document.getElementById('sidebar-carrito');
+            const megaMenu = document.getElementById('megamenu-panel');
+            const menuMobile = document.getElementById('menu-mobile');
+            
+            // Cerrar overlays/modales si están abiertos (sin retroceder de verdad)
+            if (modalUbic && !modalUbic.classList.contains('hidden')) {
+                cerrarModalUbicacion();
+                window.history.pushState({inicio: true}, '', window.location.href);
+                return;
+            }
+            if (modalQV && !modalQV.classList.contains('hidden')) {
+                cerrarQuickView();
+                window.history.pushState({inicio: true}, '', window.location.href);
+                return;
+            }
+            if (sidebarCarrito && !sidebarCarrito.classList.contains('translate-x-full')) {
+                toggleCarrito();
+                window.history.pushState({inicio: true}, '', window.location.href);
+                return;
+            }
+            if (megaMenu && megaMenu.classList.contains('open')) {
+                cerrarMegaMenu();
+                window.history.pushState({inicio: true}, '', window.location.href);
+                return;
+            }
+            if (menuMobile && menuMobile.classList.contains('open')) {
+                cerrarMenuMobile();
+                window.history.pushState({inicio: true}, '', window.location.href);
+                return;
+            }
+            
+            // Manejar navegación entre vistas según URL
+            const skuUrl = new URLSearchParams(window.location.search).get('producto');
+            if (skuUrl) {
+                const prod = todosLosProductos.find(p => p.id_producto_sku === skuUrl);
+                if(prod) abrirPDP(prod, false);
+            } else {
+                irAInicio(false);
+            }
+        });
+        
+        // Empujar un estado inicial al historial cuando carga la página
+        // Esto permite que el primer "atrás" no cierre la pestaña/app
+        window.addEventListener('load', () => {
+            // Solo empujar si no hay un parámetro de producto (estamos en home)
+            const skuUrl = new URLSearchParams(window.location.search).get('producto');
+            if (!skuUrl) {
+                window.history.pushState({inicio: true}, '', window.location.href);
+            }
+        });
         window.addEventListener('load', () => { 
             const skuUrl = new URLSearchParams(window.location.search).get('producto'); 
             // Mostrar ubicación guardada
@@ -1122,9 +1189,11 @@
                 } catch(e) {}
 
                 try {
-                    const resBanners = await fetch(`${SUPABASE_URL}/rest/v1/vitrinas_publicidad?select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } });
-                    const bannersInfo = await resBanners.json(); inyectarBannersDOM(bannersInfo);
-                } catch(e) {}
+                    const resBanners = await fetch(`${SUPABASE_URL}/rest/v1/vitrinas_publicas?select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } });
+                    const bannersInfo = await resBanners.json();
+                    console.info('[Banners] Recibidos de Supabase:', bannersInfo);
+                    inyectarBannersDOM(bannersInfo);
+                } catch(e) { console.warn('[Banners] Error al cargar:', e); }
 
                 let imagenGlobalDefecto = 'data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22150%22%20height%3D%22150%22%20viewBox%3D%220%200%20150%20150%22%3E%3Crect%20width%3D%22150%22%20height%3D%22150%22%20fill%3D%22%23f8fafc%22/%3E%3Ctext%20x%3D%2250%25%22%20y%3D%2250%25%22%20font-family%3D%22Arial%2Csans-serif%22%20font-size%3D%2214%22%20fill%3D%22%2394a3b8%22%20text-anchor%3D%22middle%22%20dy%3D%22.3em%22%3ESIN%20FOTO%3C/text%3E%3C/svg%3E';
                 try {
@@ -1317,7 +1386,11 @@
         }
 
         function toggleMonedaGlobal() {
-            mostrarEnBs = !mostrarEnBs; document.getElementById('texto-moneda').innerText = mostrarEnBs ? 'Ver en USD' : 'Ver en Bs';
+            mostrarEnBs = !mostrarEnBs;
+            const txtDesk = document.getElementById('texto-moneda');
+            if (txtDesk) txtDesk.innerText = mostrarEnBs ? 'Ver en USD' : 'Ver en Bs';
+            const txtMob = document.getElementById('texto-moneda-mobile');
+            if (txtMob) txtMob.innerText = mostrarEnBs ? 'USD' : 'Bs';
             if(productoAbiertoActual) { abrirPDP(productoAbiertoActual, false); }
             else if(document.getElementById('vista-inicio-compleja').classList.contains('hidden') === false) { renderLayoutInicio(false); }
             else { renderBusquedaLimpia(arrayBusquedaActual, document.getElementById('titulo-busqueda').innerText, false); }
