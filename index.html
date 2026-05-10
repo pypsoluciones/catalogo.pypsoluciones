@@ -387,6 +387,20 @@
         @keyframes shake { 0%,100% { transform:translateX(0); } 25% { transform:translateX(-4px); } 75% { transform:translateX(4px); } }
         .input-success { border-color:#10b981 !important; }
         
+        /* === GRID CATEGORÍAS VISUALES === */
+        .cat-grid { display:grid; grid-template-columns:repeat(2, 1fr); gap:12px; }
+        @media (min-width: 640px) { .cat-grid { grid-template-columns:repeat(3, 1fr); gap:14px; } }
+        @media (min-width: 1024px) { .cat-grid { grid-template-columns:repeat(6, 1fr); gap:16px; } }
+        .cat-card { background:#fff; border:1px solid #e5e7eb; border-radius:10px; overflow:hidden; cursor:pointer; transition:transform .2s, box-shadow .2s, border-color .2s; display:flex; flex-direction:column; align-items:center; padding:14px 10px 12px; text-align:center; }
+        .cat-card:hover { transform:translateY(-3px); box-shadow:0 8px 20px rgba(0,0,0,.10); border-color:var(--color-secondary); }
+        .cat-card-img { width:64px; height:64px; border-radius:50%; background:#f8fafc; display:flex; align-items:center; justify-content:center; overflow:hidden; margin-bottom:10px; border:2px solid #f1f5f9; transition:border-color .2s; }
+        .cat-card:hover .cat-card-img { border-color:var(--color-secondary); }
+        @media (min-width: 1024px) { .cat-card-img { width:80px; height:80px; } }
+        .cat-card-img img { width:100%; height:100%; object-fit:cover; }
+        .cat-card-img i { font-size:28px; color:#94a3b8; }
+        .cat-card-name { font-size:12px; font-weight:600; color:#1f2937; line-height:1.2; min-height:32px; display:flex; align-items:center; }
+        .cat-card-count { font-size:10px; color:#64748b; margin-top:2px; }
+        
         /* === FIX FOOTER FLASH === */
         /* Reservar espacio mínimo para evitar que el footer "salte" durante carga inicial 
            o cuando se cambia entre vistas (inicio, catálogo, PDP) */
@@ -504,8 +518,9 @@
             
             <!-- Banners promocionales (se llenan desde Supabase: vitrinas_publicidad) -->
             <div id="zona-banners-promo" class="hidden mb-6">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                    <div id="banner-destacado_principal" class="destacado-principal md:col-span-1 hidden">
+                <!-- Fila 1: 1 destacado grande + 4 mini -->
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4" id="zona-destacados">
+                    <div id="banner-destacado_principal" class="destacado-principal col-span-2 md:col-span-2 row-span-2 hidden">
                         <img src="" alt="Promoción destacada" onerror="this.style.display='none'">
                     </div>
                     <div id="banner-destacado_mini_1" class="destacado-mini hidden">
@@ -516,10 +531,18 @@
                         <img src="" alt="" onerror="this.style.display='none'">
                         <span></span>
                     </div>
+                    <div id="banner-destacado_mini_3" class="destacado-mini hidden">
+                        <img src="" alt="" onerror="this.style.display='none'">
+                        <span></span>
+                    </div>
+                    <div id="banner-destacado_mini_4" class="destacado-mini hidden">
+                        <img src="" alt="" onerror="this.style.display='none'">
+                        <span></span>
+                    </div>
                 </div>
                 
-                <!-- Mini-cards estilo Amazon (4 categorías visuales) -->
-                <div class="promo-grid">
+                <!-- Fila 2: 3 banners categoría estilo Amazon -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="zona-amazon-banners">
                     <div id="banner-amazon_1" class="promo-card hidden">
                         <div class="promo-img"><img src="" alt="" onerror="this.style.display='none'"></div>
                         <div class="promo-body"><h3></h3><span class="amazon-link"></span></div>
@@ -532,12 +555,14 @@
                         <div class="promo-img"><img src="" alt="" onerror="this.style.display='none'"></div>
                         <div class="promo-body"><h3></h3><span class="amazon-link"></span></div>
                     </div>
-                    <div id="banner-amazon_4" class="promo-card hidden">
-                        <div class="promo-img"><img src="" alt="" onerror="this.style.display='none'"></div>
-                        <div class="promo-body"><h3></h3><span class="amazon-link"></span></div>
-                    </div>
                 </div>
             </div>
+        </div>
+
+        <!-- Grid de Categorías Visuales (dinámico, generado desde productos) -->
+        <div id="seccion-cat-visuales" class="max-w-[1600px] mx-auto px-4 mb-8 hidden">
+            <h3 class="text-xl font-bold text-gray-800 mb-4 border-l-4 border-secondary pl-3"><i class="fa-solid fa-shapes text-secondary mr-1"></i> Compra por Categoría</h3>
+            <div id="cat-grid" class="cat-grid"></div>
         </div>
 
         <div class="max-w-[1600px] mx-auto px-4 mb-8"><h3 class="text-xl font-bold text-gray-800 mb-4 border-l-4 border-secondary pl-3">Lo más Reciente</h3><div id="carrusel-1" class="carrusel-container no-scrollbar pb-2"></div></div>
@@ -693,7 +718,7 @@
         <div class="footer-bottom">
             <div class="footer-bottom-inner">
                 <span>© <span id="footer-year"></span> <span id="footer-bottom-empresa">Catálogo Oficial</span> · Todos los derechos reservados</span>
-                <span>Hecho con <i class="fa-solid fa-heart text-red-500 mx-1"></i> para servirte mejor</span>
+                <span id="footer-slogan">Hecho con <i class="fa-solid fa-heart text-red-500 mx-1"></i> para servirte mejor</span>
             </div>
         </div>
     </footer>
@@ -835,6 +860,8 @@
             logo_login: '',
             logo_sidebar: '',
             logo_footer: '',
+            logo_mobile: '',
+            sloganFooter: '',
             // Toggles (todos visibles por defecto si no están definidos)
             mostrarNombreHeader: true,
             mostrarEnvios: true,
@@ -1066,8 +1093,8 @@
             });
             
             // Ocultar bloques que no tienen contenido válido
-            const filaDestacados = document.querySelector('#zona-banners-promo > div:first-child');
-            const filaAmazon = document.querySelector('#zona-banners-promo > .promo-grid');
+            const filaDestacados = document.getElementById('zona-destacados');
+            const filaAmazon = document.getElementById('zona-amazon-banners');
             if (filaDestacados) filaDestacados.style.display = mostrarDestacados ? '' : 'none';
             if (filaAmazon) filaAmazon.style.display = mostrarAmazon ? '' : 'none';
             
@@ -1278,9 +1305,12 @@
             ocultarTodasLasVistas(); 
             document.getElementById('vista-inicio-compleja').classList.remove('hidden'); 
             if(pushHistory) { const url = new URL(window.location); url.searchParams.delete('producto'); window.history.pushState({}, '', url); } 
-            window.scrollTo(0, 0); 
             renderLayoutInicio(true); 
             actualizarSEOInicio();
+            // Scroll al top: usamos doble approach para asegurar que funcione en móvil
+            // (el render puede demorar, así que hacemos scroll antes y después)
+            window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+            requestAnimationFrame(() => window.scrollTo({ top: 0, left: 0, behavior: 'instant' }));
         }
 
         function renderLayoutInicio(resetearIndices = false) {
@@ -1292,13 +1322,14 @@
             const grilla1 = document.getElementById('grilla-bloque-1');
             grilla1.innerHTML = todosLosProductos.slice(0, indices.bloque1).map(generarTarjetaHTML).join('');
             // Bloque 2 ahora con paginación
-            cargarPaginaHome(indices.paginaHome);
+            cargarPaginaHome(indices.paginaHome, false);
+            renderCategoriasVisuales();
             renderVistosRecientes();
             actualizarContadorFavoritos();
             // Animar solo la primera grilla visible (que es la que más impacto da)
             if (resetearIndices) aplicarStagger(grilla1);
         }
-        function cargarPaginaHome(numeroPagina) { 
+        function cargarPaginaHome(numeroPagina, hacerScroll = true) { 
             const productosBloque2 = todosLosProductos.slice(LIMITES.bloque1);
             const totalPag = Math.max(1, Math.ceil(productosBloque2.length / POR_PAGINA));
             numeroPagina = Math.max(1, Math.min(numeroPagina, totalPag));
@@ -1309,12 +1340,14 @@
             grilla.innerHTML = productosBloque2.slice(inicio, fin).map(generarTarjetaHTML).join('');
             aplicarStagger(grilla);
             renderPaginacion('paginacion-home', numeroPagina, totalPag, productosBloque2.length, cargarPaginaHome, grilla);
-            // Scroll suave al inicio del bloque
-            const titulo = grilla.previousElementSibling;
-            if (titulo) titulo.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            // Scroll suave SOLO cuando el usuario cambia de página (no al cargar inicial)
+            if (hacerScroll) {
+                const titulo = grilla.previousElementSibling;
+                if (titulo) titulo.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
         }
         
-        function cargarPaginaBusqueda(numeroPagina) {
+        function cargarPaginaBusqueda(numeroPagina, hacerScroll = true) {
             const totalPag = Math.max(1, Math.ceil(arrayBusquedaActual.length / POR_PAGINA));
             numeroPagina = Math.max(1, Math.min(numeroPagina, totalPag));
             indices.paginaBusqueda = numeroPagina;
@@ -1328,8 +1361,10 @@
             grilla.innerHTML = arrayBusquedaActual.slice(inicio, fin).map(generarTarjetaHTML).join('');
             aplicarStagger(grilla);
             renderPaginacion('paginacion-busqueda', numeroPagina, totalPag, arrayBusquedaActual.length, cargarPaginaBusqueda, grilla);
-            const tit = document.getElementById('titulo-busqueda');
-            if (tit) tit.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            if (hacerScroll) {
+                const tit = document.getElementById('titulo-busqueda');
+                if (tit) tit.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
         }
         
         // Genera el HTML de paginación inteligente: 1 ... 4 5 [6] 7 8 ... 20
@@ -1455,7 +1490,7 @@
             } else {
                 // Si reseteamos (nueva búsqueda o filtro aplicado), volvemos a página 1
                 if (resetearIndices) indices.paginaBusqueda = 1;
-                cargarPaginaBusqueda(indices.paginaBusqueda);
+                cargarPaginaBusqueda(indices.paginaBusqueda, false);
             }
             
             renderChipsFiltros();
@@ -2190,6 +2225,53 @@
             if (productosVistos.length > 20) productosVistos = productosVistos.slice(0, 20);
             try { localStorage.setItem('pyp_vistos', JSON.stringify(productosVistos)); } catch(e) {}
         }
+        // Grid dinámico de categorías visuales
+        // Auto-pick: para cada categoría toma la primera imagen del primer producto.
+        // En el futuro (Fase 3) habrá tabla de fallback manual de imagen por categoría.
+        function renderCategoriasVisuales() {
+            const seccion = document.getElementById('seccion-cat-visuales');
+            const cont = document.getElementById('cat-grid');
+            if (!seccion || !cont) return;
+            
+            // Agrupar productos por categoría y contar
+            const mapa = {};
+            todosLosProductos.forEach(p => {
+                const cat = p.categoria_del_producto;
+                if (!cat) return;
+                if (!mapa[cat]) mapa[cat] = { count: 0, primeraImg: null };
+                mapa[cat].count++;
+                // Tomar la primera imagen válida
+                if (!mapa[cat].primeraImg && p.imagen_principal && p.imagen_principal.trim() !== '') {
+                    mapa[cat].primeraImg = p.imagen_principal;
+                }
+            });
+            
+            // Ordenar por cantidad de productos y limitar a 12
+            const entradas = Object.entries(mapa)
+                .sort((a, b) => b[1].count - a[1].count)
+                .slice(0, 12);
+            
+            if (entradas.length === 0) {
+                seccion.classList.add('hidden');
+                return;
+            }
+            
+            cont.innerHTML = entradas.map(([cat, info]) => {
+                const icono = iconoParaCategoria(cat);
+                const imgHTML = info.primeraImg
+                    ? `<img src="${info.primeraImg}" loading="lazy" alt="${escaparHTML(cat)}" onerror="this.parentElement.innerHTML='<i class=\\'fa-solid ${icono}\\'></i>'">`
+                    : `<i class="fa-solid ${icono}"></i>`;
+                return `
+                    <div class="cat-card" onclick="filtrarPorCategoria('${escaparHTML(cat)}')" role="button" aria-label="Ver categoría ${escaparHTML(cat)}">
+                        <div class="cat-card-img">${imgHTML}</div>
+                        <div class="cat-card-name">${escaparHTML(cat)}</div>
+                        <div class="cat-card-count">${info.count} producto${info.count !== 1 ? 's' : ''}</div>
+                    </div>`;
+            }).join('');
+            
+            seccion.classList.remove('hidden');
+        }
+        
         function renderVistosRecientes() {
             const seccion = document.getElementById('seccion-recientes');
             const cont = document.getElementById('carrusel-recientes');
@@ -2283,6 +2365,8 @@
             if (map.LOGO_LOGIN) configEmpresa.logo_login = map.LOGO_LOGIN;
             if (map.LOGO_SIDEBAR) configEmpresa.logo_sidebar = map.LOGO_SIDEBAR;
             if (map.LOGO_FOOTER) configEmpresa.logo_footer = map.LOGO_FOOTER;
+            if (map.LOGO_HEADER_MOBILE) configEmpresa.logo_mobile = map.LOGO_HEADER_MOBILE;
+            if (map.SLOGAN_FOOTER) configEmpresa.sloganFooter = map.SLOGAN_FOOTER;
             
             // Toggles (interruptores configurables desde admin)
             const b = parseBool;
@@ -2313,6 +2397,11 @@
             if (footName) footName.textContent = configEmpresa.nombre.toUpperCase();
             const footBotEmp = document.getElementById('footer-bottom-empresa');
             if (footBotEmp) footBotEmp.textContent = configEmpresa.nombre;
+            const footSlog = document.getElementById('footer-slogan');
+            if (footSlog && configEmpresa.sloganFooter) {
+                // Permitir HTML básico pero escapar lo demás. Si trae <i class="fa-..."> se respeta.
+                footSlog.innerHTML = configEmpresa.sloganFooter;
+            }
             const footDesc = document.getElementById('footer-empresa-descripcion');
             if (footDesc) footDesc.textContent = configEmpresa.descripcion;
             
@@ -2359,12 +2448,22 @@
             }
             
             // Logo del header (si hay logo_sidebar lo usamos en lugar del icono)
+            // En móvil usamos logo_mobile si está definido, si no, el desktop
             const headerLogoIcon = document.getElementById('header-logo-icon');
             const headerLogoImg = document.getElementById('header-logo-img');
-            if (headerLogoIcon && headerLogoImg && configEmpresa.logo_sidebar && configEmpresa.logo_sidebar.trim()) {
-                headerLogoIcon.style.display = 'none';
-                headerLogoImg.src = configEmpresa.logo_sidebar;
-                headerLogoImg.style.display = 'block';
+            if (headerLogoIcon && headerLogoImg) {
+                const esMobil = window.matchMedia('(max-width: 768px)').matches;
+                const logoUrl = (esMobil && configEmpresa.logo_mobile && configEmpresa.logo_mobile.trim())
+                    ? configEmpresa.logo_mobile
+                    : (configEmpresa.logo_sidebar && configEmpresa.logo_sidebar.trim() ? configEmpresa.logo_sidebar : '');
+                if (logoUrl) {
+                    headerLogoIcon.style.display = 'none';
+                    headerLogoImg.src = logoUrl;
+                    headerLogoImg.style.display = 'block';
+                } else {
+                    headerLogoIcon.style.display = '';
+                    headerLogoImg.style.display = 'none';
+                }
             }
             
             // Logo del footer (si está configurado, reemplaza el icono naranja por una imagen)
@@ -2701,6 +2800,17 @@
                 document.querySelector('.lightbox')?.remove();
                 if (!document.getElementById('sidebar-carrito').classList.contains('translate-x-full')) toggleCarrito();
             }
+        });
+        
+        // Actualizar logo al cambiar tamaño de ventana (rotar móvil, redimensionar)
+        let _logoResizeTimer;
+        window.addEventListener('resize', () => {
+            clearTimeout(_logoResizeTimer);
+            _logoResizeTimer = setTimeout(() => {
+                if (configEmpresa.logo_mobile || configEmpresa.logo_sidebar) {
+                    renderConfigEmpresaEnDOM();
+                }
+            }, 200);
         });
     </script>
 </body>
