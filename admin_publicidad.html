@@ -80,6 +80,11 @@
             <div class="p-6 space-y-4 bg-gray-50">
                 <input type="hidden" id="edit-seccion">
                 
+                <!-- Bloque de info técnica del banner que se está editando -->
+                <div id="modal-info-tecnica" class="bg-blue-50 border-l-4 border-blue-500 p-3 rounded-r text-xs text-gray-700">
+                    <!-- Se llena dinámicamente al abrir el modal -->
+                </div>
+                
                 <div class="flex justify-center mb-4">
                     <img id="preview-img" src="" class="h-32 object-cover rounded border border-gray-300 shadow-sm w-full max-w-[300px]">
                 </div>
@@ -122,6 +127,92 @@
     <script>
         let banners = [];
 
+        // ============================================
+        // GUÍA TÉCNICA DE CADA BANNER
+        // Aquí están las dimensiones exactas, qué se ve en cada lugar y consejos.
+        // Esta info se muestra al usuario en cada tarjeta del admin.
+        // ============================================
+        const GUIA_BANNERS = {
+            hero: {
+                titulo: 'Banner Principal (Hero)',
+                ubicacion: 'Aparece arriba del catálogo, ocupa todo el ancho. Es lo primero que ve el visitante.',
+                dimension: '1600 × 480 px',
+                aspectRatio: '10:3 (extra panorámico)',
+                pesoMaximo: '350 KB',
+                consejos: [
+                    'Texto importante en el centro o izquierda',
+                    'Evita texto en los bordes (se cortan en móvil)',
+                    'Usa una imagen impactante con poco texto',
+                    'Alta resolución porque es la imagen más grande del sitio'
+                ],
+                color: '#143B62'
+            },
+            destacado_principal: {
+                titulo: 'Destacado Principal (Imagen Grande)',
+                ubicacion: 'Ocupa la mitad izquierda de la fila de promociones. Se acompaña de 4 mini-banners a la derecha.',
+                dimension: '1200 × 480 px',
+                aspectRatio: '5:2 (panorámico)',
+                pesoMaximo: '250 KB',
+                consejos: [
+                    'Idealmente con una persona/producto destacado',
+                    'Usa colores que contrasten con el fondo blanco del catálogo',
+                    'NO incluyas texto pequeño (no se lee)',
+                    'Esta imagen NO tiene overlay de texto, así que el texto del mensaje debe estar dentro de la imagen'
+                ],
+                color: '#E67E22'
+            },
+            destacado_mini: {
+                titulo: 'Mini-Destacados (4 banners pequeños)',
+                ubicacion: 'Aparecen al lado del destacado principal, en grilla 2×2. Tienen overlay con texto encima.',
+                dimension: '600 × 500 px',
+                aspectRatio: '6:5 (casi cuadrado)',
+                pesoMaximo: '150 KB',
+                consejos: [
+                    'NO pongas texto en la imagen (el sistema agrega el título sobre un degradado oscuro)',
+                    'Usa una imagen con elemento principal centrado',
+                    'Los bordes inferiores se oscurecen automáticamente para que el texto sea legible',
+                    'Funcionan bien con fondos claros o coloridos'
+                ],
+                color: '#10b981'
+            },
+            amazon: {
+                titulo: 'Banners Categoría (3 medianos)',
+                ubicacion: 'Aparecen debajo de los destacados, en una fila horizontal de 3. Tienen una banda de texto debajo (no encima).',
+                dimension: '700 × 500 px',
+                aspectRatio: '7:5 (paisaje suave)',
+                pesoMaximo: '180 KB',
+                consejos: [
+                    'El texto del título y subtítulo va en una banda BLANCA debajo de la imagen',
+                    'Usa imágenes con contenido centrado',
+                    'Funcionan bien con escenas o productos en uso',
+                    'Estilo similar a las categorías de Amazon'
+                ],
+                color: '#3b82f6'
+            }
+        };
+        
+        // Genera una imagen SVG de muestra con las dimensiones del banner.
+        // Útil para que el admin vea cómo se verá un banner antes de subir el real.
+        function placeholderSVG(width, height, label, color = '#143B62') {
+            const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" preserveAspectRatio="xMidYMid slice">
+                <defs>
+                    <pattern id="grid-${width}-${height}" width="40" height="40" patternUnits="userSpaceOnUse">
+                        <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+                    </pattern>
+                    <linearGradient id="grad-${width}-${height}" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="${color}" stop-opacity="0.95"/>
+                        <stop offset="100%" stop-color="${color}" stop-opacity="0.65"/>
+                    </linearGradient>
+                </defs>
+                <rect width="${width}" height="${height}" fill="url(#grad-${width}-${height})"/>
+                <rect width="${width}" height="${height}" fill="url(#grid-${width}-${height})"/>
+                <text x="50%" y="46%" font-family="system-ui, sans-serif" font-size="${Math.min(width, height) * 0.08}" fill="white" text-anchor="middle" font-weight="700" opacity="0.95">${label}</text>
+                <text x="50%" y="60%" font-family="system-ui, sans-serif" font-size="${Math.min(width, height) * 0.045}" fill="white" text-anchor="middle" opacity="0.75">${width} × ${height} px</text>
+                <text x="50%" y="${height - 20}" font-family="system-ui, sans-serif" font-size="${Math.min(width, height) * 0.035}" fill="white" text-anchor="middle" opacity="0.55">Imagen de muestra · Reemplaza con tu imagen</text>
+            </svg>`;
+            return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+        }
+
         window.onload = cargarBanners;
 
         async function cargarBanners() {
@@ -132,6 +223,27 @@
             } catch(e) { console.error(e); }
         }
 
+        // Bloque de info técnica que se muestra en cada banner del admin
+        function bloqueInfo(guia) {
+            const consejosHtml = guia.consejos.map(c => `<li class="flex items-start gap-1.5"><i class="fa-solid fa-check text-green-600 mt-0.5 text-[10px]"></i><span>${c}</span></li>`).join('');
+            return `<div class="bg-blue-50 border-l-4 border-blue-400 p-3 mt-3 rounded-r text-[11px] text-gray-700 leading-relaxed">
+                <div class="flex flex-wrap gap-x-4 gap-y-1 mb-2 font-semibold">
+                    <span><i class="fa-solid fa-ruler-combined text-blue-600 mr-1"></i> <strong class="text-blue-900">Dimensión:</strong> ${guia.dimension}</span>
+                    <span><i class="fa-solid fa-image text-blue-600 mr-1"></i> <strong class="text-blue-900">Proporción:</strong> ${guia.aspectRatio}</span>
+                    <span><i class="fa-solid fa-weight-hanging text-blue-600 mr-1"></i> <strong class="text-blue-900">Peso máx:</strong> ${guia.pesoMaximo}</span>
+                </div>
+                <p class="text-gray-600 mb-2 italic">${guia.ubicacion}</p>
+                <ul class="space-y-1 text-gray-700">${consejosHtml}</ul>
+            </div>`;
+        }
+        
+        // Verifica si un banner tiene imagen real o está vacío (entonces muestra placeholder)
+        function urlImagenOPlaceholder(banner, w, h, label, color) {
+            const url = (banner && banner.imagen_url || '').trim();
+            if (url && url !== '#' && /^(https?:|data:)/i.test(url)) return url;
+            return placeholderSVG(w, h, label, color);
+        }
+
         function dibujarBanners() {
             const cont = document.getElementById('contenedor-banners');
             let html = '';
@@ -139,45 +251,129 @@
             // Agrupar visualmente para el admin
             const hero = banners.find(b => b.seccion === 'hero');
             const destPrincipal = banners.find(b => b.seccion === 'destacado_principal');
-            const destMinis = banners.filter(b => b.seccion.startsWith('destacado_mini_'));
-            const amazons = banners.filter(b => b.seccion.startsWith('amazon_'));
+            const destMinis = banners.filter(b => b.seccion.startsWith('destacado_mini_')).sort((a,b) => a.seccion.localeCompare(b.seccion));
+            const amazons = banners.filter(b => b.seccion.startsWith('amazon_')).sort((a,b) => a.seccion.localeCompare(b.seccion));
 
-            // 1. Hero
-            if(hero) {
-                html += `<div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div class="bg-gray-50 px-4 py-2 border-b flex justify-between items-center"><h3 class="font-bold text-sm text-gray-600 uppercase">Banner Principal (Hero)</h3><button onclick="editar('${hero.seccion}')" class="text-blue-600 hover:text-blue-800 text-sm font-bold"><i class="fa-solid fa-pen"></i> Editar</button></div>
-                    <div class="flex items-center gap-4 p-4"><img src="${hero.imagen_url}" class="w-32 h-20 object-cover rounded border"><div><p class="font-bold text-lg">${hero.titulo}</p><p class="text-sm text-gray-500">${hero.subtitulo}</p></div></div>
-                </div>`;
-            }
+            // ====================================================
+            // BLOQUE INTRODUCTORIO: explicación general
+            // ====================================================
+            html += `<div class="bg-gradient-to-r from-[#143B62] to-[#1e5491] text-white rounded-xl shadow-lg p-5 mb-6">
+                <h2 class="text-xl font-bold mb-2 flex items-center gap-2"><i class="fa-solid fa-circle-info"></i> Guía Rápida de Banners</h2>
+                <p class="text-sm text-blue-100 mb-3">Cada banner tiene una ubicación específica en tu catálogo y dimensiones óptimas. Sigue las recomendaciones de cada sección para que tus imágenes se vean profesionales sin recortes ni distorsiones.</p>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                    <div class="bg-white/10 rounded p-2"><strong>1 Hero</strong><div class="text-blue-200">Principal arriba</div></div>
+                    <div class="bg-white/10 rounded p-2"><strong>1 Destacado</strong><div class="text-blue-200">Promo grande</div></div>
+                    <div class="bg-white/10 rounded p-2"><strong>4 Mini</strong><div class="text-blue-200">Mini-banners</div></div>
+                    <div class="bg-white/10 rounded p-2"><strong>3 Amazon</strong><div class="text-blue-200">Categorías</div></div>
+                </div>
+            </div>`;
 
-            // 2. Destacado Grande + 4 Minis
-            html += `<h2 class="text-lg font-bold text-[#143B62] mt-8 mb-4 border-l-4 border-[#E67E22] pl-2">Sección: Colecciones (1 Grande, 4 Pequeños)</h2>`;
-            if(destPrincipal) {
-                html += `<div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-4">
-                    <div class="bg-gray-50 px-4 py-2 border-b flex justify-between items-center"><h3 class="font-bold text-sm text-gray-600 uppercase">Imagen Grande</h3><button onclick="editar('${destPrincipal.seccion}')" class="text-blue-600 hover:text-blue-800 text-sm font-bold"><i class="fa-solid fa-pen"></i> Editar</button></div>
-                    <div class="flex items-center gap-4 p-4"><img src="${destPrincipal.imagen_url}" class="w-32 h-20 object-cover rounded border"><div><p class="font-bold text-lg">${destPrincipal.titulo}</p></div></div>
-                </div>`;
-            }
+            // ====================================================
+            // 1. BANNER HERO
+            // ====================================================
+            const guiaHero = GUIA_BANNERS.hero;
+            const heroImg = hero ? urlImagenOPlaceholder(hero, 1600, 480, 'BANNER HERO', guiaHero.color) : placeholderSVG(1600, 480, 'BANNER HERO (sin configurar)', guiaHero.color);
+            const heroBtn = hero 
+                ? `<button onclick="editar('${hero.seccion}')" class="text-white bg-[#E67E22] hover:bg-[#d96e0f] px-3 py-1.5 rounded text-xs font-bold transition"><i class="fa-solid fa-pen mr-1"></i> Editar</button>`
+                : `<span class="text-orange-600 text-xs font-bold"><i class="fa-solid fa-triangle-exclamation"></i> Sin configurar</span>`;
+            html += `<div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6">
+                <div class="bg-gradient-to-r from-blue-50 to-indigo-50 px-4 py-3 border-b flex justify-between items-center">
+                    <h3 class="font-bold text-sm text-[#143B62]"><i class="fa-solid fa-rectangle-ad mr-2"></i> ${guiaHero.titulo}</h3>
+                    ${heroBtn}
+                </div>
+                <div class="p-4">
+                    <div class="rounded-lg overflow-hidden border border-gray-200" style="aspect-ratio: 10/3; background: #f3f4f6;">
+                        <img src="${heroImg}" class="w-full h-full object-cover block">
+                    </div>
+                    ${hero && hero.titulo ? `<div class="mt-3 text-sm"><strong class="text-gray-800">${hero.titulo || ''}</strong> <span class="text-gray-500">— ${hero.subtitulo || ''}</span></div>` : ''}
+                    ${bloqueInfo(guiaHero)}
+                </div>
+            </div>`;
+
+            // ====================================================
+            // 2. DESTACADO PRINCIPAL + 4 MINI
+            // ====================================================
+            html += `<h2 class="text-base font-bold text-[#143B62] mt-8 mb-3 border-l-4 border-[#E67E22] pl-3 flex items-center gap-2"><i class="fa-solid fa-star text-[#E67E22]"></i> Sección: Destacados (1 grande + 4 pequeños)</h2>`;
             
-            html += `<div class="grid grid-cols-2 md:grid-cols-4 gap-4">`;
-            destMinis.forEach(m => {
-                html += `<div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
-                    <div class="bg-gray-50 px-3 py-2 border-b flex justify-between items-center"><span class="text-xs font-bold text-gray-500">Miniatura</span><button onclick="editar('${m.seccion}')" class="text-blue-600"><i class="fa-solid fa-pen"></i></button></div>
-                    <div class="p-3 flex-1 flex flex-col items-center text-center"><img src="${m.imagen_url}" class="w-full h-20 object-cover rounded mb-2"><p class="font-bold text-sm">${m.titulo}</p></div>
+            // Destacado Principal
+            const guiaDP = GUIA_BANNERS.destacado_principal;
+            const dpImg = destPrincipal ? urlImagenOPlaceholder(destPrincipal, 1200, 480, 'DESTACADO PRINCIPAL', guiaDP.color) : placeholderSVG(1200, 480, 'DESTACADO PRINCIPAL (sin configurar)', guiaDP.color);
+            const dpBtn = destPrincipal 
+                ? `<button onclick="editar('${destPrincipal.seccion}')" class="text-white bg-[#E67E22] hover:bg-[#d96e0f] px-3 py-1.5 rounded text-xs font-bold transition"><i class="fa-solid fa-pen mr-1"></i> Editar</button>`
+                : `<span class="text-orange-600 text-xs font-bold"><i class="fa-solid fa-triangle-exclamation"></i> Sin configurar</span>`;
+            html += `<div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-4">
+                <div class="bg-gradient-to-r from-orange-50 to-amber-50 px-4 py-3 border-b flex justify-between items-center">
+                    <h3 class="font-bold text-sm text-[#E67E22]"><i class="fa-solid fa-image mr-2"></i> ${guiaDP.titulo}</h3>
+                    ${dpBtn}
+                </div>
+                <div class="p-4">
+                    <div class="rounded-lg overflow-hidden border border-gray-200" style="aspect-ratio: 5/2; background: #f3f4f6;">
+                        <img src="${dpImg}" class="w-full h-full object-cover block">
+                    </div>
+                    ${destPrincipal && destPrincipal.titulo ? `<div class="mt-3 text-sm"><strong class="text-gray-800">${destPrincipal.titulo}</strong></div>` : ''}
+                    ${bloqueInfo(guiaDP)}
+                </div>
+            </div>`;
+            
+            // 4 Mini-banners
+            const guiaMini = GUIA_BANNERS.destacado_mini;
+            html += `<div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-4">
+                <div class="bg-gradient-to-r from-green-50 to-emerald-50 px-4 py-3 border-b">
+                    <h3 class="font-bold text-sm text-green-700"><i class="fa-solid fa-th-large mr-2"></i> ${guiaMini.titulo}</h3>
+                </div>
+                <div class="p-4">
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">`;
+            for (let i = 1; i <= 4; i++) {
+                const banner = destMinis.find(m => m.seccion === `destacado_mini_${i}`);
+                const img = banner ? urlImagenOPlaceholder(banner, 600, 500, `MINI ${i}`, guiaMini.color) : placeholderSVG(600, 500, `MINI ${i} (sin configurar)`, guiaMini.color);
+                const btn = banner 
+                    ? `<button onclick="editar('${banner.seccion}')" class="absolute top-2 right-2 bg-white shadow text-[#E67E22] hover:bg-[#E67E22] hover:text-white p-1.5 rounded transition text-xs" title="Editar"><i class="fa-solid fa-pen"></i></button>`
+                    : `<span class="absolute top-2 right-2 bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded text-[9px] font-bold">VACÍO</span>`;
+                const titulo = banner && banner.titulo ? banner.titulo : `Mini ${i}`;
+                html += `<div class="relative">
+                    <div class="rounded-lg overflow-hidden border border-gray-200 relative" style="aspect-ratio: 6/5; background: #f3f4f6;">
+                        <img src="${img}" class="w-full h-full object-cover block">
+                        <!-- Simulación del overlay de texto que aparece en el catálogo público -->
+                        <div class="absolute bottom-0 left-0 right-0 px-2 py-2 text-white text-xs font-bold" style="background: linear-gradient(to top, rgba(0,0,0,0.75), transparent);">${titulo}</div>
+                        ${btn}
+                    </div>
                 </div>`;
-            });
-            html += `</div>`;
+            }
+            html += `</div>${bloqueInfo(guiaMini)}</div></div>`;
 
-            // 3. Amazon Style
-            html += `<h2 class="text-lg font-bold text-[#143B62] mt-8 mb-4 border-l-4 border-[#143B62] pl-2">Sección: Categorías (3 Banners Medianos)</h2>`;
-            html += `<div class="grid grid-cols-1 md:grid-cols-3 gap-4">`;
-            amazons.forEach(a => {
-                html += `<div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
-                    <div class="bg-gray-50 px-3 py-2 border-b flex justify-between items-center"><span class="text-xs font-bold text-gray-500">Banner Categoría</span><button onclick="editar('${a.seccion}')" class="text-blue-600"><i class="fa-solid fa-pen"></i></button></div>
-                    <div class="p-4 flex-1 flex flex-col items-start"><img src="${a.imagen_url}" class="w-full h-24 object-cover rounded mb-3"><p class="font-bold text-md">${a.titulo}</p><p class="text-xs text-blue-600">${a.subtitulo}</p></div>
+            // ====================================================
+            // 3. AMAZON STYLE (3 banners categoría)
+            // ====================================================
+            const guiaAmz = GUIA_BANNERS.amazon;
+            html += `<h2 class="text-base font-bold text-[#143B62] mt-8 mb-3 border-l-4 border-blue-500 pl-3 flex items-center gap-2"><i class="fa-solid fa-tags text-blue-500"></i> Sección: Categorías Visuales (3 banners estilo Amazon)</h2>`;
+            html += `<div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-4">
+                <div class="bg-gradient-to-r from-blue-50 to-cyan-50 px-4 py-3 border-b">
+                    <h3 class="font-bold text-sm text-blue-700"><i class="fa-solid fa-store mr-2"></i> ${guiaAmz.titulo}</h3>
+                </div>
+                <div class="p-4">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">`;
+            for (let i = 1; i <= 3; i++) {
+                const banner = amazons.find(a => a.seccion === `amazon_${i}`);
+                const img = banner ? urlImagenOPlaceholder(banner, 700, 500, `AMAZON ${i}`, guiaAmz.color) : placeholderSVG(700, 500, `AMAZON ${i} (sin configurar)`, guiaAmz.color);
+                const btn = banner 
+                    ? `<button onclick="editar('${banner.seccion}')" class="bg-[#E67E22] hover:bg-[#d96e0f] text-white px-3 py-1 rounded text-xs font-bold transition"><i class="fa-solid fa-pen mr-1"></i> Editar</button>`
+                    : `<span class="bg-orange-100 text-orange-700 px-2 py-1 rounded text-[10px] font-bold">VACÍO</span>`;
+                const titulo = banner && banner.titulo ? banner.titulo : `Amazon ${i}`;
+                const subtitulo = banner && banner.subtitulo ? banner.subtitulo : 'Ver más';
+                html += `<div class="border border-gray-200 rounded-lg overflow-hidden bg-white">
+                    <div style="aspect-ratio: 7/5; background: #f3f4f6; overflow: hidden;">
+                        <img src="${img}" class="w-full h-full object-cover block">
+                    </div>
+                    <div class="p-3 flex items-start justify-between gap-2">
+                        <div class="flex-1 min-w-0">
+                            <p class="font-bold text-sm text-gray-800 truncate">${titulo}</p>
+                            <p class="text-xs text-[#E67E22] font-semibold truncate">${subtitulo} <i class="fa-solid fa-chevron-right text-[8px]"></i></p>
+                        </div>
+                        ${btn}
+                    </div>
                 </div>`;
-            });
-            html += `</div>`;
+            }
+            html += `</div>${bloqueInfo(guiaAmz)}</div></div>`;
 
             cont.innerHTML = html;
         }
@@ -190,6 +386,25 @@
             document.getElementById('ban-titulo').value = ban.titulo || '';
             document.getElementById('ban-subtitulo').value = ban.subtitulo || '';
             document.getElementById('ban-link').value = ban.link_url || '';
+            
+            // Llenar el bloque de info técnica según el tipo de banner
+            let guia;
+            if (seccion === 'hero') guia = GUIA_BANNERS.hero;
+            else if (seccion === 'destacado_principal') guia = GUIA_BANNERS.destacado_principal;
+            else if (seccion.startsWith('destacado_mini_')) guia = GUIA_BANNERS.destacado_mini;
+            else if (seccion.startsWith('amazon_')) guia = GUIA_BANNERS.amazon;
+            
+            const infoBox = document.getElementById('modal-info-tecnica');
+            if (guia && infoBox) {
+                infoBox.innerHTML = `
+                    <div class="font-bold text-blue-900 mb-1.5"><i class="fa-solid fa-circle-info mr-1"></i> Editando: ${guia.titulo}</div>
+                    <div class="grid grid-cols-3 gap-2 text-[11px] mb-2">
+                        <div class="bg-white rounded px-2 py-1.5"><strong class="text-blue-700 block text-[9px] uppercase">Dimensión</strong><span class="font-bold">${guia.dimension}</span></div>
+                        <div class="bg-white rounded px-2 py-1.5"><strong class="text-blue-700 block text-[9px] uppercase">Proporción</strong><span class="font-bold">${guia.aspectRatio}</span></div>
+                        <div class="bg-white rounded px-2 py-1.5"><strong class="text-blue-700 block text-[9px] uppercase">Peso máx</strong><span class="font-bold">${guia.pesoMaximo}</span></div>
+                    </div>
+                    <p class="text-[10px] text-gray-600 italic">${guia.ubicacion}</p>`;
+            }
             
             // Limpiar estado del progress (por si quedó de un upload anterior)
             const prog = document.getElementById('prog-banner');
