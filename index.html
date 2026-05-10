@@ -481,7 +481,7 @@
         </div>
         
         <div class="bg-primary-dark border-t border-white/10 shadow-inner w-full">
-            <div class="max-w-[1600px] mx-auto px-4 py-1.5 flex gap-1 items-center overflow-x-auto no-scrollbar" id="contenedor-categorias">
+            <div class="max-w-[1600px] mx-auto px-4 py-1.5 flex gap-1 items-center justify-center overflow-x-auto no-scrollbar" id="contenedor-categorias">
                 <div class="megamenu-wrap">
                     <button class="megamenu-trigger" onclick="toggleMegaMenu(event)">
                         <i class="fa-solid fa-bars"></i> Todas las categorías
@@ -499,26 +499,6 @@
                 <div class="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent flex flex-col justify-center p-8 md:p-16">
                     <h2 class="text-white text-3xl md:text-5xl font-black drop-shadow-lg mb-2">Cargando...</h2>
                     <p class="text-white text-lg md:text-2xl font-medium drop-shadow-md text-yellow-400"></p>
-                </div>
-            </div>
-            
-            <!-- Beneficios rápidos (estilo Amazon trust bar) -->
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-                <div id="trust-envios" class="bg-white border border-gray-200 rounded-lg p-3 flex items-center gap-3 hover:shadow-md transition">
-                    <div class="bg-green-100 text-green-700 rounded-full w-10 h-10 flex items-center justify-center shrink-0"><i class="fa-solid fa-truck-fast"></i></div>
-                    <div class="leading-tight"><div class="text-xs font-bold text-gray-800">Envíos a todo el país</div><div class="text-[10px] text-gray-500">Despacho 24-48h</div></div>
-                </div>
-                <div class="bg-white border border-gray-200 rounded-lg p-3 flex items-center gap-3 hover:shadow-md transition">
-                    <div class="bg-blue-100 text-blue-700 rounded-full w-10 h-10 flex items-center justify-center shrink-0"><i class="fa-solid fa-mobile-screen"></i></div>
-                    <div class="leading-tight"><div class="text-xs font-bold text-gray-800">Múltiples métodos de pago</div><div class="text-[10px] text-gray-500" id="trust-pagos-detalle">Bs, USD, Pago Móvil</div></div>
-                </div>
-                <div class="bg-white border border-gray-200 rounded-lg p-3 flex items-center gap-3 hover:shadow-md transition">
-                    <div class="bg-orange-100 text-orange-700 rounded-full w-10 h-10 flex items-center justify-center shrink-0"><i class="fa-solid fa-shield-halved"></i></div>
-                    <div class="leading-tight"><div class="text-xs font-bold text-gray-800">Compra protegida</div><div class="text-[10px] text-gray-500">Garantía oficial</div></div>
-                </div>
-                <div class="bg-white border border-gray-200 rounded-lg p-3 flex items-center gap-3 hover:shadow-md transition">
-                    <div class="bg-purple-100 text-purple-700 rounded-full w-10 h-10 flex items-center justify-center shrink-0"><i class="fa-brands fa-whatsapp"></i></div>
-                    <div class="leading-tight"><div class="text-xs font-bold text-gray-800">Atención por WhatsApp</div><div class="text-[10px] text-gray-500">Lun-Vie 8:30am-5pm</div></div>
                 </div>
             </div>
             
@@ -705,7 +685,8 @@
                     <span id="pago-bs">Bs.</span>
                     <span id="pago-transferencia">Transferencia</span>
                     <span id="pago-biopago" style="display:none;">Biopago</span>
-                    <span id="pago-tarjeta" style="display:none;">Tarjeta</span>
+                    <span id="pago-debito" style="display:none;">Tarjeta de Débito</span>
+                    <span id="pago-credito" style="display:none;">Tarjeta de Crédito</span>
                 </div>
             </div>
         </div>
@@ -860,13 +841,15 @@
             mostrarUbicacion: true,
             pagos: { 
                 movil: true, 
-                zelle: false, // por defecto OFF para que el usuario lo active si lo tiene
+                zelle: false,
                 usd: true, 
                 bs: true, 
                 transferencia: true, 
                 biopago: false, 
-                tarjeta: false 
-            }
+                debito: false, 
+                credito: false 
+            },
+            buscadorPlaceholder: ''
         };
 
         let indices = { bloque1: 0, bloque2: 0, busqueda: 0, paginaHome: 1, paginaBusqueda: 1 };
@@ -1011,58 +994,91 @@
         }
 
         function inyectarBannersDOM(banners) {
-            if (!banners || banners.length === 0) return;
-            let huboPromos = false;
+            if (!banners || banners.length === 0) {
+                // Si no hay banners, ocultar la zona de promos completa
+                const zona = document.getElementById('zona-banners-promo');
+                if (zona) zona.classList.add('hidden');
+                return;
+            }
+            
+            // Helper: ¿la URL es válida? (no vacía, no null, no "#", no espacios)
+            const urlValida = (url) => {
+                if (!url || typeof url !== 'string') return false;
+                const u = url.trim();
+                if (u === '' || u === '#' || u === 'null' || u === 'undefined') return false;
+                return /^(https?:|data:)/i.test(u);
+            };
+            
+            let mostrarDestacados = false;
+            let mostrarAmazon = false;
             
             banners.forEach(b => {
-                if (!b.seccion || !b.imagen_url) return;
+                if (!b.seccion) return;
+                if (!urlValida(b.imagen_url)) return; // ignorar banners con URL inválida
                 
-                if(b.seccion === 'hero') { 
+                if (b.seccion === 'hero') { 
                     const el = document.getElementById('banner-hero'); 
-                    if(el) { 
-                        el.querySelector('img').src = b.imagen_url; 
+                    if (el) { 
+                        const img = el.querySelector('img');
+                        img.src = b.imagen_url;
+                        img.onerror = () => { el.style.display = 'none'; };
                         el.querySelector('h2').innerText = b.titulo || ''; 
                         el.querySelector('p').innerText = b.subtitulo || ''; 
-                        if(b.link_url && b.link_url !== '#') el.onclick = () => window.location.href = b.link_url; 
+                        if (urlValida(b.link_url)) el.onclick = () => window.location.href = b.link_url; 
                     } 
                 }
-                if(b.seccion === 'destacado_principal') { 
+                else if (b.seccion === 'destacado_principal') { 
                     const el = document.getElementById('banner-destacado_principal'); 
-                    if(el) { 
-                        el.querySelector('img').src = b.imagen_url; 
+                    if (el) { 
+                        const img = el.querySelector('img');
+                        img.src = b.imagen_url;
+                        img.onerror = () => { el.classList.add('hidden'); };
                         el.classList.remove('hidden');
-                        if(b.link_url && b.link_url !== '#') el.onclick = () => window.location.href = b.link_url; 
-                        huboPromos = true;
+                        if (urlValida(b.link_url)) el.onclick = () => window.location.href = b.link_url; 
+                        mostrarDestacados = true;
                     } 
                 }
-                if(b.seccion.startsWith('destacado_mini_')) { 
+                else if (b.seccion.startsWith('destacado_mini_')) { 
                     const el = document.getElementById('banner-' + b.seccion); 
-                    if(el) { 
-                        el.querySelector('img').src = b.imagen_url; 
+                    if (el) { 
+                        const img = el.querySelector('img');
+                        img.src = b.imagen_url;
+                        img.onerror = () => { el.classList.add('hidden'); };
                         el.querySelector('span').innerText = b.titulo || ''; 
                         el.classList.remove('hidden');
-                        if(b.link_url && b.link_url !== '#') el.onclick = () => window.location.href = b.link_url; 
-                        huboPromos = true;
+                        if (urlValida(b.link_url)) el.onclick = () => window.location.href = b.link_url; 
+                        mostrarDestacados = true;
                     } 
                 }
-                if(b.seccion.startsWith('amazon_')) { 
+                else if (b.seccion.startsWith('amazon_')) { 
                     const el = document.getElementById('banner-' + b.seccion); 
-                    if(el) { 
-                        el.querySelector('img').src = b.imagen_url; 
+                    if (el) { 
+                        const img = el.querySelector('img');
+                        img.src = b.imagen_url;
+                        img.onerror = () => { el.classList.add('hidden'); };
                         el.querySelector('h3').innerText = b.titulo || ''; 
                         el.querySelector('.amazon-link').innerHTML = `${b.subtitulo || 'Ver más'} <i class="fa-solid fa-angle-right ml-1"></i>`; 
                         el.classList.remove('hidden');
-                        if(b.link_url && b.link_url !== '#') el.onclick = () => window.location.href = b.link_url; 
-                        huboPromos = true;
+                        if (urlValida(b.link_url)) el.onclick = () => window.location.href = b.link_url; 
+                        mostrarAmazon = true;
                     } 
                 }
             });
             
-            // Mostrar la zona de banners si hubo al menos uno
-            if (huboPromos) {
-                const zona = document.getElementById('zona-banners-promo');
-                if (zona) zona.classList.remove('hidden');
+            // Ocultar bloques que no tienen contenido válido
+            const filaDestacados = document.querySelector('#zona-banners-promo > div:first-child');
+            const filaAmazon = document.querySelector('#zona-banners-promo > .promo-grid');
+            if (filaDestacados) filaDestacados.style.display = mostrarDestacados ? '' : 'none';
+            if (filaAmazon) filaAmazon.style.display = mostrarAmazon ? '' : 'none';
+            
+            // Mostrar la zona si hay al menos uno de los dos
+            const zona = document.getElementById('zona-banners-promo');
+            if (zona) {
+                if (mostrarDestacados || mostrarAmazon) zona.classList.remove('hidden');
+                else zona.classList.add('hidden');
             }
+            
+            console.info(`[Banners] Cargados: destacados=${mostrarDestacados}, amazon=${mostrarAmazon}, total recibidos=${banners.length}`);
         }
 
         function toggleMonedaGlobal() {
@@ -1660,16 +1676,15 @@
                 });
             }
             
-            // 3. Categorías destacadas (top 6) en barra horizontal
+            // Categorías destacadas (todas las disponibles, scroll horizontal si no caben)
             const contCat = document.getElementById('contenedor-categorias');
             // Limpiar todo lo que no sea el mega-menú trigger
             const trigger = contCat.querySelector('.megamenu-wrap');
             contCat.innerHTML = '';
             if (trigger) contCat.appendChild(trigger);
-            const destacadas = catArr.slice(0, 6);
-            destacadas.forEach(cat => {
+            catArr.forEach(cat => {
                 const btn = document.createElement('button');
-                btn.className = 'text-xs text-gray-200 hover:text-white px-3 py-2 whitespace-nowrap font-semibold transition';
+                btn.className = 'text-xs text-gray-200 hover:text-white px-3 py-2 whitespace-nowrap font-semibold transition shrink-0';
                 btn.innerHTML = `<i class="fa-solid ${iconoParaCategoria(cat)} mr-1 opacity-70"></i> ${escaparHTML(cat)}`;
                 btn.onclick = () => filtrarPorCategoria(cat);
                 contCat.appendChild(btn);
@@ -2282,7 +2297,11 @@
             if (b(map.PAGO_BS_ACTIVO) !== null) configEmpresa.pagos.bs = b(map.PAGO_BS_ACTIVO);
             if (b(map.PAGO_TRANSFERENCIA_ACTIVO) !== null) configEmpresa.pagos.transferencia = b(map.PAGO_TRANSFERENCIA_ACTIVO);
             if (b(map.PAGO_BIOPAGO_ACTIVO) !== null) configEmpresa.pagos.biopago = b(map.PAGO_BIOPAGO_ACTIVO);
-            if (b(map.PAGO_TARJETA_ACTIVO) !== null) configEmpresa.pagos.tarjeta = b(map.PAGO_TARJETA_ACTIVO);
+            if (b(map.PAGO_DEBITO_ACTIVO) !== null) configEmpresa.pagos.debito = b(map.PAGO_DEBITO_ACTIVO);
+            if (b(map.PAGO_CREDITO_ACTIVO) !== null) configEmpresa.pagos.credito = b(map.PAGO_CREDITO_ACTIVO);
+            
+            // Placeholder del buscador
+            if (map.BUSCADOR_PLACEHOLDER) configEmpresa.buscadorPlaceholder = map.BUSCADOR_PLACEHOLDER;
             
             // Pintar todos los elementos que dependen de estos datos
             renderConfigEmpresaEnDOM();
@@ -2365,7 +2384,7 @@
             const enviarUbic = document.getElementById('topbar-enviar-a');
             if (enviarUbic) enviarUbic.style.display = configEmpresa.mostrarUbicacion ? '' : 'none';
             
-            // Trust bar de envíos en home
+            // Trust bar de envíos en home (eliminada del DOM, mantengo defensivo por si se reactiva)
             const trustEnvios = document.getElementById('trust-envios');
             if (trustEnvios) trustEnvios.style.display = configEmpresa.mostrarEnvios ? '' : 'none';
             
@@ -2380,7 +2399,14 @@
             setPago('pago-bs', configEmpresa.pagos.bs);
             setPago('pago-transferencia', configEmpresa.pagos.transferencia);
             setPago('pago-biopago', configEmpresa.pagos.biopago);
-            setPago('pago-tarjeta', configEmpresa.pagos.tarjeta);
+            setPago('pago-debito', configEmpresa.pagos.debito);
+            setPago('pago-credito', configEmpresa.pagos.credito);
+            
+            // Placeholder del buscador (configurable)
+            const inputBusc = document.getElementById('buscador');
+            if (inputBusc && configEmpresa.buscadorPlaceholder) {
+                inputBusc.placeholder = configEmpresa.buscadorPlaceholder;
+            }
             
             // Trust bar pagos: actualizar texto de "Pago Móvil" según métodos activos
             const trustPagos = document.getElementById('trust-pagos-detalle');
@@ -2390,7 +2416,7 @@
                 if (configEmpresa.pagos.usd) activos.push('USD');
                 if (configEmpresa.pagos.zelle) activos.push('Zelle');
                 if (configEmpresa.pagos.movil) activos.push('Pago Móvil');
-                if (configEmpresa.pagos.tarjeta) activos.push('Tarjeta');
+                if (configEmpresa.pagos.debito || configEmpresa.pagos.credito) activos.push('Tarjeta');
                 trustPagos.textContent = activos.length > 0 ? activos.join(', ') : 'Múltiples opciones';
             }
             

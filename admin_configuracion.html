@@ -221,6 +221,13 @@
                             <p class="text-[8px] text-gray-400 mt-1">Si dejas el campo vacío, se mostrará el icono predeterminado. Logo de fondo oscuro recomendado (footer es negro).</p>
                         </div>
 
+                        <!-- Placeholder buscador -->
+                        <div class="mb-5">
+                            <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1"><i class="fa-solid fa-magnifying-glass mr-1"></i> Texto del Buscador (placeholder)</label>
+                            <input type="text" id="conf-buscador-placeholder" placeholder="Buscar productos, marcas y más..." class="w-full border border-gray-300 rounded px-3 py-2 text-sm font-semibold text-primary focus:border-secondary outline-none transition bg-white">
+                            <p class="text-[8px] text-gray-400 mt-1">Texto de ejemplo que se ve dentro del cuadro de búsqueda cuando está vacío.</p>
+                        </div>
+
                         <h4 class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3 mt-4 flex items-center gap-2"><i class="fa-solid fa-toggle-on text-tertiary"></i> Mostrar / Ocultar Elementos</h4>
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <label class="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
@@ -273,8 +280,12 @@
                                 <span class="text-xs font-bold text-gray-800">Biopago</span>
                             </label>
                             <label class="flex items-center gap-2 p-2.5 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
-                                <input type="checkbox" id="conf-pago-tarjeta" class="w-4 h-4 accent-primary cursor-pointer">
-                                <span class="text-xs font-bold text-gray-800">Tarjeta</span>
+                                <input type="checkbox" id="conf-pago-debito" class="w-4 h-4 accent-primary cursor-pointer">
+                                <span class="text-xs font-bold text-gray-800">Tarjeta de Débito</span>
+                            </label>
+                            <label class="flex items-center gap-2 p-2.5 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
+                                <input type="checkbox" id="conf-pago-credito" class="w-4 h-4 accent-primary cursor-pointer">
+                                <span class="text-xs font-bold text-gray-800">Tarjeta de Crédito</span>
                             </label>
                         </div>
                     </div>
@@ -545,6 +556,7 @@
             document.getElementById('conf-logo-login').value = dataConf.find(c => c.parametro === 'LOGO_LOGIN')?.valor || localStorage.getItem('pyp_logo_login_url') || '';
             document.getElementById('conf-logo-sidebar').value = dataConf.find(c => c.parametro === 'LOGO_SIDEBAR')?.valor || localStorage.getItem('pyp_logo_pc_url') || '';
             document.getElementById('conf-logo-footer').value = dataConf.find(c => c.parametro === 'LOGO_FOOTER')?.valor || '';
+            document.getElementById('conf-buscador-placeholder').value = dataConf.find(c => c.parametro === 'BUSCADOR_PLACEHOLDER')?.valor || '';
 
             // Datos de empresa (visibles al público)
             fill('conf-emp-nombre', 'EMPRESA_NOMBRE');
@@ -576,7 +588,8 @@
             fillBool('conf-pago-bs', 'PAGO_BS_ACTIVO', true);
             fillBool('conf-pago-transferencia', 'PAGO_TRANSFERENCIA_ACTIVO', true);
             fillBool('conf-pago-biopago', 'PAGO_BIOPAGO_ACTIVO', false);
-            fillBool('conf-pago-tarjeta', 'PAGO_TARJETA_ACTIVO', false);
+            fillBool('conf-pago-debito', 'PAGO_DEBITO_ACTIVO', false);
+            fillBool('conf-pago-credito', 'PAGO_CREDITO_ACTIVO', false);
 
             sincronizarColorALabel('pri', cP); sincronizarColorALabel('sec', cS); sincronizarColorALabel('ter', cT);
         }
@@ -748,6 +761,7 @@
                 { parametro: 'EMPRESA_TIKTOK', valor: document.getElementById('conf-emp-tiktok').value.trim() },
                 // Nuevos: logo footer y toggles de visibilidad
                 { parametro: 'LOGO_FOOTER', valor: document.getElementById('conf-logo-footer').value.trim() },
+                { parametro: 'BUSCADOR_PLACEHOLDER', valor: document.getElementById('conf-buscador-placeholder').value.trim() },
                 { parametro: 'MOSTRAR_NOMBRE_HEADER', valor: document.getElementById('conf-mostrar-nombre-header').checked ? 'true' : 'false' },
                 { parametro: 'MOSTRAR_ENVIOS_TODO_PAIS', valor: document.getElementById('conf-mostrar-envios').checked ? 'true' : 'false' },
                 { parametro: 'MOSTRAR_ENVIAR_A_UBICACION', valor: document.getElementById('conf-mostrar-ubicacion').checked ? 'true' : 'false' },
@@ -758,7 +772,8 @@
                 { parametro: 'PAGO_BS_ACTIVO', valor: document.getElementById('conf-pago-bs').checked ? 'true' : 'false' },
                 { parametro: 'PAGO_TRANSFERENCIA_ACTIVO', valor: document.getElementById('conf-pago-transferencia').checked ? 'true' : 'false' },
                 { parametro: 'PAGO_BIOPAGO_ACTIVO', valor: document.getElementById('conf-pago-biopago').checked ? 'true' : 'false' },
-                { parametro: 'PAGO_TARJETA_ACTIVO', valor: document.getElementById('conf-pago-tarjeta').checked ? 'true' : 'false' }
+                { parametro: 'PAGO_DEBITO_ACTIVO', valor: document.getElementById('conf-pago-debito').checked ? 'true' : 'false' },
+                { parametro: 'PAGO_CREDITO_ACTIVO', valor: document.getElementById('conf-pago-credito').checked ? 'true' : 'false' }
             ];
 
             try {
