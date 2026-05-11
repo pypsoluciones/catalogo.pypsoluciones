@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>MemorAI – Tu segunda memoria</title>
+<meta name="description" content="Asistente personal de memoria con IA. Guarda notas, recordatorios y listas en lenguaje natural."/>
+<meta name="theme-color" content="#080810"/>
+<link rel="manifest" href="data:application/json,{&quot;name&quot;:&quot;MemorAI&quot;,&quot;short_name&quot;:&quot;MemorAI&quot;,&quot;display&quot;:&quot;standalone&quot;,&quot;background_color&quot;:&quot;#080810&quot;,&quot;theme_color&quot;:&quot;#4285f4&quot;}"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: #080810; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  input, button, textarea { font-family: inherit; }
+  ::-webkit-scrollbar { width: 3px; }
+  ::-webkit-scrollbar-thumb { background: rgba(66,133,244,0.3); border-radius: 4px; }
+  input::placeholder { color: #6e6d85; }
+  @keyframes pulse {
+    0%, 100% { opacity: .3; transform: scale(.8); }
+    50%       { opacity: 1;  transform: scale(1);  }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0);   }
+  }
+  .fade-in { animation: fadeIn 0.3s ease both; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback } = React;
+
+// ── Paleta ────────────────────────────────────────────────
+const C = {
+  bg:           "#080810",
+  surface:      "#10101c",
+  surface2:     "#17172a",
+  surface3:     "#1e1e35",
+  border:       "rgba(255,255,255,0.07)",
+  accent:       "#4285f4",
+  accentDim:    "rgba(66,133,244,0.15)",
+  accentBorder: "rgba(66,133,244,0.3)",
+  orange:       "#f4a24a",
+  green:        "#4ecb8d",
+  red:          "#f46a6a",
+  blue:         "#5ab4f5",
+  text:         "#eeedf8",
+  muted:        "#6e6d85",
+  glow:         "rgba(66,133,244,0.18)",
+};
+
+// ── Helpers ───────────────────────────────────────────────
+const fmtTime = d => new Date(d).toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" });
+const fmtDate = d => new Date(d).toLocaleDateString("es-MX", { weekday: "short", day: "numeric", month: "short" });
+const tagColor = t => ({ reminder: C.orange, note: C.accent, list: C.green, contact: C.blue, event: C.red }[t] || C.muted);
+const tagIcon  = t => ({ reminder: "⏰", note: "💡", list: "📋", contact: "📞", event: "📅" }[t] || "✦");
+const tagLabel = t => ({ reminder: "Recordatorio", note: "Nota", list: "Lista", contact: "Contacto", event: "Evento" }[t] || "Memoria");
+
+// ── Storage (localStorage) ────────────────────────────────
+const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+const load = (k, fb) => { try { const r = localStorage.getItem(k); return r ? JSON.parse(r) : fb; } catch { return fb; } };
+
+// ── Gemini API ────────────────────────────────────────────
+const SYSTEM_PROMPT = `Eres MemorAI, un asistente personal de memoria inteligente. El usuario te habla en español.
+
+Tu trabajo:
+1. Entender qué quiere guardar o recordar el usuario
+2. Responder de forma breve, cálida y útil
+3. SIEMPRE terminar con un bloque JSON en este formato exacto (sin backticks):
+
+MEMDATA:{"type":"reminder|note|list|contact|event|none","title":"título corto","content":"contenido","reminderDate":"ISO date o null","items":["item1"] o null}
+
+Tipos: reminder (recordatorio con fecha/hora), note (idea/dato), list (lista de cosas), contact (datos de persona), event (evento sin alarma), none (solo conversación).
+
+Para fechas relativas calcula desde hoy: ${new Date().toISOString()}
+
+Ejemplo: "¡Listo! Te recuerdo mañana a las 10. MEMDATA:{"type":"reminder","title":"Llamar médico","content":"Llamar al médico","reminderDate":"2025-05-12T10:00:00","items":null}"`;
+
+async function askGemini(apiKey, history, userMsg) {
+  const contents = [
+    ...history.map(m => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.content }] })),
+    { role: "user", parts: [{ text: userMsg }] }
+  ];
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+        contents,
+        generationConfig: { maxOutputTokens: 1000, temperature: 0.7 }
+      })
+    }
+  );
+  const data = await res.json();
+  if (data.error) throw new Error(data.error.message);
+  return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+}
+
+// ── Sub-components ────────────────────────────────────────
+function Pill({ label, color }) {
+  return (
+    <span style={{ display:"inline-block", padding:"2px 8px", borderRadius:8, fontSize:10, fontWeight:700,
+      background:`${color}22`, color, border:`1px solid ${color}44`, marginTop:4 }}>{label}</span>
+  );
+}
+
+function ChatBubble({ msg }) {
+  const isUser = msg.role === "user";
+  return (
+    <div className="fade-in" style={{ display:"flex", gap:8, alignItems:"flex-end",
+      flexDirection: isUser ? "row-reverse" : "row", marginBottom:10 }}>
+      {!isUser && (
+        <div style={{ width:28, height:28, borderRadius:"50%",
+          background:"linear-gradient(135deg,#4285f4,#34a853)",
+          display:"flex", alignItems:"center", justifyContent:"center",
+          fontSize:13, flexShrink:0, boxShadow:`0 0 12px ${C.glow}` }}>✦</div>
+      )}
+      <div style={{ maxWidth:"75%", padding:"10px 13px", borderRadius:18, fontSize:13,
+        lineHeight:1.5, whiteSpace:"pre-wrap", wordBreak:"break-word",
+        background: isUser ? "linear-gradient(135deg,#1a56db,#4285f4)" : C.surface2,
+        border: isUser ? "none" : `1px solid ${C.border}`,
+        borderBottomRightRadius: isUser ? 4 : 18,
+        borderBottomLeftRadius:  isUser ? 18 : 4,
+        color: C.text,
+        boxShadow: isUser ? `0 4px 20px ${C.glow}` : "none" }}>
+        {msg.display || msg.content}
+        {msg.memData && msg.memData.type !== "none" && (
+          <div style={{ marginTop:6 }}>
+            <Pill label={`${tagIcon(msg.memData.type)} ${tagLabel(msg.memData.type)}`} color={tagColor(msg.memData.type)} />
+          </div>
+        )}
+        <div style={{ fontSize:9, color:"rgba(255,255,255,0.35)", marginTop:4, textAlign:"right" }}>{fmtTime(msg.ts)}</div>
+      </div>
+    </div>
+  );
+}
+
+function MemCard({ mem, onDelete }) {
+  const c = tagColor(mem.type);
+  return (
+    <div className="fade-in" style={{ background:C.surface2, border:`1px solid ${C.border}`,
+      borderRadius:14, padding:12, position:"relative", overflow:"hidden" }}>
+      <div style={{ position:"absolute", top:0, left:0, right:0, height:2,
+        background:`linear-gradient(90deg,${c},transparent)` }}/>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:6 }}>
+        <div style={{ flex:1 }}>
+          <div style={{ fontSize:16, marginBottom:4 }}>{tagIcon(mem.type)}</div>
+          <div style={{ fontSize:12, fontWeight:700, color:C.text, marginBottom:3, lineHeight:1.3 }}>{mem.title}</div>
+          <div style={{ fontSize:11, color:C.muted, lineHeight:1.4 }}>
+            {mem.type === "list" && mem.items?.length
+              ? mem.items.map((it,i) => <div key={i}>• {it}</div>)
+              : mem.content}
+          </div>
+          {mem.reminderDate && (
+            <div style={{ fontSize:10, color:C.orange, marginTop:5, fontWeight:600 }}>
+              ⏰ {fmtDate(mem.reminderDate)} {fmtTime(mem.reminderDate)}
+            </div>
+          )}
+          <div style={{ fontSize:9, color:C.muted, marginTop:4 }}>{fmtDate(mem.ts)}</div>
+        </div>
+        <button onClick={() => onDelete(mem.id)} style={{ background:"rgba(244,106,106,0.12)",
+          border:"1px solid rgba(244,106,106,0.2)", color:C.red, borderRadius:8,
+          width:26, height:26, cursor:"pointer", fontSize:15,
+          display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>×</button>
+      </div>
+    </div>
+  );
+}
+
+function AgendaItem({ mem }) {
+  const c = tagColor(mem.type);
+  const isPast = new Date(mem.reminderDate) < new Date();
+  return (
+    <div style={{ display:"flex", gap:12, alignItems:"flex-start",
+      padding:"10px 0", borderBottom:`1px solid ${C.border}` }}>
+      <div style={{ textAlign:"center", minWidth:44 }}>
+        <div style={{ fontSize:13, fontWeight:800, color: isPast ? C.muted : c }}>
+          {new Date(mem.reminderDate).getDate()}
+        </div>
+        <div style={{ fontSize:9, color:C.muted, textTransform:"uppercase" }}>
+          {new Date(mem.reminderDate).toLocaleString("es-MX",{month:"short"})}
+        </div>
+      </div>
+      <div style={{ flex:1 }}>
+        <div style={{ fontSize:12, fontWeight:700, color: isPast ? C.muted : C.text }}>{mem.title}</div>
+        <div style={{ fontSize:11, color:C.muted }}>{fmtTime(mem.reminderDate)}</div>
+      </div>
+      <div style={{ width:8, height:8, borderRadius:"50%",
+        background: isPast ? C.muted : c, marginTop:4, flexShrink:0 }}/>
+    </div>
+  );
+}
+
+function BottomNav({ tab, setTab }) {
+  return (
+    <div style={{ display:"flex", justifyContent:"space-around", padding:"10px 0 20px",
+      borderTop:`1px solid ${C.border}`, background:C.surface, flexShrink:0 }}>
+      {[["chat","💬","Chat"],["memory","🧠","Memoria"],["agenda","📅","Agenda"],["settings","⚙️","Config"]].map(([key,icon,label]) => (
+        <button key={key} onClick={() => setTab(key)} style={{ background:"none", border:"none",
+          cursor:"pointer", display:"flex", flexDirection:"column", alignItems:"center", gap:3,
+          color: tab===key ? C.accent : C.muted, fontSize:10,
+          fontWeight: tab===key ? 700 : 400, transition:"color 0.2s", padding:"0 12px" }}>
+          <span style={{ fontSize:20 }}>{icon}</span>{label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function SetupScreen({ onSave }) {
+  const [key, setKey] = useState("");
+  const [testing, setTesting] = useState(false);
+  const [error, setError] = useState("");
+
+  async function test() {
+    if (!key.trim()) return;
+    setTesting(true); setError("");
+    try {
+      await askGemini(key.trim(), [], "Hola, responde solo OK");
+      onSave(key.trim());
+    } catch(e) {
+      setError("API key inválida. Verifica e intenta de nuevo.");
+    }
+    setTesting(false);
+  }
+
+  return (
+    <div style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center",
+      justifyContent:"center", padding:"32px 24px", gap:20, overflowY:"auto" }}>
+      <div style={{ fontSize:52 }}>🔑</div>
+      <div style={{ textAlign:"center" }}>
+        <div style={{ fontSize:20, fontWeight:800, marginBottom:6 }}>Configura tu API Key</div>
+        <div style={{ fontSize:13, color:C.muted, lineHeight:1.6 }}>
+          MemorAI usa <strong style={{color:C.accent}}>Gemini de Google</strong>.<br/>
+          La API key es <strong style={{color:C.green}}>gratuita</strong> (1,500 mensajes/día).
+        </div>
+      </div>
+
+      <div style={{ background:C.surface2, border:`1px solid ${C.border}`, borderRadius:16,
+        padding:"16px 18px", width:"100%", display:"flex", flexDirection:"column", gap:12 }}>
+        {[
+          ["1","Ve a ","aistudio.google.com","https://aistudio.google.com"],
+          ["2","Inicia sesión con tu cuenta Google",null,null],
+          ["3","Clic en ","Get API Key → Create API key",null],
+          ["4","Copia la key y pégala abajo",null,null],
+        ].map(([n,text,link,href]) => (
+          <div key={n} style={{ display:"flex", gap:10, alignItems:"flex-start" }}>
+            <div style={{ width:22, height:22, borderRadius:"50%", background:C.accentDim,
+              border:`1px solid ${C.accentBorder}`, display:"flex", alignItems:"center",
+              justifyContent:"center", fontSize:11, fontWeight:700, color:C.accent, flexShrink:0 }}>{n}</div>
+            <div style={{ fontSize:12, color:C.text, lineHeight:1.5 }}>
+              {text}
+              {link && href && <a href={href} target="_blank" rel="noreferrer" style={{color:C.accent,fontWeight:600}}>{link}</a>}
+              {link && !href && <span style={{color:C.accent,fontWeight:600}}>{link}</span>}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ width:"100%", display:"flex", flexDirection:"column", gap:8 }}>
+        <input value={key} onChange={e => setKey(e.target.value)}
+          onKeyDown={e => e.key==="Enter" && test()}
+          placeholder="AIzaSy…"
+          style={{ width:"100%", background:C.surface2,
+            border:`1px solid ${error ? C.red : C.accentBorder}`,
+            borderRadius:14, padding:"12px 16px", fontSize:13,
+            color:C.text, outline:"none", fontFamily:"monospace" }}/>
+        {error && <div style={{ fontSize:12, color:C.red }}>{error}</div>}
+        <button onClick={test} disabled={!key.trim() || testing}
+          style={{ width:"100%", padding:"13px", borderRadius:14,
+            background: !key.trim() ? C.surface3 : "linear-gradient(135deg,#1a56db,#4285f4)",
+            border:"none", color:"white", fontSize:14, fontWeight:700,
+            cursor: !key.trim() ? "default" : "pointer",
+            boxShadow: key.trim() ? `0 0 20px ${C.glow}` : "none",
+            transition:"all 0.2s" }}>
+          {testing ? "Verificando…" : "✓ Guardar y empezar"}
+        </button>
+      </div>
+      <div style={{ fontSize:11, color:C.muted, textAlign:"center", lineHeight:1.6 }}>
+        Tu key se guarda solo en este dispositivo.<br/>
+        Nunca se envía a ningún servidor externo.
+      </div>
+    </div>
+  );
+}
+
+function SettingsScreen({ apiKey, onReset, memoriesCount, messagesCount }) {
+  return (
+    <div style={{ flex:1, overflowY:"auto", padding:"20px 16px", display:"flex", flexDirection:"column", gap:16 }}>
+      <div style={{ fontSize:16, fontWeight:800 }}>Configuración</div>
+      <div style={{ background:C.surface2, border:`1px solid ${C.border}`, borderRadius:16, overflow:"hidden" }}>
+        <div style={{ padding:"14px 16px", borderBottom:`1px solid ${C.border}` }}>
+          <div style={{ fontSize:11, color:C.muted, marginBottom:4, textTransform:"uppercase", letterSpacing:"0.08em" }}>API Key activa</div>
+          <div style={{ fontSize:12, color:C.green, fontFamily:"monospace" }}>{apiKey.slice(0,12)}••••••••••</div>
+        </div>
+        <div style={{ padding:"14px 16px", borderBottom:`1px solid ${C.border}`, display:"flex", justifyContent:"space-between" }}>
+          <span style={{ fontSize:13 }}>Recuerdos guardados</span>
+          <span style={{ fontSize:13, fontWeight:700, color:C.accent }}>{memoriesCount}</span>
+        </div>
+        <div style={{ padding:"14px 16px", display:"flex", justifyContent:"space-between" }}>
+          <span style={{ fontSize:13 }}>Mensajes en historial</span>
+          <span style={{ fontSize:13, fontWeight:700, color:C.accent }}>{messagesCount}</span>
+        </div>
+      </div>
+
+      <button onClick={() => onReset("key")}
+        style={{ padding:"12px", borderRadius:14, background:C.accentDim,
+          border:`1px solid ${C.accentBorder}`, color:C.accent,
+          fontSize:13, fontWeight:700, cursor:"pointer" }}>
+        🔑 Cambiar API Key
+      </button>
+
+      <button onClick={() => { if(confirm("¿Borrar toda tu memoria? No se puede deshacer.")) onReset("all"); }}
+        style={{ padding:"12px", borderRadius:14, background:"rgba(244,106,106,0.1)",
+          border:"1px solid rgba(244,106,106,0.3)", color:C.red,
+          fontSize:13, fontWeight:700, cursor:"pointer" }}>
+        🗑 Borrar toda la memoria
+      </button>
+
+      <div style={{ fontSize:11, color:C.muted, textAlign:"center", lineHeight:1.7, marginTop:4 }}>
+        MemorAI usa <span style={{color:C.accent}}>Gemini 2.0 Flash</span> de Google.<br/>
+        Gratis · Sin servidores propios · Datos locales.
+      </div>
+    </div>
+  );
+}
+
+// ── App principal ─────────────────────────────────────────
+function App() {
+  const [tab, setTab]         = useState("chat");
+  const [apiKey, setApiKey]   = useState(() => load("memorai-apikey", null));
+  const [messages, setMessages] = useState(() => {
+    const saved = load("memorai-messages", []);
+    return saved.length ? saved : [{
+      id: "welcome", role:"assistant",
+      content:"¡Hola! Soy MemorAI 🧠\n\nPuedo guardar notas, recordatorios, listas y más.\n¿Qué quieres recordar hoy?",
+      display:"¡Hola! Soy MemorAI 🧠\n\nPuedo guardar notas, recordatorios, listas y más.\n¿Qué quieres recordar hoy?",
+      ts: Date.now()
+    }];
+  });
+  const [memories, setMemories] = useState(() => load("memorai-memories", []));
+  const [input, setInput]     = useState("");
+  const [loading, setLoading] = useState(false);
+  const [notify, setNotify]   = useState(null);
+  const bottomRef = useRef(null);
+  const inputRef  = useRef(null);
+
+  // scroll to bottom
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior:"smooth" }); }, [messages, loading]);
+
+  // reminder check
+  useEffect(() => {
+    const iv = setInterval(() => {
+      const now = new Date();
+      setMemories(prev => {
+        const hit = prev.find(m => m.reminderDate && !m.notified && new Date(m.reminderDate) <= now);
+        if (!hit) return prev;
+        setNotify(hit);
+        const updated = prev.map(m => m.id===hit.id ? {...m, notified:true} : m);
+        save("memorai-memories", updated);
+        return updated;
+      });
+    }, 15000);
+    return () => clearInterval(iv);
+  }, []);
+
+  async function send() {
+    const text = input.trim();
+    if (!text || loading || !apiKey) return;
+    setInput("");
+
+    const userMsg = { id:Date.now(), role:"user", content:text, ts:Date.now() };
+    const newMsgs = [...messages, userMsg];
+    setMessages(newMsgs);
+    setLoading(true);
+
+    try {
+      const history = newMsgs.filter(m => m.id !== "welcome").slice(0,-1)
+        .map(m => ({ role:m.role, content:m.content }));
+
+      const raw = await askGemini(apiKey, history, text);
+      let display = raw, memData = null;
+      const match = raw.match(/MEMDATA:(\{.*?\})/s);
+      if (match) {
+        try { memData = JSON.parse(match[1]); } catch {}
+        display = raw.replace(/MEMDATA:\{.*?\}/s,"").trim();
+      }
+
+      const aiMsg = { id:Date.now()+1, role:"assistant", content:raw, display, memData, ts:Date.now() };
+      const finalMsgs = [...newMsgs, aiMsg];
+      setMessages(finalMsgs);
+      save("memorai-messages", finalMsgs.slice(-40));
+
+      if (memData && memData.type !== "none") {
+        const mem = {
+          id:Date.now()+2, type:memData.type,
+          title:memData.title || "Sin título",
+          content:memData.content || "",
+          reminderDate:memData.reminderDate || null,
+          items:memData.items || null,
+          notified:false, ts:Date.now()
+        };
+        const newMems = [mem, ...memories];
+        setMemories(newMems);
+        save("memorai-memories", newMems);
+      }
+    } catch(e) {
+      const errMsg = { id:Date.now()+1, role:"assistant",
+        content:`Error: ${e.message}`,
+        display:`⚠️ Error: ${e.message}`,
+        ts:Date.now() };
+      setMessages(m => [...m, errMsg]);
+    }
+    setLoading(false);
+  }
+
+  function deleteMemory(id) {
+    const updated = memories.filter(m => m.id !== id);
+    setMemories(updated);
+    save("memorai-memories", updated);
+  }
+
+  function handleReset(type) {
+    if (type === "key") {
+      save("memorai-apikey", null);
+      setApiKey(null);
+    } else {
+      save("memorai-memories", []);
+      save("memorai-messages", []);
+      setMemories([]);
+      setMessages([{
+        id:"welcome", role:"assistant",
+        content:"¡Hola! Soy MemorAI 🧠\n\n¿Qué quieres recordar hoy?",
+        display:"¡Hola! Soy MemorAI 🧠\n\n¿Qué quieres recordar hoy?",
+        ts:Date.now()
+      }]);
+    }
+  }
+
+  const reminders = memories.filter(m => m.reminderDate);
+
+  return (
+    <div style={{ background:C.bg, minHeight:"100vh", color:C.text,
+      display:"flex", flexDirection:"column", alignItems:"center" }}>
+
+      {/* bg glow */}
+      <div style={{ position:"fixed", inset:0, pointerEvents:"none", zIndex:0,
+        background:"radial-gradient(ellipse 80% 50% at 15% 0%,rgba(66,133,244,0.1),transparent 60%), radial-gradient(ellipse 50% 40% at 85% 90%,rgba(78,203,141,0.07),transparent 50%)" }}/>
+
+      {/* shell */}
+      <div style={{ width:"100%", maxWidth:480, minHeight:"100vh",
+        display:"flex", flexDirection:"column", position:"relative", zIndex:1,
+        background:C.surface, boxShadow:"0 0 80px rgba(0,0,0,0.8)" }}>
+
+        {/* Header */}
+        <div style={{ padding:"14px 20px 12px", borderBottom:`1px solid ${C.border}`,
+          display:"flex", justifyContent:"space-between", alignItems:"center", flexShrink:0 }}>
+          <div>
+            <span style={{ fontWeight:900, fontSize:20, letterSpacing:"-0.03em" }}>
+              Memor<span style={{color:C.accent}}>AI</span>
+            </span>
+            <span style={{ fontSize:10, color:C.muted, marginLeft:8 }}>by Gemini</span>
+          </div>
+          <div style={{ display:"flex", gap:8, alignItems:"center" }}>
+            <div style={{ fontSize:11, color:C.muted, background:C.surface2,
+              padding:"3px 10px", borderRadius:12, border:`1px solid ${C.border}` }}>
+              {memories.length} recuerdos
+            </div>
+            <div style={{ width:32, height:32, borderRadius:"50%",
+              background:"linear-gradient(135deg,#4285f4,#34a853)",
+              display:"flex", alignItems:"center", justifyContent:"center",
+              fontSize:14, fontWeight:800, color:"white" }}>M</div>
+          </div>
+        </div>
+
+        {/* Toast */}
+        {notify && (
+          <div style={{ margin:"10px 16px 0", background:`${C.orange}18`,
+            border:`1px solid ${C.orange}44`, borderRadius:14,
+            padding:"10px 14px", display:"flex", gap:10, alignItems:"center" }}>
+            <span style={{fontSize:20}}>⏰</span>
+            <div style={{flex:1}}>
+              <div style={{fontSize:12,fontWeight:700,color:C.orange}}>¡Recordatorio!</div>
+              <div style={{fontSize:12,color:C.text}}>{notify.title}</div>
+            </div>
+            <button onClick={()=>setNotify(null)} style={{background:"none",border:"none",color:C.muted,cursor:"pointer",fontSize:18}}>×</button>
+          </div>
+        )}
+
+        {/* Setup si no hay key */}
+        {!apiKey ? (
+          <SetupScreen onSave={k => { setApiKey(k); save("memorai-apikey", k); }} />
+        ) : (
+          <>
+            {/* ── CHAT ── */}
+            {tab === "chat" && (<>
+              <div style={{ flex:1, overflowY:"auto", padding:"16px 14px 8px" }}>
+                {messages.map(m => <ChatBubble key={m.id} msg={m}/>)}
+                {loading && (
+                  <div style={{display:"flex",gap:8,alignItems:"flex-end",marginBottom:10}}>
+                    <div style={{width:28,height:28,borderRadius:"50%",background:"linear-gradient(135deg,#4285f4,#34a853)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13}}>✦</div>
+                    <div style={{background:C.surface2,border:`1px solid ${C.border}`,borderRadius:"18px 18px 18px 4px",padding:"10px 16px",display:"flex",gap:5,alignItems:"center"}}>
+                      {[0,1,2].map(i=><div key={i} style={{width:7,height:7,borderRadius:"50%",background:C.accent,animation:"pulse 1.2s ease-in-out infinite",animationDelay:`${i*0.2}s`}}/>)}
+                    </div>
+                  </div>
+                )}
+                <div ref={bottomRef}/>
+              </div>
+
+              {/* Quick chips */}
+              <div style={{padding:"8px 14px 0",display:"flex",gap:7,overflowX:"auto",flexShrink:0,paddingBottom:4}}>
+                {["📋 Lista del súper","⏰ Recordatorio","💡 Guardar idea","📞 Guardar contacto"].map(s=>(
+                  <button key={s} onClick={()=>{setInput(s.split(" ").slice(1).join(" "));inputRef.current?.focus();}}
+                    style={{background:C.surface2,border:`1px solid ${C.border}`,borderRadius:20,padding:"5px 12px",fontSize:11,color:C.muted,cursor:"pointer",whiteSpace:"nowrap",flexShrink:0}}>
+                    {s}
+                  </button>
+                ))}
+              </div>
+
+              {/* Input */}
+              <div style={{display:"flex",gap:8,padding:"10px 14px 14px",flexShrink:0}}>
+                <input ref={inputRef} value={input} onChange={e=>setInput(e.target.value)}
+                  onKeyDown={e=>e.key==="Enter"&&!e.shiftKey&&send()}
+                  placeholder="Escribe lo que quieres recordar…"
+                  style={{flex:1,background:C.surface2,border:`1px solid ${C.accentBorder}`,borderRadius:22,padding:"10px 16px",fontSize:13,color:C.text,outline:"none"}}/>
+                <button onClick={send} disabled={loading||!input.trim()}
+                  style={{width:42,height:42,borderRadius:"50%",background:loading||!input.trim()?C.surface3:"linear-gradient(135deg,#1a56db,#4285f4)",border:"none",cursor:loading||!input.trim()?"default":"pointer",color:"white",fontSize:17,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,boxShadow:!loading&&input.trim()?`0 0 16px ${C.glow}`:"none",transition:"all 0.2s"}}>➤</button>
+              </div>
+            </>)}
+
+            {/* ── MEMORIA ── */}
+            {tab === "memory" && (
+              <div style={{flex:1,overflowY:"auto",padding:"16px 14px"}}>
+                {memories.length===0 ? (
+                  <div style={{textAlign:"center",marginTop:80,color:C.muted}}>
+                    <div style={{fontSize:52,marginBottom:16}}>🧠</div>
+                    <div style={{fontSize:15,fontWeight:700,color:C.text}}>Tu memoria está vacía</div>
+                    <div style={{fontSize:13,marginTop:6}}>Ve al chat y empieza a guardar cosas</div>
+                  </div>
+                ) : (
+                  <div style={{display:"flex",flexDirection:"column",gap:10}}>
+                    {memories.map(m=><MemCard key={m.id} mem={m} onDelete={deleteMemory}/>)}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ── AGENDA ── */}
+            {tab === "agenda" && (
+              <div style={{flex:1,overflowY:"auto",padding:"16px 14px"}}>
+                {reminders.length===0 ? (
+                  <div style={{textAlign:"center",marginTop:80,color:C.muted}}>
+                    <div style={{fontSize:52,marginBottom:16}}>📅</div>
+                    <div style={{fontSize:15,fontWeight:700,color:C.text}}>Sin recordatorios</div>
+                    <div style={{fontSize:13,marginTop:6}}>Dile a MemorAI que te recuerde algo con fecha</div>
+                  </div>
+                ) : (<>
+                  <div style={{fontSize:12,fontWeight:700,color:C.muted,marginBottom:12,textTransform:"uppercase",letterSpacing:"0.08em"}}>Próximos</div>
+                  {reminders.sort((a,b)=>new Date(a.reminderDate)-new Date(b.reminderDate)).map(m=><AgendaItem key={m.id} mem={m}/>)}
+                </>)}
+              </div>
+            )}
+
+            {/* ── CONFIG ── */}
+            {tab === "settings" && (
+              <SettingsScreen apiKey={apiKey} onReset={handleReset}
+                memoriesCount={memories.length} messagesCount={messages.length}/>
+            )}
+
+            <BottomNav tab={tab} setTab={setTab}/>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
