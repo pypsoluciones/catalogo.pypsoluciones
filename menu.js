@@ -198,6 +198,68 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     cargarBadgeCierresPendientes();
+
+    // ── Barra de navegación inferior (solo móvil) ──────────────────────────
+    const navItems = [
+        { href: 'admin_dashboard.html',  icon: 'fa-chart-pie',          label: 'Inicio',    match: 'admin_dashboard' },
+        { href: 'admin_ventas.html',     icon: 'fa-file-invoice',        label: 'Ventas',    match: 'admin_ventas'    },
+        { href: 'admin_caja.html',       icon: 'fa-vault',               label: 'Caja',      match: 'admin_caja'      },
+        { href: 'admin_cxc.html',        icon: 'fa-hand-holding-dollar', label: 'CxC',       match: 'admin_cxc'       },
+        { href: 'admin_productos.html',  icon: 'fa-boxes-stacked',       label: 'Inventario',match: 'admin_productos' },
+    ];
+
+    const bottomNavHTML = `
+    <style>
+        @media (max-width: 767px) {
+            .pyp-bottom-nav-spacer { display: block !important; }
+            main { padding-bottom: 0 !important; }
+        }
+    </style>
+    <div class="pyp-bottom-nav-spacer" style="display:none;height:62px;flex-shrink:0;"></div>
+    <nav id="pyp-bottom-nav" aria-label="Navegación principal" style="
+        display: none;
+        position: fixed; bottom: 0; left: 0; right: 0; z-index: 49;
+        background: #fff;
+        border-top: 0.5px solid #e2e8f0;
+        height: 62px;
+        align-items: stretch;
+        box-shadow: 0 -2px 12px rgba(0,0,0,0.07);
+        font-family: var(--font-global, 'Inter', sans-serif);
+    ">
+        ${navItems.map(item => {
+            const isActive = currentPage.includes(item.match);
+            return `
+            <a href="${item.href}" style="
+                flex: 1; display: flex; flex-direction: column;
+                align-items: center; justify-content: center;
+                gap: 3px; text-decoration: none; position: relative;
+                padding: 6px 2px;
+                background: ${isActive ? 'rgba(20,59,98,0.04)' : 'transparent'};
+                transition: background 0.15s;
+            ">
+                ${isActive ? `<span style="position:absolute;top:0;left:50%;transform:translateX(-50%);width:28px;height:2px;background:var(--color-primary,#143B62);border-radius:0 0 2px 2px;"></span>` : ''}
+                ${item.match === 'admin_cxc' ? `<span id="bnav-badge-cxc" style="display:none;position:absolute;top:6px;right:calc(50% - 16px);background:#E24B4A;color:#fff;font-size:8px;font-weight:700;min-width:14px;height:14px;border-radius:7px;padding:0 3px;display:none;align-items:center;justify-content:center;border:1.5px solid #fff;"></span>` : ''}
+                <i class="fa-solid ${item.icon}" style="font-size:18px;color:${isActive ? 'var(--color-primary,#143B62)' : '#94a3b8'};"></i>
+                <span style="font-size:9px;font-weight:700;color:${isActive ? 'var(--color-primary,#143B62)' : '#94a3b8'};text-transform:uppercase;letter-spacing:0.05em;">${item.label}</span>
+            </a>`;
+        }).join('')}
+    </nav>`;
+
+    document.body.insertAdjacentHTML('beforeend', bottomNavHTML);
+
+    // Mostrar/ocultar según ancho de pantalla
+    const bNav = document.getElementById('pyp-bottom-nav');
+    const bNavSpacer = document.querySelector('.pyp-bottom-nav-spacer');
+    function toggleBottomNav() {
+        const isMobile = window.innerWidth < 768;
+        if (bNav) bNav.style.display = isMobile ? 'flex' : 'none';
+        if (bNavSpacer) bNavSpacer.style.display = isMobile ? 'block' : 'none';
+    }
+    toggleBottomNav();
+    window.addEventListener('resize', toggleBottomNav);
+
+    // Badge CxC: carga el conteo de facturas vencidas/por cobrar
+    cargarBadgeCxC();
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -254,4 +316,37 @@ window.cargarBadgeCierresPendientes = async function() {
     } catch {}
 
     setTimeout(window.cargarBadgeCierresPendientes, 60_000);
+};
+
+window.cargarBadgeCxC = async function() {
+    const badge = document.getElementById('bnav-badge-cxc');
+    if (!badge) return;
+    const token = localStorage.getItem('pyp_token_seguro');
+    if (!token || typeof SUPABASE_URL === 'undefined') return;
+
+    try {
+        const resUser = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?select=id_empresa&limit=1`, {
+            headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${token}` }
+        });
+        if (!resUser.ok) return;
+        const dataUser = await resUser.json();
+        const idEmpresa = dataUser[0]?.id_empresa;
+        const filtro = idEmpresa ? `id_empresa=eq.${idEmpresa}&` : '';
+
+        const res = await fetch(
+            `${SUPABASE_URL}/rest/v1/ventas_facturas?${filtro}estatus=in.(VENCIDA,POR_PAGAR,PARCIAL)&saldo_pendiente_usd=gt.0&select=id_factura`,
+            { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${token}` } }
+        );
+        if (!res.ok) return;
+        const data = await res.json();
+        const n = data.length || 0;
+        if (n > 0) {
+            badge.textContent = n > 99 ? '99+' : String(n);
+            badge.style.display = 'flex';
+        } else {
+            badge.style.display = 'none';
+        }
+    } catch {}
+
+    setTimeout(window.cargarBadgeCxC, 120_000);
 };
