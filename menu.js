@@ -1,17 +1,12 @@
 /* ═══════════════════════════════════════════════════════════════════════════
-   P&P ERP — MENÚ LATERAL GLOBAL v2 (Sprint 5 reorganizado)
+   P&P ERP — MENÚ LATERAL GLOBAL v3 (Sprint 6)
    ═══════════════════════════════════════════════════════════════════════════
-   Cambios v2:
-   - "Ventas (POS)" → "Ventas"
-   - Notas de Entrega y Cotizaciones movidos DENTRO de Ventas
-   - Eliminada pestaña independiente "Notas de Entrega"
-   - "Gestión de Compras" → "Factura de Compra"
-   - "Maestro de Productos" → "Productos"
-   - "Finanzas & Caja" → "Finanzas"
-   - "Bancos y Finanzas" → "Bancos y Cajas"
-   - Bóveda Central NO es ítem separado (está dentro de Bancos y Cajas)
-   - "Seguridad y Permisos" MOVIDO dentro de Sistema
-   - Slot deshabilitado para "Facturación" (próximo sprint)
+   Cambios v3:
+   - Eliminado item "Publicidad TV" (era nombre incorrecto del editor de banners web)
+   - Agregado "Mi Página Web" (nuevo módulo unificado para configurar el catálogo:
+     identidad visual, contacto, banners, categorías y páginas de información)
+   - admin_publicidad.html sigue accesible por URL directa (uso interno)
+   - El item Sistema queda activo también cuando estás en admin_pagina_web
    ═══════════════════════════════════════════════════════════════════════════ */
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -118,17 +113,19 @@ document.addEventListener("DOMContentLoaded", () => {
             </div>
 
             <div class="space-y-1 pt-1">
-                <button type="button" onclick="document.getElementById('submenu-sis').classList.toggle('hidden')" class="w-full flex items-center justify-between p-2 rounded-md transition text-sm ${currentPage.includes('admin_seguridad') || currentPage.includes('admin_empleados_roles') || currentPage.includes('admin_configuracion') || currentPage.includes('admin_perfil') || currentPage.includes('admin_publicidad') ? 'bg-white/5 text-white font-bold' : 'text-gray-300 hover:bg-white/10'}">
+                <button type="button" onclick="document.getElementById('submenu-sis').classList.toggle('hidden')" class="w-full flex items-center justify-between p-2 rounded-md transition text-sm ${currentPage.includes('admin_seguridad') || currentPage.includes('admin_empleados_roles') || currentPage.includes('admin_configuracion') || currentPage.includes('admin_perfil') || currentPage.includes('admin_publicidad') || currentPage.includes('admin_pagina_web') ? 'bg-white/5 text-white font-bold' : 'text-gray-300 hover:bg-white/10'}">
                     <div class="flex items-center"><i class="fa-solid fa-gears mr-3 w-4"></i> Sistema</div>
                     <i class="fa-solid fa-chevron-down text-[10px]"></i>
                 </button>
-                <div id="submenu-sis" class="pl-6 space-y-1 mt-1 ${currentPage.includes('admin_seguridad') || currentPage.includes('admin_empleados_roles') || currentPage.includes('admin_configuracion') || currentPage.includes('admin_perfil') || currentPage.includes('admin_publicidad') ? '' : 'hidden'}">
+                <div id="submenu-sis" class="pl-6 space-y-1 mt-1 ${currentPage.includes('admin_seguridad') || currentPage.includes('admin_empleados_roles') || currentPage.includes('admin_configuracion') || currentPage.includes('admin_perfil') || currentPage.includes('admin_publicidad') || currentPage.includes('admin_pagina_web') ? '' : 'hidden'}">
                     <a href="admin_seguridad.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_seguridad.html' ? estiloActivoSub : estiloInactivoSub}">
                         <i class="fa-solid fa-shield-halved mr-1 text-[10px]"></i> Seguridad y Permisos
                     </a>
                     <a href="admin_perfil.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_perfil.html' ? estiloActivoSub : estiloInactivoSub}">Mi Perfil y PIN</a>
                     <a href="admin_empleados_roles.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_empleados_roles.html' ? estiloActivoSub : estiloInactivoSub}">Empleados y Roles</a>
-                    <a href="admin_publicidad.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_publicidad.html' ? estiloActivoSub : estiloInactivoSub}">Publicidad TV</a>
+                    <a href="admin_pagina_web.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_pagina_web.html' || currentPage === 'admin_publicidad.html' ? estiloActivoSub : estiloInactivoSub}">
+                        <i class="fa-solid fa-globe mr-1 text-[10px]"></i> Mi Página Web
+                    </a>
                     <a href="admin_configuracion.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_configuracion.html' ? estiloActivoSub : estiloInactivoSub}">Parámetros del Sistema</a>
                 </div>
             </div>
