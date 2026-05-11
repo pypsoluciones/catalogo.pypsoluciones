@@ -1,289 +1,457 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <script src="config.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>P&P Admin | Dashboard</title>
 
     <script>
-        const cPri    = localStorage.getItem('pyp_color_primario')    || '#143B62';
-        const cSec    = localStorage.getItem('pyp_color_secundario')  || '#E67E22';
-        const cTer    = localStorage.getItem('pyp_color_terciario')   || '#64748b';
-        const fontFam = localStorage.getItem('pyp_fuente')            || "'Inter', sans-serif";
-        document.documentElement.style.setProperty('--color-primary',   cPri);
+        const cPri = localStorage.getItem('pyp_color_primario') || '#143B62';
+        const cSec = localStorage.getItem('pyp_color_secundario') || '#E67E22';
+        const cTer = localStorage.getItem('pyp_color_terciario') || '#64748b';
+        const fontFam = localStorage.getItem('pyp_fuente') || "'Inter', sans-serif";
+        const fontSiz = localStorage.getItem('pyp_tamano') || "14px";
+        document.documentElement.style.setProperty('--color-primary', cPri);
         document.documentElement.style.setProperty('--color-secondary', cSec);
-        document.documentElement.style.setProperty('--color-tertiary',  cTer);
-        document.documentElement.style.setProperty('--font-global',     fontFam);
+        document.documentElement.style.setProperty('--color-tertiary', cTer);
+        document.documentElement.style.setProperty('--font-global', fontFam);
+        document.documentElement.style.setProperty('--size-global', fontSiz);
     </script>
 
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
-    <script src="config.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=Poppins:wght@300;400;500;700;900&family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+
+    <script>
+        if (!localStorage.getItem('pyp_token_seguro')) { window.location.href = 'login.html'; }
+    </script>
 
     <style>
         *, *::before, *::after { box-sizing: border-box; }
-        body { font-family: var(--font-global); font-size: 14px; overscroll-behavior-y: none; background-color: #f4f6f8; }
+        body { font-family: var(--font-global); font-size: var(--size-global); }
 
         .text-primary   { color: var(--color-primary) !important; }
         .bg-primary     { background-color: var(--color-primary) !important; }
         .text-secondary { color: var(--color-secondary) !important; }
         .text-tertiary  { color: var(--color-tertiary) !important; }
 
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        
-        .fade-in { animation: fadeIn 0.35s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+        .custom-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background-color: var(--color-primary); border-radius: 4px; }
+        .fade-in { animation: fadeIn 0.35s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Privacidad */
-        .dato-sensible { transition: filter 0.2s ease; }
-        .modo-privado .dato-sensible { filter: blur(6px); user-select: none; pointer-events: none; opacity: 0.7; }
+        #watermark-bg { background-size: 50%; background-position: center; background-repeat: no-repeat; opacity: 0.04; pointer-events: none; z-index: 0; }
 
-        /* Tarjetas KPI */
-        .kpi-scroll { scroll-snap-type: x mandatory; }
-        .kpi-card { 
-            scroll-snap-align: start; flex: 0 0 auto; width: 165px; 
-            background: #fff; border-radius: 14px; border: 1px solid #e2e8f0; 
-            padding: 16px; position: relative; overflow: hidden;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        /* Privacidad global */
+        .dato-sensible { transition: filter 0.3s ease; }
+        .modo-privado .dato-sensible { filter: blur(6px); user-select: none; pointer-events: none; }
+
+        /* Header */
+        .dash-header {
+            background-color: var(--color-primary);
+            padding: 14px 20px;
+            display: flex; justify-content: space-between; align-items: center;
+            flex-shrink: 0; z-index: 10; position: relative;
         }
-        .kpi-icon-bg { 
-            position: absolute; right: -10px; bottom: -15px; font-size: 65px; 
-            opacity: 0.05; transform: rotate(-15deg); pointer-events: none;
+        .dash-header-title { font-size: 16px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 10px; font-family: var(--font-global); }
+        .dash-header-sub { font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 3px; font-family: var(--font-global); }
+        .dash-header-right { display: flex; align-items: center; gap: 10px; }
+        .dash-header-badge {
+            background: rgba(255,255,255,0.15); border-radius: 20px; padding: 5px 14px;
+            font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.9);
+            display: flex; align-items: center; gap: 6px; font-family: var(--font-global);
         }
+        .dash-btn-icon {
+            background: rgba(255,255,255,0.1); border: none; cursor: pointer;
+            color: rgba(255,255,255,0.7); font-size: 15px;
+            width: 34px; height: 34px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            transition: background 0.2s; flex-shrink: 0;
+        }
+        .dash-btn-icon:hover { background: rgba(255,255,255,0.2); color: #fff; }
+        .dash-btn-icon.activo { color: var(--color-secondary); }
 
-        .custom-scroll::-webkit-scrollbar { width: 4px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        /* Ticker */
+        .ticker-bar {
+            background-color: var(--color-primary);
+            border-top: 1px solid rgba(255,255,255,0.1);
+            padding: 10px 20px;
+            display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
+            flex-shrink: 0;
+        }
+        .ticker-item { display: flex; align-items: center; gap: 10px; padding: 4px 20px 4px 0; }
+        .ticker-item + .ticker-item { border-left: 1px solid rgba(255,255,255,0.15); padding-left: 20px; }
+        .ticker-flag { font-size: 18px; line-height: 1; }
+        .ticker-label { font-size: 11px; color: rgba(255,255,255,0.5); font-family: var(--font-global); margin-bottom: 2px; }
+        .ticker-val { font-size: 20px; font-weight: 700; color: #fff; font-family: var(--font-global); line-height: 1; }
+        .ticker-chip { font-size: 10px; font-weight: 600; background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.7); padding: 2px 8px; border-radius: 10px; font-family: var(--font-global); }
+        .ticker-sep { flex: 1; min-width: 16px; }
+        .ticker-caja { display: flex; align-items: center; gap: 8px; }
+        .ticker-caja-dot { width: 8px; height: 8px; border-radius: 50%; background: #94a3b8; flex-shrink: 0; transition: background 0.3s; }
+        .ticker-caja-text { font-size: 13px; font-weight: 600; color: #fff; font-family: var(--font-global); }
+        .ticker-caja-link {
+            font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.8);
+            border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; padding: 4px 12px;
+            text-decoration: none; font-family: var(--font-global); transition: background 0.2s;
+        }
+        .ticker-caja-link:hover { background: rgba(255,255,255,0.15); }
+
+        /* KPI cards */
+        .kpi-label {
+            font-family: var(--font-global); font-size: 12px; font-weight: 700;
+            color: #64748b; text-transform: uppercase; letter-spacing: 0.06em;
+            margin-bottom: 5px; display: block;
+        }
+        .kpi-value { font-family: var(--font-global); font-size: 1.8rem; font-weight: 900; line-height: 1.1; }
+        .kpi-card {
+            background: #fff; border-radius: 14px;
+            border: 0.5px solid #e2e8f0; border-left-width: 4px;
+            padding: 18px 20px; display: flex; align-items: center; gap: 16px;
+            transition: box-shadow 0.2s, transform 0.2s;
+        }
+        .kpi-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.08); transform: translateY(-2px); }
+        .kpi-card.ventas   { border-left-color: var(--color-primary); }
+        .kpi-card.prod     { border-left-color: #1D9E75; }
+        .kpi-card.taller   { border-left-color: #EF9F27; }
+        .kpi-card.clientes { border-left-color: #378ADD; }
+        .kpi-icon {
+            width: 44px; height: 44px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px; flex-shrink: 0;
+        }
+        .kpi-icon.ventas   { background: rgba(20,59,98,0.08);   color: var(--color-primary); }
+        .kpi-icon.prod     { background: rgba(29,158,117,0.1);  color: #1D9E75; }
+        .kpi-icon.taller   { background: rgba(239,159,39,0.1);  color: #EF9F27; }
+        .kpi-icon.clientes { background: rgba(55,138,221,0.1);  color: #378ADD; }
+
+        /* Semáforo */
+        .section-label {
+            font-family: var(--font-global); font-size: 12px; font-weight: 700;
+            color: var(--color-primary); text-transform: uppercase; letter-spacing: 0.07em;
+        }
+        .cxc-section { background: #fff; border-radius: 14px; border: 0.5px solid #e2e8f0; overflow: hidden; }
+        .cxc-header {
+            background: rgba(20,59,98,0.04); border-bottom: 0.5px solid #e2e8f0;
+            padding: 12px 20px; display: flex; justify-content: space-between; align-items: center;
+        }
+        .cxc-ver-todo {
+            font-size: 11px; font-weight: 700; color: var(--color-primary);
+            border: 1px solid rgba(20,59,98,0.2); border-radius: 6px; padding: 4px 12px;
+            text-decoration: none; font-family: var(--font-global); transition: background 0.2s;
+        }
+        .cxc-ver-todo:hover { background: rgba(20,59,98,0.06); }
+        .sem-card {
+            background: #fff; border-radius: 12px; border: 0.5px solid #e2e8f0;
+            border-left-width: 4px; padding: 16px 18px;
+            position: relative; overflow: hidden;
+            transition: box-shadow 0.2s, transform 0.2s;
+        }
+        .sem-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.07); transform: translateY(-1px); }
+        .sem-card.rojo     { border-left-color: #E24B4A; }
+        .sem-card.amarillo { border-left-color: #EF9F27; }
+        .sem-card.verde    { border-left-color: #639922; }
+        .sem-label { font-family: var(--font-global); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; display: block; }
+        .sem-val   { font-family: var(--font-global); font-size: 1.6rem; font-weight: 900; margin-bottom: 8px; line-height: 1; }
+        .sem-bar-bg { height: 4px; border-radius: 2px; background: #f1f5f9; margin-bottom: 6px; }
+        .sem-bar    { height: 4px; border-radius: 2px; width: 0%; transition: width 0.9s cubic-bezier(0.4,0,0.2,1); }
+        .sem-sub   { font-size: 12px; color: #94a3b8; font-family: var(--font-global); }
+        .sem-deco  { position: absolute; right: -6px; bottom: -6px; font-size: 52px; opacity: 0.06; }
     </style>
 </head>
 
-<body class="flex h-screen overflow-hidden text-gray-800 relative">
+<body class="bg-[#f4f6f8] flex h-screen overflow-hidden text-gray-800 relative modo-privado" id="body-dashboard">
 
+    <div id="watermark-bg" class="absolute inset-0"></div>
     <script src="menu.js"></script>
 
-    <main class="flex-1 flex flex-col h-[100dvh] overflow-hidden w-full relative z-10">
-        
-        <div class="bg-primary px-4 py-3 flex justify-between items-center shrink-0 z-10 shadow-lg">
-            <div class="flex flex-col">
-                <div class="text-white/80 text-[11px] font-bold uppercase tracking-wide mb-0.5 flex items-center gap-1.5">
-                    <i class="fa-solid fa-building-circle-check text-[10px]"></i>
-                    <span id="nombre-empresa">ESTABLECIENDO CONEXIÓN...</span>
+    <main class="flex-1 flex flex-col h-screen overflow-hidden w-full relative z-10">
+
+        <!-- Header color primario -->
+        <div class="dash-header">
+            <div>
+                <div class="dash-header-title">
+                    <button onclick="toggleMobileMenu()" class="md:hidden dash-btn-icon" style="width:28px;height:28px;font-size:13px;margin-right:2px;"><i class="fa-solid fa-bars"></i></button>
+                    <i class="fa-solid fa-chart-pie" style="color:rgba(255,255,255,0.45);font-size:15px;"></i>
+                    Resumen Gerencial
                 </div>
-                <div class="text-white text-base font-black flex items-center gap-3">
-                    <button onclick="toggleMobileMenu()" class="md:hidden text-white/80 hover:text-white transition">
-                        <i class="fa-solid fa-bars text-xl"></i>
-                    </button>
-                    Dashboard Principal
-                </div>
+                <div class="dash-header-sub" id="dash-fecha-header">Cargando...</div>
             </div>
-            <div class="flex items-center gap-4">
-                <button onclick="togglePrivacidad()" id="btn-privacidad" class="text-white/80 hover:text-white transition text-lg bg-white/5 p-2 rounded-full border border-white/5">
-                    <i class="fa-solid fa-eye-slash"></i>
-                </button>
-                <div class="bg-white/10 rounded-full px-3 py-1.5 text-xs font-bold text-white flex items-center gap-2 border border-white/10">
-                    <i class="fa-solid fa-user-tie text-tertiary"></i> <span id="nombre-usuario">Usuario</span>
+            <div class="dash-header-right">
+                <button onclick="window.location.reload()" class="dash-btn-icon md:hidden" title="Actualizar"><i class="fa-solid fa-rotate-right"></i></button>
+                <button onclick="togglePrivacidad()" id="btn-privacidad" class="dash-btn-icon" title="Ocultar/Mostrar valores"><i class="fa-solid fa-eye-slash"></i></button>
+                <div class="dash-header-badge">
+                    <i class="fa-solid fa-user-tie" style="font-size:12px;opacity:0.7;"></i>
+                    <span id="nombre-usuario">Admin</span>
                 </div>
             </div>
         </div>
 
-        <div class="bg-slate-900 border-t border-slate-800 px-4 py-3 flex items-center gap-5 overflow-x-auto no-scrollbar shrink-0 shadow-inner">
-            <div class="flex items-center gap-2 shrink-0 bg-slate-800/40 px-3 py-1.5 rounded-lg border border-slate-700">
-                <span class="text-sm">🇺🇸</span>
-                <div class="text-[11px] text-gray-400 font-bold uppercase tracking-wider">USD <span class="text-white font-black ml-1.5 text-[13px]" id="dash-tasa-usd">Bs. --</span></div>
+        <!-- Ticker BCV + Caja -->
+        <div class="ticker-bar">
+            <div class="ticker-item">
+                <span class="ticker-flag">🇺🇸</span>
+                <div>
+                    <div class="ticker-label">USD · BCV Oficial</div>
+                    <div class="ticker-val" id="dash-tasa-usd">Bs. —</div>
+                    <div class="ticker-fecha" id="dash-tasa-usd-fecha" style="font-size:10px;color:#94a3b8;font-weight:600;"></div>
+                </div>
+                <span class="ticker-chip">BCV</span>
             </div>
-            <div class="flex items-center gap-2 shrink-0 bg-slate-800/40 px-3 py-1.5 rounded-lg border border-slate-700">
-                <span class="text-sm">🇪🇺</span>
-                <div class="text-[11px] text-gray-400 font-bold uppercase tracking-wider">EUR <span class="text-white font-black ml-1.5 text-[13px]" id="dash-tasa-eur">Bs. --</span></div>
+            <div class="ticker-item">
+                <span class="ticker-flag">🇪🇺</span>
+                <div>
+                    <div class="ticker-label">EUR · BCV Oficial</div>
+                    <div class="ticker-val" id="dash-tasa-eur">Bs. —</div>
+                    <div class="ticker-fecha" id="dash-tasa-eur-fecha" style="font-size:10px;color:#94a3b8;font-weight:600;"></div>
+                </div>
+                <span class="ticker-chip">BCV</span>
             </div>
-            <div class="ml-auto flex items-center gap-2 shrink-0 pl-4 border-l border-slate-800">
-                <div id="dash-caja-dot" class="w-2.5 h-2.5 rounded-full bg-gray-500 animate-pulse"></div>
-                <a href="admin_caja.html" class="text-[10px] text-gray-400 font-black hover:text-white tracking-widest" id="dash-caja-status">CAJA...</a>
+            <div class="ticker-sep"></div>
+            <div class="ticker-caja">
+                <span class="ticker-caja-dot" id="dash-caja-dot"></span>
+                <span class="ticker-caja-text" id="dash-caja-status">Verificando...</span>
+                <a href="admin_caja.html" class="ticker-caja-link">
+                    <i class="fa-solid fa-vault" style="font-size:10px;margin-right:4px;"></i>Gestionar Caja
+                </a>
             </div>
         </div>
 
-        <div class="flex-1 overflow-y-auto custom-scroll fade-in flex flex-col pb-6">
-            
-            <div class="flex gap-4 overflow-x-auto kpi-scroll no-scrollbar px-4 py-5 shrink-0">
-                <div class="kpi-card">
-                    <i class="fa-solid fa-cash-register kpi-icon-bg text-primary"></i>
-                    <div class="text-[10px] text-gray-500 font-black uppercase mb-1.5 tracking-widest">Ventas Hoy</div>
-                    <div class="text-2xl font-black text-primary dato-sensible leading-none" id="dash-ventas-hoy">$0.00</div>
-                </div>
-                <div class="kpi-card">
-                    <i class="fa-solid fa-boxes-stacked kpi-icon-bg" style="color:#10b981;"></i>
-                    <div class="text-[10px] text-gray-500 font-black uppercase mb-1.5 tracking-widest">Productos</div>
-                    <div class="text-2xl font-black dato-sensible leading-none" style="color:#10b981;" id="indicador-productos">0</div>
-                </div>
-                <div class="kpi-card">
-                    <i class="fa-solid fa-users kpi-icon-bg" style="color:#3b82f6;"></i>
-                    <div class="text-[10px] text-gray-500 font-black uppercase mb-1.5 tracking-widest">Clientes</div>
-                    <div class="text-2xl font-black dato-sensible leading-none" style="color:#3b82f6;" id="indicador-clientes">0</div>
-                </div>
-            </div>
+        <!-- Contenido -->
+        <div class="flex-1 overflow-auto p-4 md:p-6 custom-scroll pb-20 fade-in">
 
-            <div class="px-4 mb-6 shrink-0">
-                <div class="grid grid-cols-4 gap-3">
-                    <a href="admin_ventas.html" class="bg-white border border-gray-200 rounded-xl py-3 px-1 flex flex-col items-center justify-center gap-2.5 shadow-sm active:scale-95 transition group">
-                        <div class="w-12 h-12 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center text-xl group-hover:bg-blue-600 group-hover:text-white transition-colors"><i class="fa-solid fa-file-invoice-dollar"></i></div>
-                        <span class="text-[9px] font-black text-gray-700 uppercase text-center leading-tight tracking-widest">Nueva<br>Venta</span>
-                    </a>
-                    <a href="admin_cxc.html" class="bg-white border border-gray-200 rounded-xl py-3 px-1 flex flex-col items-center justify-center gap-2.5 shadow-sm active:scale-95 transition group">
-                        <div class="w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl group-hover:bg-emerald-600 group-hover:text-white transition-colors"><i class="fa-solid fa-hand-holding-dollar"></i></div>
-                        <span class="text-[9px] font-black text-gray-700 uppercase text-center leading-tight tracking-widest">Cobrar<br>Factura</span>
-                    </a>
-                    <a href="admin_productos.html" class="bg-white border border-gray-200 rounded-xl py-3 px-1 flex flex-col items-center justify-center gap-2.5 shadow-sm active:scale-95 transition group">
-                        <div class="w-12 h-12 rounded-full bg-orange-50 text-orange-600 flex items-center justify-center text-xl group-hover:bg-orange-600 group-hover:text-white transition-colors"><i class="fa-solid fa-boxes-stacked"></i></div>
-                        <span class="text-[9px] font-black text-gray-700 uppercase text-center leading-tight tracking-widest">Inventario</span>
-                    </a>
-                    <a href="admin_caja.html" class="bg-white border border-gray-200 rounded-xl py-3 px-1 flex flex-col items-center justify-center gap-2.5 shadow-sm active:scale-95 transition group">
-                        <div class="w-12 h-12 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center text-xl group-hover:bg-purple-600 group-hover:text-white transition-colors"><i class="fa-solid fa-cash-register"></i></div>
-                        <span class="text-[9px] font-black text-gray-700 uppercase text-center leading-tight tracking-widest">Caja</span>
-                    </a>
-                </div>
-            </div>
+            <!-- KPIs -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
 
-            <div class="px-4 pb-10 flex-1 flex flex-col min-h-0">
-                <h3 class="text-xs font-black text-primary uppercase tracking-widest mb-2.5 shrink-0">Últimas Transacciones</h3>
-                <div class="bg-white border border-gray-200 rounded-xl shadow-sm flex-1 overflow-y-auto no-scrollbar">
-                    <div class="divide-y divide-gray-100" id="lista-movimientos">
-                        <div class="p-6 text-center text-[11px] text-gray-400 font-bold uppercase">Actualizando movimientos...</div>
+                <div class="kpi-card ventas">
+                    <div class="kpi-icon ventas"><i class="fa-solid fa-cash-register"></i></div>
+                    <div class="flex-1 min-w-0">
+                        <span class="kpi-label">Ventas Hoy</span>
+                        <span class="kpi-value text-primary dato-sensible" id="dash-ventas-hoy">$0.00</span>
                     </div>
                 </div>
+
+                <div class="kpi-card prod">
+                    <div class="kpi-icon prod"><i class="fa-solid fa-boxes-stacked"></i></div>
+                    <div>
+                        <span class="kpi-label">Prod. Activos</span>
+                        <span class="kpi-value dato-sensible" style="color:#1D9E75;" id="indicador-productos">0</span>
+                    </div>
+                </div>
+
+                <div class="kpi-card taller">
+                    <div class="kpi-icon taller"><i class="fa-solid fa-screwdriver-wrench"></i></div>
+                    <div>
+                        <span class="kpi-label">Equipos Taller</span>
+                        <span class="kpi-value dato-sensible" style="color:#EF9F27;" id="indicador-taller">0</span>
+                    </div>
+                </div>
+
+                <div class="kpi-card clientes">
+                    <div class="kpi-icon clientes"><i class="fa-solid fa-users"></i></div>
+                    <div>
+                        <span class="kpi-label">Clientes</span>
+                        <span class="kpi-value dato-sensible" style="color:#378ADD;" id="indicador-clientes">0</span>
+                    </div>
+                </div>
+
             </div>
+
+            <!-- Semáforo CxC -->
+            <div class="cxc-section">
+                <div class="cxc-header">
+                    <span class="section-label" style="display:flex;align-items:center;gap:8px;">
+                        <i class="fa-solid fa-traffic-light" style="color:var(--color-tertiary);font-size:14px;"></i>
+                        Semáforo Cuentas por Cobrar (CxC)
+                    </span>
+                    <a href="admin_cxc.html" class="cxc-ver-todo">Ver Todo →</a>
+                </div>
+                <div class="p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+
+                    <div class="sem-card rojo">
+                        <span class="sem-label" style="color:#A32D2D;">Vencidas (Crítico)</span>
+                        <div class="sem-val dato-sensible" style="color:#A32D2D;" id="sem-rojo-monto">$0.00</div>
+                        <div class="sem-bar-bg"><div class="sem-bar" id="sem-rojo-bar" style="background:#E24B4A;"></div></div>
+                        <p class="sem-sub"><span id="sem-rojo-cant">0</span> facturas fuera de plazo</p>
+                        <i class="fa-solid fa-triangle-exclamation sem-deco" style="color:#E24B4A;"></i>
+                    </div>
+
+                    <div class="sem-card amarillo">
+                        <span class="sem-label" style="color:#854F0B;">Por Vencer (3 Días)</span>
+                        <div class="sem-val dato-sensible" style="color:#854F0B;" id="sem-amarillo-monto">$0.00</div>
+                        <div class="sem-bar-bg"><div class="sem-bar" id="sem-amarillo-bar" style="background:#EF9F27;"></div></div>
+                        <p class="sem-sub"><span id="sem-amarillo-cant">0</span> facturas por vencerse</p>
+                        <i class="fa-regular fa-clock sem-deco" style="color:#EF9F27;"></i>
+                    </div>
+
+                    <div class="sem-card verde">
+                        <span class="sem-label" style="color:#3B6D11;">Deuda Sana</span>
+                        <div class="sem-val dato-sensible" style="color:#3B6D11;" id="sem-verde-monto">$0.00</div>
+                        <div class="sem-bar-bg"><div class="sem-bar" id="sem-verde-bar" style="background:#639922;"></div></div>
+                        <p class="sem-sub"><span id="sem-verde-cant">0</span> facturas a tiempo</p>
+                        <i class="fa-solid fa-shield-halved sem-deco" style="color:#639922;"></i>
+                    </div>
+
+                </div>
+            </div>
+
         </div>
     </main>
 
     <script>
-        // ================================================================
-        // MOTOR LÓGICO DEL DASHBOARD
-        // ================================================================
         const TOKEN_JWT = localStorage.getItem('pyp_token_seguro');
-        let modoPrivado = localStorage.getItem('pyp_dash_privado') === 'true';
+        let empresaActual = null;
 
-        if (!TOKEN_JWT) window.location.href = 'login.html';
+        function fmt(num) { return parseFloat(num || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 
-        document.addEventListener('DOMContentLoaded', async () => {
-            // Cargar interfaz básica (Empresa, Tasas, Usuario)
-            configurarUIBasica();
-            
-            // Carga de datos pesados (Supabase)
+        window.onload = async () => {
+            const ahora = new Date();
+            document.getElementById('dash-fecha-header').innerText =
+                ahora.toLocaleDateString('es-VE', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+
+            const nombre = localStorage.getItem('pyp_usuario_nombre') || 'SISTEMA';
+            document.getElementById('nombre-usuario').innerText = nombre.split(' ')[0];
+
+            if (localStorage.getItem('pyp_privacidad') === 'false') { togglePrivacidad(); }
+
+            await cargarConfiguracionGlobal();
+            await cargarIndicadoresGlobales(nombre);
+        };
+
+        async function cargarConfiguracionGlobal() {
             try {
-                // Ejecutamos todo en paralelo para que no se bloquee la pantalla
-                Promise.all([
-                    cargarMetricasPrincipales(),
-                    cargarUltimosMovimientos(),
-                    verificarEstadoCaja()
-                ]);
-            } catch (e) { 
-                console.error("Error cargando el Dashboard:", e); 
-            }
-        });
-
-        function configurarUIBasica() {
-            // 1. Nombre de la Empresa (CORREGIDO: Legibilidad Mejorada)
-            const empresa = localStorage.getItem('pyp_empresa_nombre') || 'SISTEMA P&P';
-            const elEmpresa = document.getElementById('nombre-empresa');
-            if (elEmpresa) elEmpresa.innerText = empresa.toUpperCase();
-            
-            // 2. Usuario
-            const usr = localStorage.getItem('pyp_usuario_nombre') || 'Administrador';
-            document.getElementById('nombre-usuario').innerText = usr.split(' ')[0];
-
-            // 3. Tasas de Cambio (CORREGIDO: Si están en 0, revisa los nombres de las llaves abajo)
-            const tUsd = localStorage.getItem('pyp_tasa_usd') || '0.00';
-            const tEur = localStorage.getItem('pyp_tasa_eur') || '0.00';
-            
-            document.getElementById('dash-tasa-usd').innerText = `Bs. ${parseFloat(tUsd).toFixed(2)}`;
-            document.getElementById('dash-tasa-eur').innerText = `Bs. ${parseFloat(tEur).toFixed(2)}`;
-
-            aplicarPrivacidadUI();
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                if (res.ok) {
+                    const config = await res.json();
+                    const fondoObj = config.find(c => c.parametro === 'FONDO_URL');
+                    if (fondoObj?.valor) {
+                        localStorage.setItem('pyp_fondo_url', fondoObj.valor);
+                        document.getElementById('watermark-bg').style.backgroundImage = `url('${fondoObj.valor}')`;
+                    }
+                }
+            } catch(e) {}
         }
 
         function togglePrivacidad() {
-            modoPrivado = !modoPrivado;
-            localStorage.setItem('pyp_dash_privado', modoPrivado);
-            aplicarPrivacidadUI();
-        }
-
-        function aplicarPrivacidadUI() {
-            document.body.classList.toggle('modo-privado', modoPrivado);
-            const btn = document.getElementById('btn-privacidad');
-            btn.innerHTML = modoPrivado ? '<i class="fa-solid fa-eye text-secondary"></i>' : '<i class="fa-solid fa-eye-slash"></i>';
-        }
-
-        async function cargarMetricasPrincipales() {
-            try {
-                const hoy = new Date().toISOString().split('T')[0];
-                
-                // Ventas del día (Asumiendo tabla 'ventas')
-                const resV = await fetch(`${SUPABASE_URL}/rest/v1/ventas?select=total_usd&fecha_venta=eq.${hoy}`, {
-                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` }
-                });
-                if (resV.ok) {
-                    const dataV = await resV.json();
-                    const total = dataV.reduce((acc, v) => acc + (parseFloat(v.total_usd) || 0), 0);
-                    document.getElementById('dash-ventas-hoy').innerText = `$${total.toLocaleString('en-US', {minimumFractionDigits:2})}`;
-                }
-
-                // Conteos rápidos
-                const resP = await fetch(`${SUPABASE_URL}/rest/v1/productos?select=id&estado_producto=eq.ACTIVO`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Prefer': 'count=exact' } });
-                const resC = await fetch(`${SUPABASE_URL}/rest/v1/clientes?select=id`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Prefer': 'count=exact' } });
-                
-                if (resP.ok) document.getElementById('indicador-productos').innerText = resP.headers.get('content-range')?.split('/')[1] || '0';
-                if (resC.ok) document.getElementById('indicador-clientes').innerText  = resC.headers.get('content-range')?.split('/')[1] || '0';
-                
-            } catch (e) { console.error("Error en métricas:", e); }
-        }
-
-        async function verificarEstadoCaja() {
-            // Lógica de estado de caja
-            const statusEl = document.getElementById('dash-caja-status');
-            const dotEl    = document.getElementById('dash-caja-dot');
-            statusEl.innerText = "CAJA OPERATIVA";
-            dotEl.classList.replace('bg-gray-500', 'bg-emerald-500');
-        }
-
-        async function cargarUltimosMovimientos() {
-            const contenedor = document.getElementById('lista-movimientos');
-            try {
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/ventas?select=numero_factura,cliente_nombre,total_usd,fecha_venta&order=fecha_venta.desc&limit=5`, {
-                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` }
-                });
-                
-                if (!res.ok) throw new Error("Falla en consulta de movimientos");
-                
-                const movs = await res.json();
-                
-                if (movs.length === 0) {
-                    contenedor.innerHTML = '<div class="p-8 text-center text-[10px] text-gray-400 font-bold uppercase">Sin ventas recientes</div>';
-                    return;
-                }
-
-                contenedor.innerHTML = movs.map(m => {
-                    const h = new Date(m.fecha_venta).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                    return `
-                    <div class="px-4 py-4 flex justify-between items-center border-b border-gray-50 last:border-0">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 shadow-inner"><i class="fa-solid fa-receipt text-sm"></i></div>
-                            <div class="flex flex-col">
-                                <span class="text-[11px] font-black text-slate-800 uppercase leading-none truncate max-w-[140px]">${m.cliente_nombre || 'CONSUMIDOR FINAL'}</span>
-                                <div class="flex items-center gap-2 mt-2">
-                                    <span class="text-[9px] font-black bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded">#${m.numero_factura}</span>
-                                    <span class="text-[9px] text-slate-400 font-bold">${h}</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="text-right">
-                            <div class="text-xs font-black text-primary dato-sensible">+$${parseFloat(m.total_usd).toFixed(2)}</div>
-                            <div class="text-[8px] font-black text-emerald-500 mt-1 uppercase tracking-tight">Procesado</div>
-                        </div>
-                    </div>`;
-                }).join('');
-            } catch (e) { 
-                contenedor.innerHTML = '<div class="p-6 text-center text-red-400 text-[10px] font-black uppercase"><i class="fa-solid fa-wifi-slash mb-1 block text-lg"></i> Error de sincronización</div>'; 
+            const body = document.getElementById('body-dashboard');
+            const icon = document.querySelector('#btn-privacidad i');
+            const btn  = document.getElementById('btn-privacidad');
+            if (body.classList.contains('modo-privado')) {
+                body.classList.remove('modo-privado');
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
+                btn.classList.add('activo');
+                localStorage.setItem('pyp_privacidad', 'false');
+            } else {
+                body.classList.add('modo-privado');
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
+                btn.classList.remove('activo');
+                localStorage.setItem('pyp_privacidad', 'true');
             }
         }
+async function cargarIndicadoresGlobales(usuario) {
+            try {
+                const resUser = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?select=id_empresa&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
+                if (resUser.status === 401 || resUser.status === 403 || !TOKEN_JWT) { window.location.href = 'login.html'; return; }
+                const dataUser = await resUser.json();
+                if (dataUser.length > 0) empresaActual = dataUser[0].id_empresa;
+
+                const filtroEmpresa = empresaActual ? `id_empresa=eq.${empresaActual}&` : `id_empresa=is.null&`;
+                const hoyIso = new Date().toISOString().split('T')[0];
+
+                const [resProd, resCli, resTasa, resCaja, resVen, resCxC, resTaller] = await Promise.all([
+                    fetch(`${SUPABASE_URL}/rest/v1/productos?${filtroEmpresa}select=id_producto_sku&estado_producto=eq.ACTIVO`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
+                    fetch(`${SUPABASE_URL}/rest/v1/directorio_maestro?${filtroEmpresa}select=id&tipo_persona=eq.CLIENTE`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
+                    fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
+                    fetch(`${SUPABASE_URL}/rest/v1/cierres_caja?${filtroEmpresa}usuario_cajero=eq.${usuario}&estatus=eq.ABIERTA&select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
+                    fetch(`${SUPABASE_URL}/rest/v1/ventas_facturas?${filtroEmpresa}fecha_emision=gte.${hoyIso}T00:00:00Z&estatus=neq.ANULADA&select=total_usd,tipo_transaccion`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
+                    fetch(`${SUPABASE_URL}/rest/v1/ventas_facturas?${filtroEmpresa}estatus=in.(POR_PAGAR,PARCIAL,VENCIDA)&saldo_pendiente_usd=gt.0&select=saldo_pendiente_usd,fecha_vencimiento`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
+                    fetch(`${SUPABASE_URL}/rest/v1/servicio_ordenes?${filtroEmpresa}estatus=neq.Facturado&select=id_orden`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } })
+                ]);
+
+                if (resProd.ok) document.getElementById('indicador-productos').innerText = (await resProd.json()).length;
+                if (resCli.ok)  document.getElementById('indicador-clientes').innerText  = (await resCli.json()).length;
+                if (resTaller && resTaller.ok) document.getElementById('indicador-taller').innerText = (await resTaller.json()).length;
+
+                if (resTasa.ok) {
+                    const dataTasa = await resTasa.json();
+                    const usd = dataTasa.find(t => t.moneda === 'USD');
+                    const eur = dataTasa.find(t => t.moneda === 'EUR');
+                    if (usd) document.getElementById('dash-tasa-usd').innerText = `Bs. ${parseFloat(usd.tasa).toFixed(4)}`;
+                    if (eur) document.getElementById('dash-tasa-eur').innerText = `Bs. ${parseFloat(eur.tasa).toFixed(4)}`;
+                    
+                    // Badges de fecha/hora última actualización
+                    const formatearFechaTasa = (fechaIso) => {
+                        if (!fechaIso) return '';
+                        const fecha = new Date(fechaIso);
+                        if (isNaN(fecha.getTime())) return '';
+                        const ahora = new Date();
+                        const diffMin = Math.floor((ahora - fecha) / 60000);
+                        if (diffMin < 1) return 'ahora';
+                        if (diffMin < 60) return `hace ${diffMin}m`;
+                        if (diffMin < 1440) return `hace ${Math.floor(diffMin/60)}h`;
+                        return fecha.toLocaleDateString('es-VE', { day: '2-digit', month: '2-digit' });
+                    };
+                    const elFechaUsd = document.getElementById('dash-tasa-usd-fecha');
+                    const elFechaEur = document.getElementById('dash-tasa-eur-fecha');
+                    if (usd && elFechaUsd) elFechaUsd.innerText = formatearFechaTasa(usd.fecha_actualizacion);
+                    if (eur && elFechaEur) elFechaEur.innerText = formatearFechaTasa(eur.fecha_actualizacion);
+                }
+
+                if (resCaja.ok) {
+                    const dataCaja = await resCaja.json();
+                    const dot  = document.getElementById('dash-caja-dot');
+                    const stat = document.getElementById('dash-caja-status');
+                    if (dataCaja.length > 0) {
+                        dot.style.background  = '#4ade80';
+                        stat.innerText = 'Caja Abierta';
+                    } else {
+                        dot.style.background  = '#f87171';
+                        stat.innerText = 'Caja Cerrada';
+                    }
+                }
+
+                if (resVen.ok) {
+                    const dataVen = await resVen.json();
+                    let totalDia = 0;
+                    dataVen.forEach(f => {
+                        if (f.tipo_transaccion === 'NOTA_CREDITO') totalDia -= Math.abs(parseFloat(f.total_usd));
+                        else totalDia += parseFloat(f.total_usd);
+                    });
+                    document.getElementById('dash-ventas-hoy').innerText = `$${fmt(totalDia)}`;
+                }
+
+                if (resCxC.ok) {
+                    const dataCxC = await resCxC.json();
+                    let rM=0, rC=0, aM=0, aC=0, vM=0, vC=0;
+                    const hoy = new Date(); hoy.setHours(0,0,0,0);
+                    const diaAlerta = new Date(); diaAlerta.setDate(hoy.getDate() + 3); diaAlerta.setHours(23,59,59,999);
+
+                    dataCxC.forEach(f => {
+                        const fechaV = new Date(f.fecha_vencimiento + 'T12:00:00');
+                        const saldo  = parseFloat(f.saldo_pendiente_usd);
+                        if      (fechaV < hoy)                         { rM += saldo; rC++; }
+                        else if (fechaV >= hoy && fechaV <= diaAlerta) { aM += saldo; aC++; }
+                        else                                           { vM += saldo; vC++; }
+                    });
+
+                    const total = rM + aM + vM || 1;
+                    document.getElementById('sem-rojo-monto').innerText     = `$${fmt(rM)}`;
+                    document.getElementById('sem-rojo-cant').innerText      = rC;
+                    document.getElementById('sem-amarillo-monto').innerText = `$${fmt(aM)}`;
+                    document.getElementById('sem-amarillo-cant').innerText  = aC;
+                    document.getElementById('sem-verde-monto').innerText    = `$${fmt(vM)}`;
+                    document.getElementById('sem-verde-cant').innerText     = vC;
+
+                    setTimeout(() => {
+                        document.getElementById('sem-rojo-bar').style.width    = `${Math.round(rM/total*100)}%`;
+                        document.getElementById('sem-amarillo-bar').style.width = `${Math.round(aM/total*100)}%`;
+                        document.getElementById('sem-verde-bar').style.width   = `${Math.round(vM/total*100)}%`;
+                    }, 200);
+                }
+
+            } catch(e) { console.warn("Error cargando dashboard:", e); }
+        }
+        
     </script>
 </body>
 </html>
