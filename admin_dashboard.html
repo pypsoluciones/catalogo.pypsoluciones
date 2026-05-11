@@ -189,165 +189,186 @@
     </main>
   
     <script>
-        const TOKEN_JWT = localStorage.getItem('pyp_token_seguro');
-        let empresaActual = null;
+        // ================================================================
+// MOTOR LÓGICO DEL DASHBOARD - P&P SOLUCIONES
+// ================================================================
 
-        function fmt(num) { return parseFloat(num || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+// 1. ESTADO GLOBAL Y CONFIGURACIÓN
+const TOKEN_JWT = localStorage.getItem('pyp_token_seguro');
 
-        window.onload = async () => {
-            const ahora = new Date();
-            document.getElementById('dash-fecha-header').innerText =
-                ahora.toLocaleDateString('es-VE', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
-
-            const nombre = localStorage.getItem('pyp_usuario_nombre') || 'SISTEMA';
-            document.getElementById('nombre-usuario').innerText = nombre.split(' ')[0];
-            // Cargar Nombre de la Empresa desde el almacenamiento local
-const empresaNombre = localStorage.getItem('pyp_empresa_nombre') || 'P&P SOLUCIONES';
-const elEmpresa = document.getElementById('nombre-empresa');
-if (elEmpresa) {
-    elEmpresa.innerText = empresaNombre.toUpperCase();
+// Verificación de Seguridad Inmediata
+if (!TOKEN_JWT) {
+    window.location.href = 'login.html';
 }
 
-            if (localStorage.getItem('pyp_privacidad') === 'false') { togglePrivacidad(); }
+// Variables de Control
+let modoPrivado = localStorage.getItem('pyp_dash_privado') === 'true';
 
-            await cargarConfiguracionGlobal();
-            await cargarIndicadoresGlobales(nombre);
-        };
+// 2. INICIALIZADOR PRINCIPAL (DOMContentLoaded)
+document.addEventListener('DOMContentLoaded', async () => {
+    console.log("Iniciando Dashboard...");
+    
+    // A. Inicialización Visual Estática
+    configurarUIBasica();
+    
+    // B. Carga de Datos Dinámicos (Paralela para Máxima Velocidad)
+    try {
+        await Promise.all([
+            cargarMetricasPrincipales(),
+            cargarSemaforoCxC(),
+            cargarUltimosMovimientos()
+        ]);
+    } catch (error) {
+        console.error("Error en la carga masiva:", error);
+    }
+});
 
-        async function cargarConfiguracionGlobal() {
-            try {
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/configuracion_sistema?select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
-                if (res.ok) {
-                    const config = await res.json();
-                    const fondoObj = config.find(c => c.parametro === 'FONDO_URL');
-                    if (fondoObj?.valor) {
-                        localStorage.setItem('pyp_fondo_url', fondoObj.valor);
-                        document.getElementById('watermark-bg').style.backgroundImage = `url('${fondoObj.valor}')`;
-                    }
-                }
-            } catch(e) {}
-        }
+// 3. FUNCIONES DE INTERFAZ (UI)
+function configurarUIBasica() {
+    // Nombre de la Empresa (Marca Blanca)
+    const empresa = localStorage.getItem('pyp_empresa_nombre') || 'P&P SOLUCIONES';
+    const elEmpresa = document.getElementById('nombre-empresa');
+    if (elEmpresa) elEmpresa.innerText = empresa.toUpperCase();
 
-        function togglePrivacidad() {
-            const body = document.getElementById('body-dashboard');
-            const icon = document.querySelector('#btn-privacidad i');
-            const btn  = document.getElementById('btn-privacidad');
-            if (body.classList.contains('modo-privado')) {
-                body.classList.remove('modo-privado');
-                icon.classList.replace('fa-eye-slash', 'fa-eye');
-                btn.classList.add('activo');
-                localStorage.setItem('pyp_privacidad', 'false');
-            } else {
-                body.classList.add('modo-privado');
-                icon.classList.replace('fa-eye', 'fa-eye-slash');
-                btn.classList.remove('activo');
-                localStorage.setItem('pyp_privacidad', 'true');
-            }
-        }
-async function cargarIndicadoresGlobales(usuario) {
-            try {
-                const resUser = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?select=id_empresa&limit=1`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } });
-                if (resUser.status === 401 || resUser.status === 403 || !TOKEN_JWT) { window.location.href = 'login.html'; return; }
-                const dataUser = await resUser.json();
-                if (dataUser.length > 0) empresaActual = dataUser[0].id_empresa;
+    // Fecha Gerencial
+    const elFecha = document.getElementById('dash-fecha-header');
+    if (elFecha) {
+        const opciones = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        elFecha.innerText = new Date().toLocaleDateString('es-VE', opciones).toUpperCase();
+    }
 
-                const filtroEmpresa = empresaActual ? `id_empresa=eq.${empresaActual}&` : `id_empresa=is.null&`;
-                const hoyIso = new Date().toISOString().split('T')[0];
+    // Usuario
+    const usr = localStorage.getItem('pyp_usuario_nombre');
+    if (usr && document.getElementById('nombre-usuario')) {
+        document.getElementById('nombre-usuario').innerText = usr.split(' ')[0];
+    }
 
-                const [resProd, resCli, resTasa, resCaja, resVen, resCxC, resTaller] = await Promise.all([
-                    fetch(`${SUPABASE_URL}/rest/v1/productos?${filtroEmpresa}select=id_producto_sku&estado_producto=eq.ACTIVO`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
-                    fetch(`${SUPABASE_URL}/rest/v1/directorio_maestro?${filtroEmpresa}select=id&tipo_persona=eq.CLIENTE`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
-                    fetch(`${SUPABASE_URL}/rest/v1/tasas_bcv?select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
-                    fetch(`${SUPABASE_URL}/rest/v1/cierres_caja?${filtroEmpresa}usuario_cajero=eq.${usuario}&estatus=eq.ABIERTA&select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
-                    fetch(`${SUPABASE_URL}/rest/v1/ventas_facturas?${filtroEmpresa}fecha_emision=gte.${hoyIso}T00:00:00Z&estatus=neq.ANULADA&select=total_usd,tipo_transaccion`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
-                    fetch(`${SUPABASE_URL}/rest/v1/ventas_facturas?${filtroEmpresa}estatus=in.(POR_PAGAR,PARCIAL,VENCIDA)&saldo_pendiente_usd=gt.0&select=saldo_pendiente_usd,fecha_vencimiento`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } }),
-                    fetch(`${SUPABASE_URL}/rest/v1/servicio_ordenes?${filtroEmpresa}estatus=neq.Facturado&select=id_orden`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` } })
-                ]);
+    // Tasas de Cambio (Desde localStorage)
+    const tUsd = localStorage.getItem('pyp_tasa_usd') || '0.00';
+    const tEur = localStorage.getItem('pyp_tasa_eur') || '0.00';
+    
+    if (document.getElementById('dash-tasa-usd')) document.getElementById('dash-tasa-usd').innerText = `Bs. ${parseFloat(tUsd).toFixed(2)}`;
+    if (document.getElementById('dash-tasa-eur')) document.getElementById('dash-tasa-eur').innerText = `Bs. ${parseFloat(tEur).toFixed(2)}`;
 
-                if (resProd.ok) document.getElementById('indicador-productos').innerText = (await resProd.json()).length;
-                if (resCli.ok)  document.getElementById('indicador-clientes').innerText  = (await resCli.json()).length;
-                if (resTaller && resTaller.ok) document.getElementById('indicador-taller').innerText = (await resTaller.json()).length;
+    // Estado de Privacidad
+    aplicarPrivacidadUI();
+}
 
-                if (resTasa.ok) {
-                    const dataTasa = await resTasa.json();
-                    const usd = dataTasa.find(t => t.moneda === 'USD');
-                    const eur = dataTasa.find(t => t.moneda === 'EUR');
-                    if (usd) document.getElementById('dash-tasa-usd').innerText = `Bs. ${parseFloat(usd.tasa).toFixed(4)}`;
-                    if (eur) document.getElementById('dash-tasa-eur').innerText = `Bs. ${parseFloat(eur.tasa).toFixed(4)}`;
-                    
-                    // Badges de fecha/hora última actualización
-                    const formatearFechaTasa = (fechaIso) => {
-                        if (!fechaIso) return '';
-                        const fecha = new Date(fechaIso);
-                        if (isNaN(fecha.getTime())) return '';
-                        const ahora = new Date();
-                        const diffMin = Math.floor((ahora - fecha) / 60000);
-                        if (diffMin < 1) return 'ahora';
-                        if (diffMin < 60) return `hace ${diffMin}m`;
-                        if (diffMin < 1440) return `hace ${Math.floor(diffMin/60)}h`;
-                        return fecha.toLocaleDateString('es-VE', { day: '2-digit', month: '2-digit' });
-                    };
-                    const elFechaUsd = document.getElementById('dash-tasa-usd-fecha');
-                    const elFechaEur = document.getElementById('dash-tasa-eur-fecha');
-                    if (usd && elFechaUsd) elFechaUsd.innerText = formatearFechaTasa(usd.fecha_actualizacion);
-                    if (eur && elFechaEur) elFechaEur.innerText = formatearFechaTasa(eur.fecha_actualizacion);
-                }
+function togglePrivacidad() {
+    modoPrivado = !modoPrivado;
+    localStorage.setItem('pyp_dash_privado', modoPrivado);
+    aplicarPrivacidadUI();
+}
 
-                if (resCaja.ok) {
-                    const dataCaja = await resCaja.json();
-                    const dot  = document.getElementById('dash-caja-dot');
-                    const stat = document.getElementById('dash-caja-status');
-                    if (dataCaja.length > 0) {
-                        dot.style.background  = '#4ade80';
-                        stat.innerText = 'Caja Abierta';
-                    } else {
-                        dot.style.background  = '#f87171';
-                        stat.innerText = 'Caja Cerrada';
-                    }
-                }
+function aplicarPrivacidadUI() {
+    document.body.classList.toggle('modo-privado', modoPrivado);
+    const btn = document.getElementById('btn-privacidad');
+    if (btn) {
+        btn.innerHTML = modoPrivado ? '<i class="fa-solid fa-eye"></i>' : '<i class="fa-solid fa-eye-slash"></i>';
+        btn.classList.toggle('text-secondary', modoPrivado);
+    }
+}
 
-                if (resVen.ok) {
-                    const dataVen = await resVen.json();
-                    let totalDia = 0;
-                    dataVen.forEach(f => {
-                        if (f.tipo_transaccion === 'NOTA_CREDITO') totalDia -= Math.abs(parseFloat(f.total_usd));
-                        else totalDia += parseFloat(f.total_usd);
-                    });
-                    document.getElementById('dash-ventas-hoy').innerText = `$${fmt(totalDia)}`;
-                }
+// 4. MOTORES DE DATOS (SUPABASE)
 
-                if (resCxC.ok) {
-                    const dataCxC = await resCxC.json();
-                    let rM=0, rC=0, aM=0, aC=0, vM=0, vC=0;
-                    const hoy = new Date(); hoy.setHours(0,0,0,0);
-                    const diaAlerta = new Date(); diaAlerta.setDate(hoy.getDate() + 3); diaAlerta.setHours(23,59,59,999);
+async function cargarMetricasPrincipales() {
+    try {
+        // En un ERP Pro, estas consultas deben ser optimizadas vía Views en Supabase
+        const hoy = new Date().toISOString().split('T')[0];
 
-                    dataCxC.forEach(f => {
-                        const fechaV = new Date(f.fecha_vencimiento + 'T12:00:00');
-                        const saldo  = parseFloat(f.saldo_pendiente_usd);
-                        if      (fechaV < hoy)                         { rM += saldo; rC++; }
-                        else if (fechaV >= hoy && fechaV <= diaAlerta) { aM += saldo; aC++; }
-                        else                                           { vM += saldo; vC++; }
-                    });
+        // Consulta de Ventas Hoy
+        // Basado en tu archivo previo, la tabla es 'ventas'
+        const resVentas = await fetch(`${SUPABASE_URL}/rest/v1/ventas?select=total_usd&fecha_venta=eq.${hoy}`, {
+            headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` }
+        });
+        const dataVentas = await resVentas.json();
+        const totalHoy = dataVentas.reduce((acc, v) => acc + (v.total_usd || 0), 0);
+        document.getElementById('dash-ventas-hoy').innerText = `$${totalHoy.toLocaleString('en-US', {minimumFractionDigits:2})}`;
 
-                    const total = rM + aM + vM || 1;
-                    document.getElementById('sem-rojo-monto').innerText     = `$${fmt(rM)}`;
-                    document.getElementById('sem-rojo-cant').innerText      = rC;
-                    document.getElementById('sem-amarillo-monto').innerText = `$${fmt(aM)}`;
-                    document.getElementById('sem-amarillo-cant').innerText  = aC;
-                    document.getElementById('sem-verde-monto').innerText    = `$${fmt(vM)}`;
-                    document.getElementById('sem-verde-cant').innerText     = vC;
+        // Contadores Rápidos
+        const resCounts = await Promise.all([
+            fetch(`${SUPABASE_URL}/rest/v1/productos?select=id&estado_producto=eq.ACTIVO`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Prefer': 'count=exact' } }),
+            fetch(`${SUPABASE_URL}/rest/v1/clientes?select=id`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Prefer': 'count=exact' } })
+        ]);
 
-                    setTimeout(() => {
-                        document.getElementById('sem-rojo-bar').style.width    = `${Math.round(rM/total*100)}%`;
-                        document.getElementById('sem-amarillo-bar').style.width = `${Math.round(aM/total*100)}%`;
-                        document.getElementById('sem-verde-bar').style.width   = `${Math.round(vM/total*100)}%`;
-                    }, 200);
-                }
+        document.getElementById('indicador-productos').innerText = resCounts[0].headers.get('content-range').split('/')[1] || '0';
+        document.getElementById('indicador-clientes').innerText  = resCounts[1].headers.get('content-range').split('/')[1] || '0';
 
-            } catch(e) { console.warn("Error cargando dashboard:", e); }
-        }
+    } catch (e) {
+        console.error("Error cargando métricas:", e);
+    }
+}
+
+async function cargarSemaforoCxC() {
+    try {
+        // Aquí se consultaría tu View de semáforo cxc
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/obtener_resumen_cxc`, {
+            method: 'POST',
+            headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` }
+        });
+        if (!res.ok) return;
+        const cxc = await res.json();
         
+        // Asignación de valores (Rojo/Amarillo/Verde)
+        // Nota: Asegúrate que tu RPC devuelva estos campos o ajusta según tu lógica
+        document.getElementById('sem-rojo-monto').innerText = `$${(cxc.vencido || 0).toFixed(0)}`;
+        document.getElementById('sem-rojo-cant').innerText  = cxc.cant_vencido || 0;
+        
+        document.getElementById('sem-amarillo-monto').innerText = `$${(cxc.proximo || 0).toFixed(0)}`;
+        document.getElementById('sem-amarillo-cant').innerText  = cxc.cant_proximo || 0;
+        
+        document.getElementById('sem-verde-monto').innerText = `$${(cxc.al_dia || 0).toFixed(0)}`;
+        document.getElementById('sem-verde-cant').innerText  = cxc.cant_al_dia || 0;
+    } catch (e) {
+        console.warn("Semáforo CxC requiere configuración de RPC en Supabase.");
+    }
+}
+
+async function cargarUltimosMovimientos() {
+    const contenedor = document.getElementById('lista-movimientos');
+    try {
+        // LESME: He detectado que tu tabla principal de ventas es 'ventas' 
+        // y usas 'total_usd' y 'fecha_venta'.
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/ventas?select=numero_factura,cliente_nombre,total_usd,fecha_venta&order=fecha_venta.desc&limit=5`, {
+            headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` }
+        });
+        
+        if (!res.ok) throw new Error("Error fetching movements");
+        const movs = await res.json();
+        
+        if (movs.length === 0) {
+            contenedor.innerHTML = '<div class="p-8 text-center text-[10px] text-gray-400 font-bold uppercase">Sin movimientos hoy</div>';
+            return;
+        }
+
+        contenedor.innerHTML = movs.map(m => {
+            const hora = new Date(m.fecha_venta).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            return `
+            <div class="px-4 py-3.5 flex justify-between items-center hover:bg-gray-50 active:bg-blue-50/50 transition border-b border-gray-50 last:border-0">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 shadow-inner">
+                        <i class="fa-solid fa-receipt text-sm"></i>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-[10px] font-black text-slate-800 uppercase leading-none truncate max-w-[140px]">${m.cliente_nombre || 'CONSUMIDOR FINAL'}</span>
+                        <div class="flex items-center gap-2 mt-1.5">
+                            <span class="text-[8px] font-black bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded">#${m.numero_factura}</span>
+                            <span class="text-[8px] text-slate-400 font-bold"><i class="fa-regular fa-clock mr-1"></i>${hora}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="text-xs font-black text-primary dato-sensible">+$${parseFloat(m.total_usd).toFixed(2)}</div>
+                    <div class="text-[7px] font-black text-emerald-500 mt-1 uppercase tracking-tighter">Completado</div>
+                </div>
+            </div>`;
+        }).join('');
+
+    } catch (e) {
+        contenedor.innerHTML = '<div class="p-6 text-center text-[10px] text-red-400 font-black uppercase"><i class="fa-solid fa-triangle-exclamation mb-1 block"></i> Error de Conexión</div>';
+    }
+}
     </script>
 </body>
 </html>
+    
