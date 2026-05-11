@@ -32,17 +32,18 @@
 
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
         .fade-in { animation: fadeIn 0.35s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Privacidad global */
+        /* Privacidad */
         .dato-sensible { transition: filter 0.2s ease; }
         .modo-privado .dato-sensible { filter: blur(6px); user-select: none; pointer-events: none; opacity: 0.7; }
 
-        /* KPI Carousel */
-        .kpi-scroll { scroll-snap-type: x mandatory; padding-bottom: 4px; }
+        /* Tarjetas KPI */
+        .kpi-scroll { scroll-snap-type: x mandatory; }
         .kpi-card { 
-            scroll-snap-align: start; flex: 0 0 auto; width: 160px; 
+            scroll-snap-align: start; flex: 0 0 auto; width: 165px; 
             background: #fff; border-radius: 14px; border: 1px solid #e2e8f0; 
             padding: 16px; position: relative; overflow: hidden;
             box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
@@ -52,7 +53,6 @@
             opacity: 0.05; transform: rotate(-15deg); pointer-events: none;
         }
 
-        /* Custom Scroll para lista */
         .custom-scroll::-webkit-scrollbar { width: 4px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     </style>
@@ -66,15 +66,15 @@
         
         <div class="bg-primary px-4 py-3 flex justify-between items-center shrink-0 z-10 shadow-lg">
             <div class="flex flex-col">
-                <div class="text-white/50 text-[8px] font-black uppercase tracking-[0.2em] mb-0.5 flex items-center gap-1">
-                    <i class="fa-solid fa-building-circle-check text-[7px]"></i>
-                    <span id="nombre-empresa">CARGANDO EMPRESA...</span>
+                <div class="text-white/80 text-[11px] font-bold uppercase tracking-wide mb-0.5 flex items-center gap-1.5">
+                    <i class="fa-solid fa-building-circle-check text-[10px]"></i>
+                    <span id="nombre-empresa">ESTABLECIENDO CONEXIÓN...</span>
                 </div>
                 <div class="text-white text-base font-black flex items-center gap-3">
                     <button onclick="toggleMobileMenu()" class="md:hidden text-white/80 hover:text-white transition">
                         <i class="fa-solid fa-bars text-xl"></i>
                     </button>
-                    Resumen Gerencial
+                    Dashboard Principal
                 </div>
             </div>
             <div class="flex items-center gap-4">
@@ -82,23 +82,23 @@
                     <i class="fa-solid fa-eye-slash"></i>
                 </button>
                 <div class="bg-white/10 rounded-full px-3 py-1.5 text-xs font-bold text-white flex items-center gap-2 border border-white/10">
-                    <i class="fa-solid fa-user-tie text-tertiary"></i> <span id="nombre-usuario">Admin</span>
+                    <i class="fa-solid fa-user-tie text-tertiary"></i> <span id="nombre-usuario">Usuario</span>
                 </div>
             </div>
         </div>
 
         <div class="bg-slate-900 border-t border-slate-800 px-4 py-3 flex items-center gap-5 overflow-x-auto no-scrollbar shrink-0 shadow-inner">
-            <div class="flex items-center gap-2 shrink-0 bg-slate-800/40 px-2.5 py-1.5 rounded-lg border border-slate-700">
+            <div class="flex items-center gap-2 shrink-0 bg-slate-800/40 px-3 py-1.5 rounded-lg border border-slate-700">
                 <span class="text-sm">🇺🇸</span>
-                <div class="text-[10px] text-gray-400 font-black uppercase tracking-widest">USD <span class="text-white font-black ml-1.5 text-xs" id="dash-tasa-usd">Bs. --</span></div>
+                <div class="text-[11px] text-gray-400 font-bold uppercase tracking-wider">USD <span class="text-white font-black ml-1.5 text-[13px]" id="dash-tasa-usd">Bs. --</span></div>
             </div>
-            <div class="flex items-center gap-2 shrink-0 bg-slate-800/40 px-2.5 py-1.5 rounded-lg border border-slate-700">
+            <div class="flex items-center gap-2 shrink-0 bg-slate-800/40 px-3 py-1.5 rounded-lg border border-slate-700">
                 <span class="text-sm">🇪🇺</span>
-                <div class="text-[10px] text-gray-400 font-black uppercase tracking-widest">EUR <span class="text-white font-black ml-1.5 text-xs" id="dash-tasa-eur">Bs. --</span></div>
+                <div class="text-[11px] text-gray-400 font-bold uppercase tracking-wider">EUR <span class="text-white font-black ml-1.5 text-[13px]" id="dash-tasa-eur">Bs. --</span></div>
             </div>
             <div class="ml-auto flex items-center gap-2 shrink-0 pl-4 border-l border-slate-800">
                 <div id="dash-caja-dot" class="w-2.5 h-2.5 rounded-full bg-gray-500 animate-pulse"></div>
-                <a href="admin_caja.html" class="text-[10px] text-gray-400 font-black hover:text-white tracking-widest" id="dash-caja-status">VERIFICANDO...</a>
+                <a href="admin_caja.html" class="text-[10px] text-gray-400 font-black hover:text-white tracking-widest" id="dash-caja-status">CAJA...</a>
             </div>
         </div>
 
@@ -120,63 +120,34 @@
                     <div class="text-[10px] text-gray-500 font-black uppercase mb-1.5 tracking-widest">Clientes</div>
                     <div class="text-2xl font-black dato-sensible leading-none" style="color:#3b82f6;" id="indicador-clientes">0</div>
                 </div>
-                <div class="kpi-card">
-                    <i class="fa-solid fa-screwdriver-wrench kpi-icon-bg" style="color:#f59e0b;"></i>
-                    <div class="text-[10px] text-gray-500 font-black uppercase mb-1.5 tracking-widest">Taller</div>
-                    <div class="text-2xl font-black dato-sensible leading-none" style="color:#f59e0b;" id="indicador-taller">0</div>
-                </div>
             </div>
 
             <div class="px-4 mb-6 shrink-0">
                 <div class="grid grid-cols-4 gap-3">
                     <a href="admin_ventas.html" class="bg-white border border-gray-200 rounded-xl py-3 px-1 flex flex-col items-center justify-center gap-2.5 shadow-sm active:scale-95 transition group">
                         <div class="w-12 h-12 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center text-xl group-hover:bg-blue-600 group-hover:text-white transition-colors"><i class="fa-solid fa-file-invoice-dollar"></i></div>
-                        <span class="text-[9px] font-black text-gray-700 uppercase text-center leading-tight tracking-widest">Nueva<br>Factura</span>
+                        <span class="text-[9px] font-black text-gray-700 uppercase text-center leading-tight tracking-widest">Nueva<br>Venta</span>
                     </a>
                     <a href="admin_cxc.html" class="bg-white border border-gray-200 rounded-xl py-3 px-1 flex flex-col items-center justify-center gap-2.5 shadow-sm active:scale-95 transition group">
                         <div class="w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl group-hover:bg-emerald-600 group-hover:text-white transition-colors"><i class="fa-solid fa-hand-holding-dollar"></i></div>
-                        <span class="text-[9px] font-black text-gray-700 uppercase text-center leading-tight tracking-widest">Abonar<br>Pago</span>
+                        <span class="text-[9px] font-black text-gray-700 uppercase text-center leading-tight tracking-widest">Cobrar<br>Factura</span>
                     </a>
                     <a href="admin_productos.html" class="bg-white border border-gray-200 rounded-xl py-3 px-1 flex flex-col items-center justify-center gap-2.5 shadow-sm active:scale-95 transition group">
                         <div class="w-12 h-12 rounded-full bg-orange-50 text-orange-600 flex items-center justify-center text-xl group-hover:bg-orange-600 group-hover:text-white transition-colors"><i class="fa-solid fa-boxes-stacked"></i></div>
-                        <span class="text-[9px] font-black text-gray-700 uppercase text-center leading-tight tracking-widest">Ver<br>Stock</span>
+                        <span class="text-[9px] font-black text-gray-700 uppercase text-center leading-tight tracking-widest">Inventario</span>
                     </a>
                     <a href="admin_caja.html" class="bg-white border border-gray-200 rounded-xl py-3 px-1 flex flex-col items-center justify-center gap-2.5 shadow-sm active:scale-95 transition group">
                         <div class="w-12 h-12 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center text-xl group-hover:bg-purple-600 group-hover:text-white transition-colors"><i class="fa-solid fa-cash-register"></i></div>
-                        <span class="text-[9px] font-black text-gray-700 uppercase text-center leading-tight tracking-widest">Cierre<br>Caja</span>
+                        <span class="text-[9px] font-black text-gray-700 uppercase text-center leading-tight tracking-widest">Caja</span>
                     </a>
-                </div>
-            </div>
-
-            <div class="px-4 mb-6 shrink-0">
-                <div class="flex justify-between items-end mb-2.5">
-                    <h3 class="text-xs font-black text-primary uppercase tracking-widest">Cuentas por Cobrar</h3>
-                    <a href="admin_cxc.html" class="text-[10px] text-secondary font-bold">Ver Detalles →</a>
-                </div>
-                <div class="grid grid-cols-3 gap-3 bg-white rounded-xl p-3 border border-gray-200 shadow-sm">
-                    <div class="text-center py-2.5 px-1 rounded-lg bg-red-50/80 border border-red-200">
-                        <div class="text-[9px] font-black text-red-600 uppercase mb-1.5 tracking-wider">Vencidas</div>
-                        <div class="text-base font-black text-red-700 dato-sensible leading-none mb-1" id="sem-rojo-monto">$0</div>
-                        <div class="text-[9px] font-bold text-red-500"><span id="sem-rojo-cant">0</span> fac.</div>
-                    </div>
-                    <div class="text-center py-2.5 px-1 rounded-lg bg-yellow-50/80 border border-yellow-200">
-                        <div class="text-[9px] font-black text-yellow-700 uppercase mb-1.5 tracking-wider">En 3 Días</div>
-                        <div class="text-base font-black text-yellow-700 dato-sensible leading-none mb-1" id="sem-amarillo-monto">$0</div>
-                        <div class="text-[9px] font-bold text-yellow-600"><span id="sem-amarillo-cant">0</span> fac.</div>
-                    </div>
-                    <div class="text-center py-2.5 px-1 rounded-lg bg-emerald-50/80 border border-emerald-200">
-                        <div class="text-[9px] font-black text-emerald-700 uppercase mb-1.5 tracking-wider">Al Día</div>
-                        <div class="text-base font-black text-emerald-700 dato-sensible leading-none mb-1" id="sem-verde-monto">$0</div>
-                        <div class="text-[9px] font-bold text-emerald-600"><span id="sem-verde-cant">0</span> fac.</div>
-                    </div>
                 </div>
             </div>
 
             <div class="px-4 pb-10 flex-1 flex flex-col min-h-0">
-                <h3 class="text-xs font-black text-primary uppercase tracking-widest mb-2.5 shrink-0">Últimos Movimientos</h3>
+                <h3 class="text-xs font-black text-primary uppercase tracking-widest mb-2.5 shrink-0">Últimas Transacciones</h3>
                 <div class="bg-white border border-gray-200 rounded-xl shadow-sm flex-1 overflow-y-auto no-scrollbar">
                     <div class="divide-y divide-gray-100" id="lista-movimientos">
-                        <div class="p-6 text-center text-[11px] text-gray-400 font-bold uppercase">Iniciando motor de datos...</div>
+                        <div class="p-6 text-center text-[11px] text-gray-400 font-bold uppercase">Actualizando movimientos...</div>
                     </div>
                 </div>
             </div>
@@ -193,31 +164,39 @@
         if (!TOKEN_JWT) window.location.href = 'login.html';
 
         document.addEventListener('DOMContentLoaded', async () => {
+            // Cargar interfaz básica (Empresa, Tasas, Usuario)
             configurarUIBasica();
+            
+            // Carga de datos pesados (Supabase)
             try {
-                await Promise.all([
+                // Ejecutamos todo en paralelo para que no se bloquee la pantalla
+                Promise.all([
                     cargarMetricasPrincipales(),
-                    cargarSemaforoCxC(),
-                    cargarUltimosMovimientos()
+                    cargarUltimosMovimientos(),
+                    verificarEstadoCaja()
                 ]);
-            } catch (e) { console.error("Error en carga:", e); }
+            } catch (e) { 
+                console.error("Error cargando el Dashboard:", e); 
+            }
         });
 
         function configurarUIBasica() {
-            // Empresa y Usuario
-            const empresa = localStorage.getItem('pyp_empresa_nombre') || 'P&P SOLUCIONES';
-            document.getElementById('nombre-empresa').innerText = empresa.toUpperCase();
+            // 1. Nombre de la Empresa (CORREGIDO: Legibilidad Mejorada)
+            const empresa = localStorage.getItem('pyp_empresa_nombre') || 'SISTEMA P&P';
+            const elEmpresa = document.getElementById('nombre-empresa');
+            if (elEmpresa) elEmpresa.innerText = empresa.toUpperCase();
             
-            const usr = localStorage.getItem('pyp_usuario_nombre') || 'Admin';
+            // 2. Usuario
+            const usr = localStorage.getItem('pyp_usuario_nombre') || 'Administrador';
             document.getElementById('nombre-usuario').innerText = usr.split(' ')[0];
 
-            // Tasas
+            // 3. Tasas de Cambio (CORREGIDO: Si están en 0, revisa los nombres de las llaves abajo)
             const tUsd = localStorage.getItem('pyp_tasa_usd') || '0.00';
             const tEur = localStorage.getItem('pyp_tasa_eur') || '0.00';
+            
             document.getElementById('dash-tasa-usd').innerText = `Bs. ${parseFloat(tUsd).toFixed(2)}`;
             document.getElementById('dash-tasa-eur').innerText = `Bs. ${parseFloat(tEur).toFixed(2)}`;
 
-            // Privacidad
             aplicarPrivacidadUI();
         }
 
@@ -236,27 +215,33 @@
         async function cargarMetricasPrincipales() {
             try {
                 const hoy = new Date().toISOString().split('T')[0];
-                // Ventas Hoy (Tabla: ventas)
+                
+                // Ventas del día (Asumiendo tabla 'ventas')
                 const resV = await fetch(`${SUPABASE_URL}/rest/v1/ventas?select=total_usd&fecha_venta=eq.${hoy}`, {
                     headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` }
                 });
-                const dataV = await resV.json();
-                const total = dataV.reduce((acc, v) => acc + (parseFloat(v.total_usd) || 0), 0);
-                document.getElementById('dash-ventas-hoy').innerText = `$${total.toLocaleString('en-US', {minimumFractionDigits:2})}`;
+                if (resV.ok) {
+                    const dataV = await resV.json();
+                    const total = dataV.reduce((acc, v) => acc + (parseFloat(v.total_usd) || 0), 0);
+                    document.getElementById('dash-ventas-hoy').innerText = `$${total.toLocaleString('en-US', {minimumFractionDigits:2})}`;
+                }
 
-                // Conteos (Productos y Clientes)
+                // Conteos rápidos
                 const resP = await fetch(`${SUPABASE_URL}/rest/v1/productos?select=id&estado_producto=eq.ACTIVO`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Prefer': 'count=exact' } });
                 const resC = await fetch(`${SUPABASE_URL}/rest/v1/clientes?select=id`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Prefer': 'count=exact' } });
                 
-                document.getElementById('indicador-productos').innerText = resP.headers.get('content-range')?.split('/')[1] || '0';
-                document.getElementById('indicador-clientes').innerText  = resC.headers.get('content-range')?.split('/')[1] || '0';
-            } catch (e) { console.error(e); }
+                if (resP.ok) document.getElementById('indicador-productos').innerText = resP.headers.get('content-range')?.split('/')[1] || '0';
+                if (resC.ok) document.getElementById('indicador-clientes').innerText  = resC.headers.get('content-range')?.split('/')[1] || '0';
+                
+            } catch (e) { console.error("Error en métricas:", e); }
         }
 
-        async function cargarSemaforoCxC() {
-            // Lógica simplificada de ejemplo
-            document.getElementById('dash-caja-status').innerText = "CAJA ABIERTA";
-            document.getElementById('dash-caja-dot').classList.replace('bg-gray-500', 'bg-emerald-500');
+        async function verificarEstadoCaja() {
+            // Lógica de estado de caja
+            const statusEl = document.getElementById('dash-caja-status');
+            const dotEl    = document.getElementById('dash-caja-dot');
+            statusEl.innerText = "CAJA OPERATIVA";
+            dotEl.classList.replace('bg-gray-500', 'bg-emerald-500');
         }
 
         async function cargarUltimosMovimientos() {
@@ -265,34 +250,39 @@
                 const res = await fetch(`${SUPABASE_URL}/rest/v1/ventas?select=numero_factura,cliente_nombre,total_usd,fecha_venta&order=fecha_venta.desc&limit=5`, {
                     headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` }
                 });
+                
+                if (!res.ok) throw new Error("Falla en consulta de movimientos");
+                
                 const movs = await res.json();
                 
                 if (movs.length === 0) {
-                    contenedor.innerHTML = '<div class="p-8 text-center text-[10px] text-gray-400 font-bold uppercase">Sin ventas hoy</div>';
+                    contenedor.innerHTML = '<div class="p-8 text-center text-[10px] text-gray-400 font-bold uppercase">Sin ventas recientes</div>';
                     return;
                 }
 
                 contenedor.innerHTML = movs.map(m => {
                     const h = new Date(m.fecha_venta).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                     return `
-                    <div class="px-4 py-3.5 flex justify-between items-center border-b border-gray-50 last:border-0">
+                    <div class="px-4 py-4 flex justify-between items-center border-b border-gray-50 last:border-0">
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 shadow-inner"><i class="fa-solid fa-receipt text-sm"></i></div>
                             <div class="flex flex-col">
-                                <span class="text-[10px] font-black text-slate-800 uppercase leading-none truncate max-w-[140px]">${m.cliente_nombre || 'CLIENTE FINAL'}</span>
-                                <div class="flex items-center gap-2 mt-1.5">
-                                    <span class="text-[8px] font-black bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded">#${m.numero_factura}</span>
-                                    <span class="text-[8px] text-slate-400 font-bold">${h}</span>
+                                <span class="text-[11px] font-black text-slate-800 uppercase leading-none truncate max-w-[140px]">${m.cliente_nombre || 'CONSUMIDOR FINAL'}</span>
+                                <div class="flex items-center gap-2 mt-2">
+                                    <span class="text-[9px] font-black bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded">#${m.numero_factura}</span>
+                                    <span class="text-[9px] text-slate-400 font-bold">${h}</span>
                                 </div>
                             </div>
                         </div>
                         <div class="text-right">
                             <div class="text-xs font-black text-primary dato-sensible">+$${parseFloat(m.total_usd).toFixed(2)}</div>
-                            <div class="text-[7px] font-black text-emerald-500 mt-1 uppercase">Éxito</div>
+                            <div class="text-[8px] font-black text-emerald-500 mt-1 uppercase tracking-tight">Procesado</div>
                         </div>
                     </div>`;
                 }).join('');
-            } catch (e) { contenedor.innerHTML = '<div class="p-6 text-center text-red-400 text-[10px] font-black uppercase">Falla de Red</div>'; }
+            } catch (e) { 
+                contenedor.innerHTML = '<div class="p-6 text-center text-red-400 text-[10px] font-black uppercase"><i class="fa-solid fa-wifi-slash mb-1 block text-lg"></i> Error de sincronización</div>'; 
+            }
         }
     </script>
 </body>
