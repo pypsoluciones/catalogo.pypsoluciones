@@ -29,134 +29,36 @@
 
     <style>
         *, *::before, *::after { box-sizing: border-box; }
-        body { font-family: var(--font-global); font-size: var(--size-global); }
+        body { font-family: var(--font-global); font-size: var(--size-global); overscroll-behavior-y: none; }
 
         .text-primary   { color: var(--color-primary) !important; }
         .bg-primary     { background-color: var(--color-primary) !important; }
         .text-secondary { color: var(--color-secondary) !important; }
         .text-tertiary  { color: var(--color-tertiary) !important; }
 
-        .custom-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background-color: var(--color-primary); border-radius: 4px; }
-        .fade-in { animation: fadeIn 0.35s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .fade-in { animation: fadeIn 0.35s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
 
         #watermark-bg { background-size: 50%; background-position: center; background-repeat: no-repeat; opacity: 0.04; pointer-events: none; z-index: 0; }
 
         /* Privacidad global */
-        .dato-sensible { transition: filter 0.3s ease; }
-        .modo-privado .dato-sensible { filter: blur(6px); user-select: none; pointer-events: none; }
+        .dato-sensible { transition: filter 0.2s ease; }
+        .modo-privado .dato-sensible { filter: blur(5px); user-select: none; pointer-events: none; opacity: 0.8; }
 
-        /* Header */
-        .dash-header {
-            background-color: var(--color-primary);
-            padding: 14px 20px;
-            display: flex; justify-content: space-between; align-items: center;
-            flex-shrink: 0; z-index: 10; position: relative;
+        /* KPI Carousel */
+        .kpi-scroll { scroll-snap-type: x mandatory; }
+        .kpi-card { 
+            scroll-snap-align: start; flex: 0 0 auto; width: 140px; 
+            background: #fff; border-radius: 12px; border: 1px solid #f1f5f9; 
+            padding: 12px; position: relative; overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
         }
-        .dash-header-title { font-size: 16px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 10px; font-family: var(--font-global); }
-        .dash-header-sub { font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 3px; font-family: var(--font-global); }
-        .dash-header-right { display: flex; align-items: center; gap: 10px; }
-        .dash-header-badge {
-            background: rgba(255,255,255,0.15); border-radius: 20px; padding: 5px 14px;
-            font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.9);
-            display: flex; align-items: center; gap: 6px; font-family: var(--font-global);
+        .kpi-icon-bg { 
+            position: absolute; right: -8px; bottom: -12px; font-size: 50px; 
+            opacity: 0.04; transform: rotate(-10deg); 
         }
-        .dash-btn-icon {
-            background: rgba(255,255,255,0.1); border: none; cursor: pointer;
-            color: rgba(255,255,255,0.7); font-size: 15px;
-            width: 34px; height: 34px; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            transition: background 0.2s; flex-shrink: 0;
-        }
-        .dash-btn-icon:hover { background: rgba(255,255,255,0.2); color: #fff; }
-        .dash-btn-icon.activo { color: var(--color-secondary); }
-
-        /* Ticker */
-        .ticker-bar {
-            background-color: var(--color-primary);
-            border-top: 1px solid rgba(255,255,255,0.1);
-            padding: 10px 20px;
-            display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
-            flex-shrink: 0;
-        }
-        .ticker-item { display: flex; align-items: center; gap: 10px; padding: 4px 20px 4px 0; }
-        .ticker-item + .ticker-item { border-left: 1px solid rgba(255,255,255,0.15); padding-left: 20px; }
-        .ticker-flag { font-size: 18px; line-height: 1; }
-        .ticker-label { font-size: 11px; color: rgba(255,255,255,0.5); font-family: var(--font-global); margin-bottom: 2px; }
-        .ticker-val { font-size: 20px; font-weight: 700; color: #fff; font-family: var(--font-global); line-height: 1; }
-        .ticker-chip { font-size: 10px; font-weight: 600; background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.7); padding: 2px 8px; border-radius: 10px; font-family: var(--font-global); }
-        .ticker-sep { flex: 1; min-width: 16px; }
-        .ticker-caja { display: flex; align-items: center; gap: 8px; }
-        .ticker-caja-dot { width: 8px; height: 8px; border-radius: 50%; background: #94a3b8; flex-shrink: 0; transition: background 0.3s; }
-        .ticker-caja-text { font-size: 13px; font-weight: 600; color: #fff; font-family: var(--font-global); }
-        .ticker-caja-link {
-            font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.8);
-            border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; padding: 4px 12px;
-            text-decoration: none; font-family: var(--font-global); transition: background 0.2s;
-        }
-        .ticker-caja-link:hover { background: rgba(255,255,255,0.15); }
-
-        /* KPI cards */
-        .kpi-label {
-            font-family: var(--font-global); font-size: 12px; font-weight: 700;
-            color: #64748b; text-transform: uppercase; letter-spacing: 0.06em;
-            margin-bottom: 5px; display: block;
-        }
-        .kpi-value { font-family: var(--font-global); font-size: 1.8rem; font-weight: 900; line-height: 1.1; }
-        .kpi-card {
-            background: #fff; border-radius: 14px;
-            border: 0.5px solid #e2e8f0; border-left-width: 4px;
-            padding: 18px 20px; display: flex; align-items: center; gap: 16px;
-            transition: box-shadow 0.2s, transform 0.2s;
-        }
-        .kpi-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.08); transform: translateY(-2px); }
-        .kpi-card.ventas   { border-left-color: var(--color-primary); }
-        .kpi-card.prod     { border-left-color: #1D9E75; }
-        .kpi-card.taller   { border-left-color: #EF9F27; }
-        .kpi-card.clientes { border-left-color: #378ADD; }
-        .kpi-icon {
-            width: 44px; height: 44px; border-radius: 12px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 18px; flex-shrink: 0;
-        }
-        .kpi-icon.ventas   { background: rgba(20,59,98,0.08);   color: var(--color-primary); }
-        .kpi-icon.prod     { background: rgba(29,158,117,0.1);  color: #1D9E75; }
-        .kpi-icon.taller   { background: rgba(239,159,39,0.1);  color: #EF9F27; }
-        .kpi-icon.clientes { background: rgba(55,138,221,0.1);  color: #378ADD; }
-
-        /* Semáforo */
-        .section-label {
-            font-family: var(--font-global); font-size: 12px; font-weight: 700;
-            color: var(--color-primary); text-transform: uppercase; letter-spacing: 0.07em;
-        }
-        .cxc-section { background: #fff; border-radius: 14px; border: 0.5px solid #e2e8f0; overflow: hidden; }
-        .cxc-header {
-            background: rgba(20,59,98,0.04); border-bottom: 0.5px solid #e2e8f0;
-            padding: 12px 20px; display: flex; justify-content: space-between; align-items: center;
-        }
-        .cxc-ver-todo {
-            font-size: 11px; font-weight: 700; color: var(--color-primary);
-            border: 1px solid rgba(20,59,98,0.2); border-radius: 6px; padding: 4px 12px;
-            text-decoration: none; font-family: var(--font-global); transition: background 0.2s;
-        }
-        .cxc-ver-todo:hover { background: rgba(20,59,98,0.06); }
-        .sem-card {
-            background: #fff; border-radius: 12px; border: 0.5px solid #e2e8f0;
-            border-left-width: 4px; padding: 16px 18px;
-            position: relative; overflow: hidden;
-            transition: box-shadow 0.2s, transform 0.2s;
-        }
-        .sem-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.07); transform: translateY(-1px); }
-        .sem-card.rojo     { border-left-color: #E24B4A; }
-        .sem-card.amarillo { border-left-color: #EF9F27; }
-        .sem-card.verde    { border-left-color: #639922; }
-        .sem-label { font-family: var(--font-global); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; display: block; }
-        .sem-val   { font-family: var(--font-global); font-size: 1.6rem; font-weight: 900; margin-bottom: 8px; line-height: 1; }
-        .sem-bar-bg { height: 4px; border-radius: 2px; background: #f1f5f9; margin-bottom: 6px; }
-        .sem-bar    { height: 4px; border-radius: 2px; width: 0%; transition: width 0.9s cubic-bezier(0.4,0,0.2,1); }
-        .sem-sub   { font-size: 12px; color: #94a3b8; font-family: var(--font-global); }
-        .sem-deco  { position: absolute; right: -6px; bottom: -6px; font-size: 52px; opacity: 0.06; }
     </style>
 </head>
 
@@ -165,133 +67,117 @@
     <div id="watermark-bg" class="absolute inset-0"></div>
     <script src="menu.js"></script>
 
-    <main class="flex-1 flex flex-col h-screen overflow-hidden w-full relative z-10">
-
-        <!-- Header color primario -->
-        <div class="dash-header">
+   <main class="flex-1 flex flex-col h-[100dvh] overflow-hidden w-full relative z-10 bg-[#f4f6f8]">
+        
+        <div class="bg-primary px-4 py-3 flex justify-between items-center shrink-0 z-10">
             <div>
-                <div class="dash-header-title">
-                    <button onclick="toggleMobileMenu()" class="md:hidden dash-btn-icon" style="width:28px;height:28px;font-size:13px;margin-right:2px;"><i class="fa-solid fa-bars"></i></button>
-                    <i class="fa-solid fa-chart-pie" style="color:rgba(255,255,255,0.45);font-size:15px;"></i>
+                <div class="text-white text-sm font-bold flex items-center gap-2">
+                    <button onclick="toggleMobileMenu()" class="md:hidden text-white/70 hover:text-white transition"><i class="fa-solid fa-bars text-base"></i></button>
                     Resumen Gerencial
                 </div>
-                <div class="dash-header-sub" id="dash-fecha-header">Cargando...</div>
+                <div class="text-[9px] text-white/50 mt-0.5" id="dash-fecha-header">Cargando...</div>
             </div>
-            <div class="dash-header-right">
-                <button onclick="window.location.reload()" class="dash-btn-icon md:hidden" title="Actualizar"><i class="fa-solid fa-rotate-right"></i></button>
-                <button onclick="togglePrivacidad()" id="btn-privacidad" class="dash-btn-icon" title="Ocultar/Mostrar valores"><i class="fa-solid fa-eye-slash"></i></button>
-                <div class="dash-header-badge">
-                    <i class="fa-solid fa-user-tie" style="font-size:12px;opacity:0.7;"></i>
-                    <span id="nombre-usuario">Admin</span>
+            <div class="flex items-center gap-3">
+                <button onclick="togglePrivacidad()" id="btn-privacidad" class="text-white/70 hover:text-white transition text-sm"><i class="fa-solid fa-eye-slash"></i></button>
+                <div class="bg-white/10 rounded-full px-3 py-1 text-[10px] font-bold text-white/90 flex items-center gap-1.5 border border-white/5">
+                    <i class="fa-solid fa-user-tie opacity-70"></i> <span id="nombre-usuario">Admin</span>
                 </div>
             </div>
         </div>
 
-        <!-- Ticker BCV + Caja -->
-        <div class="ticker-bar">
-            <div class="ticker-item">
-                <span class="ticker-flag">🇺🇸</span>
-                <div>
-                    <div class="ticker-label">USD · BCV Oficial</div>
-                    <div class="ticker-val" id="dash-tasa-usd">Bs. —</div>
-                    <div class="ticker-fecha" id="dash-tasa-usd-fecha" style="font-size:10px;color:#94a3b8;font-weight:600;"></div>
-                </div>
-                <span class="ticker-chip">BCV</span>
+        <div class="bg-primary/95 border-t border-white/10 px-4 py-1.5 flex items-center gap-5 overflow-x-auto no-scrollbar shrink-0">
+            <div class="flex items-center gap-1.5 shrink-0">
+                <span class="text-xs">🇺🇸</span>
+                <div class="text-[9px] text-white/60 font-bold">USD <span class="text-white font-black ml-1 text-[11px]" id="dash-tasa-usd">Bs. —</span></div>
             </div>
-            <div class="ticker-item">
-                <span class="ticker-flag">🇪🇺</span>
-                <div>
-                    <div class="ticker-label">EUR · BCV Oficial</div>
-                    <div class="ticker-val" id="dash-tasa-eur">Bs. —</div>
-                    <div class="ticker-fecha" id="dash-tasa-eur-fecha" style="font-size:10px;color:#94a3b8;font-weight:600;"></div>
-                </div>
-                <span class="ticker-chip">BCV</span>
+            <div class="flex items-center gap-1.5 shrink-0">
+                <span class="text-xs">🇪🇺</span>
+                <div class="text-[9px] text-white/60 font-bold">EUR <span class="text-white font-black ml-1 text-[11px]" id="dash-tasa-eur">Bs. —</span></div>
             </div>
-            <div class="ticker-sep"></div>
-            <div class="ticker-caja">
-                <span class="ticker-caja-dot" id="dash-caja-dot"></span>
-                <span class="ticker-caja-text" id="dash-caja-status">Verificando...</span>
-                <a href="admin_caja.html" class="ticker-caja-link">
-                    <i class="fa-solid fa-vault" style="font-size:10px;margin-right:4px;"></i>Gestionar Caja
-                </a>
+            <div class="ml-auto flex items-center gap-1.5 shrink-0 pl-4 border-l border-white/10">
+                <div id="dash-caja-dot" class="w-2 h-2 rounded-full bg-gray-400"></div>
+                <a href="admin_caja.html" class="text-[9px] text-white/80 font-bold hover:text-white" id="dash-caja-status">Verificando...</a>
             </div>
         </div>
 
-        <!-- Contenido -->
-        <div class="flex-1 overflow-auto p-4 md:p-6 custom-scroll pb-20 fade-in">
-
-            <!-- KPIs -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
-
-                <div class="kpi-card ventas">
-                    <div class="kpi-icon ventas"><i class="fa-solid fa-cash-register"></i></div>
-                    <div class="flex-1 min-w-0">
-                        <span class="kpi-label">Ventas Hoy</span>
-                        <span class="kpi-value text-primary dato-sensible" id="dash-ventas-hoy">$0.00</span>
-                    </div>
+        <div class="flex-1 overflow-y-auto custom-scroll fade-in flex flex-col">
+            
+            <div class="flex gap-3 overflow-x-auto kpi-scroll no-scrollbar px-4 py-4 shrink-0">
+                <div class="kpi-card">
+                    <i class="fa-solid fa-cash-register kpi-icon-bg text-primary"></i>
+                    <div class="text-[9px] text-gray-500 font-bold uppercase mb-1 tracking-wider">Ventas Hoy</div>
+                    <div class="text-xl font-black text-primary dato-sensible leading-none" id="dash-ventas-hoy">$0.00</div>
                 </div>
-
-                <div class="kpi-card prod">
-                    <div class="kpi-icon prod"><i class="fa-solid fa-boxes-stacked"></i></div>
-                    <div>
-                        <span class="kpi-label">Prod. Activos</span>
-                        <span class="kpi-value dato-sensible" style="color:#1D9E75;" id="indicador-productos">0</span>
-                    </div>
+                <div class="kpi-card">
+                    <i class="fa-solid fa-boxes-stacked kpi-icon-bg" style="color:#1D9E75;"></i>
+                    <div class="text-[9px] text-gray-500 font-bold uppercase mb-1 tracking-wider">Prod. Activos</div>
+                    <div class="text-xl font-black dato-sensible leading-none" style="color:#1D9E75;" id="indicador-productos">0</div>
                 </div>
-
-                <div class="kpi-card taller">
-                    <div class="kpi-icon taller"><i class="fa-solid fa-screwdriver-wrench"></i></div>
-                    <div>
-                        <span class="kpi-label">Equipos Taller</span>
-                        <span class="kpi-value dato-sensible" style="color:#EF9F27;" id="indicador-taller">0</span>
-                    </div>
+                <div class="kpi-card">
+                    <i class="fa-solid fa-screwdriver-wrench kpi-icon-bg" style="color:#EF9F27;"></i>
+                    <div class="text-[9px] text-gray-500 font-bold uppercase mb-1 tracking-wider">Taller</div>
+                    <div class="text-xl font-black dato-sensible leading-none" style="color:#EF9F27;" id="indicador-taller">0</div>
                 </div>
-
-                <div class="kpi-card clientes">
-                    <div class="kpi-icon clientes"><i class="fa-solid fa-users"></i></div>
-                    <div>
-                        <span class="kpi-label">Clientes</span>
-                        <span class="kpi-value dato-sensible" style="color:#378ADD;" id="indicador-clientes">0</span>
-                    </div>
+                <div class="kpi-card">
+                    <i class="fa-solid fa-users kpi-icon-bg" style="color:#378ADD;"></i>
+                    <div class="text-[9px] text-gray-500 font-bold uppercase mb-1 tracking-wider">Clientes</div>
+                    <div class="text-xl font-black dato-sensible leading-none" style="color:#378ADD;" id="indicador-clientes">0</div>
                 </div>
-
             </div>
 
-            <!-- Semáforo CxC -->
-            <div class="cxc-section">
-                <div class="cxc-header">
-                    <span class="section-label" style="display:flex;align-items:center;gap:8px;">
-                        <i class="fa-solid fa-traffic-light" style="color:var(--color-tertiary);font-size:14px;"></i>
-                        Semáforo Cuentas por Cobrar (CxC)
-                    </span>
-                    <a href="admin_cxc.html" class="cxc-ver-todo">Ver Todo →</a>
+            <div class="px-4 mb-4 shrink-0">
+                <div class="grid grid-cols-4 gap-2">
+                    <a href="admin_ventas.html" class="bg-white border border-gray-100 rounded-xl py-2 px-1 flex flex-col items-center justify-center gap-1.5 shadow-[0_2px_8px_rgba(0,0,0,0.02)] active:scale-95 transition">
+                        <div class="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center text-sm"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+                        <span class="text-[8px] font-black text-gray-600 uppercase text-center leading-tight">Nueva<br>Factura</span>
+                    </a>
+                    <a href="admin_cxc.html" class="bg-white border border-gray-100 rounded-xl py-2 px-1 flex flex-col items-center justify-center gap-1.5 shadow-[0_2px_8px_rgba(0,0,0,0.02)] active:scale-95 transition">
+                        <div class="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+                        <span class="text-[8px] font-black text-gray-600 uppercase text-center leading-tight">Abonar<br>Pago</span>
+                    </a>
+                    <a href="admin_productos.html" class="bg-white border border-gray-100 rounded-xl py-2 px-1 flex flex-col items-center justify-center gap-1.5 shadow-[0_2px_8px_rgba(0,0,0,0.02)] active:scale-95 transition">
+                        <div class="w-8 h-8 rounded-full bg-orange-50 text-orange-600 flex items-center justify-center text-sm"><i class="fa-solid fa-boxes-stacked"></i></div>
+                        <span class="text-[8px] font-black text-gray-600 uppercase text-center leading-tight">Ver<br>Stock</span>
+                    </a>
+                    <a href="admin_caja.html" class="bg-white border border-gray-100 rounded-xl py-2 px-1 flex flex-col items-center justify-center gap-1.5 shadow-[0_2px_8px_rgba(0,0,0,0.02)] active:scale-95 transition">
+                        <div class="w-8 h-8 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center text-sm"><i class="fa-solid fa-cash-register"></i></div>
+                        <span class="text-[8px] font-black text-gray-600 uppercase text-center leading-tight">Cierre<br>Caja</span>
+                    </a>
                 </div>
-                <div class="p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+            </div>
 
-                    <div class="sem-card rojo">
-                        <span class="sem-label" style="color:#A32D2D;">Vencidas (Crítico)</span>
-                        <div class="sem-val dato-sensible" style="color:#A32D2D;" id="sem-rojo-monto">$0.00</div>
-                        <div class="sem-bar-bg"><div class="sem-bar" id="sem-rojo-bar" style="background:#E24B4A;"></div></div>
-                        <p class="sem-sub"><span id="sem-rojo-cant">0</span> facturas fuera de plazo</p>
-                        <i class="fa-solid fa-triangle-exclamation sem-deco" style="color:#E24B4A;"></i>
+            <div class="px-4 mb-4 shrink-0">
+                <div class="flex justify-between items-end mb-2">
+                    <h3 class="text-[10px] font-black text-primary uppercase tracking-wider"><i class="fa-solid fa-traffic-light text-tertiary mr-1"></i> Cuentas por Cobrar</h3>
+                    <a href="admin_cxc.html" class="text-[9px] text-secondary font-bold">Ver Detalles →</a>
+                </div>
+                <div class="grid grid-cols-3 gap-2 bg-white rounded-xl p-2 border border-gray-100 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+                    <div class="text-center py-2 px-1 rounded-lg bg-red-50/50 border border-red-100">
+                        <div class="text-[8px] font-black text-red-600 uppercase mb-1">Vencidas</div>
+                        <div class="text-sm font-black text-red-700 dato-sensible leading-none" id="sem-rojo-monto">$0</div>
+                        <div class="text-[8px] font-bold text-red-400 mt-1"><span id="sem-rojo-cant">0</span> fac</div>
                     </div>
-
-                    <div class="sem-card amarillo">
-                        <span class="sem-label" style="color:#854F0B;">Por Vencer (3 Días)</span>
-                        <div class="sem-val dato-sensible" style="color:#854F0B;" id="sem-amarillo-monto">$0.00</div>
-                        <div class="sem-bar-bg"><div class="sem-bar" id="sem-amarillo-bar" style="background:#EF9F27;"></div></div>
-                        <p class="sem-sub"><span id="sem-amarillo-cant">0</span> facturas por vencerse</p>
-                        <i class="fa-regular fa-clock sem-deco" style="color:#EF9F27;"></i>
+                    <div class="text-center py-2 px-1 rounded-lg bg-yellow-50/50 border border-yellow-100">
+                        <div class="text-[8px] font-black text-yellow-700 uppercase mb-1">3 Días</div>
+                        <div class="text-sm font-black text-yellow-700 dato-sensible leading-none" id="sem-amarillo-monto">$0</div>
+                        <div class="text-[8px] font-bold text-yellow-500 mt-1"><span id="sem-amarillo-cant">0</span> fac</div>
                     </div>
-
-                    <div class="sem-card verde">
-                        <span class="sem-label" style="color:#3B6D11;">Deuda Sana</span>
-                        <div class="sem-val dato-sensible" style="color:#3B6D11;" id="sem-verde-monto">$0.00</div>
-                        <div class="sem-bar-bg"><div class="sem-bar" id="sem-verde-bar" style="background:#639922;"></div></div>
-                        <p class="sem-sub"><span id="sem-verde-cant">0</span> facturas a tiempo</p>
-                        <i class="fa-solid fa-shield-halved sem-deco" style="color:#639922;"></i>
+                    <div class="text-center py-2 px-1 rounded-lg bg-green-50/50 border border-green-100">
+                        <div class="text-[8px] font-black text-green-700 uppercase mb-1">Al Día</div>
+                        <div class="text-sm font-black text-green-700 dato-sensible leading-none" id="sem-verde-monto">$0</div>
+                        <div class="text-[8px] font-bold text-green-500 mt-1"><span id="sem-verde-cant">0</span> fac</div>
                     </div>
+                </div>
+            </div>
 
+            <div class="px-4 pb-20 flex-1 flex flex-col min-h-0">
+                <h3 class="text-[10px] font-black text-primary uppercase tracking-wider mb-2 shrink-0"><i class="fa-solid fa-clock-rotate-left text-tertiary mr-1"></i> Últimos Movimientos</h3>
+                <div class="bg-white border border-gray-100 rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.02)] flex-1 overflow-y-auto no-scrollbar">
+                    <div class="divide-y divide-gray-50" id="lista-movimientos">
+                        <div class="p-4 text-center text-[10px] text-gray-400 font-bold">
+                            A la espera de los datos...
+                        </div>
+                    </div>
                 </div>
             </div>
 
