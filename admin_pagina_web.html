@@ -516,8 +516,10 @@ async function detectarEmpresaUsuario() {
         return false;
     }
     try {
-        // 1. Buscar usuario por token (qué empresa tiene asignada)
-        const resUser = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?select=id_empresa,nombre_completo,email&limit=1`, {
+        // 1. Buscar usuario por token (usamos el MISMO patrón que admin_configuracion.html,
+        //    que ya funciona en producción): solo seleccionamos id_empresa.
+        //    Las políticas RLS de Supabase pueden bloquear si pedimos más campos.
+        const resUser = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?select=id_empresa&limit=1`, {
             headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${token}` }
         });
         if (!resUser.ok) throw new Error(`Error ${resUser.status} al leer usuarios`);
@@ -525,13 +527,14 @@ async function detectarEmpresaUsuario() {
         if (!usuarios || usuarios.length === 0) {
             throw new Error('Usuario no encontrado para este token');
         }
-        const user = usuarios[0];
-        ID_EMPRESA_ACTUAL = user.id_empresa;
+        ID_EMPRESA_ACTUAL = usuarios[0].id_empresa;
         
-        // Mostrar info del usuario en el sidebar
-        const nombre = user.nombre_completo || user.email || 'Usuario';
-        document.getElementById('user-nombre').textContent = nombre;
-        document.getElementById('user-avatar').textContent = (nombre[0] || '?').toUpperCase();
+        // Mostrar info básica en el sidebar (sin requerir lectura de usuario completo)
+        // Si hay un email en localStorage del login, lo usamos
+        const emailGuardado = localStorage.getItem('pyp_user_email') || '';
+        const nombreVisible = emailGuardado.split('@')[0] || 'Usuario';
+        document.getElementById('user-nombre').textContent = nombreVisible;
+        document.getElementById('user-avatar').textContent = (nombreVisible[0] || '?').toUpperCase();
         
         // 2. Buscar info completa de la empresa
         const resEmp = await fetch(`${SUPABASE_URL}/rest/v1/empresas?id_empresa=eq.${ID_EMPRESA_ACTUAL}&select=*`, {
