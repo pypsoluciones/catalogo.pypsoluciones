@@ -66,34 +66,41 @@
     <script src="menu.js"></script>
 <main class="flex-1 flex flex-col h-[100dvh] overflow-hidden w-full relative z-10 bg-[#f4f6f8]">
         
-        <div class="bg-primary px-4 py-3 flex justify-between items-center shrink-0 z-10 shadow-md">
-            <div>
+        <div class="bg-primary px-4 py-3 flex justify-between items-center shrink-0 z-10 shadow-lg">
+            <div class="flex flex-col">
+                <div class="text-white/50 text-[8px] font-black uppercase tracking-[0.2em] mb-0.5 flex items-center gap-1">
+                    <i class="fa-solid fa-building-circle-check text-[7px]"></i>
+                    <span id="nombre-empresa">CARGANDO EMPRESA...</span>
+                </div>
                 <div class="text-white text-base font-black flex items-center gap-3">
-                    <button onclick="toggleMobileMenu()" class="md:hidden text-white/80 hover:text-white transition"><i class="fa-solid fa-bars text-xl"></i></button>
+                    <button onclick="toggleMobileMenu()" class="md:hidden text-white/80 hover:text-white transition">
+                        <i class="fa-solid fa-bars text-xl"></i>
+                    </button>
                     Resumen Gerencial
                 </div>
-                <div class="text-[10px] text-white/60 mt-1 font-medium tracking-wide" id="dash-fecha-header">Cargando fecha...</div>
             </div>
             <div class="flex items-center gap-4">
-                <button onclick="togglePrivacidad()" id="btn-privacidad" class="text-white/80 hover:text-white transition text-lg bg-white/5 p-2 rounded-full"><i class="fa-solid fa-eye-slash"></i></button>
+                <button onclick="togglePrivacidad()" id="btn-privacidad" class="text-white/80 hover:text-white transition text-lg bg-white/5 p-2 rounded-full border border-white/5">
+                    <i class="fa-solid fa-eye-slash"></i>
+                </button>
                 <div class="bg-white/10 rounded-full px-3 py-1.5 text-xs font-bold text-white flex items-center gap-2 border border-white/10">
                     <i class="fa-solid fa-user-tie text-tertiary"></i> <span id="nombre-usuario">Admin</span>
                 </div>
             </div>
         </div>
 
-        <div class="bg-slate-900 border-t border-slate-800 px-4 py-2.5 flex items-center gap-6 overflow-x-auto no-scrollbar shrink-0 shadow-inner">
-            <div class="flex items-center gap-2 shrink-0 bg-slate-800/50 px-2 py-1 rounded-md border border-slate-700">
+        <div class="bg-slate-900 border-t border-slate-800 px-4 py-3 flex items-center gap-5 overflow-x-auto no-scrollbar shrink-0 shadow-inner">
+            <div class="flex items-center gap-2 shrink-0 bg-slate-800/40 px-2.5 py-1.5 rounded-lg border border-slate-700">
                 <span class="text-sm">🇺🇸</span>
-                <div class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">USD <span class="text-emerald-400 font-black ml-1 text-xs" id="dash-tasa-usd">Bs. —</span></div>
+                <div class="text-[10px] text-gray-400 font-black uppercase tracking-widest">USD <span class="text-white font-black ml-1.5 text-xs" id="dash-tasa-usd">Bs. —</span></div>
             </div>
-            <div class="flex items-center gap-2 shrink-0 bg-slate-800/50 px-2 py-1 rounded-md border border-slate-700">
+            <div class="flex items-center gap-2 shrink-0 bg-slate-800/40 px-2.5 py-1.5 rounded-lg border border-slate-700">
                 <span class="text-sm">🇪🇺</span>
-                <div class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">EUR <span class="text-blue-400 font-black ml-1 text-xs" id="dash-tasa-eur">Bs. —</span></div>
+                <div class="text-[10px] text-gray-400 font-black uppercase tracking-widest">EUR <span class="text-white font-black ml-1.5 text-xs" id="dash-tasa-eur">Bs. —</span></div>
             </div>
-            <div class="ml-auto flex items-center gap-2 shrink-0 pl-4 border-l border-slate-700">
+            <div class="ml-auto flex items-center gap-2 shrink-0 pl-4 border-l border-slate-800">
                 <div id="dash-caja-dot" class="w-2.5 h-2.5 rounded-full bg-gray-500 animate-pulse"></div>
-                <a href="admin_caja.html" class="text-[10px] text-gray-300 font-bold hover:text-white tracking-wider" id="dash-caja-status">Verificando...</a>
+                <a href="admin_caja.html" class="text-[10px] text-gray-400 font-black hover:text-white tracking-widest" id="dash-caja-status">VERIFICANDO...</a>
             </div>
         </div>
 
@@ -194,6 +201,12 @@
 
             const nombre = localStorage.getItem('pyp_usuario_nombre') || 'SISTEMA';
             document.getElementById('nombre-usuario').innerText = nombre.split(' ')[0];
+            // Cargar Nombre de la Empresa desde el almacenamiento local
+const empresaNombre = localStorage.getItem('pyp_empresa_nombre') || 'P&P SOLUCIONES';
+const elEmpresa = document.getElementById('nombre-empresa');
+if (elEmpresa) {
+    elEmpresa.innerText = empresaNombre.toUpperCase();
+}
 
             if (localStorage.getItem('pyp_privacidad') === 'false') { togglePrivacidad(); }
 
