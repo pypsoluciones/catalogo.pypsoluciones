@@ -3,7 +3,7 @@
    ═══════════════════════════════════════════════════════════════════════════
    Cambios v3:
    - Eliminado item "Publicidad TV" (era nombre incorrecto del editor de banners web)
-   - Agregado "Mi Página Web" (nuevo módulo unificado para configurar el catálogo:
+   - Agregado "Config. Página Web" (nuevo módulo unificado para configurar el catálogo:
      identidad visual, contacto, banners, categorías y páginas de información)
    - admin_publicidad.html sigue accesible por URL directa (uso interno)
    - El item Sistema queda activo también cuando estás en admin_pagina_web
@@ -124,7 +124,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     <a href="admin_perfil.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_perfil.html' ? estiloActivoSub : estiloInactivoSub}">Mi Perfil y PIN</a>
                     <a href="admin_empleados_roles.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_empleados_roles.html' ? estiloActivoSub : estiloInactivoSub}">Empleados y Roles</a>
                     <a href="admin_pagina_web.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_pagina_web.html' || currentPage === 'admin_publicidad.html' ? estiloActivoSub : estiloInactivoSub}">
-                        <i class="fa-solid fa-globe mr-1 text-[10px]"></i> Mi Página Web
+                        <i class="fa-solid fa-globe mr-1 text-[10px]"></i> Config. Página Web
                     </a>
                     <a href="admin_configuracion.html" class="block py-1.5 px-3 text-xs rounded-md transition-all ${currentPage === 'admin_configuracion.html' ? estiloActivoSub : estiloInactivoSub}">Parámetros del Sistema</a>
                 </div>
