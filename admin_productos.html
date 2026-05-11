@@ -829,11 +829,26 @@ function renderizarInventario() {
             data = fuseInventario.search(qN).map(r => r.item);
         }
     }
+   // 1. REGLA ESTRICTA: Excluir "CONSUMIBLE" de todas las vistas
+    data = data.filter(p => {
+        const tipoStr = String(p.tipo_producto || '').toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        return tipoStr !== 'CONSUMIBLE';
+    });
+
+    // 2. FILTROS ESTÁNDAR
     if (cat     !== 'TODAS') data = data.filter(p => p.categoria_del_producto === cat);
     if (marca   !== 'TODAS') data = data.filter(p => p.marca === marca);
     if (estatus !== 'TODOS') data = data.filter(p => p.estado_producto === estatus);
-    if (stock === 'CRITICO')    data = data.filter(p => p.stock_actual <= (p.stock_minimo || 0));
-    if (stock === 'DISPONIBLE') data = data.filter(p => p.stock_actual > 0 || p.permitir_negativo);
+    if (stock === 'CRITICO') data = data.filter(p => p.stock_actual <= (p.stock_minimo || 0));
+    
+    // 3. REGLA DE DISPONIBILIDAD: Incluir intangibles sin importar el stock
+    if (stock === 'DISPONIBLE') {
+        data = data.filter(p => {
+            const tipoStr = String(p.tipo_producto || '').toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            return p.stock_actual > 0 || p.permitir_negativo || tipoStr === 'SERVICIO' || tipoStr === 'FABRICACION';
+        });
+    }
+
     if (imagen === 'SIN_FOTO')  data = data.filter(p => !p.imagen_principal);
     if (imagen === 'CON_FOTO')  data = data.filter(p => p.imagen_principal);
 
