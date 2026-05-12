@@ -82,13 +82,39 @@ Para fechas relativas calcula desde hoy: ${new Date().toISOString()}
 Ejemplo: "¡Listo! Te recuerdo mañana a las 10. MEMDATA:{"type":"reminder","title":"Llamar médico","content":"Llamar al médico","reminderDate":"2025-05-12T10:00:00","items":null}"`;
 
 const GEMINI_MODELS = [
-  "gemini-2.0-pro-exp",
+  "gemini-2.5-pro-preview-05-06",
+  "gemini-2.5-flash-preview-04-17",
+  "gemini-2.0-flash-001",
   "gemini-2.0-flash",
-  "gemini-1.5-pro",
-  "gemini-1.5-pro-latest",
-  "gemini-1.5-flash",
-  "gemini-pro",
+  "gemini-1.5-pro-002",
+  "gemini-1.5-pro-001",
+  "gemini-1.5-flash-002",
+  "gemini-1.5-flash-001",
 ];
+
+// Cache del modelo detectado
+let _cachedModel = null;
+
+async function detectBestModel(apiKey) {
+  if (_cachedModel) return _cachedModel;
+  try {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+    const data = await res.json();
+    if (data.error || !data.models) return "gemini-1.5-flash-001";
+    const available = data.models
+      .map(m => m.name.replace("models/",""))
+      .filter(n => n.startsWith("gemini") && !n.includes("embedding") && !n.includes("aqa"));
+    const priority = ["2.5-pro","2.5-flash","2.0-flash","1.5-pro","1.5-flash"];
+    for (const p of priority) {
+      const found = available.find(n => n.includes(p));
+      if (found) { _cachedModel = found; return found; }
+    }
+    _cachedModel = available[0] || "gemini-1.5-flash-001";
+    return _cachedModel;
+  } catch {
+    return "gemini-1.5-flash-001";
+  }
+}
 
 async function askGemini(apiKey, history, userMsg) {
   const contents = [
@@ -96,28 +122,25 @@ async function askGemini(apiKey, history, userMsg) {
     { role: "user", parts: [{ text: userMsg }] }
   ];
 
-  let lastError = "";
-  for (const model of GEMINI_MODELS) {
-    try {
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
-            contents,
-            generationConfig: { maxOutputTokens: 2048, temperature: 0.7 }
-          })
-        }
-      );
-      const data = await res.json();
-      if (data.error) { lastError = data.error.message; continue; }
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (text) return text;
-    } catch(e) { lastError = e.message; }
-  }
-  throw new Error(lastError || "No se pudo conectar con Gemini");
+  const model = await detectBestModel(apiKey);
+
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+        contents,
+        generationConfig: { maxOutputTokens: 2048, temperature: 0.7 }
+      })
+    }
+  );
+  const data = await res.json();
+  if (data.error) throw new Error(`[${model}] ${data.error.message}`);
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!text) throw new Error("Respuesta vacía de Gemini");
+  return text;
 }
 
 async function validateKey(apiKey) {
