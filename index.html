@@ -3168,15 +3168,36 @@
             if (footHor) footHor.innerHTML = configEmpresa.horario.replace(/\|/g, '<br>');
             
             // Footer: redes sociales (mostrar solo las que tengan URL)
-            const setRedSocial = (id, url) => {
+            // Acepta tanto USERNAMES (ej: "miempresa") como URLs completas (ej: "https://instagram.com/miempresa")
+            // Si es username → construye la URL según la red social
+            // Si ya empieza con http:// o https:// → úsala tal cual (compatibilidad con datos antiguos)
+            const armarUrlSocial = (red, valor) => {
+                if (!valor) return '';
+                const v = String(valor).trim();
+                if (!v) return '';
+                // Si ya es URL completa, devolverla tal cual
+                if (/^https?:\/\//i.test(v)) return v;
+                // Si es username, limpiar @ inicial y construir según red
+                const username = v.replace(/^@/, '').replace(/^\/+/, '').trim();
+                if (!username) return '';
+                switch(red) {
+                    case 'instagram': return `https://instagram.com/${username}`;
+                    case 'facebook':  return `https://facebook.com/${username}`;
+                    case 'tiktok':    return `https://tiktok.com/@${username}`;
+                    default: return '';
+                }
+            };
+            
+            const setRedSocial = (id, valor, red) => {
                 const el = document.getElementById(id);
                 if (!el) return;
-                if (url && url.trim() !== '') { el.href = url; el.classList.remove('hidden'); el.style.display = ''; }
+                const url = armarUrlSocial(red, valor);
+                if (url) { el.href = url; el.classList.remove('hidden'); el.style.display = ''; }
                 else el.style.display = 'none';
             };
-            setRedSocial('footer-red-instagram', configEmpresa.instagram);
-            setRedSocial('footer-red-facebook', configEmpresa.facebook);
-            setRedSocial('footer-red-tiktok', configEmpresa.tiktok);
+            setRedSocial('footer-red-instagram', configEmpresa.instagram, 'instagram');
+            setRedSocial('footer-red-facebook',  configEmpresa.facebook,  'facebook');
+            setRedSocial('footer-red-tiktok',    configEmpresa.tiktok,    'tiktok');
             const wsRed = document.getElementById('footer-red-whatsapp');
             if (wsRed) wsRed.href = `https://wa.me/${configEmpresa.whatsapp}`;
             const emRed = document.getElementById('footer-red-email');
