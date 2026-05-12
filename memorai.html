@@ -396,10 +396,13 @@ function App() {
   });
   const [memories, setMemories] = useState(() => load("memorai-memories", []));
   const [input, setInput]     = useState("");
-  const [loading, setLoading] = useState(false);
-  const [notify, setNotify]   = useState(null);
-  const bottomRef = useRef(null);
-  const inputRef  = useRef(null);
+  const [loading, setLoading]     = useState(false);
+  const [notify, setNotify]       = useState(null);
+  const [listening, setListening] = useState(false);
+  const [voiceError, setVoiceError] = useState("");
+  const bottomRef  = useRef(null);
+  const inputRef   = useRef(null);
+  const recognRef  = useRef(null);
 
   // scroll to bottom
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior:"smooth" }); }, [messages, loading]);
@@ -420,18 +423,58 @@ function App() {
     return () => clearInterval(iv);
   }, []);
 
-  async function send() {
-    const text = input.trim();
+  // ── Voz ──────────────────────────────────────────────────
+  function toggleVoice() {
+    setVoiceError("");
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) { setVoiceError("Tu navegador no soporta voz. Usa Chrome."); return; }
+
+    if (listening) {
+      recognRef.current?.stop();
+      setListening(false);
+      return;
+    }
+
+    const recog = new SR();
+    recog.lang = "es-MX";
+    recog.continuous = false;
+    recog.interimResults = true;
+
+    recog.onstart  = () => setListening(true);
+    recog.onend    = () => setListening(false);
+    recog.onerror  = e => { setListening(false); setVoiceError("Error de micrófono: " + e.error); };
+
+    recog.onresult = e => {
+      const transcript = Array.from(e.results).map(r => r[0].transcript).join("");
+      setInput(transcript);
+      if (e.results[e.results.length - 1].isFinal) {
+        setListening(false);
+        // Auto-enviar al terminar de hablar
+        setTimeout(() => {
+          setInput(t => { if (t.trim()) { sendText(t.trim()); return ""; } return t; });
+        }, 400);
+      }
+    };
+
+    recognRef.current = recog;
+    recog.start();
+  }
+
+  async function sendText(text) {
     if (!text || loading || !apiKey) return;
-    setInput("");
-
     const userMsg = { id:Date.now(), role:"user", content:text, ts:Date.now() };
-    const newMsgs = [...messages, userMsg];
-    setMessages(newMsgs);
-    setLoading(true);
+    setMessages(prev => {
+      const newMsgs = [...prev, userMsg];
+      processMessage(newMsgs, text);
+      return newMsgs;
+    });
+  }
 
+  async function processMessage(newMsgs, text) {
+    setLoading(true);
     try {
-      const history = newMsgs.filter(m => m.id !== "welcome").slice(0,-1)
+      const history = newMsgs.filter(m => m.id !== "welcome" && m.role === "assistant" || m.role === "user")
+        .filter(m => m.id !== newMsgs[newMsgs.length-1].id)
         .map(m => ({ role:m.role, content:m.content }));
 
       const raw = await askGemini(apiKey, history, text);
@@ -441,33 +484,28 @@ function App() {
         try { memData = JSON.parse(match[1]); } catch {}
         display = raw.replace(/MEMDATA:\{.*?\}/s,"").trim();
       }
-
       const aiMsg = { id:Date.now()+1, role:"assistant", content:raw, display, memData, ts:Date.now() };
-      const finalMsgs = [...newMsgs, aiMsg];
-      setMessages(finalMsgs);
-      save("memorai-messages", finalMsgs.slice(-40));
-
+      setMessages(prev => {
+        const final = [...prev, aiMsg];
+        save("memorai-messages", final.slice(-40));
+        return final;
+      });
       if (memData && memData.type !== "none") {
-        const mem = {
-          id:Date.now()+2, type:memData.type,
-          title:memData.title || "Sin título",
-          content:memData.content || "",
-          reminderDate:memData.reminderDate || null,
-          items:memData.items || null,
-          notified:false, ts:Date.now()
-        };
-        const newMems = [mem, ...memories];
-        setMemories(newMems);
-        save("memorai-memories", newMems);
+        const mem = { id:Date.now()+2, type:memData.type, title:memData.title||"Sin título", content:memData.content||"", reminderDate:memData.reminderDate||null, items:memData.items||null, notified:false, ts:Date.now() };
+        setMemories(prev => { const n=[mem,...prev]; save("memorai-memories",n); return n; });
       }
     } catch(e) {
-      const errMsg = { id:Date.now()+1, role:"assistant",
-        content:`Error: ${e.message}`,
-        display:`⚠️ Error: ${e.message}`,
-        ts:Date.now() };
-      setMessages(m => [...m, errMsg]);
+      const errMsg = { id:Date.now()+1, role:"assistant", content:`Error: ${e.message}`, display:`⚠️ ${e.message}`, ts:Date.now() };
+      setMessages(prev => [...prev, errMsg]);
     }
     setLoading(false);
+  }
+
+  function send() {
+    const text = input.trim();
+    if (!text || loading || !apiKey) return;
+    setInput("");
+    sendText(text);
   }
 
   function deleteMemory(id) {
@@ -573,12 +611,34 @@ function App() {
                 ))}
               </div>
 
+              {/* Voice error */}
+              {voiceError && (
+                <div style={{padding:"4px 16px 0",fontSize:11,color:C.red}}>{voiceError}</div>
+              )}
+
               {/* Input */}
               <div style={{display:"flex",gap:8,padding:"10px 14px 14px",flexShrink:0}}>
                 <input ref={inputRef} value={input} onChange={e=>setInput(e.target.value)}
                   onKeyDown={e=>e.key==="Enter"&&!e.shiftKey&&send()}
-                  placeholder="Escribe lo que quieres recordar…"
-                  style={{flex:1,background:C.surface2,border:`1px solid ${C.accentBorder}`,borderRadius:22,padding:"10px 16px",fontSize:13,color:C.text,outline:"none"}}/>
+                  placeholder={listening ? "Escuchando… habla ahora 🎙" : "Escribe o habla lo que quieres recordar…"}
+                  style={{flex:1,background:C.surface2,border:`1px solid ${listening ? C.red : C.accentBorder}`,borderRadius:22,padding:"10px 16px",fontSize:13,color:C.text,outline:"none",transition:"border 0.2s"}}/>
+                {/* Mic button */}
+                <button onClick={toggleVoice}
+                  title={listening ? "Detener" : "Hablar"}
+                  style={{width:42,height:42,borderRadius:"50%",
+                    background: listening
+                      ? `radial-gradient(circle, #f46a6a, #c0392b)`
+                      : C.surface2,
+                    border: listening ? "none" : `1px solid ${C.border}`,
+                    cursor:"pointer", color:"white", fontSize:18,
+                    display:"flex", alignItems:"center", justifyContent:"center",
+                    flexShrink:0,
+                    boxShadow: listening ? "0 0 16px rgba(244,106,106,0.5)" : "none",
+                    animation: listening ? "pulse 1s ease-in-out infinite" : "none",
+                    transition:"all 0.2s"}}>
+                  🎙
+                </button>
+                {/* Send button */}
                 <button onClick={send} disabled={loading||!input.trim()}
                   style={{width:42,height:42,borderRadius:"50%",background:loading||!input.trim()?C.surface3:"linear-gradient(135deg,#1a56db,#4285f4)",border:"none",cursor:loading||!input.trim()?"default":"pointer",color:"white",fontSize:17,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,boxShadow:!loading&&input.trim()?`0 0 16px ${C.glow}`:"none",transition:"all 0.2s"}}>➤</button>
               </div>
