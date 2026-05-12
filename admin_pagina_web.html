@@ -436,6 +436,140 @@
             background: #dc2626;
             box-shadow: 0 6px 20px rgba(220,38,38,0.3);
         }
+        
+        /* ============================================== */
+        /* === TAB VISIBILIDAD Y CONTACTO (B3.3) ======== */
+        /* ============================================== */
+        
+        /* Textarea para descripción y horarios */
+        .cfg-campo textarea {
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            padding: 9px 12px;
+            font-size: 13px;
+            color: #1f2937;
+            background: #fff;
+            outline: none;
+            transition: border-color .15s, box-shadow .15s;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 70px;
+            line-height: 1.4;
+        }
+        .cfg-campo textarea:focus {
+            border-color: var(--color-secondary);
+            box-shadow: 0 0 0 3px rgba(230,126,34,0.1);
+        }
+        
+        /* Input con icono prefijo (ej: @ para Instagram, +58 para WhatsApp) */
+        .input-con-prefijo {
+            display: flex;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            overflow: hidden;
+            background: #fff;
+            transition: border-color .15s, box-shadow .15s;
+        }
+        .input-con-prefijo:focus-within {
+            border-color: var(--color-secondary);
+            box-shadow: 0 0 0 3px rgba(230,126,34,0.1);
+        }
+        .input-con-prefijo .prefijo {
+            background: #f8fafc;
+            padding: 9px 10px;
+            font-size: 12px;
+            color: #6b7280;
+            font-weight: 600;
+            border-right: 1px solid #e5e7eb;
+            display: flex; align-items: center;
+            white-space: nowrap;
+        }
+        .input-con-prefijo input {
+            flex: 1; min-width: 0;
+            border: none !important; outline: none;
+            padding: 9px 12px;
+            font-size: 13px;
+            background: none;
+            font-family: inherit;
+        }
+        .input-con-prefijo input:focus { box-shadow: none !important; }
+        
+        /* === SWITCH TOGGLE === */
+        .switch-wrap {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 11px 14px; gap: 12px;
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            transition: all .15s;
+            cursor: pointer;
+        }
+        .switch-wrap:hover { border-color: #cbd5e1; background: #fafbfc; }
+        .switch-wrap.activo { 
+            border-color: var(--color-secondary); 
+            background: rgba(230,126,34,0.04);
+        }
+        .switch-wrap .sw-info { flex: 1; min-width: 0; }
+        .switch-wrap .sw-info .sw-titulo {
+            font-size: 12px; font-weight: 700; color: #1f2937;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .switch-wrap .sw-info .sw-titulo i {
+            color: var(--color-secondary); font-size: 13px;
+            width: 18px; text-align: center;
+        }
+        .switch-wrap .sw-info .sw-desc {
+            font-size: 10px; color: #6b7280; margin-top: 2px;
+            line-height: 1.4;
+        }
+        
+        /* El switch visual (input checkbox custom) */
+        .switch-toggle {
+            position: relative;
+            width: 38px; height: 22px;
+            flex-shrink: 0;
+        }
+        .switch-toggle input {
+            opacity: 0; width: 0; height: 0;
+        }
+        .switch-slider {
+            position: absolute; cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: #d1d5db;
+            border-radius: 22px;
+            transition: background .2s;
+        }
+        .switch-slider::before {
+            position: absolute;
+            content: '';
+            height: 16px; width: 16px;
+            left: 3px; top: 3px;
+            background: #fff;
+            border-radius: 50%;
+            transition: transform .2s;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        .switch-toggle input:checked + .switch-slider {
+            background: var(--color-secondary);
+        }
+        .switch-toggle input:checked + .switch-slider::before {
+            transform: translateX(16px);
+        }
+        
+        /* === LOGO DEL MÉTODO DE PAGO === */
+        .pago-logo {
+            width: 28px; height: 28px;
+            border-radius: 6px;
+            background: #f1f5f9;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        .pago-logo i { color: var(--color-primary); font-size: 14px; }
+        
+        @media (max-width: 640px) {
+            .switch-wrap { padding: 10px 12px; }
+            .switch-wrap .sw-info .sw-titulo { font-size: 11.5px; }
+        }
     </style>
 </head>
 <body class="bg-[#f4f6f8] flex h-screen overflow-hidden text-gray-800">
@@ -728,11 +862,284 @@
             </div>
             
             <div id="pane-contacto" class="tab-pane">
-                <div class="tab-placeholder">
-                    <div class="ico-grande"><i class="fa-solid fa-address-card"></i></div>
-                    <h3>Visibilidad y Contacto</h3>
-                    <p class="desc">Datos de contacto público (descripción, email, teléfono, WhatsApp, horarios), redes sociales (Instagram, Facebook, TikTok), métodos de pago activos y opciones de visibilidad del catálogo.</p>
-                    <span class="pendiente"><i class="fa-solid fa-hammer"></i> Próxima entrega: B3.3</span>
+                <!-- Loading inicial -->
+                <div id="contacto-loading" style="text-align:center; padding:60px 20px;">
+                    <i class="fa-solid fa-spinner fa-spin text-3xl" style="color:var(--color-primary);"></i>
+                    <p style="margin-top:12px; color:#6b7280; font-size:13px;">Cargando configuración...</p>
+                </div>
+                
+                <div id="contacto-contenido" style="display:none;">
+                    
+                    <!-- BLOQUE 1: DATOS DE CONTACTO PÚBLICO -->
+                    <div class="cfg-bloque">
+                        <div class="cfg-bloque-header">
+                            <i class="fa-solid fa-address-book"></i>
+                            <h3>Datos de Contacto Público</h3>
+                            <small>Aparecen en footer del catálogo</small>
+                        </div>
+                        <div class="cfg-bloque-body">
+                            <div class="cfg-grid">
+                                <div class="cfg-campo">
+                                    <label><i class="fa-solid fa-align-left"></i> Descripción Corta</label>
+                                    <textarea id="vc-descripcion" placeholder="Somos una papelería con más de 20 años..." data-param="EMPRESA_DESCRIPCION" rows="2"></textarea>
+                                    <span class="hint">Aparece en el footer y se usa para SEO. Máximo recomendado: 160 caracteres.</span>
+                                </div>
+                                
+                                <div class="cfg-grid dos-cols">
+                                    <div class="cfg-campo">
+                                        <label><i class="fa-solid fa-envelope"></i> Email Público</label>
+                                        <input type="text" id="vc-email" placeholder="contacto@miempresa.com" data-param="EMPRESA_EMAIL">
+                                        <span class="hint">Se mostrará como link mailto: en el footer.</span>
+                                    </div>
+                                    <div class="cfg-campo">
+                                        <label><i class="fa-solid fa-phone"></i> Teléfono</label>
+                                        <input type="text" id="vc-telefono" placeholder="+58-212-000-0000" data-param="EMPRESA_TELEFONO">
+                                        <span class="hint">Texto que se muestra. No tiene que coincidir con WhatsApp.</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="cfg-grid dos-cols">
+                                    <div class="cfg-campo">
+                                        <label><i class="fa-brands fa-whatsapp"></i> WhatsApp para Pedidos</label>
+                                        <div class="input-con-prefijo">
+                                            <span class="prefijo">+</span>
+                                            <input type="text" id="vc-whatsapp" placeholder="58414XXXXXXX" data-param="EMPRESA_WHATSAPP">
+                                        </div>
+                                        <span class="hint">Código país + número sin espacios ni signos. Es donde llegan los pedidos del catálogo.</span>
+                                    </div>
+                                    <div class="cfg-campo">
+                                        <label><i class="fa-solid fa-clock"></i> Horario de Atención</label>
+                                        <input type="text" id="vc-horario" placeholder="Lun-Vie 9am-6pm, Sáb 9am-1pm" data-param="EMPRESA_HORARIO">
+                                        <span class="hint">Texto libre que aparece en el footer.</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="cfg-campo">
+                                    <label><i class="fa-solid fa-location-dot"></i> Dirección Física</label>
+                                    <textarea id="vc-direccion" placeholder="Av. Principal, Edificio X, Local 1, Caracas, Venezuela" data-param="EMPRESA_DIRECCION" rows="2"></textarea>
+                                    <span class="hint">Tu dirección comercial visible al público. Aparece en pickup y SEO local. (También se usa en el checkout cuando el cliente elige retirar en tienda.)</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- BLOQUE 2: REDES SOCIALES -->
+                    <div class="cfg-bloque">
+                        <div class="cfg-bloque-header">
+                            <i class="fa-solid fa-share-nodes"></i>
+                            <h3>Redes Sociales</h3>
+                            <small>URLs completas. Si dejas en blanco, no aparece el icono.</small>
+                        </div>
+                        <div class="cfg-bloque-body">
+                            <div class="cfg-grid">
+                                <div class="cfg-campo">
+                                    <label><i class="fa-brands fa-instagram" style="color:#E4405F;"></i> Instagram</label>
+                                    <div class="input-con-prefijo">
+                                        <span class="prefijo">instagram.com/</span>
+                                        <input type="text" id="vc-instagram" placeholder="miempresa" data-param="EMPRESA_INSTAGRAM">
+                                    </div>
+                                    <span class="hint">Solo el usuario (sin @). Ej: para instagram.com/papelerialaesquina escribe "papelerialaesquina".</span>
+                                </div>
+                                <div class="cfg-campo">
+                                    <label><i class="fa-brands fa-facebook" style="color:#1877F2;"></i> Facebook</label>
+                                    <div class="input-con-prefijo">
+                                        <span class="prefijo">facebook.com/</span>
+                                        <input type="text" id="vc-facebook" placeholder="MiEmpresa" data-param="EMPRESA_FACEBOOK">
+                                    </div>
+                                    <span class="hint">Nombre de la página de Facebook (sin la URL completa).</span>
+                                </div>
+                                <div class="cfg-campo">
+                                    <label><i class="fa-brands fa-tiktok" style="color:#000;"></i> TikTok</label>
+                                    <div class="input-con-prefijo">
+                                        <span class="prefijo">tiktok.com/@</span>
+                                        <input type="text" id="vc-tiktok" placeholder="miempresa" data-param="EMPRESA_TIKTOK">
+                                    </div>
+                                    <span class="hint">Solo el nombre de usuario, sin el @.</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- BLOQUE 3: MÉTODOS DE PAGO ACTIVOS -->
+                    <div class="cfg-bloque">
+                        <div class="cfg-bloque-header">
+                            <i class="fa-solid fa-credit-card"></i>
+                            <h3>Métodos de Pago Activos</h3>
+                            <small>Solo los activos aparecen en el checkout</small>
+                        </div>
+                        <div class="cfg-bloque-body">
+                            <div class="cfg-grid dos-cols">
+                                <label class="switch-wrap" data-pago="movil">
+                                    <div class="pago-logo"><i class="fa-solid fa-mobile-screen-button"></i></div>
+                                    <div class="sw-info">
+                                        <div class="sw-titulo">Pago Móvil</div>
+                                        <div class="sw-desc">Transferencia desde app bancaria con celular</div>
+                                    </div>
+                                    <div class="switch-toggle">
+                                        <input type="checkbox" id="vc-pago-movil" data-param="PAGO_MOVIL_ACTIVO" data-tipo="toggle">
+                                        <span class="switch-slider"></span>
+                                    </div>
+                                </label>
+                                
+                                <label class="switch-wrap" data-pago="zelle">
+                                    <div class="pago-logo"><i class="fa-solid fa-z"></i></div>
+                                    <div class="sw-info">
+                                        <div class="sw-titulo">Zelle</div>
+                                        <div class="sw-desc">Transferencia en USD desde bancos en EE.UU.</div>
+                                    </div>
+                                    <div class="switch-toggle">
+                                        <input type="checkbox" id="vc-pago-zelle" data-param="PAGO_ZELLE_ACTIVO" data-tipo="toggle">
+                                        <span class="switch-slider"></span>
+                                    </div>
+                                </label>
+                                
+                                <label class="switch-wrap" data-pago="usd">
+                                    <div class="pago-logo"><i class="fa-solid fa-dollar-sign"></i></div>
+                                    <div class="sw-info">
+                                        <div class="sw-titulo">USD Efectivo</div>
+                                        <div class="sw-desc">Pago en dólares en efectivo</div>
+                                    </div>
+                                    <div class="switch-toggle">
+                                        <input type="checkbox" id="vc-pago-usd" data-param="PAGO_USD_ACTIVO" data-tipo="toggle">
+                                        <span class="switch-slider"></span>
+                                    </div>
+                                </label>
+                                
+                                <label class="switch-wrap" data-pago="bs">
+                                    <div class="pago-logo"><i class="fa-solid fa-money-bill"></i></div>
+                                    <div class="sw-info">
+                                        <div class="sw-titulo">Bs Efectivo</div>
+                                        <div class="sw-desc">Pago en bolívares en efectivo</div>
+                                    </div>
+                                    <div class="switch-toggle">
+                                        <input type="checkbox" id="vc-pago-bs" data-param="PAGO_BS_ACTIVO" data-tipo="toggle">
+                                        <span class="switch-slider"></span>
+                                    </div>
+                                </label>
+                                
+                                <label class="switch-wrap" data-pago="transferencia">
+                                    <div class="pago-logo"><i class="fa-solid fa-building-columns"></i></div>
+                                    <div class="sw-info">
+                                        <div class="sw-titulo">Transferencia Bancaria</div>
+                                        <div class="sw-desc">Transferencia tradicional entre cuentas</div>
+                                    </div>
+                                    <div class="switch-toggle">
+                                        <input type="checkbox" id="vc-pago-transferencia" data-param="PAGO_TRANSFERENCIA_ACTIVO" data-tipo="toggle">
+                                        <span class="switch-slider"></span>
+                                    </div>
+                                </label>
+                                
+                                <label class="switch-wrap" data-pago="biopago">
+                                    <div class="pago-logo"><i class="fa-solid fa-fingerprint"></i></div>
+                                    <div class="sw-info">
+                                        <div class="sw-titulo">Biopago</div>
+                                        <div class="sw-desc">Pago biométrico Banco de Venezuela</div>
+                                    </div>
+                                    <div class="switch-toggle">
+                                        <input type="checkbox" id="vc-pago-biopago" data-param="PAGO_BIOPAGO_ACTIVO" data-tipo="toggle">
+                                        <span class="switch-slider"></span>
+                                    </div>
+                                </label>
+                                
+                                <label class="switch-wrap" data-pago="debito">
+                                    <div class="pago-logo"><i class="fa-solid fa-credit-card"></i></div>
+                                    <div class="sw-info">
+                                        <div class="sw-titulo">Tarjeta de Débito</div>
+                                        <div class="sw-desc">Punto de venta con débito</div>
+                                    </div>
+                                    <div class="switch-toggle">
+                                        <input type="checkbox" id="vc-pago-debito" data-param="PAGO_DEBITO_ACTIVO" data-tipo="toggle">
+                                        <span class="switch-slider"></span>
+                                    </div>
+                                </label>
+                                
+                                <label class="switch-wrap" data-pago="credito">
+                                    <div class="pago-logo"><i class="fa-solid fa-credit-card"></i></div>
+                                    <div class="sw-info">
+                                        <div class="sw-titulo">Tarjeta de Crédito</div>
+                                        <div class="sw-desc">Punto de venta con crédito (Visa, MC, etc.)</div>
+                                    </div>
+                                    <div class="switch-toggle">
+                                        <input type="checkbox" id="vc-pago-credito" data-param="PAGO_CREDITO_ACTIVO" data-tipo="toggle">
+                                        <span class="switch-slider"></span>
+                                    </div>
+                                </label>
+                                
+                                <label class="switch-wrap" data-pago="tarjeta">
+                                    <div class="pago-logo"><i class="fa-regular fa-credit-card"></i></div>
+                                    <div class="sw-info">
+                                        <div class="sw-titulo">Tarjeta Genérica</div>
+                                        <div class="sw-desc">Cualquier tarjeta sin distinguir débito/crédito</div>
+                                    </div>
+                                    <div class="switch-toggle">
+                                        <input type="checkbox" id="vc-pago-tarjeta" data-param="PAGO_TARJETA_ACTIVO" data-tipo="toggle">
+                                        <span class="switch-slider"></span>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- BLOQUE 4: VISIBILIDAD DEL CATÁLOGO -->
+                    <div class="cfg-bloque">
+                        <div class="cfg-bloque-header">
+                            <i class="fa-solid fa-eye"></i>
+                            <h3>Visibilidad del Catálogo</h3>
+                            <small>Mostrar u ocultar elementos del catálogo público</small>
+                        </div>
+                        <div class="cfg-bloque-body">
+                            <div class="cfg-grid">
+                                <label class="switch-wrap">
+                                    <div class="sw-info">
+                                        <div class="sw-titulo"><i class="fa-solid fa-heading"></i> Mostrar nombre en header</div>
+                                        <div class="sw-desc">Si tu logo ya incluye el nombre, puedes ocultar el texto adicional.</div>
+                                    </div>
+                                    <div class="switch-toggle">
+                                        <input type="checkbox" id="vc-mostrar-nombre" data-param="MOSTRAR_NOMBRE_HEADER" data-tipo="toggle">
+                                        <span class="switch-slider"></span>
+                                    </div>
+                                </label>
+                                
+                                <label class="switch-wrap">
+                                    <div class="sw-info">
+                                        <div class="sw-titulo"><i class="fa-solid fa-truck-fast"></i> "Envíos a todo el país"</div>
+                                        <div class="sw-desc">Banner promocional de envíos nacionales en el header.</div>
+                                    </div>
+                                    <div class="switch-toggle">
+                                        <input type="checkbox" id="vc-envios-pais" data-param="MOSTRAR_ENVIOS_TODO_PAIS" data-tipo="toggle">
+                                        <span class="switch-slider"></span>
+                                    </div>
+                                </label>
+                                
+                                <label class="switch-wrap">
+                                    <div class="sw-info">
+                                        <div class="sw-titulo"><i class="fa-solid fa-location-arrow"></i> "Enviar a ubicación"</div>
+                                        <div class="sw-desc">Selector que permite al cliente cambiar su ubicación de envío.</div>
+                                    </div>
+                                    <div class="switch-toggle">
+                                        <input type="checkbox" id="vc-enviar-ubicacion" data-param="MOSTRAR_ENVIAR_A_UBICACION" data-tipo="toggle">
+                                        <span class="switch-slider"></span>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- BARRA STICKY DE GUARDAR -->
+                    <div id="barra-guardar-vc" class="barra-guardar oculta">
+                        <div class="estado-cambios">
+                            <i class="fa-solid fa-circle-exclamation"></i>
+                            <span>Tienes cambios sin guardar</span>
+                        </div>
+                        <div class="acciones">
+                            <button type="button" class="btn-descartar" onclick="descartarCambiosVC()">
+                                <i class="fa-solid fa-rotate-left"></i> Descartar
+                            </button>
+                            <button type="button" class="btn-guardar" id="btn-guardar-vc" onclick="guardarVisibilidadContacto()">
+                                <i class="fa-solid fa-floppy-disk"></i> Guardar Cambios
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
             
@@ -865,14 +1272,277 @@ function filtroEmpresa(prefijo = '&') {
     return ID_EMPRESA_ACTUAL ? `${prefijo}id_empresa=eq.${ID_EMPRESA_ACTUAL}` : '';
 }
 
-function onTabAbierto(tabId) {
-    console.info(`[Config. Página Web] Tab abierto: ${tabId}`);
-    // Lazy loading: cargar datos del tab solo cuando se abre por primera vez
-    if (tabId === 'identidad' && !identidadCargada) {
-        cargarConfigIdentidadVisual();
-    }
-    // En B3.3+ agregaremos: if (tabId === 'contacto' && !contactoCargado) ...
+// ====================================================================
+// TAB VISIBILIDAD Y CONTACTO (B3.3)
+// ====================================================================
+let contactoCargado = false;
+let valoresOriginalesVC = {};
+
+// Lista de campos del tab. Algunos son toggles booleanos.
+const CAMPOS_VC = [
+    // Bloque 1: Contacto público
+    { id: 'vc-descripcion',  param: 'EMPRESA_DESCRIPCION' },
+    { id: 'vc-email',        param: 'EMPRESA_EMAIL' },
+    { id: 'vc-telefono',     param: 'EMPRESA_TELEFONO' },
+    { id: 'vc-whatsapp',     param: 'EMPRESA_WHATSAPP' },
+    { id: 'vc-horario',      param: 'EMPRESA_HORARIO' },
+    { id: 'vc-direccion',    param: 'EMPRESA_DIRECCION' },
+    // Bloque 2: Redes sociales
+    { id: 'vc-instagram',    param: 'EMPRESA_INSTAGRAM' },
+    { id: 'vc-facebook',     param: 'EMPRESA_FACEBOOK' },
+    { id: 'vc-tiktok',       param: 'EMPRESA_TIKTOK' },
+    // Bloque 3: Métodos de pago (toggles)
+    { id: 'vc-pago-movil',         param: 'PAGO_MOVIL_ACTIVO',         tipo: 'toggle' },
+    { id: 'vc-pago-zelle',         param: 'PAGO_ZELLE_ACTIVO',         tipo: 'toggle' },
+    { id: 'vc-pago-usd',           param: 'PAGO_USD_ACTIVO',           tipo: 'toggle' },
+    { id: 'vc-pago-bs',            param: 'PAGO_BS_ACTIVO',            tipo: 'toggle' },
+    { id: 'vc-pago-transferencia', param: 'PAGO_TRANSFERENCIA_ACTIVO', tipo: 'toggle' },
+    { id: 'vc-pago-biopago',       param: 'PAGO_BIOPAGO_ACTIVO',       tipo: 'toggle' },
+    { id: 'vc-pago-debito',        param: 'PAGO_DEBITO_ACTIVO',        tipo: 'toggle' },
+    { id: 'vc-pago-credito',       param: 'PAGO_CREDITO_ACTIVO',       tipo: 'toggle' },
+    { id: 'vc-pago-tarjeta',       param: 'PAGO_TARJETA_ACTIVO',       tipo: 'toggle' },
+    // Bloque 4: Visibilidad (toggles)
+    { id: 'vc-mostrar-nombre',     param: 'MOSTRAR_NOMBRE_HEADER',     tipo: 'toggle' },
+    { id: 'vc-envios-pais',        param: 'MOSTRAR_ENVIOS_TODO_PAIS',  tipo: 'toggle' },
+    { id: 'vc-enviar-ubicacion',   param: 'MOSTRAR_ENVIAR_A_UBICACION', tipo: 'toggle' }
+];
+
+// Helper: parsear valor de Supabase a booleano para toggles
+// Acepta: 'true', '1', 'SI', 'YES' en cualquier casing
+function parsearToggle(valor) {
+    if (!valor) return false;
+    const v = String(valor).trim().toLowerCase();
+    return v === 'true' || v === '1' || v === 'si' || v === 'sí' || v === 'yes';
 }
+
+// ---- CARGA DE DATOS ----
+async function cargarConfigVisibilidadContacto() {
+    if (contactoCargado) return;
+    if (!ID_EMPRESA_ACTUAL) {
+        console.warn('[Visibilidad y Contacto] No hay empresa detectada');
+        return;
+    }
+    try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/configuracion_publica?select=parametro,valor&id_empresa=eq.${ID_EMPRESA_ACTUAL}`, {
+            headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+        });
+        if (!res.ok) throw new Error(`Error ${res.status} al cargar configuración`);
+        const params = await res.json();
+        
+        const map = {};
+        params.forEach(p => { map[p.parametro] = p.valor || ''; });
+        
+        // Llenar cada campo
+        CAMPOS_VC.forEach(campo => {
+            const input = document.getElementById(campo.id);
+            if (!input) return;
+            const valor = map[campo.param] || '';
+            
+            if (campo.tipo === 'toggle') {
+                const activo = parsearToggle(valor);
+                input.checked = activo;
+                valoresOriginalesVC[campo.id] = activo ? 'true' : 'false';
+                actualizarEstiloSwitch(input);
+            } else {
+                input.value = valor;
+                valoresOriginalesVC[campo.id] = valor;
+            }
+        });
+        
+        // Mostrar contenido
+        document.getElementById('contacto-loading').style.display = 'none';
+        document.getElementById('contacto-contenido').style.display = 'block';
+        
+        // Activar listeners de detección de cambios
+        setTimeout(() => {
+            CAMPOS_VC.forEach(campo => {
+                const input = document.getElementById(campo.id);
+                if (!input) return;
+                if (campo.tipo === 'toggle') {
+                    input.addEventListener('change', () => {
+                        actualizarEstiloSwitch(input);
+                        detectarCambiosVC();
+                    });
+                } else {
+                    input.addEventListener('input', detectarCambiosVC);
+                    input.addEventListener('change', detectarCambiosVC);
+                }
+            });
+        }, 50);
+        
+        contactoCargado = true;
+        console.info('[Visibilidad y Contacto] Configuración cargada:', Object.keys(valoresOriginalesVC).length, 'campos');
+    } catch (e) {
+        console.error('[Visibilidad y Contacto] Error al cargar:', e);
+        document.getElementById('contacto-loading').innerHTML = `
+            <div style="background:#fef2f2; border-left:4px solid #dc2626; padding:16px; border-radius:6px; text-align:left; max-width:520px; margin:0 auto;">
+                <strong style="color:#dc2626; display:block; margin-bottom:6px;">No se pudo cargar la configuración</strong>
+                <p style="font-size:12px; color:#7f1d1d;">${e.message}</p>
+                <button onclick="contactoCargado=false; cargarConfigVisibilidadContacto()" style="margin-top:10px; padding:6px 12px; background:#dc2626; color:#fff; border:none; border-radius:4px; font-size:12px; cursor:pointer; font-weight:600;">Reintentar</button>
+            </div>`;
+    }
+}
+
+// Visual: aplica clase "activo" al contenedor del switch cuando está encendido
+function actualizarEstiloSwitch(input) {
+    const wrap = input.closest('.switch-wrap');
+    if (wrap) wrap.classList.toggle('activo', input.checked);
+}
+
+// ---- DETECCIÓN DE CAMBIOS ----
+function detectarCambiosVC() {
+    let hayCambios = false;
+    CAMPOS_VC.forEach(campo => {
+        const input = document.getElementById(campo.id);
+        if (!input) return;
+        const valorActual = campo.tipo === 'toggle' 
+            ? (input.checked ? 'true' : 'false')
+            : (input.value || '');
+        if (valorActual !== (valoresOriginalesVC[campo.id] || '')) {
+            hayCambios = true;
+        }
+    });
+    document.getElementById('barra-guardar-vc').classList.toggle('oculta', !hayCambios);
+}
+
+function descartarCambiosVC() {
+    if (!confirm('¿Descartar todos los cambios? Los valores volverán a como estaban.')) return;
+    CAMPOS_VC.forEach(campo => {
+        const input = document.getElementById(campo.id);
+        if (!input) return;
+        if (campo.tipo === 'toggle') {
+            input.checked = (valoresOriginalesVC[campo.id] === 'true');
+            actualizarEstiloSwitch(input);
+        } else {
+            input.value = valoresOriginalesVC[campo.id] || '';
+        }
+    });
+    detectarCambiosVC();
+}
+
+// ---- GUARDADO ----
+async function guardarVisibilidadContacto() {
+    if (!ID_EMPRESA_ACTUAL) {
+        mostrarToastConfirm('No se identificó tu empresa. Recarga la página.', true);
+        return;
+    }
+    
+    const btn = document.getElementById('btn-guardar-vc');
+    const htmlOriginal = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Guardando...';
+    
+    try {
+        // Recopilar SOLO los campos que cambiaron
+        const cambios = [];
+        CAMPOS_VC.forEach(campo => {
+            const input = document.getElementById(campo.id);
+            if (!input) return;
+            const valorActual = campo.tipo === 'toggle'
+                ? (input.checked ? 'true' : 'false')
+                : (input.value || '');
+            const valorOriginal = valoresOriginalesVC[campo.id] || '';
+            if (valorActual !== valorOriginal) {
+                cambios.push({ param: campo.param, valor: valorActual });
+            }
+        });
+        
+        if (cambios.length === 0) {
+            mostrarToastConfirm('No hay cambios para guardar');
+            btn.disabled = false;
+            btn.innerHTML = htmlOriginal;
+            return;
+        }
+        
+        // Validar email si cambió
+        const cambioEmail = cambios.find(c => c.param === 'EMPRESA_EMAIL');
+        if (cambioEmail && cambioEmail.valor && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cambioEmail.valor)) {
+            throw new Error('El email tiene un formato inválido');
+        }
+        
+        // Validar WhatsApp si cambió: solo números, mínimo 10 dígitos
+        const cambioWa = cambios.find(c => c.param === 'EMPRESA_WHATSAPP');
+        if (cambioWa && cambioWa.valor) {
+            const limpio = cambioWa.valor.replace(/[^0-9]/g, '');
+            if (limpio.length < 10) {
+                throw new Error('El WhatsApp debe tener al menos 10 dígitos (código país + número)');
+            }
+            cambioWa.valor = limpio;  // limpiamos antes de guardar
+        }
+        
+        const token = localStorage.getItem('pyp_token_seguro');
+        
+        // UPSERT por cada cambio
+        for (const c of cambios) {
+            const urlPatch = `${SUPABASE_URL}/rest/v1/configuracion_catalogo?parametro=eq.${encodeURIComponent(c.param)}&id_empresa=eq.${ID_EMPRESA_ACTUAL}`;
+            const resPatch = await fetch(urlPatch, {
+                method: 'PATCH',
+                headers: {
+                    'apikey': SUPABASE_KEY,
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                    'Prefer': 'return=representation'
+                },
+                body: JSON.stringify({ valor: c.valor, fecha_actualizacion: new Date().toISOString() })
+            });
+            if (!resPatch.ok) {
+                const txt = await resPatch.text();
+                throw new Error(`Error ${resPatch.status} guardando ${c.param}: ${txt.substring(0, 100)}`);
+            }
+            const filas = await resPatch.json();
+            
+            // Si no había fila, hacer POST
+            if (!filas || filas.length === 0) {
+                const resPost = await fetch(`${SUPABASE_URL}/rest/v1/configuracion_catalogo`, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                        'Prefer': 'return=minimal'
+                    },
+                    body: JSON.stringify({
+                        id_empresa: ID_EMPRESA_ACTUAL,
+                        parametro: c.param,
+                        valor: c.valor
+                    })
+                });
+                if (!resPost.ok) {
+                    const txt = await resPost.text();
+                    throw new Error(`Error ${resPost.status} creando ${c.param}: ${txt.substring(0, 100)}`);
+                }
+            }
+        }
+        
+        // Actualizar snapshot y refrescar campo de WhatsApp si se limpió
+        CAMPOS_VC.forEach(campo => {
+            const input = document.getElementById(campo.id);
+            if (!input) return;
+            if (campo.tipo === 'toggle') {
+                valoresOriginalesVC[campo.id] = input.checked ? 'true' : 'false';
+            } else {
+                // Si el WhatsApp se normalizó, actualizar el input visible
+                if (campo.id === 'vc-whatsapp' && cambioWa && cambioWa.valor) {
+                    input.value = cambioWa.valor;
+                }
+                valoresOriginalesVC[campo.id] = input.value || '';
+            }
+        });
+        
+        document.getElementById('barra-guardar-vc').classList.add('oculta');
+        
+        mostrarToastConfirm(`${cambios.length} ${cambios.length === 1 ? 'cambio guardado' : 'cambios guardados'} correctamente`);
+        console.info('[Visibilidad y Contacto] Guardado exitoso:', cambios.length, 'cambios');
+    } catch (e) {
+        console.error('[Visibilidad y Contacto] Error al guardar:', e);
+        mostrarToastConfirm('Error: ' + e.message, true);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = htmlOriginal;
+    }
+}
+
+
 // ====================================================================
 // TAB IDENTIDAD VISUAL (B3.2)
 // ====================================================================
@@ -1299,6 +1969,18 @@ function mostrarToastConfirm(mensaje, esError = false) {
 }
 
 
+
+function onTabAbierto(tabId) {
+    console.info(`[Config. Página Web] Tab abierto: ${tabId}`);
+    // Lazy loading: cargar datos del tab solo cuando se abre por primera vez
+    if (tabId === 'identidad' && !identidadCargada) {
+        cargarConfigIdentidadVisual();
+    }
+    if (tabId === 'contacto' && !contactoCargado) {
+        cargarConfigVisibilidadContacto();
+    }
+    // En B3.4+ agregaremos: if (tabId === 'banners' && !bannersCargados) ...
+}
 
 window.addEventListener('load', async () => {
     const ok = await detectarEmpresaUsuario();
