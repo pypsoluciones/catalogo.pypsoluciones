@@ -111,12 +111,19 @@
         <!-- Panel Caja Abierta -->
         <div id="panel-caja-abierta" class="hidden flex-col flex-1 overflow-hidden p-4 gap-4">
             
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 shrink-0">
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 shrink-0">
                 <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-sm flex flex-col">
                     <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Fondo Inicial</p>
                     <div class="flex flex-col gap-0.5" id="metric-fondo">
                         <span class="text-base font-black text-primary leading-tight" data-usd>$0.00</span>
                         <span class="text-base font-black text-primary leading-tight" data-bs>Bs. 0.00</span>
+                    </div>
+                </div>
+                <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-sm flex flex-col border-l-4 border-l-blue-500">
+                    <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Fondos Recibidos</p>
+                    <div class="flex flex-col gap-0.5" id="metric-fondos-recibidos">
+                        <span class="text-base font-black text-blue-600 leading-tight" data-usd>$0.00</span>
+                        <span class="text-base font-black text-blue-600 leading-tight" data-bs>Bs. 0.00</span>
                     </div>
                 </div>
                 <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-sm flex flex-col border-l-4 border-l-green-500">
@@ -133,7 +140,7 @@
                         <span class="text-base font-black text-red-600 leading-tight" data-bs>Bs. 0.00</span>
                     </div>
                 </div>
-                <div class="bg-slate-800 p-3 rounded-lg border border-slate-900 shadow-md flex flex-col items-center justify-center cursor-pointer hover:bg-slate-700 transition btn-press" onclick="abrirModalCierre()">
+                <div class="bg-slate-800 p-3 rounded-lg border border-slate-900 shadow-md flex flex-col items-center justify-center cursor-pointer hover:bg-slate-700 transition btn-press col-span-2 sm:col-span-3 lg:col-span-1" onclick="abrirModalCierre()">
                     <i class="fa-solid fa-lock text-white text-xl mb-1"></i>
                     <span class="text-xs font-black text-white uppercase tracking-widest">Cerrar Caja</span>
                 </div>
@@ -334,6 +341,7 @@
                             <div class="text-[9px] font-bold text-green-800 uppercase tracking-wider mb-1">💵 EN USD</div>
                             <div class="space-y-0.5 text-[11px] font-bold">
                                 <div class="flex justify-between"><span class="text-gray-600">Fondo inicial:</span> <span id="res-fondo-usd" class="text-gray-800">$0.00</span></div>
+                                <div class="flex justify-between"><span class="text-gray-600">+ Fondos recibidos:</span> <span id="res-fondos-recibidos-usd" class="text-blue-700">$0.00</span></div>
                                 <div class="flex justify-between"><span class="text-gray-600">+ Ventas:</span> <span id="res-ventas-usd" class="text-green-700">$0.00</span></div>
                                 <div class="flex justify-between"><span class="text-gray-600">- Egresos:</span> <span id="res-egresos-usd" class="text-red-600">$0.00</span></div>
                                 <div class="border-t border-green-300 my-1"></div>
@@ -345,6 +353,7 @@
                             <div class="text-[9px] font-bold text-blue-800 uppercase tracking-wider mb-1">💴 EN BOLÍVARES</div>
                             <div class="space-y-0.5 text-[11px] font-bold">
                                 <div class="flex justify-between"><span class="text-gray-600">Fondo inicial:</span> <span id="res-fondo-bs" class="text-gray-800">Bs. 0.00</span></div>
+                                <div class="flex justify-between"><span class="text-gray-600">+ Fondos recibidos:</span> <span id="res-fondos-recibidos-bs" class="text-blue-700">Bs. 0.00</span></div>
                                 <div class="flex justify-between"><span class="text-gray-600">+ Ventas:</span> <span id="res-ventas-bs" class="text-green-700">Bs. 0.00</span></div>
                                 <div class="flex justify-between"><span class="text-gray-600">- Egresos:</span> <span id="res-egresos-bs" class="text-red-600">Bs. 0.00</span></div>
                                 <div class="border-t border-blue-300 my-1"></div>
@@ -586,67 +595,64 @@
             try {
                 const usuario = localStorage.getItem('pyp_usuario_login') || localStorage.getItem('pyp_usuario_nombre') || 'SISTEMA';
 
-                // ════════════════════════════════════════════════════════════════
-                // SPRINT 1.0 P1: usar RPC abrir_turno_caja (no INSERT directo)
-                // La RPC: valida sucursal, crea turno, mueve bóveda si hay monto inicial,
-                // genera numero_operacion. NUNCA INSERT directo a cierres_caja.
-                // ════════════════════════════════════════════════════════════════
-                const rpcAbrir = await fetch(`${SUPABASE_URL}/rest/v1/rpc/abrir_turno_caja`, {
-                    method: 'POST',
-                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        p_monto_usd: 0,            // El monto inicial llega vía aceptar_transferencia_fondo
-                        p_monto_bs: 0,
-                        p_concepto: 'Apertura de turno'
-                    })
-                });
-                if (!rpcAbrir.ok) {
-                    const txt = await rpcAbrir.text();
-                    throw new Error(extraerMensajeError(txt) || 'No se pudo aperturar la caja.');
-                }
-                const respAbrir = await rpcAbrir.json();
-                const idCierreNuevo = respAbrir.id_cierre;
+                // 🆕 Sprint 3D: extraer auth_id del JWT para identificar al cajero por UUID
+                let authIdCajero = null;
+                try {
+                    if (TOKEN_JWT) {
+                        const payload = JSON.parse(atob(TOKEN_JWT.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+                        authIdCajero = payload.sub;
+                    }
+                } catch(e) {}
 
-                // ════════════════════════════════════════════════════════════════
-                // ACEPTAR TRANSFERENCIAS PENDIENTES vía RPC aceptar_transferencia_fondo
-                // La RPC mueve dinero de bóveda → caja chica de forma atómica.
-                // NO duplicar movimientos manuales (eso causaría doble contabilización).
-                // ════════════════════════════════════════════════════════════════
+                const payloadTurno = {
+                    id_empresa: empresaActual || null, usuario_cajero: usuario, estatus: 'ABIERTA',
+                    monto_apertura_usd: redondear(totalUsd), monto_apertura_bs: redondear(totalBs),
+                    auth_id_cajero: authIdCajero
+                };
+
+                const resTurno = await fetch(`${SUPABASE_URL}/rest/v1/cierres_caja`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, body: JSON.stringify(payloadTurno) }); 
+                if(!resTurno.ok) throw new Error("No se pudo aperturar la caja.");
+                const idCierreNuevo = (await resTurno.json())[0].id_cierre;
+
                 if (aceptaFondo && transferenciasPendientes.length > 0) {
-                    for (const t of transferenciasPendientes) {
-                        const rpcAceptar = await fetch(`${SUPABASE_URL}/rest/v1/rpc/aceptar_transferencia_fondo`, {
-                            method: 'POST',
-                            headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ p_id_transferencia: t.id })
-                        });
-                        if (!rpcAceptar.ok) {
-                            const txt = await rpcAceptar.text();
-                            throw new Error(extraerMensajeError(txt) || 'No se pudo aceptar la transferencia ' + (t.numero_operacion || t.id));
-                        }
-
-                        // Registrar en caja_movimientos para que aparezca en el historial del turno.
-                        // Solo INSERT directo a esta tabla (la RPC no la toca y es necesaria para el reporte intra-turno).
+                    const ts = new Date().toISOString();
+                    for(const t of transferenciasPendientes) {
                         const mUsd = parseFloat(t.monto_usd) || 0;
                         const mBs = parseFloat(t.monto_bs) || 0;
+                        
                         const cta = Array.isArray(t.fin_cuentas) ? t.fin_cuentas[0] : t.fin_cuentas;
                         const nombreBoveda = cta ? cta.nombre : "Bóveda";
-                        const ts = new Date().toISOString();
+                        
+                        // A. Sellar la transferencia como ACEPTADA
+                        await fetch(`${SUPABASE_URL}/rest/v1/fin_transferencias?id=eq.${t.id}`, { method: 'PATCH', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ estado: 'ACEPTADA', fecha_recepcion: ts }) });
+                        
+                        // B. Libro Mayor (Dejar rastro)
+                        const payloadEgresoBoveda = { 
+                            id_empresa: empresaActual || null, id_cuenta: t.id_cuenta_origen, fecha: ts, tipo: 'EGRESO', 
+                            concepto: `ASIGNACIÓN ACEPTADA POR CAJERO: ${usuario}`, monto_usd: redondear(mUsd), monto_bs: redondear(mBs), usuario: usuario, referencia_origen: t.id
+                        }; 
+                        await fetch(`${SUPABASE_URL}/rest/v1/fin_movimientos`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify(payloadEgresoBoveda) });
 
-                        await fetch(`${SUPABASE_URL}/rest/v1/caja_movimientos`, {
-                            method: 'POST',
-                            headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                id_empresa: empresaActual || null,
-                                id_cierre: idCierreNuevo,
-                                fecha: ts,
-                                tipo: 'INGRESO',
-                                concepto: `FONDO RECIBIDO DESDE: ${nombreBoveda}`,
-                                monto_usd: redondear(mUsd),
-                                monto_bs: redondear(mBs),
-                                metodo_pago: 'EFECTIVO_MIXTO',
-                                usuario: usuario
-                            })
-                        });
+                        // C. DESCONTAR DE LA BÓVEDA (La pieza que faltaba)
+                        if(cta) {
+                            const saldoActualUsd = parseFloat(cta.saldo_usd) || 0;
+                            const saldoActualBs = parseFloat(cta.saldo_bs) || 0;
+                            const nuevoSaldoUsd = redondear(saldoActualUsd - mUsd);
+                            const nuevoSaldoBs = redondear(saldoActualBs - mBs);
+
+                            await fetch(`${SUPABASE_URL}/rest/v1/fin_cuentas?id=eq.${t.id_cuenta_origen}`, { 
+                                method: 'PATCH', 
+                                headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, 
+                                body: JSON.stringify({ saldo_usd: nuevoSaldoUsd, saldo_bs: nuevoSaldoBs }) 
+                            });
+                        }
+
+                        // D. Ingresar a la Caja del Cajero
+                        const payloadIngresoCaja = {
+                            id_empresa: empresaActual || null, id_cierre: idCierreNuevo, fecha: ts, tipo: 'INGRESO',
+                            concepto: `FONDO RECIBIDO DESDE: ${nombreBoveda}`, monto_usd: redondear(mUsd), monto_bs: redondear(mBs), metodo_pago: 'EFECTIVO_MIXTO', usuario: usuario
+                        };
+                        await fetch(`${SUPABASE_URL}/rest/v1/caja_movimientos`, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' }, body: JSON.stringify(payloadIngresoCaja) });
                     }
                 }
 
@@ -654,18 +660,6 @@
                 await verificarTurnoActivo();
                 cerrarErrorCarga();
             } catch(e) { mostrarErrorConexion(e.message); } finally { if(btn) btn.disabled = false; }
-        }
-
-        // Helper: extraer mensaje legible de errores PostgreSQL/PostgREST
-        function extraerMensajeError(txt) {
-            try {
-                const j = JSON.parse(txt);
-                if (j.message) {
-                    // Cortar en " | SQLSTATE:" si existe (mensaje formato Filtro Cero Soporte)
-                    return j.message.split(' | SQLSTATE:')[0];
-                }
-            } catch(e) {}
-            return null;
         }
 
         // ================= CARGA DE MOVIMIENTOS EN VIVO =================
@@ -677,9 +671,10 @@
             const tbody = document.getElementById('tabla-movimientos');
             let html = '';
             
-            let sApUsd = 0, sApBs = 0; 
-            let sInUsd = 0, sInBs = 0; 
-            let sEgUsd = 0, sEgBs = 0; 
+            let sApUsd = 0, sApBs = 0;        // Fondo Inicial (APERTURA)
+            let sFrUsd = 0, sFrBs = 0;        // Fondos Recibidos (FONDO_BOVEDA)
+            let sInUsd = 0, sInBs = 0;        // Ventas/Cobros (INGRESO)
+            let sEgUsd = 0, sEgBs = 0;        // Egresos/Retiros (EGRESO + EGRESO_A_BOVEDA)
 
             if(movs.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-gray-400 font-bold text-[10px] uppercase">Sin transacciones aún.</td></tr>`;
@@ -689,15 +684,23 @@
                     const usd = parseFloat(m.monto_usd) || 0;
                     const bs = parseFloat(m.monto_bs) || 0;
 
-                    const color = m.tipo === 'INGRESO' ? 'text-green-600' : 'text-red-600';
-                    const signo = m.tipo === 'INGRESO' ? '+' : '-';
-                    
-                    if (m.concepto.includes('FONDO RECIBIDO')) {
+                    // Clasificación contable por tipo (mapa profesional ERP)
+                    let color, signo;
+                    if (m.tipo === 'APERTURA') {
                         sApUsd += usd; sApBs += bs;
+                        color = 'text-primary'; signo = '+';
+                    } else if (m.tipo === 'FONDO_BOVEDA') {
+                        sFrUsd += usd; sFrBs += bs;
+                        color = 'text-blue-600'; signo = '+';
                     } else if (m.tipo === 'INGRESO') {
                         sInUsd += usd; sInBs += bs;
-                    } else if (m.tipo === 'EGRESO') {
+                        color = 'text-green-600'; signo = '+';
+                    } else if (m.tipo === 'EGRESO' || m.tipo === 'EGRESO_A_BOVEDA') {
                         sEgUsd += usd; sEgBs += bs;
+                        color = 'text-red-600'; signo = '-';
+                    } else {
+                        // Otros tipos (TRANSFERENCIA_*, AJUSTE_*, DEVOLUCION, CIERRE) se listan pero no suman a KPIs
+                        color = 'text-gray-500'; signo = '·';
                     }
 
                     let textoMonto = '';
@@ -708,7 +711,7 @@
                     html += `<tr class="hover:bg-blue-50 transition border-b border-gray-50">
                         <td class="py-2 px-2 text-[9px] font-bold text-gray-500">${hora}</td>
                         <td class="py-2 px-2 font-bold text-primary truncate max-w-[200px] text-[10px]">${m.concepto}</td>
-                        <td class="py-2 px-2 font-mono text-[9px] text-gray-500">${m.metodo_pago.replace('_', ' ')}</td>
+                        <td class="py-2 px-2 font-mono text-[9px] text-gray-500">${(m.metodo_pago || '').replace(/_/g, ' ')}</td>
                         <td class="py-2 px-2 text-right font-black ${color} text-[11px]">${signo} ${textoMonto}</td>
                     </tr>`;
                 });
@@ -717,16 +720,20 @@
 
             document.querySelector('#metric-fondo [data-usd]').textContent = `$${fmt(sApUsd)}`;
             document.querySelector('#metric-fondo [data-bs]').textContent = `Bs. ${fmt(sApBs)}`;
+            document.querySelector('#metric-fondos-recibidos [data-usd]').textContent = `$${fmt(sFrUsd)}`;
+            document.querySelector('#metric-fondos-recibidos [data-bs]').textContent = `Bs. ${fmt(sFrBs)}`;
             document.querySelector('#metric-ingresos [data-usd]').textContent = `$${fmt(sInUsd)}`;
             document.querySelector('#metric-ingresos [data-bs]').textContent = `Bs. ${fmt(sInBs)}`;
             document.querySelector('#metric-egresos [data-usd]').textContent = `$${fmt(sEgUsd)}`;
             document.querySelector('#metric-egresos [data-bs]').textContent = `Bs. ${fmt(sEgBs)}`;
             
             turnoActivo.sumFondoUsd = sApUsd; turnoActivo.sumFondoBs = sApBs;
+            turnoActivo.sumFondosRecibidosUsd = sFrUsd; turnoActivo.sumFondosRecibidosBs = sFrBs;
             turnoActivo.sumIngresosUsd = sInUsd; turnoActivo.sumIngresosBs = sInBs;
             turnoActivo.sumEgresosUsd = sEgUsd; turnoActivo.sumEgresosBs = sEgBs;
             
-            turnoActivo.totalCalculadoSistema = sApUsd + sInUsd - sEgUsd + ((sApBs + sInBs - sEgBs) / tasaBCV);
+            // Total caja = Fondo inicial + Fondos recibidos + Ventas - Egresos
+            turnoActivo.totalCalculadoSistema = (sApUsd + sFrUsd + sInUsd - sEgUsd) + ((sApBs + sFrBs + sInBs - sEgBs) / tasaBCV);
         }
 
         // ================= CIERRE DE CAJA =================
@@ -739,20 +746,24 @@
             // Llenar el resumen auto-calculado
             const sApUsd = turnoActivo.sumFondoUsd || 0;
             const sApBs = turnoActivo.sumFondoBs || 0;
+            const sFrUsd = turnoActivo.sumFondosRecibidosUsd || 0;
+            const sFrBs = turnoActivo.sumFondosRecibidosBs || 0;
             const sInUsd = turnoActivo.sumIngresosUsd || 0;
             const sInBs = turnoActivo.sumIngresosBs || 0;
             const sEgUsd = turnoActivo.sumEgresosUsd || 0;
             const sEgBs = turnoActivo.sumEgresosBs || 0;
 
             document.getElementById('res-fondo-usd').textContent = `$${fmt(sApUsd)}`;
+            document.getElementById('res-fondos-recibidos-usd').textContent = `$${fmt(sFrUsd)}`;
             document.getElementById('res-ventas-usd').textContent = `$${fmt(sInUsd)}`;
             document.getElementById('res-egresos-usd').textContent = `$${fmt(sEgUsd)}`;
-            document.getElementById('res-debe-usd').textContent = `$${fmt(sApUsd + sInUsd - sEgUsd)}`;
+            document.getElementById('res-debe-usd').textContent = `$${fmt(sApUsd + sFrUsd + sInUsd - sEgUsd)}`;
 
             document.getElementById('res-fondo-bs').textContent = `Bs. ${fmt(sApBs)}`;
+            document.getElementById('res-fondos-recibidos-bs').textContent = `Bs. ${fmt(sFrBs)}`;
             document.getElementById('res-ventas-bs').textContent = `Bs. ${fmt(sInBs)}`;
             document.getElementById('res-egresos-bs').textContent = `Bs. ${fmt(sEgBs)}`;
-            document.getElementById('res-debe-bs').textContent = `Bs. ${fmt(sApBs + sInBs - sEgBs)}`;
+            document.getElementById('res-debe-bs').textContent = `Bs. ${fmt(sApBs + sFrBs + sInBs - sEgBs)}`;
 
             // Reset estado del cierre
             document.getElementById('cierre-status').innerHTML = `
@@ -766,8 +777,8 @@
 
         // Auto-completa los campos con los valores esperados (asume cuadre exacto)
         function autocompletarValores() {
-            const debeUsd = (turnoActivo.sumFondoUsd || 0) + (turnoActivo.sumIngresosUsd || 0) - (turnoActivo.sumEgresosUsd || 0);
-            const debeBs = (turnoActivo.sumFondoBs || 0) + (turnoActivo.sumIngresosBs || 0) - (turnoActivo.sumEgresosBs || 0);
+            const debeUsd = (turnoActivo.sumFondoUsd || 0) + (turnoActivo.sumFondosRecibidosUsd || 0) + (turnoActivo.sumIngresosUsd || 0) - (turnoActivo.sumEgresosUsd || 0);
+            const debeBs = (turnoActivo.sumFondoBs || 0) + (turnoActivo.sumFondosRecibidosBs || 0) + (turnoActivo.sumIngresosBs || 0) - (turnoActivo.sumEgresosBs || 0);
             // Valor por defecto: todo el USD en efectivo, todo el Bs en efectivo
             document.getElementById('dec-efectivo-usd').value = redondear(debeUsd).toFixed(2);
             document.getElementById('dec-efectivo-bs').value = redondear(debeBs).toFixed(2);
@@ -790,8 +801,8 @@
             const totalDecUsd = efUsd + zelleUsd;
             const totalDecBs  = efBs + posBs + pmBs + trfBs;
 
-            const debeUsd = (turnoActivo.sumFondoUsd || 0) + (turnoActivo.sumIngresosUsd || 0) - (turnoActivo.sumEgresosUsd || 0);
-            const debeBs = (turnoActivo.sumFondoBs || 0) + (turnoActivo.sumIngresosBs || 0) - (turnoActivo.sumEgresosBs || 0);
+            const debeUsd = (turnoActivo.sumFondoUsd || 0) + (turnoActivo.sumFondosRecibidosUsd || 0) + (turnoActivo.sumIngresosUsd || 0) - (turnoActivo.sumEgresosUsd || 0);
+            const debeBs = (turnoActivo.sumFondoBs || 0) + (turnoActivo.sumFondosRecibidosBs || 0) + (turnoActivo.sumIngresosBs || 0) - (turnoActivo.sumEgresosBs || 0);
 
             const descUsd = redondear(totalDecUsd - debeUsd);
             const descBs = redondear(totalDecBs - debeBs);
@@ -913,7 +924,7 @@
                 // Primero sellar el cierre en cierres_caja (estatus CERRADA)
                 const totalDeclaradoUsd = efUsd + zelleUsd + (efBs / tasaBCV) + (posBs / tasaBCV) + (pmBs / tasaBCV) + (trfBs / tasaBCV);
                 const totalDeclaradoBs  = efBs + posBs + pmBs + trfBs;
-                const debeUsd = (turnoActivo.sumFondoUsd || 0) + (turnoActivo.sumIngresosUsd || 0) - (turnoActivo.sumEgresosUsd || 0);
+                const debeUsd = (turnoActivo.sumFondoUsd || 0) + (turnoActivo.sumFondosRecibidosUsd || 0) + (turnoActivo.sumIngresosUsd || 0) - (turnoActivo.sumEgresosUsd || 0);
                 const totalCalculadoSistemaUsd = debeUsd;
 
                 const sellarPayload = {
@@ -1054,10 +1065,11 @@
                         mensaje = errJson.message || errJson.hint || mensaje;
                     } catch {}
 
-                    // Si el error indica que no hay PIN configurado, ofrecer crearlo en línea
+                    // Si el error indica que no hay PIN configurado, redirigir a perfil
                     if (mensaje.toLowerCase().includes('pin configurado') || mensaje.toLowerCase().includes('no tiene pin')) {
-                        cerrarModalPin();
-                        abrirModalCrearPin();
+                        if (confirm("No tienes PIN configurado.\n\nVamos a tu perfil para crearlo. Una vez creado, vuelve a esta pantalla.")) {
+                            window.location.href = 'admin_perfil.html';
+                        }
                         return;
                     }
 
@@ -1221,6 +1233,7 @@
                 </div>
                 <div style="border-top: 1px dashed #000; border-bottom: 1px dashed #000; margin-bottom: 10px; padding: 5px 0;">
                     <div style="display: flex; justify-content: space-between;"><span>Fondo Inicial:</span><strong>$${fmt(turnoActivo?.sumFondoUsd || 0)} | Bs.${fmt(turnoActivo?.sumFondoBs || 0)}</strong></div>
+                    <div style="display: flex; justify-content: space-between;"><span>Fondos Recibidos:</span><strong>+$${fmt(turnoActivo?.sumFondosRecibidosUsd || 0)} | +Bs.${fmt(turnoActivo?.sumFondosRecibidosBs || 0)}</strong></div>
                     <div style="display: flex; justify-content: space-between;"><span>Ventas/Cobros:</span><strong>+$${fmt(turnoActivo?.sumIngresosUsd || 0)} | +Bs.${fmt(turnoActivo?.sumIngresosBs || 0)}</strong></div>
                     <div style="display: flex; justify-content: space-between;"><span>Retiros/Egresos:</span><strong>-$${fmt(turnoActivo?.sumEgresosUsd || 0)} | -Bs.${fmt(turnoActivo?.sumEgresosBs || 0)}</strong></div>
                     <div style="display: flex; justify-content: space-between; margin-top: 5px; font-weight: bold; border-top: 1px solid #000;"><span>TOTAL SISTEMA:</span><span>$${fmt(cierre.total_calculado_sistema_usd)}</span></div>
@@ -1256,106 +1269,6 @@
                     Tasa Referencia Cierre: Bs. ${fmt(tasaBCV)}
                 </div>`;
             window.print();
-        }
-
-        // ════════════════════════════════════════════════════════════════════
-        // SPRINT 1.0 LOTE 1 — CREAR PIN INLINE (sin redirigir a perfil 404)
-        // ════════════════════════════════════════════════════════════════════
-        function abrirModalCrearPin() {
-            let modal = document.getElementById('modal-crear-pin');
-            if (!modal) {
-                modal = document.createElement('div');
-                modal.id = 'modal-crear-pin';
-                modal.className = 'fixed inset-0 bg-slate-900/85 backdrop-blur-sm z-[9999] flex items-center justify-center p-4';
-                modal.innerHTML = `
-                    <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden border-4 border-amber-400">
-                        <div class="bg-gradient-to-r from-amber-500 to-orange-500 p-4 text-center">
-                            <i class="fa-solid fa-key text-white text-3xl mb-1"></i>
-                            <h2 class="text-white font-black text-base uppercase tracking-wider">Configura tu PIN</h2>
-                            <p class="text-amber-100 text-[10px] font-bold uppercase tracking-wide mt-1">Crea un PIN para confirmar cierres de turno</p>
-                        </div>
-                        <div class="p-5 space-y-3">
-                            <div>
-                                <label class="text-[10px] font-bold text-gray-600 uppercase tracking-wide">Nuevo PIN (4-6 dígitos)</label>
-                                <input type="password" id="cp-pin-1" inputmode="numeric" autocomplete="off" maxlength="6"
-                                    class="w-full border-2 border-gray-200 rounded-lg p-3 text-center text-2xl font-black tracking-[0.5em] outline-none focus:border-amber-500 transition mt-1"
-                                    placeholder="••••">
-                            </div>
-                            <div>
-                                <label class="text-[10px] font-bold text-gray-600 uppercase tracking-wide">Confirmar PIN</label>
-                                <input type="password" id="cp-pin-2" inputmode="numeric" autocomplete="off" maxlength="6"
-                                    class="w-full border-2 border-gray-200 rounded-lg p-3 text-center text-2xl font-black tracking-[0.5em] outline-none focus:border-amber-500 transition mt-1"
-                                    placeholder="••••">
-                                <p id="cp-pin-error" class="hidden text-red-500 text-[10px] font-bold mt-1 text-center"><i class="fa-solid fa-circle-exclamation mr-1"></i><span id="cp-pin-error-msg"></span></p>
-                            </div>
-                            <div class="flex gap-2 pt-2">
-                                <button onclick="cancelarCrearPin()" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2.5 rounded-lg uppercase text-[11px] tracking-wide transition">Cancelar</button>
-                                <button onclick="guardarPinNuevo()" id="cp-btn-guardar" class="flex-1 bg-amber-500 hover:bg-amber-600 text-white font-black py-2.5 rounded-lg uppercase text-[11px] tracking-wide transition shadow-md"><i class="fa-solid fa-check mr-1"></i>Crear PIN</button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                document.body.appendChild(modal);
-                setTimeout(() => document.getElementById('cp-pin-1').focus(), 100);
-            } else {
-                modal.classList.remove('hidden');
-                modal.classList.add('flex');
-                document.getElementById('cp-pin-1').value = '';
-                document.getElementById('cp-pin-2').value = '';
-                document.getElementById('cp-pin-error').classList.add('hidden');
-                document.getElementById('cp-btn-guardar').disabled = false;
-                setTimeout(() => document.getElementById('cp-pin-1').focus(), 100);
-            }
-        }
-
-        function cancelarCrearPin() {
-            const m = document.getElementById('modal-crear-pin');
-            if (m) { m.classList.add('hidden'); m.classList.remove('flex'); }
-        }
-
-        async function guardarPinNuevo() {
-            const pin1 = document.getElementById('cp-pin-1').value.trim();
-            const pin2 = document.getElementById('cp-pin-2').value.trim();
-            const errBox = document.getElementById('cp-pin-error');
-            const errMsg = document.getElementById('cp-pin-error-msg');
-            const btn = document.getElementById('cp-btn-guardar');
-
-            errBox.classList.add('hidden');
-            if (!/^[0-9]{4,6}$/.test(pin1)) { errMsg.innerText = 'PIN debe ser numérico de 4 a 6 dígitos'; errBox.classList.remove('hidden'); return; }
-            if (pin1 !== pin2) { errMsg.innerText = 'Los PINs no coinciden'; errBox.classList.remove('hidden'); return; }
-
-            btn.disabled = true;
-            try {
-                // Obtener id_usuario propio
-                const payload = JSON.parse(atob(TOKEN_JWT.split('.')[1]));
-                const authId = payload.sub;
-                const resUser = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?auth_id=eq.${authId}&select=id_usuario&limit=1`, {
-                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}` }
-                });
-                const arr = await resUser.json();
-                if (!arr.length) throw new Error('Usuario no encontrado');
-                const idUsuario = arr[0].id_usuario;
-
-                const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/establecer_pin_usuario`, {
-                    method: 'POST',
-                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${TOKEN_JWT}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ p_id_usuario: idUsuario, p_pin: pin1 })
-                });
-                if (!r.ok) {
-                    const txt = await r.text();
-                    let msg = 'Error al crear PIN';
-                    try { msg = (JSON.parse(txt)).message || msg; } catch(e) {}
-                    throw new Error(msg);
-                }
-                cancelarCrearPin();
-                alert('✅ PIN creado correctamente.\n\nReintenta el cierre de turno con tu nuevo PIN.');
-                // Reabrir modal de PIN para que el usuario reintente
-                abrirModalPin();
-            } catch (e) {
-                errMsg.innerText = e.message.substring(0, 80);
-                errBox.classList.remove('hidden');
-                btn.disabled = false;
-            }
         }
     </script>
 
