@@ -1839,13 +1839,13 @@
             });
             const saldoBs = redondear(granTotalBs - totalPagadoBs);
             const saldoUsd = redondear(saldoBs / tasaBCVCalculo);
-            // FILTRO PROFIT/SAINT: tolerancia ±0.50 Bs por descuadre de conversión BCV.
-            // Si está dentro de la tolerancia, se considera Pago Completo.
-            const TOLERANCIA_BS = 0.50;
-            if (saldoBs > TOLERANCIA_BS) {
+            // POLÍTICA ERP: Cuadre EXACTO obligatorio. Cero tolerancia (estándar Profit/Saint).
+            // El cajero debe cobrar hasta el último céntimo. Si hay descuadre operativo real
+            // (cambio insuficiente), se gestiona como vuelto, no como tolerancia silenciosa.
+            if (saldoBs > 0.005) {
                 el.innerHTML = `Faltan <b>Bs. ${fmt(saldoBs)}</b> <span class="text-[9px] text-gray-400">(US$ ${fmt(saldoUsd)})</span>`;
                 el.className = 'text-red-600 font-bold text-[11px]';
-            } else if (saldoBs < -TOLERANCIA_BS) {
+            } else if (saldoBs < -0.005) {
                 el.innerHTML = `Sobran <b>Bs. ${fmt(Math.abs(saldoBs))}</b> <span class="text-[9px] text-gray-400">(devolver vuelto)</span>`;
                 el.className = 'text-amber-600 font-bold text-[11px]';
             } else {
@@ -2476,6 +2476,30 @@
 
         async function procesarVentaRPC(modo = 'NORMAL') {
             const btnCobrar = document.getElementById('btn-cobrar'); const btnGuardar = document.getElementById('btn-guardar');
+            
+            // ─────────────────────────────────────────────────────────────
+            // VALIDACIÓN DE CUADRE OBLIGATORIA (Política ERP cero tolerancia)
+            // Solo se valida en modo NORMAL (cobro real) con líneas mixtas.
+            // Modo DIRECTO (POR_PAGAR) no requiere pagos, va a CXC.
+            // ─────────────────────────────────────────────────────────────
+            if (modo === 'NORMAL' && lineasPagoMixto.length > 0) {
+                const tasaCalc = tasaBCV;
+                const totalPagadoBs = lineasPagoMixto.reduce((acc, l) => {
+                    const m = parseFloat(l.monto) || 0;
+                    return acc + (l.moneda === 'USD' ? m * tasaCalc : m);
+                }, 0);
+                const aplicaIgtfPre = (document.getElementById('cobro-metodo').value === 'EFECTIVO_USD' || document.getElementById('cobro-metodo').value === 'ZELLE');
+                const granTotalBsPre = redondear(granTotalBs + (aplicaIgtfPre ? redondear(granTotalBs * pypIgtf) : 0));
+                const saldoBsPre = redondear(granTotalBsPre - totalPagadoBs);
+                if (Math.abs(saldoBsPre) > 0.005) {
+                    const msg = saldoBsPre > 0
+                        ? `Faltan Bs. ${fmt(saldoBsPre)} por cobrar. Complete el pago antes de facturar.`
+                        : `Sobran Bs. ${fmt(Math.abs(saldoBsPre))} declarados. Ajuste el pago antes de facturar.`;
+                    mostrarErrorConexion(msg);
+                    return;
+                }
+            }
+            
             btnCobrar.disabled = true; btnGuardar.disabled = true;
             mostrarCarga(modo === 'DIRECTO' ? "Guardando..." : "Procesando...", "Procesando venta...");
             try {
